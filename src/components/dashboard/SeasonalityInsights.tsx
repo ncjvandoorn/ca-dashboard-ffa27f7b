@@ -308,34 +308,103 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
             {/* Pest & Disease */}
             {analysis.pestAndDisease.length > 0 && (
               <div className="mt-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Bug className="h-4 w-4 text-destructive" />
-                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-                    Pest & Disease Pressure
-                  </h3>
-                </div>
-                <div className="space-y-2">
-                  {analysis.pestAndDisease.map((pd, i) => (
-                    <motion.div
-                      key={pd.name}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 + 0.3, duration: 0.2 }}
-                      className="p-3 rounded-lg bg-muted/30"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{pd.name}</span>
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${severityColors[pd.severity]}`}>
-                          {pd.severity}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground ml-auto">
-                          Wk {pd.weeksObserved.join(", ")}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{pd.notes}</p>
-                    </motion.div>
-                  ))}
-                </div>
+                {/* Diseases */}
+                {analysis.pestAndDisease.some((pd) => pd.category === "disease") && (
+                  <div className="mb-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <AlertCircle className="h-4 w-4 text-warning" />
+                      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                        Disease Incidence
+                      </h3>
+                    </div>
+                    <div className="space-y-2">
+                      {analysis.pestAndDisease
+                        .filter((pd) => pd.category === "disease")
+                        .map((pd, i) => (
+                          <motion.div
+                            key={pd.name}
+                            initial={{ opacity: 0, x: -12 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.04 + 0.3, duration: 0.2 }}
+                            className="p-3 rounded-lg bg-muted/30"
+                          >
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-foreground">{pd.name}</span>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${severityColors[pd.severity]}`}>
+                                {pd.severity}
+                              </span>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                pd.trend === "increasing" ? "bg-destructive/10 text-destructive" :
+                                pd.trend === "decreasing" ? "bg-accent/10 text-accent" :
+                                "bg-muted text-muted-foreground"
+                              }`}>
+                                {pd.trend === "increasing" ? "↑ increasing" : pd.trend === "decreasing" ? "↓ decreasing" : "→ stable"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1.5">{pd.notes}</p>
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                              <span className="font-medium text-foreground/70">Driver:</span> {pd.environmentalDriver}
+                            </p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-muted-foreground">
+                              <span><span className="font-medium text-foreground/70">Weeks:</span> {pd.weeksObserved.join(", ")}</span>
+                              {pd.farmsAffected.length > 0 && (
+                                <span><span className="font-medium text-foreground/70">Farms:</span> {pd.farmsAffected.join(", ")}</span>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pests */}
+                {analysis.pestAndDisease.some((pd) => pd.category === "pest") && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Bug className="h-4 w-4 text-destructive" />
+                      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                        Pest Incidence
+                      </h3>
+                    </div>
+                    <div className="space-y-2">
+                      {analysis.pestAndDisease
+                        .filter((pd) => pd.category === "pest")
+                        .map((pd, i) => (
+                          <motion.div
+                            key={pd.name}
+                            initial={{ opacity: 0, x: -12 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.04 + 0.45, duration: 0.2 }}
+                            className="p-3 rounded-lg bg-muted/30"
+                          >
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-foreground">{pd.name}</span>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${severityColors[pd.severity]}`}>
+                                {pd.severity}
+                              </span>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                pd.trend === "increasing" ? "bg-destructive/10 text-destructive" :
+                                pd.trend === "decreasing" ? "bg-accent/10 text-accent" :
+                                "bg-muted text-muted-foreground"
+                              }`}>
+                                {pd.trend === "increasing" ? "↑ increasing" : pd.trend === "decreasing" ? "↓ decreasing" : "→ stable"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1.5">{pd.notes}</p>
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                              <span className="font-medium text-foreground/70">Driver:</span> {pd.environmentalDriver}
+                            </p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-muted-foreground">
+                              <span><span className="font-medium text-foreground/70">Weeks:</span> {pd.weeksObserved.join(", ")}</span>
+                              {pd.farmsAffected.length > 0 && (
+                                <span><span className="font-medium text-foreground/70">Farms:</span> {pd.farmsAffected.join(", ")}</span>
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
