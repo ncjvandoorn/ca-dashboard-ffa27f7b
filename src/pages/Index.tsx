@@ -30,6 +30,7 @@ const Index = () => {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
+  const [exceptionOpen, setExceptionOpen] = useState(false);
 
   const farmsWithData = useMemo(() => {
     if (!accounts || !reports) return [];
