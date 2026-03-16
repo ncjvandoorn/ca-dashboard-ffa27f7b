@@ -42,9 +42,18 @@ interface ImprovedFarm {
   improvedMetrics: string[];
 }
 
+interface TopPerformerFarm {
+  farmId: string;
+  farmName: string;
+  summary: string;
+  details: string[];
+  strongMetrics: string[];
+}
+
 interface AIAnalysis {
   needsAttention: AttentionFarm[];
   mostImproved: ImprovedFarm[];
+  topPerformers?: TopPerformerFarm[];
   industryInsight: string;
 }
 
