@@ -103,7 +103,7 @@ const Admin = () => {
     });
   };
 
-  const formatLocation = (log: LoginLog) => {
+  const formatLocation = (log: { city?: string | null; region?: string | null; country?: string | null }) => {
     const parts = [log.city, log.region, log.country].filter(Boolean);
     return parts.length > 0 ? parts.join(", ") : "—";
   };
