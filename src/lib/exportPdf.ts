@@ -26,13 +26,13 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
   let heightLeft = imgHeight;
   let position = margin;
 
-  pdf.addImage(imgData, "PNG", margin, position, contentWidth, imgHeight);
+  pdf.addImage(imgData, "JPEG", margin, position, contentWidth, imgHeight, undefined, "FAST");
   heightLeft -= (pageHeight - margin * 2);
 
   while (heightLeft > 0) {
     position = margin - (imgHeight - heightLeft);
     pdf.addPage();
-    pdf.addImage(imgData, "PNG", margin, position, contentWidth, imgHeight);
+    pdf.addImage(imgData, "JPEG", margin, position, contentWidth, imgHeight, undefined, "FAST");
     heightLeft -= (pageHeight - margin * 2);
   }
 
