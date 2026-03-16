@@ -107,6 +107,19 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
       setInput("");
       setIsLoading(true);
 
+      // Fire-and-forget: log the question
+      try {
+        const { data: { session } } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/log-question`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ question: text.trim(), email: session?.user?.email || "" }),
+        }).catch(() => {});
+      } catch {}
+
       let assistantSoFar = "";
 
       try {
