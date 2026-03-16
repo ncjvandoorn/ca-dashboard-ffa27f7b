@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAccounts, useQualityReports } from "@/hooks/useQualityData";
+import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
@@ -8,6 +9,7 @@ import { QualityTables } from "@/components/dashboard/QualityTables";
 import { ExceptionReport } from "@/components/dashboard/ExceptionReport";
 import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights";
 import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
+import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
