@@ -209,6 +209,9 @@ const Index = () => {
               />
             </div>
 
+            {/* Quality Tables */}
+            <QualityTables reports={farmReports} />
+
             {/* Trend Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               <TrendChart
