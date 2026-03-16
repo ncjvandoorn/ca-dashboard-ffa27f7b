@@ -131,6 +131,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   /**
    * Compute current YYWW week number.
