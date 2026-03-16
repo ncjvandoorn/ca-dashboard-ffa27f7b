@@ -40,6 +40,7 @@ function isNoteFilled(value: string | null): boolean {
 export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
   const [open, setOpen] = useState(false);
   const [expandedFarm, setExpandedFarm] = useState<string | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const farmCompliance = useMemo(() => {
     const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
