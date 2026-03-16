@@ -4,6 +4,7 @@ import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { DataLedger } from "@/components/dashboard/DataLedger";
+import { ExceptionReport } from "@/components/dashboard/ExceptionReport";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
