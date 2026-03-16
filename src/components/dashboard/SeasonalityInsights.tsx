@@ -41,8 +41,12 @@ interface WeeklyAssessment {
 
 interface PestDisease {
   name: string;
+  category: "disease" | "pest";
   severity: "low" | "moderate" | "high";
+  trend: "increasing" | "stable" | "decreasing";
   weeksObserved: number[];
+  farmsAffected: string[];
+  environmentalDriver: string;
   notes: string;
 }
 
