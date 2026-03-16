@@ -37,7 +37,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (username: string, password: string) => {
     const email = `${username}@chrysal.app`;
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    
+    // Log the login event
+    if (!error && data?.user) {
+      try {
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/log-login`;
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ userId: data.user.id, email }),
+        }).catch(() => {}); // fire and forget
+      } catch {}
+    }
+    
     return { error: error?.message ?? null };
   };
 
