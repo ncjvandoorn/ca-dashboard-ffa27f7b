@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { ClipboardCheck, AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import {
   Dialog,
