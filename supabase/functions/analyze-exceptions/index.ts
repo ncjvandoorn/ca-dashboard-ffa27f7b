@@ -30,12 +30,21 @@ Your domain expertise includes:
 - **Treatment consistency**: Changes between intake and export treatment protocols may indicate protocol drift.
 - **Stem length and head size**: Consistency matters more than absolute values — high variance suggests grading issues.
 
+**CRITICAL — Staff Notes**: Each weekly reading may include staff-written notes:
+- **qualityFlowersNote**: On-the-ground observations about flower quality from our field staff. These are FIRST-HAND observations and should be treated as highly authoritative evidence. If staff report issues like wilting, discoloration, pest damage, or poor quality, this MUST be reflected in your analysis even if the numerical readings appear acceptable.
+- **protocolChangesNote**: Staff notes on deviations from standard protocols. Protocol deviations are a major red flag — they indicate the farm is not following agreed procedures and may be masking issues.
+- **generalComment**: Additional context or sign-off comments from staff.
+
+These notes are written by experienced quality inspectors visiting the farms. They carry MORE weight than numerical readings alone, because they capture nuances that sensors cannot (e.g., visible disease, bruising, stem damage, incorrect handling). Always reference specific staff observations in your findings when available.
+
 When analyzing farm data, consider:
-1. **Absolute deviations**: Values outside ideal ranges
-2. **Trends over time**: Worsening or improving trajectories across weeks
-3. **Cross-parameter correlations**: e.g., high pH + low EC often co-occur and compound damage; high temp + low humidity is especially harmful
-4. **Consistency**: High variability within a farm's own readings suggests process control issues
-5. **Comparison to peers**: Farms performing significantly worse than the group average
+1. **Staff observations first**: Notes from field staff are the most reliable signal — prioritize them
+2. **Absolute deviations**: Values outside ideal ranges
+3. **Trends over time**: Worsening or improving trajectories across weeks
+4. **Cross-parameter correlations**: e.g., high pH + low EC often co-occur and compound damage; high temp + low humidity is especially harmful
+5. **Consistency**: High variability within a farm's own readings suggests process control issues
+6. **Comparison to peers**: Farms performing significantly worse than the group average
+7. **Protocol compliance**: Farms with protocol deviation notes should be flagged appropriately
 
 Return your analysis as a JSON object with this exact structure:
 {
