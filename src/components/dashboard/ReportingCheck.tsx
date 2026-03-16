@@ -116,11 +116,15 @@ export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <div ref={contentRef}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <ClipboardCheck className="h-5 w-5 text-primary" />
-            Reporting Completeness Check
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <ClipboardCheck className="h-5 w-5 text-primary" />
+              Reporting Completeness Check
+            </DialogTitle>
+            <ExportPdfButton targetRef={contentRef} filename="reporting-check" size="sm" />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             How consistently are staff filling in quality notes and protocol observations per farm.
           </p>
