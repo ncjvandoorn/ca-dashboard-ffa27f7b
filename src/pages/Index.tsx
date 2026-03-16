@@ -295,7 +295,7 @@ const Index = () => {
             <div className="mb-12">
               <DataLedger reports={farmReports} />
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
