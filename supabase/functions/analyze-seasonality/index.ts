@@ -64,7 +64,7 @@ Analyze the data and provide:
 
 Return as JSON using the tool provided.`;
 
-    const userPrompt = `Analyze the following multi-farm post-harvest quality data from the last 10 weeks (YYWW format, current week ~2612, covering roughly January–March 2026). This is cut flower data from East African farms.
+    const userPrompt = `Analyze the following multi-farm post-harvest quality data from the last 12 weeks (one quarter, YYWW format, current week ~2612, covering roughly January–March 2026). This is cut flower data from East African farms.
 
 Focus on CROSS-FARM patterns to deduce weather/seasonality conditions. Pay special attention to staff notes — they contain direct observations about pests, diseases, rain damage, and flower conditions.
 
