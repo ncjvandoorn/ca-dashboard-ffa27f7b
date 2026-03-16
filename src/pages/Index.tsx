@@ -165,6 +165,10 @@ const Index = () => {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                <AIAgent
+                  reports={yearFilteredReports}
+                  accounts={accounts || []}
+                />
                 {isAdmin && (
                   <ReportingCheck
                     reports={yearFilteredReports}
