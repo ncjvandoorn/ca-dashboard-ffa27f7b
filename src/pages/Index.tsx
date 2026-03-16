@@ -4,6 +4,7 @@ import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { DataLedger } from "@/components/dashboard/DataLedger";
+import { QualityTables } from "@/components/dashboard/QualityTables";
 import { ExceptionReport } from "@/components/dashboard/ExceptionReport";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -207,6 +208,9 @@ const Index = () => {
                 index={3}
               />
             </div>
+
+            {/* Quality Tables */}
+            <QualityTables reports={farmReports} />
 
             {/* Trend Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
