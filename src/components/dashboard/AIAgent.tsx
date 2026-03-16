@@ -248,7 +248,7 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
 
         {/* Chat area */}
         <ScrollArea className="flex-1 px-5" ref={scrollRef}>
-          <div className="py-4 space-y-4">
+          <div className="py-4 space-y-4" ref={chatContentRef}>
             {messages.length === 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
