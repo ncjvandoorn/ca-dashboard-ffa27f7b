@@ -250,11 +250,17 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <div ref={contentRef}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI Exception Report
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI Exception Report
+            </DialogTitle>
+            {analysis && !loading && (
+              <ExportPdfButton targetRef={contentRef} filename="exception-report" size="sm" />
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             Weeks {MIN_WEEK}–{CURRENT_WEEK} · AI-powered post-harvest quality analysis
           </p>
