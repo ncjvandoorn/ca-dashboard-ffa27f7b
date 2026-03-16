@@ -21,11 +21,34 @@ serve(async (req) => {
 Your task is to analyze 10 weeks of multi-farm post-harvest data to deduce the prevailing weather/seasonality conditions during that period. You are NOT analyzing individual farm performance — you are looking for CROSS-FARM patterns that reveal environmental conditions.
 
 Key signals to look for:
-- **Staff notes (qualityFlowersNote, protocolChangesNote, generalComment)**: These are GOLD. Staff mention pests (thrips, aphids, caterpillars, spider mites, whitefly), diseases (Botrytis, downy mildew, powdery mildew, rust), weather effects (rain damage, sunburn, frost, wind damage), and flower conditions that directly indicate weather.
+- **Staff notes (qualityFlowersNote, protocolChangesNote, generalComment)**: These are GOLD. Staff mention pests, diseases, weather effects, and flower conditions that directly indicate weather.
 - **Humidity patterns**: High humidity across many farms suggests rainy season; low humidity suggests dry season.
-- **Quality rating trends**: Widespread quality drops often correlate with weather stress (rain → Botrytis, heat → wilting, cold → frost damage).
+- **Quality rating trends**: Widespread quality drops often correlate with weather stress.
 - **Temperature readings**: Cold store temps are controlled, but intake temps before cold storage can indicate ambient conditions.
 - **EC and water quality shifts**: Heavy rains dilute water sources; dry spells concentrate salts.
+
+**CRITICAL — Pest & Disease Identification**:
+You MUST carefully scan ALL staff notes for mentions of these specific pests and diseases. Look for exact names, abbreviations, misspellings, and contextual references:
+
+DISEASES (fungal/bacterial):
+- **Botrytis** (grey mold, botrytis cinerea) — thrives in high humidity/cool temps, causes grey fuzzy growth on petals
+- **Powdery mildew** (PM, white powder on leaves) — favors warm days + cool nights with moderate humidity
+- **Downy mildew** (DM, underside leaf growth) — favors cool, wet, humid conditions
+- **Rust** — orange/brown pustules, favors moisture on leaves
+
+PESTS (insects/mites):
+- **FCM** (False Codling Moth) — moth larvae boring into stems/buds
+- **Caterpillars** (various species, leaf/bud damage, frass visible)
+- **Thrips** (trips, thripes, silver/brown streaking on petals, major quality issue)
+- **Spider mites** (two-spotted mite, red spider mite, webbing, stippling on leaves) — thrive in hot dry conditions
+- **Aphids** — cluster on new growth, honeydew
+- **Whitefly** — small white flying insects, honeydew, sooty mold
+
+For EACH pest or disease found in the data, report:
+- Which specific farms mentioned it
+- Which weeks it was observed
+- Whether incidence is increasing, stable, or decreasing over the period
+- The likely environmental driver (e.g., "high humidity favoring Botrytis")
 
 East African flower growing seasons context:
 - **Long rains**: March–May (heavy rainfall, high humidity, increased Botrytis and downy mildew risk)
@@ -34,10 +57,10 @@ East African flower growing seasons context:
 - **Dry cool**: January–February (lower temps, better quality generally, but frost risk at altitude)
 
 Analyze the data and provide:
-1. A weekly weather/conditions assessment (what was likely happening environmentally each week)
-2. Pest & disease pressure summary derived from staff observations
-3. A quality impact score per week (1-10, where 10 = severe negative weather impact on quality)
-4. Overall seasonal summary and what to expect in coming weeks
+1. A weekly weather/conditions assessment
+2. Detailed pest & disease incidence tracking with farm-level detail
+3. A quality impact score per week (1-10, where 10 = severe negative impact)
+4. Overall seasonal summary and outlook
 
 Return as JSON using the tool provided.`;
 
