@@ -54,8 +54,20 @@ const Admin = () => {
     setLogsLoading(false);
   };
 
+  const fetchQuestions = async () => {
+    setQuestionsLoading(true);
+    const { data } = await (supabase as any)
+      .from("question_logs")
+      .select("*")
+      .order("asked_at", { ascending: false })
+      .limit(100);
+    setQuestions((data as QuestionLog[]) || []);
+    setQuestionsLoading(false);
+  };
+
   useEffect(() => {
     fetchLogs();
+    fetchQuestions();
   }, []);
 
   const handleChangePassword = async (e: React.FormEvent) => {
