@@ -4,6 +4,7 @@ import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { DataLedger } from "@/components/dashboard/DataLedger";
+import { QualityTables } from "@/components/dashboard/QualityTables";
 import { ExceptionReport } from "@/components/dashboard/ExceptionReport";
 import { Skeleton } from "@/components/ui/skeleton";
 
