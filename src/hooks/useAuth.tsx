@@ -50,8 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   };
 
+  const isAdmin = user?.email === "admin@chrysal.app";
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signOut, changePassword }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, signIn, signOut, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

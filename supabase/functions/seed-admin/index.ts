@@ -17,30 +17,36 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const email = "admin@chrysal.app";
-    const password = "CA@2026";
+    const users = [
+      { email: "admin@chrysal.app", password: "CA@2026" },
+      { email: "user@chrysal.app", password: "CA@2026" },
+    ];
 
-    // Check if user exists
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existing = existingUsers?.users?.find((u) => u.email === email);
+    const results: string[] = [];
 
-    if (existing) {
-      return new Response(
-        JSON.stringify({ message: "Admin user already exists", userId: existing.id }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    for (const u of users) {
+      const existing = existingUsers?.users?.find((e) => e.email === u.email);
+      if (existing) {
+        results.push(`${u.email} already exists`);
+        continue;
+      }
+
+      const { error } = await supabaseAdmin.auth.admin.createUser({
+        email: u.email,
+        password: u.password,
+        email_confirm: true,
+      });
+
+      if (error) {
+        results.push(`${u.email} error: ${error.message}`);
+      } else {
+        results.push(`${u.email} created`);
+      }
     }
 
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-
-    if (error) throw error;
-
     return new Response(
-      JSON.stringify({ message: "Admin user created", userId: data.user.id }),
+      JSON.stringify({ message: "Seed complete", results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
