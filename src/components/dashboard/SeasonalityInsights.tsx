@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { CloudSun, Loader2, AlertCircle, Info, RefreshCw, Bug, Eye, TrendingUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
