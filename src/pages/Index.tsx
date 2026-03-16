@@ -35,7 +35,7 @@ const Index = () => {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
-  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
 
   // Extract available years from data
