@@ -190,9 +190,9 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
       if (data?.error) throw new Error(data.error);
 
       // Save to cache
-      await supabase
-        .from("seasonality_report_cache" as any)
-        .upsert({ week_nr: currentWeek, analysis: data } as any, { onConflict: "week_nr" });
+      await (supabase as any)
+        .from("seasonality_report_cache")
+        .upsert({ week_nr: currentWeek, analysis: data }, { onConflict: "week_nr" });
 
       setAnalysis(data as SeasonalityAnalysis);
     } catch (e: any) {
