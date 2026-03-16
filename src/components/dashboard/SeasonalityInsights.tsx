@@ -484,6 +484,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
             </div>
           </>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );
