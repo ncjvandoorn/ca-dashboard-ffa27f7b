@@ -17,6 +17,8 @@ interface ControlBarProps {
 
 export function ControlBar({ accounts, selectedFarmId, onFarmChange, years, selectedYear, onYearChange, farmCount }: ControlBarProps) {
   const sorted = [...accounts].sort((a, b) => a.name.localeCompare(b.name));
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-10 backdrop-blur-sm py-5">
