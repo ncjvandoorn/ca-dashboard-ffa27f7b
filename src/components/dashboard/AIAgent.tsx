@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Send, Loader2, Sparkles } from "lucide-react";
+import { Bot, Send, Loader2, Sparkles, RotateCcw } from "lucide-react";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
