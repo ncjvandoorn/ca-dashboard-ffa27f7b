@@ -11,15 +11,20 @@ export function ControlBar({ accounts, selectedFarmId, onFarmChange }: ControlBa
   const sorted = [...accounts].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-4">
+    <header className="sticky top-0 z-10 backdrop-blur-sm py-5">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Quality Analytics
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Farm quality parameters over time
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="chrysal-gradient rounded-xl px-4 py-2">
+            <span className="text-lg font-bold tracking-wide text-primary-foreground">CHRYSAL</span>
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+              Quality Analytics
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Farm quality parameters over time
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <span className="label-text">Farm</span>

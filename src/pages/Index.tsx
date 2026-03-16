@@ -30,7 +30,6 @@ const Index = () => {
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
 
-  // Auto-select first farm with data
   const farmsWithData = useMemo(() => {
     if (!accounts || !reports) return [];
     const farmIds = new Set(reports.map((r) => r.farmAccountId));
@@ -48,7 +47,6 @@ const Index = () => {
 
   const farmName = farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
 
-  // Metric extractors
   const intakePh = farmReports.map((r) => r.qrIntakePh);
   const intakeEc = farmReports.map((r) => r.qrIntakeEc);
   const intakeTemp = farmReports.map((r) => r.qrIntakeTempColdstore);
@@ -57,7 +55,6 @@ const Index = () => {
   const sparkOf = (arr: (number | null)[]) =>
     arr.filter((v): v is number => v !== null).map((v) => ({ v }));
 
-  // Trend data
   const trendIntake = farmReports.map((r) => ({
     week: r.weekNr,
     pH: r.qrIntakePh,
@@ -80,8 +77,17 @@ const Index = () => {
 
   const isLoading = loadingAccounts || loadingReports;
 
+  // Chrysal brand colors
+  const chrysalBlue = "hsl(207, 100%, 35%)";
+  const chrysalGreen = "hsl(90, 67%, 41%)";
+  const chrysalMidBlue = "hsl(207, 60%, 57%)";
+  const chrysalWarm = "hsl(38, 92%, 50%)";
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Chrysal branded header bar */}
+      <div className="chrysal-gradient h-1.5" />
+      
       <div className="max-w-[1400px] mx-auto px-6">
         {isLoading ? (
           <div className="pt-8 space-y-6">
@@ -101,10 +107,14 @@ const Index = () => {
               onFarmChange={setSelectedFarmId}
             />
 
-            <p className="text-sm text-muted-foreground mb-6">
-              Showing <span className="font-medium text-foreground">{farmReports.length}</span> reports for{" "}
-              <span className="font-medium text-foreground">{farmName}</span>
-            </p>
+            {/* Summary strip */}
+            <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-accent" />
+              <p className="text-sm text-foreground">
+                Showing <span className="font-semibold">{farmReports.length}</span> reports for{" "}
+                <span className="font-semibold">{farmName}</span>
+              </p>
+            </div>
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -114,7 +124,7 @@ const Index = () => {
                 delta={computeDelta(intakePh).text}
                 deltaType={computeDelta(intakePh).type}
                 sparkData={sparkOf(intakePh)}
-                color="hsl(210, 100%, 50%)"
+                color={chrysalBlue}
                 index={0}
               />
               <MetricCard
@@ -124,7 +134,7 @@ const Index = () => {
                 delta={computeDelta(intakeEc).text}
                 deltaType={computeDelta(intakeEc).type}
                 sparkData={sparkOf(intakeEc)}
-                color="hsl(262, 80%, 55%)"
+                color={chrysalMidBlue}
                 index={1}
               />
               <MetricCard
@@ -134,7 +144,7 @@ const Index = () => {
                 delta={computeDelta(intakeTemp).text}
                 deltaType={computeDelta(intakeTemp).type}
                 sparkData={sparkOf(intakeTemp)}
-                color="hsl(38, 92%, 50%)"
+                color={chrysalWarm}
                 index={2}
               />
               <MetricCard
@@ -144,7 +154,7 @@ const Index = () => {
                 delta={computeDelta(intakeHumidity).text}
                 deltaType={computeDelta(intakeHumidity).type}
                 sparkData={sparkOf(intakeHumidity)}
-                color="hsl(142, 70%, 45%)"
+                color={chrysalGreen}
                 index={3}
               />
             </div>
@@ -155,16 +165,16 @@ const Index = () => {
                 title="Intake — pH & EC over time"
                 data={trendIntake}
                 lines={[
-                  { key: "pH", label: "pH", color: "hsl(210, 100%, 50%)" },
-                  { key: "EC", label: "EC", color: "hsl(262, 80%, 55%)" },
+                  { key: "pH", label: "pH", color: chrysalBlue },
+                  { key: "EC", label: "EC", color: chrysalMidBlue },
                 ]}
               />
               <TrendChart
                 title="Export — pH & EC over time"
                 data={trendExport}
                 lines={[
-                  { key: "pH (Export)", label: "pH", color: "hsl(210, 100%, 50%)" },
-                  { key: "EC (Export)", label: "EC", color: "hsl(262, 80%, 55%)" },
+                  { key: "pH (Export)", label: "pH", color: chrysalBlue },
+                  { key: "EC (Export)", label: "EC", color: chrysalMidBlue },
                 ]}
               />
             </div>
@@ -174,15 +184,14 @@ const Index = () => {
                 title="Cold Store — Temperature & Humidity"
                 data={trendColdstore}
                 lines={[
-                  { key: "Temp (Intake)", label: "Temp (Intake)", color: "hsl(38, 92%, 50%)" },
-                  { key: "Humidity (Intake)", label: "Humidity (Intake)", color: "hsl(142, 70%, 45%)" },
-                  { key: "Temp (Export)", label: "Temp (Export)", color: "hsl(0, 84%, 60%)" },
-                  { key: "Humidity (Export)", label: "Humidity (Export)", color: "hsl(180, 60%, 45%)" },
+                  { key: "Temp (Intake)", label: "Temp (Intake)", color: chrysalWarm },
+                  { key: "Humidity (Intake)", label: "Humidity (Intake)", color: chrysalGreen },
+                  { key: "Temp (Export)", label: "Temp (Export)", color: "hsl(0, 72%, 51%)" },
+                  { key: "Humidity (Export)", label: "Humidity (Export)", color: chrysalMidBlue },
                 ]}
               />
             </div>
 
-            {/* Data Table */}
             <div className="mb-12">
               <DataLedger reports={farmReports} />
             </div>
