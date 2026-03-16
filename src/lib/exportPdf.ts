@@ -2,7 +2,7 @@ import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 
 /**
- * Export a DOM element's content to a PDF file.
+ * Export a DOM element's content to a PDF file with margins.
  * @param element - The DOM element to capture
  * @param filename - PDF filename (without extension)
  */
@@ -15,22 +15,25 @@ export async function exportElementToPdf(element: HTMLElement, filename: string)
   });
 
   const imgData = canvas.toDataURL("image/png");
-  const imgWidth = 210; // A4 width in mm
-  const pageHeight = 297; // A4 height in mm
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  const margin = 10; // mm
+  const pageWidth = 210; // A4
+  const pageHeight = 297;
+  const contentWidth = pageWidth - margin * 2;
+  const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
   const pdf = new jsPDF("p", "mm", "a4");
   let heightLeft = imgHeight;
-  let position = 0;
+  let position = margin;
 
-  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-  heightLeft -= pageHeight;
+  pdf.addImage(imgData, "PNG", margin, position, contentWidth, imgHeight);
+  heightLeft -= (pageHeight - margin * 2);
 
   while (heightLeft > 0) {
-    position -= pageHeight;
+    position = margin - (imgHeight - heightLeft);
     pdf.addPage();
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+    pdf.addImage(imgData, "PNG", margin, position, contentWidth, imgHeight);
+    heightLeft -= (pageHeight - margin * 2);
   }
 
   pdf.save(`${filename}.pdf`);
