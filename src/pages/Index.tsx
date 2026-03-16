@@ -214,16 +214,16 @@ const Index = () => {
                 title="Intake — pH & EC over time"
                 data={trendIntake}
                 lines={[
-                  { key: "pH", label: "pH", color: chrysalBlue },
-                  { key: "EC", label: "EC", color: chrysalMidBlue },
+                  { key: "pH", label: "pH", color: chrysalBlue, yAxisId: "left" },
+                  { key: "EC", label: "EC (μS)", color: chrysalMidBlue, yAxisId: "right" },
                 ]}
               />
               <TrendChart
                 title="Export — pH & EC over time"
                 data={trendExport}
                 lines={[
-                  { key: "pH (Export)", label: "pH", color: chrysalBlue },
-                  { key: "EC (Export)", label: "EC", color: chrysalMidBlue },
+                  { key: "pH (Export)", label: "pH", color: chrysalBlue, yAxisId: "left" },
+                  { key: "EC (Export)", label: "EC (μS)", color: chrysalMidBlue, yAxisId: "right" },
                 ]}
               />
             </div>
