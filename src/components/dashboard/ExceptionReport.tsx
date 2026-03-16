@@ -20,7 +20,7 @@ interface ExceptionReportProps {
 }
 
 // Current week: 2512 (week 12, 2025). Last 10 weeks = 2503..2512
-const CURRENT_WEEK = 2512;
+const CURRENT_WEEK = 2612;
 const WINDOW = 10;
 const MIN_WEEK = CURRENT_WEEK - WINDOW + 1;
 
