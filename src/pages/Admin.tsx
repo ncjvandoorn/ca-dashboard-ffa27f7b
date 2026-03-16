@@ -1,20 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Loader2, KeyRound, Check } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface LoginLog {
+  id: string;
+  username: string;
+  email: string;
+  ip_address: string | null;
+  city: string | null;
+  country: string | null;
+  region: string | null;
+  logged_in_at: string;
+}
 
 const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [logs, setLogs] = useState<LoginLog[]>([]);
+  const [logsLoading, setLogsLoading] = useState(true);
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const fetchLogs = async () => {
+    setLogsLoading(true);
+    const { data } = await (supabase as any)
+      .from("login_logs")
+      .select("*")
+      .order("logged_in_at", { ascending: false })
+      .limit(50);
+    setLogs((data as LoginLog[]) || []);
+    setLogsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,10 +68,26 @@ const Admin = () => {
     }
   };
 
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatLocation = (log: LoginLog) => {
+    const parts = [log.city, log.region, log.country].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : "—";
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="chrysal-gradient h-1.5" />
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-6 py-8">
         <Button variant="ghost" onClick={() => navigate("/")} className="mb-6 gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back to Dashboard
@@ -49,7 +95,8 @@ const Admin = () => {
 
         <h1 className="text-2xl font-bold text-foreground mb-6">Admin Settings</h1>
 
-        <Card>
+        {/* Change Password */}
+        <Card className="mb-8">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -90,6 +137,85 @@ const Admin = () => {
                 Update Password
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Login Logbook */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Login Logbook</CardTitle>
+                  <CardDescription>Recent login activity (last 50 entries)</CardDescription>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={fetchLogs} disabled={logsLoading}>
+                <RefreshCw className={`h-4 w-4 ${logsLoading ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {logsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : logs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No login events recorded yet. Logins will appear here after the next sign-in.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Date & Time</TableHead>
+                      <TableHead>
+                        <div className="flex items-center gap-1">
+                          <Globe className="h-3 w-3" />
+                          IP Address
+                        </div>
+                      </TableHead>
+                      <TableHead>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          Location
+                        </div>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-2 h-2 rounded-full ${
+                                log.username === "admin" ? "bg-primary" : "bg-accent"
+                              }`}
+                            />
+                            <span className="font-medium text-sm">{log.username}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatDate(log.logged_in_at)}
+                        </TableCell>
+                        <TableCell className="text-sm font-mono text-muted-foreground">
+                          {log.ip_address || "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatLocation(log)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
