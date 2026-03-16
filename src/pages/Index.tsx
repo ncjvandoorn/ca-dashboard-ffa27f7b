@@ -153,7 +153,7 @@ const Index = () => {
             <Skeleton className="h-[340px] rounded-xl" />
           </div>
         ) : (
-          <>
+          <div ref={dashboardRef}>
             <ControlBar
               accounts={farmsWithData}
               selectedFarmId={activeFarmId}
