@@ -40,6 +40,7 @@ const Index = () => {
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
+  const [seasonalityOpen, setSeasonalityOpen] = useState(false);
 
   // Extract available years from data
   const availableYears = useMemo(() => {
