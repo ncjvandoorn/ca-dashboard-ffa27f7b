@@ -8,13 +8,13 @@ import jsPDF from "jspdf";
  */
 export async function exportElementToPdf(element: HTMLElement, filename: string) {
   const canvas = await html2canvas(element, {
-    scale: 2,
+    scale: 1.5,
     useCORS: true,
     backgroundColor: "#ffffff",
     logging: false,
   });
 
-  const imgData = canvas.toDataURL("image/png");
+  const imgData = canvas.toDataURL("image/jpeg", 0.75);
 
   const margin = 10; // mm
   const pageWidth = 210; // A4
