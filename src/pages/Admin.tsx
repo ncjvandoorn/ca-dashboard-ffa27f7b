@@ -21,6 +21,16 @@ interface LoginLog {
   logged_in_at: string;
 }
 
+interface QuestionLog {
+  id: string;
+  question: string;
+  username: string | null;
+  city: string | null;
+  country: string | null;
+  region: string | null;
+  asked_at: string;
+}
+
 const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
