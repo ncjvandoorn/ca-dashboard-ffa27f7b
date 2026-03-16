@@ -224,6 +224,7 @@ export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
             );
           })}
         </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
