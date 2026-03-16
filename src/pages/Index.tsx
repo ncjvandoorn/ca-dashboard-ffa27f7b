@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useAccounts, useQualityReports } from "@/hooks/useQualityData";
 import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
