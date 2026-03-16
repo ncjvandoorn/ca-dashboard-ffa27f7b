@@ -214,8 +214,8 @@ const Index = () => {
                 title="Intake — pH & EC over time"
                 data={trendIntake}
                 lines={[
-                  { key: "pH", label: "pH", color: chrysalBlue },
-                  { key: "EC", label: "EC", color: chrysalMidBlue },
+                  { key: "pH", label: "pH", color: chrysalBlue, yAxisId: "left" },
+                  { key: "EC", label: "EC (μS)", color: chrysalMidBlue, yAxisId: "right" },
                 ]}
               />
               <TrendChart
