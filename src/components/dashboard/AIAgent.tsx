@@ -110,7 +110,7 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
 
       // Fire-and-forget: log the question
       try {
-        const { data: { session } } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/log-question`, {
           method: "POST",
           headers: {

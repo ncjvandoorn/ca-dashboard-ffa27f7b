@@ -299,7 +299,7 @@ const Admin = () => {
                           {formatDate(q.asked_at)}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {formatLocation(q as any)}
+                          {formatLocation(q)}
                         </TableCell>
                       </TableRow>
                     ))}

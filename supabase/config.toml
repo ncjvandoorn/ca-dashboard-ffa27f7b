@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.seed-admin]
 verify_jwt = false
+
+[functions.log-login]
+verify_jwt = false
+
+[functions.log-question]
+verify_jwt = false
+
+[functions.ai-agent]
+verify_jwt = false
