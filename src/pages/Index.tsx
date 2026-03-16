@@ -93,6 +93,16 @@ const Index = () => {
 
   const farmName = farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
 
+  const handleDashboardExport = useCallback(async () => {
+    if (!dashboardRef.current) return;
+    try {
+      await exportElementToPdf(dashboardRef.current, `dashboard-${farmName}-${selectedYear}`);
+      toast({ title: "PDF exported" });
+    } catch {
+      toast({ title: "Export failed", variant: "destructive" });
+    }
+  }, [farmName, selectedYear]);
+
   const intakePh = farmReports.map((r) => r.qrIntakePh);
   const intakeEc = farmReports.map((r) => r.qrIntakeEc);
   const intakeTemp = farmReports.map((r) => r.qrIntakeTempColdstore);
