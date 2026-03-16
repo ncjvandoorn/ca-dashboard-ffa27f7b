@@ -18,7 +18,7 @@ interface ControlBarProps {
 export function ControlBar({ accounts, selectedFarmId, onFarmChange, years, selectedYear, onYearChange, farmCount }: ControlBarProps) {
   const sorted = [...accounts].sort((a, b) => a.name.localeCompare(b.name));
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, isAdmin } = useAuth();
 
   return (
     <header className="sticky top-0 z-10 backdrop-blur-sm py-5">
@@ -75,9 +75,11 @@ export function ControlBar({ accounts, selectedFarmId, onFarmChange, years, sele
             </span>
           </div>
           <div className="flex items-center gap-1 ml-2 border-l border-border pl-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin Settings">
-              <Settings className="h-4 w-4" />
-            </Button>
+            {isAdmin && (
+              <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin Settings">
+                <Settings className="h-4 w-4" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={() => signOut()} title="Sign Out">
               <LogOut className="h-4 w-4" />
             </Button>

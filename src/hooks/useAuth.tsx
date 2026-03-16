@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (username: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   changePassword: (newPassword: string) => Promise<{ error: string | null }>;
@@ -49,8 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   };
 
+  const isAdmin = user?.email === "admin@chrysal.app";
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signOut, changePassword }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, signIn, signOut, changePassword }}>
       {children}
     </AuthContext.Provider>
   );
