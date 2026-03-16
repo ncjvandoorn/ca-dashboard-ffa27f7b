@@ -164,11 +164,39 @@ Identify which farms need attention (worst performing, worsening trends, dangero
                         additionalProperties: false,
                       },
                     },
+                    topPerformers: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          farmId: { type: "string" },
+                          farmName: { type: "string" },
+                          summary: { type: "string" },
+                          details: {
+                            type: "array",
+                            items: { type: "string" },
+                          },
+                          strongMetrics: {
+                            type: "array",
+                            items: { type: "string" },
+                          },
+                        },
+                        required: [
+                          "farmId",
+                          "farmName",
+                          "summary",
+                          "details",
+                          "strongMetrics",
+                        ],
+                        additionalProperties: false,
+                      },
+                    },
                     industryInsight: { type: "string" },
                   },
                   required: [
                     "needsAttention",
                     "mostImproved",
+                    "topPerformers",
                     "industryInsight",
                   ],
                   additionalProperties: false,
