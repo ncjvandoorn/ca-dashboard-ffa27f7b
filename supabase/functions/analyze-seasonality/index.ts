@@ -112,15 +112,20 @@ Deduce the weather patterns, pest/disease pressure, and seasonal conditions from
                     },
                     pestAndDisease: {
                       type: "array",
+                      description: "Each pest or disease observed in staff notes, with farm-level detail",
                       items: {
                         type: "object",
                         properties: {
-                          name: { type: "string", description: "Pest or disease name" },
+                          name: { type: "string", description: "Pest or disease name (e.g. Botrytis, Thrips, FCM, Powdery Mildew)" },
+                          category: { type: "string", enum: ["disease", "pest"], description: "Whether this is a disease or pest" },
                           severity: { type: "string", enum: ["low", "moderate", "high"] },
+                          trend: { type: "string", enum: ["increasing", "stable", "decreasing"], description: "Whether incidence is increasing, stable, or decreasing over the period" },
                           weeksObserved: { type: "array", items: { type: "number" } },
+                          farmsAffected: { type: "array", items: { type: "string" }, description: "Names of farms where this was observed" },
+                          environmentalDriver: { type: "string", description: "Likely environmental cause (e.g. high humidity, dry conditions)" },
                           notes: { type: "string" },
                         },
-                        required: ["name", "severity", "weeksObserved", "notes"],
+                        required: ["name", "category", "severity", "trend", "weeksObserved", "farmsAffected", "environmentalDriver", "notes"],
                         additionalProperties: false,
                       },
                     },
