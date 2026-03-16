@@ -103,7 +103,7 @@ const Admin = () => {
     });
   };
 
-  const formatLocation = (log: LoginLog) => {
+  const formatLocation = (log: { city?: string | null; region?: string | null; country?: string | null }) => {
     const parts = [log.city, log.region, log.country].filter(Boolean);
     return parts.length > 0 ? parts.join(", ") : "—";
   };
@@ -299,7 +299,7 @@ const Admin = () => {
                           {formatDate(q.asked_at)}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {formatLocation(q as any)}
+                          {formatLocation(q)}
                         </TableCell>
                       </TableRow>
                     ))}

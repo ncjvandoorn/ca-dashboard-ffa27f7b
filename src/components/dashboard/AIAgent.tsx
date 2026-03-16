@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Send, Loader2, X, Sparkles } from "lucide-react";
+import { Bot, Send, Loader2, Sparkles } from "lucide-react";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
+import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -109,7 +110,7 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
 
       // Fire-and-forget: log the question
       try {
-        const { data: { session } } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/log-question`, {
           method: "POST",
           headers: {
