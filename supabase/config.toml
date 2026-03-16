@@ -1,1 +1,4 @@
 project_id = "lvnnripwnkjpgklgypnv"
+
+[functions.analyze-exceptions]
+verify_jwt = false

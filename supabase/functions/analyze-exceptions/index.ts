@@ -1,0 +1,223 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { farmSummaries } = await req.json();
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const systemPrompt = `You are an expert post-harvest quality analyst for the cut flower industry (roses, chrysanthemums, gerbera, etc.). You understand the entire cold chain from farm intake through cold storage, packhouse processing, and dispatch/export.
+
+Your domain expertise includes:
+- **pH monitoring**: Water pH affects flower hydration and vase life. Ideal intake pH is 3.5–5.0; drift above 5.5 accelerates bacterial growth in stems. Export pH should stay consistent with intake.
+- **EC (Electrical Conductivity)**: Measures dissolved salts in treatment water. Ideal EC 200–800 μS/cm. Too high causes stem blockage; too low means inadequate nutrition.
+- **Cold store temperature**: Must stay 1–4°C for most varieties. Temperature spikes above 6°C cause ethylene sensitivity and accelerate senescence. Deviations between intake and export cold stores signal chain breaks.
+- **Humidity**: 80–95% RH prevents dehydration. Below 70% causes petal browning and wilting. Above 95% risks Botrytis (grey mold).
+- **Quality ratings**: 1=Good, 2=Average, 3=Bad. Repeated ratings of 2–3 signal systemic issues.
+- **Water quality ratings**: Same scale. Bad water quality (3) is a serious red flag for bacterial contamination.
+- **Processing speed**: Slow packhouse processing (rating 3) means flowers spend too long at ambient temps.
+- **Cold store hours**: Both too few (inadequate cooling) and excessive (over 24h without monitoring) can be problematic.
+- **Treatment consistency**: Changes between intake and export treatment protocols may indicate protocol drift.
+- **Stem length and head size**: Consistency matters more than absolute values — high variance suggests grading issues.
+
+When analyzing farm data, consider:
+1. **Absolute deviations**: Values outside ideal ranges
+2. **Trends over time**: Worsening or improving trajectories across weeks
+3. **Cross-parameter correlations**: e.g., high pH + low EC often co-occur and compound damage; high temp + low humidity is especially harmful
+4. **Consistency**: High variability within a farm's own readings suggests process control issues
+5. **Comparison to peers**: Farms performing significantly worse than the group average
+
+Return your analysis as a JSON object with this exact structure:
+{
+  "needsAttention": [
+    {
+      "farmId": "uuid",
+      "farmName": "string",
+      "severity": "critical" | "warning",
+      "summary": "One-sentence plain language summary of the core issue",
+      "details": ["Specific finding 1", "Specific finding 2"],
+      "affectedMetrics": ["pH", "EC", etc.]
+    }
+  ],
+  "mostImproved": [
+    {
+      "farmId": "uuid",
+      "farmName": "string",
+      "summary": "One-sentence summary of what improved",
+      "details": ["Specific improvement 1"],
+      "improvedMetrics": ["pH", "Temperature", etc.]
+    }
+  ],
+  "industryInsight": "One paragraph of overall observations about the group of farms"
+}
+
+Return at most 5 farms in each category. Only include farms where there is genuine signal — do not pad the lists. If fewer than 5 qualify, return fewer. Be specific and actionable in your findings.`;
+
+    const userPrompt = `Analyze the following farm quality data summaries from the last 10 weeks of cut flower post-harvest monitoring. Today is week 12 of 2026 (weekNr format is YYWW, so current = 2612).
+
+Each farm summary includes weekly readings for intake and export cold store parameters, quality ratings, and other post-harvest metrics.
+
+Farm data:
+${JSON.stringify(farmSummaries, null, 2)}
+
+Identify which farms need attention (worst performing, worsening trends, dangerous parameter combinations) and which have shown the most improvement. Consider the full post-harvest context — don't just flag outliers mechanically, think about what combinations of metrics signal real risk to flower quality and vase life.`;
+
+    const response = await fetch(
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "report_exceptions",
+                description:
+                  "Report the exception analysis results for cut flower farms",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    needsAttention: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          farmId: { type: "string" },
+                          farmName: { type: "string" },
+                          severity: {
+                            type: "string",
+                            enum: ["critical", "warning"],
+                          },
+                          summary: { type: "string" },
+                          details: {
+                            type: "array",
+                            items: { type: "string" },
+                          },
+                          affectedMetrics: {
+                            type: "array",
+                            items: { type: "string" },
+                          },
+                        },
+                        required: [
+                          "farmId",
+                          "farmName",
+                          "severity",
+                          "summary",
+                          "details",
+                          "affectedMetrics",
+                        ],
+                        additionalProperties: false,
+                      },
+                    },
+                    mostImproved: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          farmId: { type: "string" },
+                          farmName: { type: "string" },
+                          summary: { type: "string" },
+                          details: {
+                            type: "array",
+                            items: { type: "string" },
+                          },
+                          improvedMetrics: {
+                            type: "array",
+                            items: { type: "string" },
+                          },
+                        },
+                        required: [
+                          "farmId",
+                          "farmName",
+                          "summary",
+                          "details",
+                          "improvedMetrics",
+                        ],
+                        additionalProperties: false,
+                      },
+                    },
+                    industryInsight: { type: "string" },
+                  },
+                  required: [
+                    "needsAttention",
+                    "mostImproved",
+                    "industryInsight",
+                  ],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: {
+            type: "function",
+            function: { name: "report_exceptions" },
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded, please try again later." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Payment required. Please add credits to your workspace." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const text = await response.text();
+      console.error("AI gateway error:", response.status, text);
+      return new Response(
+        JSON.stringify({ error: "AI analysis failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const result = await response.json();
+    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall) {
+      console.error("No tool call in response:", JSON.stringify(result));
+      return new Response(
+        JSON.stringify({ error: "AI did not return structured analysis" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const analysis = JSON.parse(toolCall.function.arguments);
+
+    return new Response(JSON.stringify(analysis), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    console.error("analyze-exceptions error:", e);
+    return new Response(
+      JSON.stringify({
+        error: e instanceof Error ? e.message : "Unknown error",
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
