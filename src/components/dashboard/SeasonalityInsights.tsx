@@ -415,7 +415,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
                   <CloudSun className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <div>
                     <h3 className="text-sm font-semibold text-foreground mb-1">Outlook</h3>
-                    <p className="text-sm text-foreground leading-relaxed">{analysis.outlook}</p>
+                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{analysis.outlook.replace(/\\n/g, "\n")}</p>
                   </div>
                 </div>
               </div>
