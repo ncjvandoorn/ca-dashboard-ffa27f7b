@@ -9,10 +9,12 @@ import {
   YAxis,
 } from "recharts";
 
+interface LineConfig { key: string; label: string; color: string; yAxisId?: string }
+
 interface TrendChartProps {
   title: string;
   data: { week: number; [key: string]: number | null }[];
-  lines: { key: string; label: string; color: string }[];
+  lines: LineConfig[];
 }
 
 export function TrendChart({ title, data, lines }: TrendChartProps) {
