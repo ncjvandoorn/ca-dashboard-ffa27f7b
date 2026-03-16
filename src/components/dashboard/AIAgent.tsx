@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Send, Loader2, Sparkles } from "lucide-react";
+import { Bot, Send, Loader2, Sparkles, RotateCcw } from "lucide-react";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
@@ -252,7 +252,18 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
               AI Quality Agent
             </DialogTitle>
             {messages.length > 0 && (
-              <ExportPdfButton targetRef={chatContentRef} filename="ai-agent-chat" size="sm" />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMessages([])}
+                  className="gap-1 text-muted-foreground hover:text-foreground"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Reset
+                </Button>
+                <ExportPdfButton targetRef={chatContentRef} filename="ai-agent-chat" size="sm" />
+              </div>
             )}
           </div>
           <p className="text-sm text-muted-foreground">
