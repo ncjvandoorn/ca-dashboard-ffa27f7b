@@ -110,12 +110,21 @@ const Index = () => {
             />
 
             {/* Summary strip */}
-            <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-accent" />
-              <p className="text-sm text-foreground">
-                Showing <span className="font-semibold">{farmReports.length}</span> reports for{" "}
-                <span className="font-semibold">{farmName}</span>
-              </p>
+            <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-accent" />
+                <p className="text-sm text-foreground">
+                  Showing <span className="font-semibold">{farmReports.length}</span> reports for{" "}
+                  <span className="font-semibold">{farmName}</span>
+                </p>
+              </div>
+              <ExceptionReport
+                reports={reports || []}
+                accounts={accounts || []}
+                onSelectFarm={(id) => { setSelectedFarmId(id); }}
+                open={exceptionOpen}
+                onOpenChange={setExceptionOpen}
+              />
             </div>
 
             {/* KPI Cards */}
