@@ -76,10 +76,27 @@ Return your analysis as a JSON object with this exact structure:
       "strongMetrics": ["pH", "Cold Chain", etc.]
     }
   ],
+  "allFarmInsights": [
+    {
+      "farmId": "uuid",
+      "farmName": "string",
+      "status": "critical" | "warning" | "stable" | "good" | "excellent",
+      "summary": "One-sentence assessment of the farm's overall quality status",
+      "details": ["Key observation 1", "Key observation 2"],
+      "keyMetrics": ["pH", "EC", etc.]
+    }
+  ],
   "industryInsight": "One paragraph of overall observations about the group of farms"
 }
 
-Return at most 10 farms in each category. For "needsAttention", rank by severity (critical first, then warning). For "mostImproved", focus on farms that have shown the clearest positive trajectory over recent weeks. For "topPerformers", highlight farms that consistently outperform their peers — they don't need to have improved, they just need to be reliably excellent across key metrics. Only include farms where there is genuine signal — do not pad the lists. If fewer than 10 qualify, return fewer. Be specific and actionable in your findings.`;
+IMPORTANT: The "allFarmInsights" array MUST contain an entry for EVERY farm in the input data, not just the exceptional ones. This provides a per-farm quality summary for each farm regardless of whether they appear in needsAttention, mostImproved, or topPerformers. Use these status levels:
+- "critical": Serious issues requiring immediate action
+- "warning": Notable concerns that should be monitored
+- "stable": Performing adequately, no major concerns
+- "good": Performing well across most metrics
+- "excellent": Consistently outstanding performance
+
+Return at most 10 farms in needsAttention, mostImproved, and topPerformers. For "needsAttention", rank by severity (critical first, then warning). For "mostImproved", focus on farms that have shown the clearest positive trajectory over recent weeks. For "topPerformers", highlight farms that consistently outperform their peers. Only include farms where there is genuine signal — do not pad the lists. If fewer than 10 qualify, return fewer. Be specific and actionable in your findings.`;
 
     const userPrompt = `Analyze the following farm quality data summaries from the last 12 weeks (one quarter) of cut flower post-harvest monitoring. Today is week 12 of 2026 (weekNr format is YYWW, so current = 2612).
 
