@@ -81,6 +81,7 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const chatContentRef = useRef<HTMLDivElement>(null);
 
   const farmData = useMemo(() => buildFarmDataContext(reports, accounts), [reports, accounts]);
 
