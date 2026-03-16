@@ -5,9 +5,13 @@ interface ControlBarProps {
   accounts: Account[];
   selectedFarmId: string;
   onFarmChange: (id: string) => void;
+  years: number[];
+  selectedYear: string;
+  onYearChange: (year: string) => void;
+  farmCount: number;
 }
 
-export function ControlBar({ accounts, selectedFarmId, onFarmChange }: ControlBarProps) {
+export function ControlBar({ accounts, selectedFarmId, onFarmChange, years, selectedYear, onYearChange, farmCount }: ControlBarProps) {
   const sorted = [...accounts].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
@@ -26,20 +30,44 @@ export function ControlBar({ accounts, selectedFarmId, onFarmChange }: ControlBa
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="label-text">Farm</span>
-          <Select value={selectedFarmId} onValueChange={onFarmChange}>
-            <SelectTrigger className="w-[280px] shadow-card border-0 rounded-lg bg-card">
-              <SelectValue placeholder="Select a farm" />
-            </SelectTrigger>
-            <SelectContent className="max-h-[300px]">
-              {sorted.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-4">
+          {/* Year filter */}
+          <div className="flex items-center gap-2">
+            <span className="label-text">Year</span>
+            <Select value={selectedYear} onValueChange={onYearChange}>
+              <SelectTrigger className="w-[110px] shadow-card border-0 rounded-lg bg-card">
+                <SelectValue placeholder="All years" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All years</SelectItem>
+                {years.map((y) => (
+                  <SelectItem key={y} value={String(y)}>
+                    20{y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Farm filter */}
+          <div className="flex items-center gap-2">
+            <span className="label-text">Farm</span>
+            <Select value={selectedFarmId} onValueChange={onFarmChange}>
+              <SelectTrigger className="w-[280px] shadow-card border-0 rounded-lg bg-card">
+                <SelectValue placeholder="Select a farm" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {sorted.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {farmCount} farms
+            </span>
+          </div>
         </div>
       </div>
     </header>

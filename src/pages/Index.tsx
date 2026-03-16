@@ -26,26 +26,56 @@ function latest(values: (number | null)[]): string {
   return valid[valid.length - 1].toFixed(1);
 }
 
+/** Extract 2-digit year from weekNr (e.g. 2340 → 23) */
+function weekYear(weekNr: number): number {
+  return Math.floor(weekNr / 100);
+}
+
 const Index = () => {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
   const [exceptionOpen, setExceptionOpen] = useState(false);
 
-  const farmsWithData = useMemo(() => {
-    if (!accounts || !reports) return [];
-    const farmIds = new Set(reports.map((r) => r.farmAccountId));
-    return accounts.filter((a) => farmIds.has(a.id));
-  }, [accounts, reports]);
+  // Extract available years from data
+  const availableYears = useMemo(() => {
+    if (!reports) return [];
+    const years = new Set<number>();
+    for (const r of reports) {
+      if (r.weekNr > 0) years.add(weekYear(r.weekNr));
+    }
+    return [...years].sort((a, b) => b - a);
+  }, [reports]);
 
-  const activeFarmId = selectedFarmId || farmsWithData[0]?.id || "";
+  // Filter reports by selected year
+  const yearFilteredReports = useMemo(() => {
+    if (!reports) return [];
+    if (selectedYear === "all") return reports;
+    const y = parseInt(selectedYear);
+    return reports.filter((r) => weekYear(r.weekNr) === y);
+  }, [reports, selectedYear]);
+
+  // Farms that have data in the selected year
+  const farmsWithData = useMemo(() => {
+    if (!accounts) return [];
+    const farmIds = new Set(yearFilteredReports.map((r) => r.farmAccountId));
+    return accounts.filter((a) => farmIds.has(a.id));
+  }, [accounts, yearFilteredReports]);
+
+  // Reset farm selection if current farm not in filtered list
+  const activeFarmId = useMemo(() => {
+    if (selectedFarmId && farmsWithData.some((a) => a.id === selectedFarmId)) {
+      return selectedFarmId;
+    }
+    return farmsWithData[0]?.id || "";
+  }, [selectedFarmId, farmsWithData]);
 
   const farmReports = useMemo(() => {
-    if (!reports) return [];
-    return reports
+    return yearFilteredReports
       .filter((r) => r.farmAccountId === activeFarmId && r.weekNr > 0)
       .sort((a, b) => a.weekNr - b.weekNr);
-  }, [reports, activeFarmId]);
+  }, [yearFilteredReports, activeFarmId]);
 
   const farmName = farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
 
@@ -79,7 +109,6 @@ const Index = () => {
 
   const isLoading = loadingAccounts || loadingReports;
 
-  // Chrysal brand colors
   const chrysalBlue = "hsl(207, 100%, 35%)";
   const chrysalGreen = "hsl(90, 67%, 41%)";
   const chrysalMidBlue = "hsl(207, 60%, 57%)";
@@ -87,7 +116,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Chrysal branded header bar */}
       <div className="chrysal-gradient h-1.5" />
       
       <div className="max-w-[1400px] mx-auto px-6">
@@ -107,6 +135,13 @@ const Index = () => {
               accounts={farmsWithData}
               selectedFarmId={activeFarmId}
               onFarmChange={setSelectedFarmId}
+              years={availableYears}
+              selectedYear={selectedYear}
+              onYearChange={(y) => {
+                setSelectedYear(y);
+                setSelectedFarmId(""); // reset farm on year change
+              }}
+              farmCount={farmsWithData.length}
             />
 
             {/* Summary strip */}
@@ -116,10 +151,13 @@ const Index = () => {
                 <p className="text-sm text-foreground">
                   Showing <span className="font-semibold">{farmReports.length}</span> reports for{" "}
                   <span className="font-semibold">{farmName}</span>
+                  {selectedYear !== "all" && (
+                    <span className="text-muted-foreground"> · 20{selectedYear}</span>
+                  )}
                 </p>
               </div>
               <ExceptionReport
-                reports={reports || []}
+                reports={yearFilteredReports}
                 accounts={accounts || []}
                 onSelectFarm={(id) => { setSelectedFarmId(id); }}
                 open={exceptionOpen}
