@@ -222,8 +222,8 @@ const Index = () => {
                 title="Export — pH & EC over time"
                 data={trendExport}
                 lines={[
-                  { key: "pH (Export)", label: "pH", color: chrysalBlue },
-                  { key: "EC (Export)", label: "EC", color: chrysalMidBlue },
+                  { key: "pH (Export)", label: "pH", color: chrysalBlue, yAxisId: "left" },
+                  { key: "EC (Export)", label: "EC (μS)", color: chrysalMidBlue, yAxisId: "right" },
                 ]}
               />
             </div>
