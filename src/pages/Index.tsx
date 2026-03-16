@@ -4,6 +4,7 @@ import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { DataLedger } from "@/components/dashboard/DataLedger";
+import { ExceptionReport } from "@/components/dashboard/ExceptionReport";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
@@ -29,6 +30,7 @@ const Index = () => {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
+  const [exceptionOpen, setExceptionOpen] = useState(false);
 
   const farmsWithData = useMemo(() => {
     if (!accounts || !reports) return [];
@@ -108,12 +110,21 @@ const Index = () => {
             />
 
             {/* Summary strip */}
-            <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-accent" />
-              <p className="text-sm text-foreground">
-                Showing <span className="font-semibold">{farmReports.length}</span> reports for{" "}
-                <span className="font-semibold">{farmName}</span>
-              </p>
+            <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-accent" />
+                <p className="text-sm text-foreground">
+                  Showing <span className="font-semibold">{farmReports.length}</span> reports for{" "}
+                  <span className="font-semibold">{farmName}</span>
+                </p>
+              </div>
+              <ExceptionReport
+                reports={reports || []}
+                accounts={accounts || []}
+                onSelectFarm={(id) => { setSelectedFarmId(id); }}
+                open={exceptionOpen}
+                onOpenChange={setExceptionOpen}
+              />
             </div>
 
             {/* KPI Cards */}
