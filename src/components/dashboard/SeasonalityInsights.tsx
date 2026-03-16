@@ -462,11 +462,16 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
               </div>
             )}
 
-            {/* Refresh */}
-            <div className="mt-4 flex justify-center">
-              <Button variant="outline" size="sm" onClick={runAnalysis} className="gap-2 text-xs">
+            {/* Refresh / cache info */}
+            <div className="mt-4 flex flex-col items-center gap-2">
+              {fromCache && (
+                <p className="text-xs text-muted-foreground">
+                  Loaded from cache · Generated this week
+                </p>
+              )}
+              <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
                 <RefreshCw className="h-3 w-3" />
-                Re-analyze
+                {fromCache ? "Refresh Analysis" : "Re-analyze"}
               </Button>
             </div>
           </>
