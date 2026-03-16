@@ -124,15 +124,49 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
   const [analysis, setAnalysis] = useState<SeasonalityAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
 
-  const runAnalysis = useCallback(async () => {
+  const getCurrentWeekNr = useCallback((): number => {
+    const now = new Date();
+    const day = now.getDay();
+    const daysSinceSat = (day + 1) % 7;
+    const saturday = new Date(now);
+    saturday.setDate(now.getDate() - daysSinceSat);
+    const jan1 = new Date(saturday.getFullYear(), 0, 1);
+    const days = Math.floor((saturday.getTime() - jan1.getTime()) / 86400000);
+    const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
+    const year = saturday.getFullYear() % 100;
+    return year * 100 + weekNum;
+  }, []);
+
+  const runAnalysis = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
+    setFromCache(false);
+
+    const currentWeek = getCurrentWeekNr();
 
     try {
+      // Check cache first (unless forcing refresh)
+      if (!forceRefresh) {
+        const { data: cached } = await supabase
+          .from("seasonality_report_cache" as any)
+          .select("analysis")
+          .eq("week_nr", currentWeek)
+          .maybeSingle();
+
+        if (cached?.analysis) {
+          setAnalysis(cached.analysis as unknown as SeasonalityAnalysis);
+          setFromCache(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // No cache — run AI analysis
       const farmSummaries = buildAllFarmSummaries(reports, accounts);
       if (farmSummaries.length === 0) {
-        setError("No farms with data in the last 10 weeks.");
+        setError("No farms with data in the last 12 weeks.");
         setLoading(false);
         return;
       }
@@ -154,6 +188,12 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
 
       const data = await response.json();
       if (data?.error) throw new Error(data.error);
+
+      // Save to cache
+      await supabase
+        .from("seasonality_report_cache" as any)
+        .upsert({ week_nr: currentWeek, analysis: data } as any, { onConflict: "week_nr" });
+
       setAnalysis(data as SeasonalityAnalysis);
     } catch (e: any) {
       console.error("Seasonality analysis error:", e);
@@ -163,7 +203,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
     } finally {
       setLoading(false);
     }
-  }, [reports, accounts]);
+  }, [reports, accounts, getCurrentWeekNr]);
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
