@@ -37,6 +37,8 @@ const Admin = () => {
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<LoginLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
+  const [questions, setQuestions] = useState<QuestionLog[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
