@@ -461,6 +461,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
             </div>
           </>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );
