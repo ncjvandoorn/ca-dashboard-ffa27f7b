@@ -6,6 +6,7 @@ import { TrendChart } from "@/components/dashboard/TrendChart";
 import { DataLedger } from "@/components/dashboard/DataLedger";
 import { QualityTables } from "@/components/dashboard/QualityTables";
 import { ExceptionReport } from "@/components/dashboard/ExceptionReport";
+import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
@@ -38,6 +39,7 @@ const Index = () => {
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
+  const [seasonalityOpen, setSeasonalityOpen] = useState(false);
 
   // Extract available years from data
   const availableYears = useMemo(() => {
@@ -157,13 +159,21 @@ const Index = () => {
                   )}
                 </p>
               </div>
-              <ExceptionReport
-                reports={yearFilteredReports}
-                accounts={accounts || []}
-                onSelectFarm={(id) => { setSelectedFarmId(id); }}
-                open={exceptionOpen}
-                onOpenChange={setExceptionOpen}
-              />
+              <div className="flex items-center gap-2">
+                <SeasonalityInsights
+                  reports={yearFilteredReports}
+                  accounts={accounts || []}
+                  open={seasonalityOpen}
+                  onOpenChange={setSeasonalityOpen}
+                />
+                <ExceptionReport
+                  reports={yearFilteredReports}
+                  accounts={accounts || []}
+                  onSelectFarm={(id) => { setSelectedFarmId(id); }}
+                  open={exceptionOpen}
+                  onOpenChange={setExceptionOpen}
+                />
+              </div>
             </div>
 
             {/* KPI Cards */}
