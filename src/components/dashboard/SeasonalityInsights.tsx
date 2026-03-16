@@ -258,7 +258,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <AlertCircle className="h-8 w-8 text-destructive" />
             <p className="text-sm text-muted-foreground">{error}</p>
-            <Button variant="outline" size="sm" onClick={runAnalysis}>
+            <Button variant="outline" size="sm" onClick={() => runAnalysis()}>
               Retry Analysis
             </Button>
           </div>
