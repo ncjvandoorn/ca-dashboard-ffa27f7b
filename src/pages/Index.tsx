@@ -7,6 +7,7 @@ import { DataLedger } from "@/components/dashboard/DataLedger";
 import { QualityTables } from "@/components/dashboard/QualityTables";
 import { ExceptionReport } from "@/components/dashboard/ExceptionReport";
 import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights";
+import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
@@ -218,6 +219,9 @@ const Index = () => {
                 index={3}
               />
             </div>
+
+            {/* AI Insights for selected farm */}
+            <FarmAIInsights farmId={activeFarmId} />
 
             {/* Quality Tables */}
             <QualityTables reports={farmReports} />
