@@ -51,15 +51,6 @@ const Index = () => {
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  const handleDashboardExport = useCallback(async () => {
-    if (!dashboardRef.current) return;
-    try {
-      await exportElementToPdf(dashboardRef.current, `dashboard-${farmName}-${selectedYear}`);
-      toast({ title: "PDF exported" });
-    } catch {
-      toast({ title: "Export failed", variant: "destructive" });
-    }
-  }, [farmName, selectedYear]);
 
   // Extract available years from data
   const availableYears = useMemo(() => {
