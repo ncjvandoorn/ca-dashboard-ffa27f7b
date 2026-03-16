@@ -238,11 +238,17 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <div ref={contentRef}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <CloudSun className="h-5 w-5 text-primary" />
-            Seasonality Insights
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <CloudSun className="h-5 w-5 text-primary" />
+              Seasonality Insights
+            </DialogTitle>
+            {analysis && !loading && (
+              <ExportPdfButton targetRef={contentRef} filename="seasonality-insights" size="sm" />
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             Weeks {MIN_WEEK}–{CURRENT_WEEK} · Weather & pest patterns from quality data
           </p>
