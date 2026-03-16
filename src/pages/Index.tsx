@@ -164,6 +164,12 @@ const Index = () => {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <ReportingCheck
+                    reports={yearFilteredReports}
+                    accounts={accounts || []}
+                  />
+                )}
                 <SeasonalityInsights
                   reports={yearFilteredReports}
                   accounts={accounts || []}
