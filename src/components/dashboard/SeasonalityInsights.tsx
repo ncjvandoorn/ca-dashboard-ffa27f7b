@@ -229,7 +229,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
             <div className="chrysal-gradient-subtle rounded-lg p-4 mt-2">
               <div className="flex gap-3">
                 <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{analysis.seasonalSummary}</p>
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{analysis.seasonalSummary.replace(/\\n/g, "\n")}</p>
               </div>
             </div>
 
