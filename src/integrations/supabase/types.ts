@@ -71,6 +71,39 @@ export type Database = {
         }
         Relationships: []
       }
+      question_logs: {
+        Row: {
+          asked_at: string
+          city: string | null
+          country: string | null
+          id: string
+          question: string
+          region: string | null
+          user_email: string | null
+          username: string | null
+        }
+        Insert: {
+          asked_at?: string
+          city?: string | null
+          country?: string | null
+          id?: string
+          question: string
+          region?: string | null
+          user_email?: string | null
+          username?: string | null
+        }
+        Update: {
+          asked_at?: string
+          city?: string | null
+          country?: string | null
+          id?: string
+          question?: string
+          region?: string | null
+          user_email?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       seasonality_report_cache: {
         Row: {
           analysis: Json
