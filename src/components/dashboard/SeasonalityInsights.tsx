@@ -149,8 +149,8 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
     try {
       // Check cache first (unless forcing refresh)
       if (!forceRefresh) {
-        const { data: cached } = await supabase
-          .from("seasonality_report_cache" as any)
+        const { data: cached } = await (supabase as any)
+          .from("seasonality_report_cache")
           .select("analysis")
           .eq("week_nr", currentWeek)
           .maybeSingle();
