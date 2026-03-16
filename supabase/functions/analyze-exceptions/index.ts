@@ -81,7 +81,7 @@ Return your analysis as a JSON object with this exact structure:
 
 Return at most 10 farms in each category. For "needsAttention", rank by severity (critical first, then warning). For "mostImproved", focus on farms that have shown the clearest positive trajectory over recent weeks. For "topPerformers", highlight farms that consistently outperform their peers — they don't need to have improved, they just need to be reliably excellent across key metrics. Only include farms where there is genuine signal — do not pad the lists. If fewer than 10 qualify, return fewer. Be specific and actionable in your findings.`;
 
-    const userPrompt = `Analyze the following farm quality data summaries from the last 10 weeks of cut flower post-harvest monitoring. Today is week 12 of 2026 (weekNr format is YYWW, so current = 2612).
+    const userPrompt = `Analyze the following farm quality data summaries from the last 12 weeks (one quarter) of cut flower post-harvest monitoring. Today is week 12 of 2026 (weekNr format is YYWW, so current = 2612).
 
 Each farm summary includes weekly readings for intake and export cold store parameters, quality ratings, and other post-harvest metrics. **Pay special attention to the qualityFlowersNote, protocolChangesNote, and generalComment fields** — these are written by our experienced field staff and represent direct, first-hand observations. Reference them explicitly in your analysis when they provide relevant context.
 
