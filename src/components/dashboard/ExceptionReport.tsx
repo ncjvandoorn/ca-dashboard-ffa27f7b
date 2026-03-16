@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { AlertTriangle, TrendingUp, TrendingDown, ArrowRight, Sparkles, Loader2, AlertCircle, Info, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -130,6 +131,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   /**
    * Compute current YYWW week number.
@@ -248,11 +250,17 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <div ref={contentRef}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="h-5 w-5 text-primary" />
-            AI Exception Report
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI Exception Report
+            </DialogTitle>
+            {analysis && !loading && (
+              <ExportPdfButton targetRef={contentRef} filename="exception-report" size="sm" />
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             Weeks {MIN_WEEK}–{CURRENT_WEEK} · AI-powered post-harvest quality analysis
           </p>
@@ -453,6 +461,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
             </div>
           </>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );

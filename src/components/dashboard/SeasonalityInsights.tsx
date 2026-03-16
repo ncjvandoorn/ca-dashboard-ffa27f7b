@@ -1,5 +1,6 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { CloudSun, Loader2, AlertCircle, Info, RefreshCw, Bug, Eye, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -125,6 +126,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const getCurrentWeekNr = useCallback((): number => {
     const now = new Date();
@@ -236,11 +238,17 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <div ref={contentRef}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <CloudSun className="h-5 w-5 text-primary" />
-            Seasonality Insights
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <CloudSun className="h-5 w-5 text-primary" />
+              Seasonality Insights
+            </DialogTitle>
+            {analysis && !loading && (
+              <ExportPdfButton targetRef={contentRef} filename="seasonality-insights" size="sm" />
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             Weeks {MIN_WEEK}–{CURRENT_WEEK} · Weather & pest patterns from quality data
           </p>
@@ -476,6 +484,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
             </div>
           </>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );

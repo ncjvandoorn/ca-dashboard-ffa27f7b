@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useAccounts, useQualityReports } from "@/hooks/useQualityData";
 import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
@@ -12,6 +12,10 @@ import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
 import { AIAgent } from "@/components/dashboard/AIAgent";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FileDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { exportElementToPdf } from "@/lib/exportPdf";
+import { toast } from "@/hooks/use-toast";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
   const valid = values.filter((v): v is number => v !== null);
@@ -45,6 +49,8 @@ const Index = () => {
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
+  const dashboardRef = useRef<HTMLDivElement>(null);
+
 
   // Extract available years from data
   const availableYears = useMemo(() => {
@@ -86,6 +92,16 @@ const Index = () => {
   }, [yearFilteredReports, activeFarmId]);
 
   const farmName = farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
+
+  const handleDashboardExport = useCallback(async () => {
+    if (!dashboardRef.current) return;
+    try {
+      await exportElementToPdf(dashboardRef.current, `dashboard-${farmName}-${selectedYear}`);
+      toast({ title: "PDF exported" });
+    } catch {
+      toast({ title: "Export failed", variant: "destructive" });
+    }
+  }, [farmName, selectedYear]);
 
   const intakePh = farmReports.map((r) => r.qrIntakePh);
   const intakeEc = farmReports.map((r) => r.qrIntakeEc);
@@ -138,7 +154,7 @@ const Index = () => {
             <Skeleton className="h-[340px] rounded-xl" />
           </div>
         ) : (
-          <>
+          <div ref={dashboardRef}>
             <ControlBar
               accounts={farmsWithData}
               selectedFarmId={activeFarmId}
@@ -188,6 +204,10 @@ const Index = () => {
                   open={exceptionOpen}
                   onOpenChange={setExceptionOpen}
                 />
+                <Button variant="outline" size="sm" onClick={handleDashboardExport} className="gap-2">
+                  <FileDown className="h-4 w-4" />
+                  Export PDF
+                </Button>
               </div>
             </div>
 
@@ -276,7 +296,7 @@ const Index = () => {
             <div className="mb-12">
               <DataLedger reports={farmReports} />
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

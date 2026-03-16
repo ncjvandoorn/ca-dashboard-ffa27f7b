@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { ClipboardCheck, AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import {
   Dialog,
@@ -39,6 +40,7 @@ function isNoteFilled(value: string | null): boolean {
 export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
   const [open, setOpen] = useState(false);
   const [expandedFarm, setExpandedFarm] = useState<string | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const farmCompliance = useMemo(() => {
     const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
@@ -114,11 +116,15 @@ export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <div ref={contentRef}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <ClipboardCheck className="h-5 w-5 text-primary" />
-            Reporting Completeness Check
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <ClipboardCheck className="h-5 w-5 text-primary" />
+              Reporting Completeness Check
+            </DialogTitle>
+            <ExportPdfButton targetRef={contentRef} filename="reporting-check" size="sm" />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             How consistently are staff filling in quality notes and protocol observations per farm.
           </p>
@@ -217,6 +223,7 @@ export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
               </motion.div>
             );
           })}
+        </div>
         </div>
       </DialogContent>
     </Dialog>

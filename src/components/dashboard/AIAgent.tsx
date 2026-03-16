@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Send, Loader2, X, Sparkles } from "lucide-react";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -80,6 +81,7 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const chatContentRef = useRef<HTMLDivElement>(null);
 
   const farmData = useMemo(() => buildFarmDataContext(reports, accounts), [reports, accounts]);
 
@@ -230,10 +232,15 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
       </DialogTrigger>
       <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Bot className="h-5 w-5 text-primary" />
-            AI Quality Agent
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Bot className="h-5 w-5 text-primary" />
+              AI Quality Agent
+            </DialogTitle>
+            {messages.length > 0 && (
+              <ExportPdfButton targetRef={chatContentRef} filename="ai-agent-chat" size="sm" />
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             Ask questions about farm quality data. I can analyze trends, compare farms, and create tables.
           </p>
@@ -241,7 +248,7 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
 
         {/* Chat area */}
         <ScrollArea className="flex-1 px-5" ref={scrollRef}>
-          <div className="py-4 space-y-4">
+          <div className="py-4 space-y-4" ref={chatContentRef}>
             {messages.length === 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
