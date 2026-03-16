@@ -9,7 +9,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import type { QualityReport, Account } from "@/lib/csvParser";
 
@@ -130,11 +129,22 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
         return;
       }
 
-      const { data, error: fnError } = await supabase.functions.invoke("analyze-exceptions", {
-        body: { farmSummaries },
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-exceptions`;
+      const response = await fetch(functionUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ farmSummaries }),
       });
 
-      if (fnError) throw new Error(fnError.message || "Analysis failed");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Analysis failed (${response.status})`);
+      }
+
+      const data = await response.json();
       if (data?.error) throw new Error(data.error);
 
       setAnalysis(data as AIAnalysis);
