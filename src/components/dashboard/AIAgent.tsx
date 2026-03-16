@@ -232,10 +232,15 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
       </DialogTrigger>
       <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Bot className="h-5 w-5 text-primary" />
-            AI Quality Agent
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Bot className="h-5 w-5 text-primary" />
+              AI Quality Agent
+            </DialogTitle>
+            {messages.length > 0 && (
+              <ExportPdfButton targetRef={chatContentRef} filename="ai-agent-chat" size="sm" />
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             Ask questions about farm quality data. I can analyze trends, compare farms, and create tables.
           </p>
