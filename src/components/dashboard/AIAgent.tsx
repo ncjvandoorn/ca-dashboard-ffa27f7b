@@ -252,7 +252,18 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
               AI Quality Agent
             </DialogTitle>
             {messages.length > 0 && (
-              <ExportPdfButton targetRef={chatContentRef} filename="ai-agent-chat" size="sm" />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMessages([])}
+                  className="gap-1 text-muted-foreground hover:text-foreground"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Reset
+                </Button>
+                <ExportPdfButton targetRef={chatContentRef} filename="ai-agent-chat" size="sm" />
+              </div>
             )}
           </div>
           <p className="text-sm text-muted-foreground">
