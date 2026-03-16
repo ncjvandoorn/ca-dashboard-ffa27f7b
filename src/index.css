@@ -6,80 +6,90 @@
 
 @layer base {
   :root {
-    --background: 220 20% 98%;
-    --foreground: 224 71% 4%;
+    /* Chrysal Brand — Deep Blue + Sky Blue + Green Accent */
+    --background: 210 30% 96%;
+    --foreground: 210 50% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
+    --card-foreground: 210 50% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
+    --popover-foreground: 210 50% 10%;
 
-    --primary: 210 100% 50%;
+    /* Chrysal Deep Blue */
+    --primary: 207 100% 35%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 20% 94%;
-    --secondary-foreground: 224 71% 4%;
+    /* Light blue tint */
+    --secondary: 207 40% 93%;
+    --secondary-foreground: 207 100% 25%;
 
-    --muted: 220 14% 92%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 210 20% 92%;
+    --muted-foreground: 210 12% 46%;
 
-    --accent: 142 70% 45%;
+    /* Chrysal Green */
+    --accent: 90 67% 41%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 210 100% 50%;
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 207 100% 35%;
 
     --radius: 0.75rem;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chrysal gradient blues */
+    --chrysal-blue-light: 205 60% 68%;
+    --chrysal-blue-mid: 207 60% 57%;
 
-    --shadow-card: 0 0 0 1px rgba(0,0,0,0.03), 0 2px 4px rgba(0,0,0,0.05), 0 12px 24px rgba(0,0,0,0.03);
-    --shadow-card-hover: 0 0 0 1px rgba(0,0,0,0.05), 0 4px 8px rgba(0,0,0,0.08), 0 16px 32px rgba(0,0,0,0.05);
+    --sidebar-background: 207 100% 25%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 207 100% 25%;
+    --sidebar-accent: 207 80% 30%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 207 60% 35%;
+    --sidebar-ring: 90 67% 41%;
+
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,50,100,0.06);
+    --shadow-card-hover: 0 2px 6px rgba(0,0,0,0.06), 0 8px 24px rgba(0,50,100,0.1);
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 220 20% 98%;
-    --card: 224 50% 8%;
-    --card-foreground: 220 20% 98%;
-    --popover: 224 50% 8%;
-    --popover-foreground: 220 20% 98%;
-    --primary: 210 100% 50%;
+    --background: 210 40% 7%;
+    --foreground: 210 20% 95%;
+    --card: 210 35% 11%;
+    --card-foreground: 210 20% 95%;
+    --popover: 210 35% 11%;
+    --popover-foreground: 210 20% 95%;
+    --primary: 207 90% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 20% 14%;
-    --secondary-foreground: 220 20% 98%;
-    --muted: 220 14% 16%;
-    --muted-foreground: 220 10% 60%;
-    --accent: 142 70% 45%;
+    --secondary: 207 30% 18%;
+    --secondary-foreground: 207 40% 85%;
+    --muted: 210 20% 16%;
+    --muted-foreground: 210 12% 60%;
+    --accent: 90 60% 45%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 14% 16%;
-    --input: 220 14% 16%;
-    --ring: 210 100% 50%;
-    --sidebar-background: 224 50% 6%;
-    --sidebar-foreground: 220 20% 90%;
-    --sidebar-primary: 210 100% 50%;
+    --border: 210 20% 18%;
+    --input: 210 20% 18%;
+    --ring: 207 90% 50%;
+    --chrysal-blue-light: 205 40% 30%;
+    --chrysal-blue-mid: 207 40% 25%;
+    --sidebar-background: 210 40% 6%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 207 90% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 12%;
-    --sidebar-accent-foreground: 220 20% 90%;
-    --sidebar-border: 220 14% 16%;
-    --sidebar-ring: 210 100% 50%;
+    --sidebar-accent: 210 30% 14%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 210 20% 18%;
+    --sidebar-ring: 90 60% 45%;
   }
 }
 
@@ -107,5 +117,11 @@
   }
   .display-value {
     @apply text-4xl font-semibold tracking-tight;
+  }
+  .chrysal-gradient {
+    background: linear-gradient(135deg, hsl(207, 100%, 35%) 0%, hsl(205, 60%, 55%) 100%);
+  }
+  .chrysal-gradient-subtle {
+    background: linear-gradient(135deg, hsl(207, 40%, 96%) 0%, hsl(205, 50%, 92%) 100%);
   }
 }
