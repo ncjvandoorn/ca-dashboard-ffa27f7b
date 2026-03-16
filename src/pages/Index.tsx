@@ -203,6 +203,10 @@ const Index = () => {
                   open={exceptionOpen}
                   onOpenChange={setExceptionOpen}
                 />
+                <Button variant="outline" size="sm" onClick={handleDashboardExport} className="gap-2">
+                  <FileDown className="h-4 w-4" />
+                  Export PDF
+                </Button>
               </div>
             </div>
 
