@@ -159,13 +159,21 @@ const Index = () => {
                   )}
                 </p>
               </div>
-              <ExceptionReport
-                reports={yearFilteredReports}
-                accounts={accounts || []}
-                onSelectFarm={(id) => { setSelectedFarmId(id); }}
-                open={exceptionOpen}
-                onOpenChange={setExceptionOpen}
-              />
+              <div className="flex items-center gap-2">
+                <SeasonalityInsights
+                  reports={yearFilteredReports}
+                  accounts={accounts || []}
+                  open={seasonalityOpen}
+                  onOpenChange={setSeasonalityOpen}
+                />
+                <ExceptionReport
+                  reports={yearFilteredReports}
+                  accounts={accounts || []}
+                  onSelectFarm={(id) => { setSelectedFarmId(id); }}
+                  open={exceptionOpen}
+                  onOpenChange={setExceptionOpen}
+                />
+              </div>
             </div>
 
             {/* KPI Cards */}
