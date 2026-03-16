@@ -18,6 +18,9 @@ interface TrendChartProps {
 }
 
 export function TrendChart({ title, data, lines }: TrendChartProps) {
+  // Determine if we need dual axes: any line explicitly on "right" axis
+  const hasDualAxis = lines.some((l) => l.yAxisId === "right");
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -28,7 +31,7 @@ export function TrendChart({ title, data, lines }: TrendChartProps) {
       <h3 className="label-text mb-4">{title}</h3>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+          <AreaChart data={data} margin={{ top: 4, right: hasDualAxis ? 10 : 4, bottom: 0, left: -20 }}>
             <defs>
               {lines.map((l) => (
                 <linearGradient key={l.key} id={`grad-${l.key}`} x1="0" y1="0" x2="0" y2="1">
@@ -45,10 +48,22 @@ export function TrendChart({ title, data, lines }: TrendChartProps) {
               axisLine={false}
             />
             <YAxis
+              yAxisId="left"
               tick={{ fontSize: 11, fill: "hsl(210, 12%, 46%)" }}
               tickLine={false}
               axisLine={false}
+              label={hasDualAxis ? { value: "pH", angle: -90, position: "insideLeft", offset: 20, style: { fontSize: 11, fill: "hsl(210, 12%, 46%)" } } : undefined}
             />
+            {hasDualAxis && (
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tick={{ fontSize: 11, fill: "hsl(210, 12%, 46%)" }}
+                tickLine={false}
+                axisLine={false}
+                label={{ value: "EC (μS)", angle: 90, position: "insideRight", offset: 15, style: { fontSize: 11, fill: "hsl(210, 12%, 46%)" } }}
+              />
+            )}
             <Tooltip
               contentStyle={{
                 background: "hsl(0, 0%, 100%)",
@@ -71,6 +86,7 @@ export function TrendChart({ title, data, lines }: TrendChartProps) {
                 fill={`url(#grad-${l.key})`}
                 dot={false}
                 connectNulls
+                yAxisId={l.yAxisId || "left"}
               />
             ))}
           </AreaChart>
