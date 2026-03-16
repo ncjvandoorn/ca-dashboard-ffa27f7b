@@ -1,0 +1,42 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Account } from "@/lib/csvParser";
+
+interface ControlBarProps {
+  accounts: Account[];
+  selectedFarmId: string;
+  onFarmChange: (id: string) => void;
+}
+
+export function ControlBar({ accounts, selectedFarmId, onFarmChange }: ControlBarProps) {
+  const sorted = [...accounts].sort((a, b) => a.name.localeCompare(b.name));
+
+  return (
+    <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm py-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Quality Analytics
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Farm quality parameters over time
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="label-text">Farm</span>
+          <Select value={selectedFarmId} onValueChange={onFarmChange}>
+            <SelectTrigger className="w-[280px] shadow-card border-0 rounded-lg bg-card">
+              <SelectValue placeholder="Select a farm" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[300px]">
+              {sorted.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  {a.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </header>
+  );
+}
