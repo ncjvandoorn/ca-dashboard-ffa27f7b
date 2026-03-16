@@ -42,9 +42,18 @@ interface ImprovedFarm {
   improvedMetrics: string[];
 }
 
+interface TopPerformerFarm {
+  farmId: string;
+  farmName: string;
+  summary: string;
+  details: string[];
+  strongMetrics: string[];
+}
+
 interface AIAnalysis {
   needsAttention: AttentionFarm[];
   mostImproved: ImprovedFarm[];
+  topPerformers?: TopPerformerFarm[];
   industryInsight: string;
 }
 
@@ -341,7 +350,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
               </div>
               <div className="space-y-2">
                 {analysis.mostImproved.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">No significant improvements detected</p>
+                  <p className="text-sm text-muted-foreground py-4 text-center">No significant improvements detected in the analysis window</p>
                 ) : (
                   analysis.mostImproved.map((farm, i) => (
                     <motion.button
@@ -379,6 +388,53 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
                 )}
               </div>
             </div>
+
+            {/* Top Performers */}
+            {analysis.topPerformers && analysis.topPerformers.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                    Top Performers
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {analysis.topPerformers.map((farm, i) => (
+                    <motion.button
+                      key={farm.farmId}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 + 0.5, duration: 0.2 }}
+                      onClick={() => handleClick(farm.farmId)}
+                      className="w-full flex items-start gap-4 p-4 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors duration-150 text-left group"
+                    >
+                      <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                        {i + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                          {farm.farmName}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">{farm.summary}</p>
+                        <div className="mt-2 space-y-0.5">
+                          {farm.details.map((d, j) => (
+                            <p key={j} className="text-[11px] text-muted-foreground">• {d}</p>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {farm.strongMetrics.map((m) => (
+                            <span key={m} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                              {m}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary flex-shrink-0 transition-colors mt-1" />
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Re-analyze / cache info */}
             <div className="mt-4 flex flex-col items-center gap-2">
