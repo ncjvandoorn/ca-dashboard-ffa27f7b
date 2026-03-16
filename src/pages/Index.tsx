@@ -105,8 +105,8 @@ const Index = () => {
 
   const intakePh = farmReports.map((r) => r.qrIntakePh);
   const intakeEc = farmReports.map((r) => r.qrIntakeEc);
-  const intakeTemp = farmReports.map((r) => r.qrIntakeTempColdstore);
-  const intakeHumidity = farmReports.map((r) => r.qrIntakeHumidityColdstore);
+  const exportTemp = farmReports.map((r) => r.qrExportTempColdstore);
+  const exportHumidity = farmReports.map((r) => r.qrExportHumidityColdstore);
 
   const sparkOf = (arr: (number | null)[]) =>
     arr.filter((v): v is number => v !== null).map((v) => ({ v }));
