@@ -1,44 +1,77 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, TrendingUp, Award, Info } from "lucide-react";
+import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
-interface AttentionFarm {
+interface FarmInsight {
   farmId: string;
   farmName: string;
-  severity: "critical" | "warning";
+  status: "critical" | "warning" | "stable" | "good" | "excellent";
   summary: string;
   details: string[];
-  affectedMetrics: string[];
-}
-
-interface ImprovedFarm {
-  farmId: string;
-  farmName: string;
-  summary: string;
-  details: string[];
-  improvedMetrics: string[];
-}
-
-interface TopPerformerFarm {
-  farmId: string;
-  farmName: string;
-  summary: string;
-  details: string[];
-  strongMetrics: string[];
+  keyMetrics: string[];
 }
 
 interface AIAnalysis {
-  needsAttention: AttentionFarm[];
-  mostImproved: ImprovedFarm[];
-  topPerformers?: TopPerformerFarm[];
-  industryInsight: string;
+  needsAttention?: any[];
+  mostImproved?: any[];
+  topPerformers?: any[];
+  allFarmInsights?: FarmInsight[];
+  industryInsight?: string;
 }
 
 interface FarmAIInsightsProps {
   farmId: string;
 }
+
+const statusConfig = {
+  critical: {
+    icon: AlertTriangle,
+    label: "Needs Attention",
+    border: "border-destructive/30",
+    bg: "bg-destructive/5",
+    iconBg: "bg-destructive/15 text-destructive",
+    dot: "bg-destructive/40",
+    badgeBorder: "border-destructive/30 text-destructive",
+  },
+  warning: {
+    icon: AlertTriangle,
+    label: "Warning",
+    border: "border-warning/30",
+    bg: "bg-warning/5",
+    iconBg: "bg-warning/15 text-warning",
+    dot: "bg-warning/40",
+    badgeBorder: "border-warning/30 text-warning",
+  },
+  stable: {
+    icon: Info,
+    label: "Stable",
+    border: "border-border",
+    bg: "bg-muted/30",
+    iconBg: "bg-muted text-muted-foreground",
+    dot: "bg-muted-foreground/40",
+    badgeBorder: "border-border text-muted-foreground",
+  },
+  good: {
+    icon: CheckCircle,
+    label: "Good",
+    border: "border-accent/30",
+    bg: "bg-accent/5",
+    iconBg: "bg-accent/15 text-accent",
+    dot: "bg-accent/40",
+    badgeBorder: "border-accent/30 text-accent",
+  },
+  excellent: {
+    icon: Shield,
+    label: "Top Performer",
+    border: "border-primary/30",
+    bg: "bg-primary/5",
+    iconBg: "bg-primary/15 text-primary",
+    dot: "bg-primary/40",
+    badgeBorder: "border-primary/30 text-primary",
+  },
+};
 
 export function FarmAIInsights({ farmId }: FarmAIInsightsProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
@@ -75,12 +108,13 @@ export function FarmAIInsights({ farmId }: FarmAIInsightsProps) {
 
   if (!analysis) return null;
 
-  // Find this farm in any category
-  const attention = analysis.needsAttention?.find((f) => f.farmId === farmId);
-  const improved = analysis.mostImproved?.find((f) => f.farmId === farmId);
-  const topPerformer = analysis.topPerformers?.find((f) => f.farmId === farmId);
+  // Look up this farm in allFarmInsights first (covers all farms)
+  const farmInsight = analysis.allFarmInsights?.find((f) => f.farmId === farmId);
 
-  if (!attention && !improved && !topPerformer) return null;
+  if (!farmInsight) return null;
+
+  const config = statusConfig[farmInsight.status] || statusConfig.stable;
+  const Icon = config.icon;
 
   return (
     <motion.div
@@ -88,119 +122,44 @@ export function FarmAIInsights({ farmId }: FarmAIInsightsProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className="mb-8"
+      key={farmId}
     >
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
         <Info className="w-4 h-4" />
         AI Quality Insights (Last 12 Weeks)
       </h3>
 
-      <div className="space-y-4">
-        {attention && (
-          <div
-            className={`rounded-xl border p-5 ${
-              attention.severity === "critical"
-                ? "border-destructive/30 bg-destructive/5"
-                : "border-warning/30 bg-warning/5"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className={`mt-0.5 p-1.5 rounded-full ${
-                  attention.severity === "critical"
-                    ? "bg-destructive/15 text-destructive"
-                    : "bg-warning/15 text-warning"
-                }`}
-              >
-                <AlertTriangle className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-foreground text-sm uppercase tracking-wide">
-                    {attention.severity === "critical" ? "Needs Attention" : "Warning"}
-                  </span>
-                </div>
-                <p className="text-sm text-foreground/80 mb-3">{attention.summary}</p>
-                <ul className="space-y-1.5">
-                  {attention.details.map((d, i) => (
-                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
-                      {d}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {attention.affectedMetrics.map((m) => (
-                    <Badge key={m} variant="outline" className="text-xs border-destructive/30 text-destructive">
-                      {m}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
+      <div className={`rounded-xl border p-5 ${config.border} ${config.bg}`}>
+        <div className="flex items-start gap-3">
+          <div className={`mt-0.5 p-1.5 rounded-full ${config.iconBg}`}>
+            <Icon className="w-4 h-4" />
           </div>
-        )}
-
-        {improved && (
-          <div className="rounded-xl border border-accent/30 bg-accent/5 p-5">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 p-1.5 rounded-full bg-accent/15 text-accent">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="font-semibold text-foreground text-sm uppercase tracking-wide">
-                  Most Improved
-                </span>
-                <p className="text-sm text-foreground/80 mt-1 mb-3">{improved.summary}</p>
-                <ul className="space-y-1.5">
-                  {improved.details.map((d, i) => (
-                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent/40 shrink-0" />
-                      {d}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {improved.improvedMetrics.map((m) => (
-                    <Badge key={m} variant="outline" className="text-xs border-accent/30 text-accent">
-                      {m}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-semibold text-foreground text-sm uppercase tracking-wide">
+                {config.label}
+              </span>
             </div>
-          </div>
-        )}
-
-        {topPerformer && (
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 p-1.5 rounded-full bg-primary/15 text-primary">
-                <Award className="w-4 h-4" />
+            <p className="text-sm text-foreground/80 mb-3">{farmInsight.summary}</p>
+            <ul className="space-y-1.5">
+              {farmInsight.details.map((d, i) => (
+                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                  <span className={`mt-1.5 w-1.5 h-1.5 rounded-full ${config.dot} shrink-0`} />
+                  {d}
+                </li>
+              ))}
+            </ul>
+            {farmInsight.keyMetrics.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {farmInsight.keyMetrics.map((m) => (
+                  <Badge key={m} variant="outline" className={`text-xs ${config.badgeBorder}`}>
+                    {m}
+                  </Badge>
+                ))}
               </div>
-              <div className="flex-1 min-w-0">
-                <span className="font-semibold text-foreground text-sm uppercase tracking-wide">
-                  Top Performer
-                </span>
-                <p className="text-sm text-foreground/80 mt-1 mb-3">{topPerformer.summary}</p>
-                <ul className="space-y-1.5">
-                  {topPerformer.details.map((d, i) => (
-                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary/40 shrink-0" />
-                      {d}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {topPerformer.strongMetrics.map((m) => (
-                    <Badge key={m} variant="outline" className="text-xs border-primary/30 text-primary">
-                      {m}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </motion.div>
   );
