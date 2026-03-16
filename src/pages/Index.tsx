@@ -10,6 +10,7 @@ import { ExceptionReport } from "@/components/dashboard/ExceptionReport";
 import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights";
 import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
+import { AIAgent } from "@/components/dashboard/AIAgent";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
