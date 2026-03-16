@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { toast } from "@/hooks/use-toast";
 import type { QualityReport, Account } from "@/lib/csvParser";
 
 interface ExceptionReportProps {
