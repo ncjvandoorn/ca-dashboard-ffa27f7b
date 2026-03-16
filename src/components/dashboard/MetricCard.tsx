@@ -19,7 +19,7 @@ export function MetricCard({
   delta,
   deltaType = "neutral",
   sparkData,
-  color = "hsl(210, 100%, 50%)",
+  color = "hsl(207, 100%, 35%)",
   index = 0,
 }: MetricCardProps) {
   const deltaColor =
@@ -34,12 +34,12 @@ export function MetricCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: index * 0.05, ease: [0.23, 1, 0.32, 1] }}
-      className="bg-card rounded-xl shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 p-5 flex flex-col justify-between min-h-[160px]"
+      className="bg-card rounded-xl shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 p-5 flex flex-col justify-between min-h-[160px] border-t-[3px] border-t-primary"
     >
       <p className="label-text">{label}</p>
       <div className="mt-2">
         <div className="flex items-baseline gap-1">
-          <span className="display-value text-foreground">{value}</span>
+          <span className="display-value text-primary">{value}</span>
           {unit && <span className="text-sm text-muted-foreground font-medium">{unit}</span>}
         </div>
         {delta && (
@@ -52,7 +52,7 @@ export function MetricCard({
             <AreaChart data={sparkData}>
               <defs>
                 <linearGradient id={`spark-${label}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={color} stopOpacity={0.2} />
+                  <stop offset="0%" stopColor={color} stopOpacity={0.25} />
                   <stop offset="100%" stopColor={color} stopOpacity={0} />
                 </linearGradient>
               </defs>

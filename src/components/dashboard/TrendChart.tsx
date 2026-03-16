@@ -30,20 +30,20 @@ export function TrendChart({ title, data, lines }: TrendChartProps) {
             <defs>
               {lines.map((l) => (
                 <linearGradient key={l.key} id={`grad-${l.key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={l.color} stopOpacity={0.15} />
+                  <stop offset="0%" stopColor={l.color} stopOpacity={0.2} />
                   <stop offset="100%" stopColor={l.color} stopOpacity={0} />
                 </linearGradient>
               ))}
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(210, 20%, 90%)" vertical={false} />
             <XAxis
               dataKey="week"
-              tick={{ fontSize: 11, fill: "hsl(220, 10%, 46%)" }}
+              tick={{ fontSize: 11, fill: "hsl(210, 12%, 46%)" }}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: "hsl(220, 10%, 46%)" }}
+              tick={{ fontSize: 11, fill: "hsl(210, 12%, 46%)" }}
               tickLine={false}
               axisLine={false}
             />
@@ -52,7 +52,7 @@ export function TrendChart({ title, data, lines }: TrendChartProps) {
                 background: "hsl(0, 0%, 100%)",
                 border: "none",
                 borderRadius: "8px",
-                boxShadow: "0 0 0 1px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.1)",
+                boxShadow: "0 0 0 1px rgba(0,50,100,0.08), 0 4px 16px rgba(0,50,100,0.12)",
                 fontSize: "12px",
                 fontFamily: '"IBM Plex Sans", sans-serif',
               }}
