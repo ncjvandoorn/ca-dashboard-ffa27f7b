@@ -37,6 +37,7 @@ function weekYear(weekNr: number): number {
 }
 
 const Index = () => {
+  const { isAdmin } = useAuth();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
