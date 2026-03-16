@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, TrendingUp, TrendingDown, ArrowRight, Sparkles, Loader2, AlertCircle, Info } from "lucide-react";
+import { AlertTriangle, TrendingUp, TrendingDown, ArrowRight, Sparkles, Loader2, AlertCircle, Info, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -116,11 +117,55 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
 
-  const runAnalysis = useCallback(async () => {
+  /**
+   * Compute current YYWW week number.
+   * Week runs Saturday–Friday. Today (Mon 16 Mar 2026) = week 2612.
+   * Saturday 21 Mar 2026 starts week 2613.
+   */
+  const getCurrentWeekNr = useCallback((): number => {
+    const now = new Date();
+    // Shift so Saturday=day0: (day+1)%7 maps Sat→0,Sun→1,...Fri→6
+    // Find the Saturday that started this week
+    const day = now.getDay(); // 0=Sun
+    const daysSinceSat = (day + 1) % 7; // Sat=0, Sun=1, Mon=2...Fri=6
+    const saturday = new Date(now);
+    saturday.setDate(now.getDate() - daysSinceSat);
+
+    // Get ISO week of that Saturday to derive YYWW
+    const jan1 = new Date(saturday.getFullYear(), 0, 1);
+    const days = Math.floor((saturday.getTime() - jan1.getTime()) / 86400000);
+    const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
+    const year = saturday.getFullYear() % 100;
+    return year * 100 + weekNum;
+  }, []);
+
+  const runAnalysis = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
+    setFromCache(false);
+
+    const currentWeek = getCurrentWeekNr();
+
     try {
+      // Check cache first (unless forcing refresh)
+      if (!forceRefresh) {
+        const { data: cached } = await supabase
+          .from("exception_report_cache")
+          .select("analysis")
+          .eq("week_nr", currentWeek)
+          .maybeSingle();
+
+        if (cached?.analysis) {
+          setAnalysis(cached.analysis as unknown as AIAnalysis);
+          setFromCache(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // No cache — run AI analysis
       const farmSummaries = buildFarmSummaries(reports, accounts);
 
       if (farmSummaries.length === 0) {
@@ -146,6 +191,11 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
 
       const data = await response.json();
       if (data?.error) throw new Error(data.error);
+
+      // Save to cache (upsert)
+      await supabase
+        .from("exception_report_cache")
+        .upsert({ week_nr: currentWeek, analysis: data }, { onConflict: "week_nr" });
 
       setAnalysis(data as AIAnalysis);
     } catch (e: any) {
@@ -208,7 +258,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
           <div className="flex flex-col items-center justify-center py-12 gap-3">
             <AlertCircle className="h-8 w-8 text-destructive" />
             <p className="text-sm text-muted-foreground">{error}</p>
-            <Button variant="outline" size="sm" onClick={runAnalysis}>
+            <Button variant="outline" size="sm" onClick={() => runAnalysis()}>
               Retry Analysis
             </Button>
           </div>
@@ -330,11 +380,16 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
               </div>
             </div>
 
-            {/* Re-analyze button */}
-            <div className="mt-4 flex justify-center">
-              <Button variant="outline" size="sm" onClick={runAnalysis} className="gap-2 text-xs">
-                <Sparkles className="h-3 w-3" />
-                Re-analyze
+            {/* Re-analyze / cache info */}
+            <div className="mt-4 flex flex-col items-center gap-2">
+              {fromCache && (
+                <p className="text-xs text-muted-foreground">
+                  Loaded from cache · Generated this week
+                </p>
+              )}
+              <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
+                <RefreshCw className="h-3 w-3" />
+                {fromCache ? "Refresh Analysis" : "Re-analyze"}
               </Button>
             </div>
           </>
