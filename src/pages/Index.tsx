@@ -105,8 +105,8 @@ const Index = () => {
 
   const intakePh = farmReports.map((r) => r.qrIntakePh);
   const intakeEc = farmReports.map((r) => r.qrIntakeEc);
-  const intakeTemp = farmReports.map((r) => r.qrIntakeTempColdstore);
-  const intakeHumidity = farmReports.map((r) => r.qrIntakeHumidityColdstore);
+  const exportTemp = farmReports.map((r) => r.qrExportTempColdstore);
+  const exportHumidity = farmReports.map((r) => r.qrExportHumidityColdstore);
 
   const sparkOf = (arr: (number | null)[]) =>
     arr.filter((v): v is number => v !== null).map((v) => ({ v }));
@@ -233,22 +233,22 @@ const Index = () => {
                 index={1}
               />
               <MetricCard
-                label="Temperature (Intake)"
-                value={latest(intakeTemp)}
+                label="Temperature (Export)"
+                value={latest(exportTemp)}
                 unit="°C"
-                delta={computeDelta(intakeTemp).text}
-                deltaType={computeDelta(intakeTemp).type}
-                sparkData={sparkOf(intakeTemp)}
+                delta={computeDelta(exportTemp).text}
+                deltaType={computeDelta(exportTemp).type}
+                sparkData={sparkOf(exportTemp)}
                 color={chrysalWarm}
                 index={2}
               />
               <MetricCard
-                label="Humidity (Intake)"
-                value={latest(intakeHumidity)}
+                label="Humidity (Export)"
+                value={latest(exportHumidity)}
                 unit="%"
-                delta={computeDelta(intakeHumidity).text}
-                deltaType={computeDelta(intakeHumidity).type}
-                sparkData={sparkOf(intakeHumidity)}
+                delta={computeDelta(exportHumidity).text}
+                deltaType={computeDelta(exportHumidity).type}
+                sparkData={sparkOf(exportHumidity)}
                 color={chrysalGreen}
                 index={3}
               />
