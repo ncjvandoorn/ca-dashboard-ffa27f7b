@@ -220,6 +220,9 @@ const Index = () => {
               />
             </div>
 
+            {/* AI Insights for selected farm */}
+            <FarmAIInsights farmId={activeFarmId} />
+
             {/* Quality Tables */}
             <QualityTables reports={farmReports} />
 
