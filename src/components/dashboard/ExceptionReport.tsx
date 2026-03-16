@@ -250,7 +250,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <div ref={contentRef}>
+        <div ref={contentRef} className="p-2">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2 text-lg">
