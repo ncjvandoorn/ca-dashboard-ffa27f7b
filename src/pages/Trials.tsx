@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut, Download } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut, Download, History, CalendarDays } from "lucide-react";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -103,9 +103,19 @@ export default function Trials() {
     else { setSortKey(key); setSortDir("asc"); }
   };
 
-  // Capacity planner: today + 90 days
+  // Capacity planner
+  const [capacityView, setCapacityView] = useState<"future" | "history">("future");
   const today = new Date().toISOString().slice(0, 10);
-  const capacityRows = useMemo(() => buildCapacityTable(trials, today, 90), [trials, today]);
+
+  const capacityRows = useMemo(() => {
+    if (capacityView === "future") {
+      return buildCapacityTable(trials, today, 90);
+    } else {
+      const start = new Date();
+      start.setDate(start.getDate() - 90);
+      return buildCapacityTable(trials, start.toISOString().slice(0, 10), 90);
+    }
+  }, [trials, today, capacityView]);
 
   // Find peak VL usage
   const peakVL = useMemo(() => Math.max(...capacityRows.map((r) => r.vlRoom), 0), [capacityRows]);
@@ -169,7 +179,7 @@ export default function Trials() {
               <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 flex items-center gap-4 flex-1">
                 <div className="w-2 h-2 rounded-full bg-accent" />
                 <p className="text-sm text-foreground">
-                  Showing <span className="font-semibold">90-day</span> capacity forecast from today.
+                  Showing <span className="font-semibold">90-day</span> {capacityView === "future" ? "forecast" : "history"}.
                   VL Room max capacity: <span className="font-semibold">{VL_CAPACITY} vases</span>.
                   CA rooms counted in <span className="font-semibold">boxes</span>. Transport/Retail &amp; VL Room in <span className="font-semibold">vases</span>.
                   {peakVL >= VL_CAPACITY && (
@@ -177,10 +187,30 @@ export default function Trials() {
                   )}
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled={exporting} onClick={() => handleExport(capacityRef, "Capacity-Planner")}>
-                <Download className="h-4 w-4" />
-                PDF
-              </Button>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant={capacityView === "history" ? "default" : "outline"}
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setCapacityView("history")}
+                >
+                  <History className="h-3.5 w-3.5" />
+                  Last 90 days
+                </Button>
+                <Button
+                  variant={capacityView === "future" ? "default" : "outline"}
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setCapacityView("future")}
+                >
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  Next 90 days
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5 ml-2" disabled={exporting} onClick={() => handleExport(capacityRef, "Capacity-Planner")}>
+                  <Download className="h-3.5 w-3.5" />
+                  PDF
+                </Button>
+              </div>
             </div>
 
             <div ref={capacityRef} className="bg-card rounded-xl shadow-card overflow-hidden">
