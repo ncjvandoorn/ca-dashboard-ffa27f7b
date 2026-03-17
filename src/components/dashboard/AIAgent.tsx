@@ -156,6 +156,8 @@ export function AIAgent({ reports, accounts, activities, exceptionAnalysis, seas
           body: JSON.stringify({
             messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
             farmData,
+            exceptionAnalysis: exceptionAnalysis || null,
+            seasonalityAnalysis: seasonalityAnalysis || null,
           }),
         });
 
