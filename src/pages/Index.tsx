@@ -16,6 +16,7 @@ import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
   const valid = values.filter((v): v is number => v !== null);
