@@ -41,8 +41,6 @@ When answering:
     if (staffSummary) {
       userContextMessage += `\n\nStaff report attribution summary:\n${JSON.stringify(staffSummary)}`;
     }
-
-    if (exceptionAnalysis) {
     if (exceptionAnalysis) {
       userContextMessage += `\n\nException Report:\n${JSON.stringify(exceptionAnalysis)}`;
     }
