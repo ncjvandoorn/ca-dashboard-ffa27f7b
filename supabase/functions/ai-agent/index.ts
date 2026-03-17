@@ -41,8 +41,6 @@ When answering:
     if (staffSummary) {
       userContextMessage += `\n\nStaff report attribution summary:\n${JSON.stringify(staffSummary)}`;
     }
-
-    if (exceptionAnalysis) {
     if (exceptionAnalysis) {
       userContextMessage += `\n\nException Report:\n${JSON.stringify(exceptionAnalysis)}`;
     }
@@ -91,8 +89,8 @@ When answering:
         JSON.stringify({ error: "AI analysis failed" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-  }
-});
+    }
+
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
