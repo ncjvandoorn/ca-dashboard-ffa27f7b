@@ -103,9 +103,19 @@ export default function Trials() {
     else { setSortKey(key); setSortDir("asc"); }
   };
 
-  // Capacity planner: today + 90 days
+  // Capacity planner
+  const [capacityView, setCapacityView] = useState<"future" | "history">("future");
   const today = new Date().toISOString().slice(0, 10);
-  const capacityRows = useMemo(() => buildCapacityTable(trials, today, 90), [trials, today]);
+
+  const capacityRows = useMemo(() => {
+    if (capacityView === "future") {
+      return buildCapacityTable(trials, today, 90);
+    } else {
+      const start = new Date();
+      start.setDate(start.getDate() - 90);
+      return buildCapacityTable(trials, start.toISOString().slice(0, 10), 90);
+    }
+  }, [trials, today, capacityView]);
 
   // Find peak VL usage
   const peakVL = useMemo(() => Math.max(...capacityRows.map((r) => r.vlRoom), 0), [capacityRows]);
