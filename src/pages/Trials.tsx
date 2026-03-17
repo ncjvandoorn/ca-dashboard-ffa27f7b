@@ -118,6 +118,21 @@ export default function Trials() {
     }
   }, [trials, today, capacityView]);
 
+  // Schedule violations map: trialNumber -> violation
+  const violationMap = useMemo(() => {
+    const map = new Map<string, ScheduleViolation>();
+    for (const trial of trials) {
+      const v = validateTrialSchedule(trial);
+      if (v) map.set(trial.trialNumber, v);
+    }
+    return map;
+  }, [trials]);
+
+  // Dialog state for schedule violation details
+  const [violationDialogOpen, setViolationDialogOpen] = useState(false);
+  const [selectedViolations, setSelectedViolations] = useState<ScheduleViolation[]>([]);
+  const [selectedViolationDate, setSelectedViolationDate] = useState("");
+
   // Find peak VL usage
   const peakVL = useMemo(() => Math.max(...capacityRows.map((r) => r.vlRoom), 0), [capacityRows]);
 
