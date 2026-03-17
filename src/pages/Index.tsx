@@ -222,6 +222,7 @@ const Index = () => {
                   <ReportingCheck
                     reports={yearFilteredReports}
                     accounts={accounts || []}
+                    users={users || []}
                   />
                 )}
                 <SeasonalityInsights
