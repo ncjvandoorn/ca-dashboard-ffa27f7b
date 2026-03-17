@@ -118,7 +118,7 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[80vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <ClipboardList className="h-5 w-5 text-primary" />
