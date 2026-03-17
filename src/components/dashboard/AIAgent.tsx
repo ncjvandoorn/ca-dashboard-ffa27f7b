@@ -105,10 +105,9 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
   const chatContentRef = useRef<HTMLDivElement>(null);
 
   const farmData = useMemo(() => {
-    const base = buildFarmDataContext(reports, accounts);
+    const base = buildFarmDataContext(reports, accounts, users || []);
     // Attach activities per farm
     if (activities?.length) {
-      const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
       for (const summary of base) {
         const farmActivities = activities
           .filter((a) => a.accountId === summary.farmId)
@@ -124,7 +123,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
       }
     }
     return base;
-  }, [reports, accounts, activities]);
+  }, [reports, accounts, activities, users]);
 
   useEffect(() => {
     if (scrollRef.current) {
