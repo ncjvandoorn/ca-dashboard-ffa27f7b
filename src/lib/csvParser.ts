@@ -78,7 +78,8 @@ export async function loadAccounts(): Promise<Account[]> {
 }
 
 export async function loadQualityReports(): Promise<QualityReport[]> {
-  return fetchCsv("/data/qualityReport.csv", (row) => ({
+  const url = await getDataFileUrl("qualityReport.csv");
+  return fetchCsv(url, (row) => ({
     id: row.id,
     farmAccountId: row.farmAccountId,
     weekNr: parseInt(row.weekNr) || 0,
