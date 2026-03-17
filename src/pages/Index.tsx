@@ -195,7 +195,7 @@ const Index = () => {
               selectedYear={selectedYear}
               onYearChange={(y) => {
                 setSelectedYear(y);
-                setSelectedFarmId(""); // reset farm on year change
+                // Keep current farm — activeFarmId logic handles fallback
               }}
               farmCount={farmsWithData.length}
             />
