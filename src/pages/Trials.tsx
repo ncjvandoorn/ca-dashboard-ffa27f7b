@@ -212,6 +212,9 @@ export default function Trials() {
                 </Button>
               </div>
             </div>
+
+            <div ref={capacityRef} className="bg-card rounded-xl shadow-card overflow-hidden">
+              <div className="overflow-auto max-h-[600px]">
                 <Table>
                   <TableHeader className="sticky top-0 bg-card z-10">
                     <TableRow>
