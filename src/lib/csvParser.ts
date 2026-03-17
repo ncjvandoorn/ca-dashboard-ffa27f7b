@@ -68,6 +68,8 @@ export interface QualityReport {
   signoffName: string | null;
   submittedAt: number | null;
   submittedByUserId: string | null;
+  createdByUserId: string | null;
+  updatedByUserId: string | null;
   generalComment: string | null;
 }
 
@@ -163,6 +165,8 @@ export async function loadQualityReports(): Promise<QualityReport[]> {
     signoffName: parseStr(row.signoffName),
     submittedAt: parseNum(row.submittedAt),
     submittedByUserId: parseStr(row.submittedByUserId),
+    createdByUserId: parseStr(row.createdById),
+    updatedByUserId: parseStr(row.updatedById),
     generalComment: parseStr(row.generalComment),
   }));
 }
