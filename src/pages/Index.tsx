@@ -202,6 +202,9 @@ const Index = () => {
                 <p className="text-sm text-foreground">
                   Showing <span className="font-semibold">{farmReports.length}</span> reports for{" "}
                   <span className="font-semibold">{farmName}</span>
+                  {managerName && (
+                    <span className="text-muted-foreground"> | {managerName}</span>
+                  )}
                   {selectedYear !== "all" && (
                     <span className="text-muted-foreground"> · 20{selectedYear}</span>
                   )}
