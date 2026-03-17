@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { loadTrials, buildCapacityTable, type Trial, type CapacityRow, type CapacityTrialInfo } from "@/lib/trialsParser";
