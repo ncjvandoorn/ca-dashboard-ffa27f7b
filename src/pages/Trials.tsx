@@ -452,6 +452,43 @@ export default function Trials() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Schedule Violation Dialog */}
+        <Dialog open={violationDialogOpen} onOpenChange={setViolationDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-warning" />
+                Schedule Violations — {selectedViolationDate}
+              </DialogTitle>
+              <DialogDescription>
+                The following TC/Commercial trials are not following the standard schedule.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="divide-y divide-border max-h-[400px] overflow-auto">
+              {selectedViolations.map((v, idx) => (
+                <div key={idx} className="py-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold">{v.trial.trialReference || v.trial.trialNumber}</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      v.trial.trialType === "SF" ? "bg-warning/15 text-warning" : "bg-primary/10 text-primary"
+                    }`}>
+                      {v.trial.trialType} — {v.trial.trialClient}
+                    </span>
+                  </div>
+                  <ul className="space-y-1">
+                    {v.issues.map((issue, j) => (
+                      <li key={j} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <span className="text-warning mt-0.5">•</span>
+                        {issue}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
