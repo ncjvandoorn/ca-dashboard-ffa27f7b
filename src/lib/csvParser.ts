@@ -69,7 +69,8 @@ async function fetchCsv<T>(url: string, transform: (row: Record<string, string>)
 }
 
 export async function loadAccounts(): Promise<Account[]> {
-  return fetchCsv("/data/account.csv", (row) => ({
+  const url = await getDataFileUrl("account.csv");
+  return fetchCsv(url, (row) => ({
     id: row.id,
     name: row.name || "Unknown",
     publicId: row.publicId || "",
