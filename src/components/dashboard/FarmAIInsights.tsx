@@ -26,6 +26,8 @@ interface AIAnalysis {
 
 interface FarmAIInsightsProps {
   farmId: string;
+  farmName: string;
+  activities: Activity[];
 }
 
 const statusConfig = {
