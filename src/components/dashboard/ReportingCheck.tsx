@@ -46,6 +46,7 @@ export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps
 
   const farmCompliance = useMemo(() => {
     const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
+    const userMap = new Map(users.map((u) => [u.id, u.name]));
     const byFarm = new Map<string, QualityReport[]>();
 
     for (const r of reports) {
