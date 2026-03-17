@@ -156,6 +156,7 @@ export default function Trials() {
               <p className="text-sm text-foreground">
                 Showing <span className="font-semibold">90-day</span> capacity forecast from today.
                 VL Room max capacity: <span className="font-semibold">{VL_CAPACITY} vases</span>.
+                CA rooms counted in <span className="font-semibold">boxes</span>. Transport/Retail &amp; VL Room in <span className="font-semibold">vases</span>.
                 {peakVL >= VL_CAPACITY && (
                   <span className="text-destructive font-semibold ml-2">⚠ Capacity exceeded on some days!</span>
                 )}
