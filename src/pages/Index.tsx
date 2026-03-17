@@ -96,9 +96,8 @@ const Index = () => {
 
   // Reset farm selection if current farm not in filtered list
   const activeFarmId = useMemo(() => {
-    if (selectedFarmId && farmsWithData.some((a) => a.id === selectedFarmId)) {
-      return selectedFarmId;
-    }
+    // If a farm is explicitly selected (even without data), keep it
+    if (selectedFarmId) return selectedFarmId;
     return farmsWithData[0]?.id || "";
   }, [selectedFarmId, farmsWithData]);
 
