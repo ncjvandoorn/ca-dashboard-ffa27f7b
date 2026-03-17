@@ -8,6 +8,25 @@ export interface Account {
   servicesEnabled: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  position: string;
+  countryName: string;
+}
+
+export async function loadUsers(): Promise<User[]> {
+  const url = await getDataFileUrl("user.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    name: row.name || "Unknown",
+    email: row.email || "",
+    position: row.position || "",
+    countryName: row.countryName || "",
+  }));
+}
+
 export interface QualityReport {
   id: string;
   farmAccountId: string;
@@ -48,6 +67,7 @@ export interface QualityReport {
   // Sign off
   signoffName: string | null;
   submittedAt: number | null;
+  submittedByUserId: string | null;
   generalComment: string | null;
 }
 
@@ -142,6 +162,7 @@ export async function loadQualityReports(): Promise<QualityReport[]> {
     qrPackProcessingSpeed: parseNum(row.qrPackProcessingSpeed),
     signoffName: parseStr(row.signoffName),
     submittedAt: parseNum(row.submittedAt),
+    submittedByUserId: parseStr(row.submittedByUserId),
     generalComment: parseStr(row.generalComment),
   }));
 }

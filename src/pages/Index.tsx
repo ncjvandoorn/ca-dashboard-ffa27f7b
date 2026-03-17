@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { useAccounts, useQualityReports, useActivities } from "@/hooks/useQualityData";
+import { useAccounts, useQualityReports, useActivities, useUsers } from "@/hooks/useQualityData";
 import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -47,6 +47,7 @@ const Index = () => {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const { data: activities } = useActivities();
+  const { data: users } = useUsers();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("0e668ede-6c66-4bf0-a87c-043303dfd5a7");
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
@@ -108,6 +109,15 @@ const Index = () => {
   }, [yearFilteredReports, activeFarmId]);
 
   const farmName = accounts?.find((a) => a.id === activeFarmId)?.name || farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
+
+  // Find the manager name from the last quality report's submittedByUserId
+  const managerName = useMemo(() => {
+    if (!farmReports.length || !users?.length) return null;
+    const lastReport = farmReports[farmReports.length - 1];
+    if (!lastReport.submittedByUserId) return null;
+    const user = users.find((u) => u.id === lastReport.submittedByUserId);
+    return user?.name || null;
+  }, [farmReports, users]);
 
   const handleDashboardExport = useCallback(async () => {
     if (!dashboardRef.current) return;
@@ -192,6 +202,9 @@ const Index = () => {
                 <p className="text-sm text-foreground">
                   Showing <span className="font-semibold">{farmReports.length}</span> reports for{" "}
                   <span className="font-semibold">{farmName}</span>
+                  {managerName && (
+                    <span className="text-muted-foreground"> | {managerName}</span>
+                  )}
                   {selectedYear !== "all" && (
                     <span className="text-muted-foreground"> · 20{selectedYear}</span>
                   )}

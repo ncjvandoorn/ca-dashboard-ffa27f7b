@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { loadAccounts, loadQualityReports, loadActivities } from "@/lib/csvParser";
+import { loadAccounts, loadQualityReports, loadActivities, loadUsers } from "@/lib/csvParser";
 
 export function useAccounts() {
   return useQuery({
@@ -21,6 +21,14 @@ export function useActivities() {
   return useQuery({
     queryKey: ["activities"],
     queryFn: loadActivities,
+    staleTime: Infinity,
+  });
+}
+
+export function useUsers() {
+  return useQuery({
+    queryKey: ["users"],
+    queryFn: loadUsers,
     staleTime: Infinity,
   });
 }
