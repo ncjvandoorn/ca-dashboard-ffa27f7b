@@ -186,6 +186,62 @@ const Admin = () => {
           </CardContent>
         </Card>
 
+        {/* Data File Uploads */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Upload className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Data Files</CardTitle>
+                <CardDescription>Upload updated data files. Keep the same filename format.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {DATA_FILES.map(({ key, label, accept, icon: Icon }) => (
+                <div key={key} className="border border-border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{label}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground font-mono">{key}</p>
+                  <label className="block">
+                    <input
+                      type="file"
+                      accept={accept}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(key, file);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2"
+                      disabled={uploading === key}
+                      asChild
+                    >
+                      <span>
+                        {uploading === key ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5" />
+                        )}
+                        {uploading === key ? "Uploading…" : "Upload"}
+                      </span>
+                    </Button>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Login Logbook */}
         <Card>
           <CardHeader>
