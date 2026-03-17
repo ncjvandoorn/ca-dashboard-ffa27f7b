@@ -76,6 +76,87 @@ export async function loadTrials(): Promise<Trial[]> {
   })).filter((t) => t.trialNumber !== "");
 }
 
+/** Schedule violation info */
+export interface ScheduleViolation {
+  trial: Trial;
+  issues: string[];
+}
+
+/**
+ * Validate a trial's schedule against the standard rules.
+ * TC and Commercial trials must follow exact schedules:
+ * - SF: starts Thursday, CA 28 days, transport starts Thursday 6 days, VL starts Wednesday 14 days
+ * - VL: starts Tuesday, 14 days (no CA or transport)
+ * R&D trials are exempt.
+ */
+export function validateTrialSchedule(trial: Trial): ScheduleViolation | null {
+  const client = trial.trialClient.toLowerCase().trim();
+  // Only validate TC and Commercial
+  if (client !== "tc" && client !== "commercial") return null;
+
+  const issues: string[] = [];
+
+  const getDayName = (dateStr: string): string => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr + "T00:00:00Z");
+    return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][d.getUTCDay()];
+  };
+
+  const getDayNum = (dateStr: string): number => {
+    if (!dateStr) return -1;
+    return new Date(dateStr + "T00:00:00Z").getUTCDay();
+  };
+
+  if (trial.trialType === "SF") {
+    // Start must be Thursday (4)
+    if (trial.startDate && getDayNum(trial.startDate) !== 4) {
+      issues.push(`CA start is ${getDayName(trial.startDate)}, should be Thursday`);
+    }
+    // CA duration must be 28
+    if (trial.caDuration !== 28) {
+      issues.push(`CA duration is ${trial.caDuration} days, should be 28`);
+    }
+    // Transport start (= CA end) should be Thursday
+    if (trial.startDate && trial.caDuration > 0) {
+      const transportStart = addDays(trial.startDate, trial.caDuration);
+      if (getDayNum(transportStart) !== 4) {
+        issues.push(`Transport/Retail start is ${getDayName(transportStart)}, should be Thursday`);
+      }
+    }
+    // VL start must be Wednesday (3)
+    if (trial.vlStart && getDayNum(trial.vlStart) !== 3) {
+      issues.push(`VL start is ${getDayName(trial.vlStart)}, should be Wednesday`);
+    }
+    // VL duration must be 14
+    if (trial.vlDuration !== 14) {
+      issues.push(`VL duration is ${trial.vlDuration} days, should be 14`);
+    }
+    // Transport duration should be 6 days
+    if (trial.startDate && trial.vlStart && trial.caDuration > 0) {
+      const transportStart = addDays(trial.startDate, trial.caDuration);
+      const transportDays = daysBetween(transportStart, trial.vlStart);
+      if (transportDays !== 6) {
+        issues.push(`Transport/Retail duration is ${transportDays} days, should be 6`);
+      }
+    }
+  } else if (trial.trialType === "VL") {
+    // VL start must be Tuesday (2)
+    if (trial.vlStart && getDayNum(trial.vlStart) !== 2) {
+      issues.push(`VL start is ${getDayName(trial.vlStart)}, should be Tuesday`);
+    }
+    // VL duration must be 14
+    if (trial.vlDuration !== 14) {
+      issues.push(`VL duration is ${trial.vlDuration} days, should be 14`);
+    }
+    // Should have no CA
+    if (trial.caDuration > 0) {
+      issues.push(`VL trial should not have CA duration (has ${trial.caDuration} days)`);
+    }
+  }
+
+  return issues.length > 0 ? { trial, issues } : null;
+}
+
 /** Trial info attached to a capacity row */
 export interface CapacityTrialInfo {
   trial: Trial;

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { loadTrials, buildCapacityTable, type Trial, type CapacityRow, type CapacityTrialInfo } from "@/lib/trialsParser";
+import { loadTrials, buildCapacityTable, validateTrialSchedule, type Trial, type CapacityRow, type CapacityTrialInfo, type ScheduleViolation } from "@/lib/trialsParser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,7 +14,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut, Download, History, CalendarDays } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut, Download, History, CalendarDays, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -116,6 +117,21 @@ export default function Trials() {
       return buildCapacityTable(trials, start.toISOString().slice(0, 10), 90);
     }
   }, [trials, today, capacityView]);
+
+  // Schedule violations map: trialNumber -> violation
+  const violationMap = useMemo(() => {
+    const map = new Map<string, ScheduleViolation>();
+    for (const trial of trials) {
+      const v = validateTrialSchedule(trial);
+      if (v) map.set(trial.trialNumber, v);
+    }
+    return map;
+  }, [trials]);
+
+  // Dialog state for schedule violation details
+  const [violationDialogOpen, setViolationDialogOpen] = useState(false);
+  const [selectedViolations, setSelectedViolations] = useState<ScheduleViolation[]>([]);
+  const [selectedViolationDate, setSelectedViolationDate] = useState("");
 
   // Find peak VL usage
   const peakVL = useMemo(() => Math.max(...capacityRows.map((r) => r.vlRoom), 0), [capacityRows]);
@@ -234,11 +250,40 @@ export default function Trials() {
                       const weekend = isWeekend(row.date);
                       const vlOver = row.vlRoom >= VL_CAPACITY;
                       const hasTrials = row.trials.length > 0;
+                      // Check for schedule violations among trials active on this date
+                      const rowViolations: ScheduleViolation[] = [];
+                      const seenTrials = new Set<string>();
+                      for (const info of row.trials) {
+                        if (seenTrials.has(info.trial.trialNumber)) continue;
+                        seenTrials.add(info.trial.trialNumber);
+                        const v = violationMap.get(info.trial.trialNumber);
+                        if (v) rowViolations.push(v);
+                      }
+                      const hasViolation = rowViolations.length > 0;
                       return (
                         <Popover key={row.date}>
                           <PopoverTrigger asChild>
                             <TableRow className={`${weekend ? "bg-muted/30" : ""} ${hasTrials ? "cursor-pointer hover:bg-accent/10" : ""}`}>
-                              <TableCell className="font-mono text-xs sticky left-0 bg-card z-10">{row.date}</TableCell>
+                              <TableCell className="font-mono text-xs sticky left-0 bg-card z-10">
+                                <span className="inline-flex items-center gap-1.5">
+                                  {row.date}
+                                  {hasViolation && (
+                                    <button
+                                      type="button"
+                                      className="text-warning hover:text-warning/80 transition-colors"
+                                      title="Schedule violation"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedViolations(rowViolations);
+                                        setSelectedViolationDate(row.date);
+                                        setViolationDialogOpen(true);
+                                      }}
+                                    >
+                                      <AlertTriangle className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                </span>
+                              </TableCell>
                               <TableCell className="text-center text-xs text-muted-foreground">{dayName}</TableCell>
                               <TableCell className="text-center tabular-nums">{row.ca1 || ""}</TableCell>
                               <TableCell className="text-center tabular-nums">{row.ca2 || ""}</TableCell>
@@ -407,6 +452,43 @@ export default function Trials() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Schedule Violation Dialog */}
+        <Dialog open={violationDialogOpen} onOpenChange={setViolationDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-warning" />
+                Schedule Violations — {selectedViolationDate}
+              </DialogTitle>
+              <DialogDescription>
+                The following TC/Commercial trials are not following the standard schedule.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="divide-y divide-border max-h-[400px] overflow-auto">
+              {selectedViolations.map((v, idx) => (
+                <div key={idx} className="py-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold">{v.trial.trialReference || v.trial.trialNumber}</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      v.trial.trialType === "SF" ? "bg-warning/15 text-warning" : "bg-primary/10 text-primary"
+                    }`}>
+                      {v.trial.trialType} — {v.trial.trialClient}
+                    </span>
+                  </div>
+                  <ul className="space-y-1">
+                    {v.issues.map((issue, j) => (
+                      <li key={j} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <span className="text-warning mt-0.5">•</span>
+                        {issue}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
