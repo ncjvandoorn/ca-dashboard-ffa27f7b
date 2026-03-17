@@ -31,6 +31,12 @@ interface QuestionLog {
   asked_at: string;
 }
 
+const DATA_FILES = [
+  { key: "trials.xlsx", label: "Trials Data", accept: ".xlsx", icon: FileSpreadsheet },
+  { key: "qualityReport.csv", label: "Quality Report", accept: ".csv", icon: FileText },
+  { key: "account.csv", label: "Account Data", accept: ".csv", icon: FileText },
+] as const;
+
 const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -39,9 +45,25 @@ const Admin = () => {
   const [logsLoading, setLogsLoading] = useState(true);
   const [questions, setQuestions] = useState<QuestionLog[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [uploading, setUploading] = useState<string | null>(null);
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleFileUpload = async (filename: string, file: File) => {
+    setUploading(filename);
+    try {
+      const { error } = await supabase.storage
+        .from("data-files")
+        .upload(filename, file, { upsert: true, cacheControl: "0" });
+      if (error) throw error;
+      toast({ title: "Uploaded", description: `${filename} updated successfully. Refresh the dashboard to see changes.` });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const fetchLogs = async () => {
     setLogsLoading(true);
