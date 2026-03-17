@@ -342,10 +342,6 @@ export default function Trials() {
           <TabsContent value="overview">
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
-              <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled={exporting} onClick={() => handleExport(overviewRef, "Trial-Overview")}>
-                <Download className="h-4 w-4" />
-                PDF
-              </Button>
               <div className="relative flex-1 min-w-[200px] max-w-[320px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -383,6 +379,12 @@ export default function Trials() {
                 </SelectContent>
               </Select>
               <span className="text-xs text-muted-foreground tabular-nums">{filteredTrials.length} trials</span>
+              <div className="ml-auto">
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled={exporting} onClick={() => handleExport(overviewRef, "Trial-Overview")}>
+                  <Download className="h-4 w-4" />
+                  PDF
+                </Button>
+              </div>
             </div>
 
             <div ref={overviewRef} className="bg-card rounded-xl shadow-card overflow-hidden">
