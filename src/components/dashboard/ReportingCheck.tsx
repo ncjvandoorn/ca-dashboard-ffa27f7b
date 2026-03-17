@@ -22,6 +22,7 @@ interface ReportingCheckProps {
 interface FarmCompliance {
   farmId: string;
   farmName: string;
+  managerName: string | null;
   totalReports: number;
   qualityNotesFilled: number;
   protocolNotesFilled: number;
