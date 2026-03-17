@@ -138,7 +138,7 @@ export default function Trials() {
       const v = validateTrialSchedule(trial);
       if (v) map.set(trial.trialNumber, v);
     }
-    console.log("[Violations]", map.size, "violations found. Clients:", [...new Set(trials.map(t => t.trialClient))]);
+    
     return map;
   }, [trials]);
 
