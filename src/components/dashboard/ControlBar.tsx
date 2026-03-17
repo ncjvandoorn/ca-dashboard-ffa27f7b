@@ -75,6 +75,9 @@ export function ControlBar({ accounts, selectedFarmId, onFarmChange, years, sele
             </span>
           </div>
           <div className="flex items-center gap-1 ml-2 border-l border-border pl-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/trials")} title="Trial Planning">
+              <FlaskConical className="h-4 w-4" />
+            </Button>
             {isAdmin && (
               <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin Settings">
                 <Settings className="h-4 w-4" />
