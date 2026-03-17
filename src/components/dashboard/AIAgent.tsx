@@ -87,7 +87,27 @@ export function AIAgent({ reports, accounts, activities, exceptionAnalysis, seas
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContentRef = useRef<HTMLDivElement>(null);
 
-  const farmData = useMemo(() => buildFarmDataContext(reports, accounts), [reports, accounts]);
+  const farmData = useMemo(() => {
+    const base = buildFarmDataContext(reports, accounts);
+    // Attach activities per farm
+    if (activities?.length) {
+      const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
+      for (const summary of base) {
+        const farmActivities = activities
+          .filter((a) => a.accountId === summary.farmId)
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+          .slice(0, 20)
+          .map((a) => ({
+            type: a.type,
+            status: a.status,
+            subject: a.subject,
+            date: a.startsAt ? new Date(a.startsAt).toISOString().slice(0, 10) : null,
+          }));
+        (summary as any).recentActivities = farmActivities;
+      }
+    }
+    return base;
+  }, [reports, accounts, activities]);
 
   useEffect(() => {
     if (scrollRef.current) {
