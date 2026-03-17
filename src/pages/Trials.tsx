@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut, Download } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut, Download, History, CalendarDays } from "lucide-react";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
