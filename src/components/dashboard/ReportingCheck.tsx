@@ -61,6 +61,12 @@ export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps
       const total = farmReports.length;
       if (total === 0) continue;
 
+      // Find manager from last report
+      const sorted = [...farmReports].sort((a, b) => a.weekNr - b.weekNr);
+      const lastReport = sorted[sorted.length - 1];
+      const managerName = lastReport.submittedByUserId ? (userMap.get(lastReport.submittedByUserId) || null) : null;
+      if (total === 0) continue;
+
       const qualityNotesFilled = farmReports.filter((r) => isNoteFilled(r.qrGenQualityFlowers)).length;
       const protocolNotesFilled = farmReports.filter((r) => isNoteFilled(r.qrGenProtocolChanges)).length;
       const generalCommentFilled = farmReports.filter((r) => isNoteFilled(r.generalComment)).length;
