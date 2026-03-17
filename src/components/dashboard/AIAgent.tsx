@@ -37,6 +37,38 @@ const SAMPLE_QUESTIONS = [
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-agent`;
 
+/** Strip null/undefined/empty values to reduce JSON size */
+function compact(obj: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== null && v !== undefined && v !== "") result[k] = v;
+  }
+  return result;
+}
+
+/** Pre-aggregated staff report counts for attribution questions */
+function buildStaffSummary(reports: QualityReport[], users: User[]) {
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
+  const counts = new Map<string, { name: string; created: number; submitted: number; farms: Set<string> }>();
+
+  for (const r of reports) {
+    if (r.weekNr <= 0) continue;
+    const userId = r.createdByUserId || r.submittedByUserId;
+    if (!userId) continue;
+    if (!counts.has(userId)) {
+      counts.set(userId, { name: userMap.get(userId) || userId, created: 0, submitted: 0, farms: new Set() });
+    }
+    const entry = counts.get(userId)!;
+    if (r.createdByUserId === userId) entry.created++;
+    if (r.submittedByUserId === userId) entry.submitted++;
+    entry.farms.add(r.farmAccountId);
+  }
+
+  return Array.from(counts.values())
+    .map((e) => ({ name: e.name, reportsCreated: e.created, reportsSubmitted: e.submitted, farmsCount: e.farms.size }))
+    .sort((a, b) => b.reportsCreated - a.reportsCreated);
+}
+
 function buildFarmDataContext(reports: QualityReport[], accounts: Account[], users: User[]) {
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
   const userMap = new Map(users.map((u) => [u.id, u.name]));
@@ -52,42 +84,18 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[], use
   for (const [farmId, farmReports] of byFarm) {
     const sorted = [...farmReports].sort((a, b) => a.weekNr - b.weekNr);
     summaries.push({
-      farmId,
-      farmName: accountMap.get(farmId) || farmId,
-      weeklyData: sorted.map((r) => ({
-        week: r.weekNr,
-        intakePh: r.qrIntakePh,
-        intakeEc: r.qrIntakeEc,
-        intakeTemp: r.qrIntakeTempColdstore,
-        intakeHumidity: r.qrIntakeHumidityColdstore,
-        exportPh: r.qrExportPh,
-        exportEc: r.qrExportEc,
-        exportTemp: r.qrExportTempColdstore,
-        exportHumidity: r.qrExportHumidityColdstore,
-        qualityRating: r.qrGenQualityRating,
-        waterQuality: r.qrIntakeWaterQuality,
-        processingSpeed: r.qrPackProcessingSpeed,
-        stemLength: r.qrIntakeStemLength,
-        headSize: r.qrIntakeHeadSize,
-        coldStoreHours: r.qrIntakeColdstoreHours,
-        qualityNote: r.qrGenQualityFlowers,
-        protocolNote: r.qrGenProtocolChanges,
-        generalComment: r.generalComment,
-        signoffName: r.signoffName,
-        createdBy: r.createdByUserId ? userMap.get(r.createdByUserId) || r.createdByUserId : null,
-        submittedBy: r.submittedByUserId ? userMap.get(r.submittedByUserId) || r.submittedByUserId : null,
-        updatedBy: r.updatedByUserId ? userMap.get(r.updatedByUserId) || r.updatedByUserId : null,
-        dippingLocation: r.qrGenDippingLocation,
-        intakeTreatment: r.qrIntakeTreatment,
-        exportTreatment: r.qrExportTreatment,
-        exportWaterQuality: r.qrExportWaterQuality,
-        exportColdStoreHours: r.qrExportColdstoreHours,
-        packingQuality: r.qrDispatchPackingQuality,
-        packrate: r.qrDispatchPackrate,
-        truckType: r.qrDispatchTruckType,
-        usedLiner: r.qrDispatchUsedLiner,
-        dippingStand: r.qrIntakeDippingStand,
-        usingNets: r.qrIntakeUsingNets,
+      farm: accountMap.get(farmId) || farmId,
+      d: sorted.map((r) => compact({
+        w: r.weekNr,
+        iPh: r.qrIntakePh, iEc: r.qrIntakeEc, iT: r.qrIntakeTempColdstore, iH: r.qrIntakeHumidityColdstore,
+        ePh: r.qrExportPh, eEc: r.qrExportEc, eT: r.qrExportTempColdstore, eH: r.qrExportHumidityColdstore,
+        qR: r.qrGenQualityRating, wQ: r.qrIntakeWaterQuality, pS: r.qrPackProcessingSpeed,
+        sL: r.qrIntakeStemLength, hS: r.qrIntakeHeadSize, cH: r.qrIntakeColdstoreHours,
+        qN: r.qrGenQualityFlowers, pN: r.qrGenProtocolChanges, gC: r.generalComment,
+        cBy: r.createdByUserId ? userMap.get(r.createdByUserId) || null : null,
+        sby: r.submittedByUserId ? userMap.get(r.submittedByUserId) || null : null,
+        pQ: r.qrDispatchPackingQuality, pR: r.qrDispatchPackrate,
+        eWQ: r.qrExportWaterQuality, eCH: r.qrExportColdstoreHours,
       })),
     });
   }
