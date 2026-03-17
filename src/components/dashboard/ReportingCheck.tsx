@@ -39,7 +39,7 @@ function isNoteFilled(value: string | null): boolean {
   return trimmed.length > 0 && trimmed !== "-" && trimmed !== "n/a" && trimmed !== "na" && trimmed !== "none";
 }
 
-export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
+export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps) {
   const [open, setOpen] = useState(false);
   const [expandedFarm, setExpandedFarm] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
