@@ -183,19 +183,56 @@ export default function Trials() {
                       const dayName = new Date(row.date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
                       const weekend = isWeekend(row.date);
                       const vlOver = row.vlRoom >= VL_CAPACITY;
+                      const hasTrials = row.trials.length > 0;
                       return (
-                        <TableRow key={row.date} className={weekend ? "bg-muted/30" : ""}>
-                          <TableCell className="font-mono text-xs sticky left-0 bg-card z-10">{row.date}</TableCell>
-                          <TableCell className="text-center text-xs text-muted-foreground">{dayName}</TableCell>
-                          <TableCell className="text-center tabular-nums">{row.ca1 || ""}</TableCell>
-                          <TableCell className="text-center tabular-nums">{row.ca2 || ""}</TableCell>
-                          <TableCell className="text-center tabular-nums">{row.ca3 || ""}</TableCell>
-                          <TableCell className="text-center tabular-nums">{row.ca4 || ""}</TableCell>
-                          <TableCell className="text-center tabular-nums">{row.transport || ""}</TableCell>
-                          <TableCell className={`text-center tabular-nums font-semibold ${vlOver ? "text-destructive bg-destructive/10" : row.vlRoom > 0 ? "text-primary" : ""}`}>
-                            {row.vlRoom || ""}
-                          </TableCell>
-                        </TableRow>
+                        <Popover key={row.date}>
+                          <PopoverTrigger asChild>
+                            <TableRow className={`${weekend ? "bg-muted/30" : ""} ${hasTrials ? "cursor-pointer hover:bg-accent/10" : ""}`}>
+                              <TableCell className="font-mono text-xs sticky left-0 bg-card z-10">{row.date}</TableCell>
+                              <TableCell className="text-center text-xs text-muted-foreground">{dayName}</TableCell>
+                              <TableCell className="text-center tabular-nums">{row.ca1 || ""}</TableCell>
+                              <TableCell className="text-center tabular-nums">{row.ca2 || ""}</TableCell>
+                              <TableCell className="text-center tabular-nums">{row.ca3 || ""}</TableCell>
+                              <TableCell className="text-center tabular-nums">{row.ca4 || ""}</TableCell>
+                              <TableCell className="text-center tabular-nums">{row.transport || ""}</TableCell>
+                              <TableCell className={`text-center tabular-nums font-semibold ${vlOver ? "text-destructive bg-destructive/10" : row.vlRoom > 0 ? "text-primary" : ""}`}>
+                                {row.vlRoom || ""}
+                              </TableCell>
+                            </TableRow>
+                          </PopoverTrigger>
+                          {hasTrials && (
+                            <PopoverContent className="w-[420px] max-h-[400px] overflow-auto p-0" side="right" align="start">
+                              <div className="px-4 py-3 border-b border-border">
+                                <p className="text-sm font-semibold">{row.date} — {row.trials.length} trial(s)</p>
+                              </div>
+                              <div className="divide-y divide-border">
+                                {row.trials.map((info, idx) => (
+                                  <div key={idx} className="px-4 py-3 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-mono text-muted-foreground">{info.trial.trialReference}</span>
+                                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                        info.phase === "ca" ? "bg-secondary text-secondary-foreground" :
+                                        info.phase === "transport" ? "bg-warning/15 text-warning" :
+                                        "bg-primary/10 text-primary"
+                                      }`}>
+                                        {info.phase === "ca" ? `CA (${info.chamber})` : info.phase === "transport" ? "Transport/Retail" : "VL Room"}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
+                                      <span className="text-muted-foreground">Farm</span><span>{info.trial.farm}</span>
+                                      <span className="text-muted-foreground">Customer</span><span>{info.trial.customer}</span>
+                                      <span className="text-muted-foreground">Client</span><span>{info.trial.trialClient}</span>
+                                      <span className="text-muted-foreground">Type</span><span>{info.trial.trialType}</span>
+                                      <span className="text-muted-foreground">Crop</span><span>{info.trial.flowerCrop}</span>
+                                      <span className="text-muted-foreground">Variety</span><span>{info.trial.variety}</span>
+                                      <span className="text-muted-foreground">Vases</span><span>{info.trial.bunches}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          )}
+                        </Popover>
                       );
                     })}
                   </TableBody>
