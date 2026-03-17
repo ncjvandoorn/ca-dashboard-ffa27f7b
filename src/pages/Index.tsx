@@ -110,6 +110,15 @@ const Index = () => {
 
   const farmName = accounts?.find((a) => a.id === activeFarmId)?.name || farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
 
+  // Find the manager name from the last quality report's submittedByUserId
+  const managerName = useMemo(() => {
+    if (!farmReports.length || !users?.length) return null;
+    const lastReport = farmReports[farmReports.length - 1];
+    if (!lastReport.submittedByUserId) return null;
+    const user = users.find((u) => u.id === lastReport.submittedByUserId);
+    return user?.name || null;
+  }, [farmReports, users]);
+
   const handleDashboardExport = useCallback(async () => {
     if (!dashboardRef.current) return;
     try {
