@@ -181,6 +181,9 @@ export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps
                   <div className="flex items-center gap-2">
                     {statusIcon(farm.overallPct)}
                     <span className="font-medium text-sm text-foreground">{farm.farmName}</span>
+                    {farm.managerName && (
+                      <span className="text-xs text-muted-foreground">| {farm.managerName}</span>
+                    )}
                     <span className="text-xs text-muted-foreground">({farm.totalReports} reports)</span>
                   </div>
                   <div className="flex items-center gap-3">
