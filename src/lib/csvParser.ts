@@ -67,6 +67,7 @@ export interface QualityReport {
   // Sign off
   signoffName: string | null;
   submittedAt: number | null;
+  submittedByUserId: string | null;
   generalComment: string | null;
 }
 
