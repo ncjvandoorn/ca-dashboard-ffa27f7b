@@ -140,9 +140,9 @@ export function validateTrialSchedule(trial: Trial): ScheduleViolation | null {
       }
     }
   } else if (trial.trialType === "VL") {
-    // VL start must be Tuesday (2)
-    if (trial.vlStart && getDayNum(trial.vlStart) !== 2) {
-      issues.push(`VL start is ${getDayName(trial.vlStart)}, should be Tuesday`);
+    // VL start must be Monday (1)
+    if (trial.vlStart && getDayNum(trial.vlStart) !== 1) {
+      issues.push(`VL start is ${getDayName(trial.vlStart)}, should be Monday`);
     }
     // VL duration must be 14
     if (trial.vlDuration !== 14) {
