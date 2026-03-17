@@ -12,55 +12,42 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, farmData, exceptionAnalysis, seasonalityAnalysis } = await req.json();
+    const { messages, farmData, staffSummary, exceptionAnalysis, seasonalityAnalysis } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are a data analyst for Chrysal's cut flower post-harvest quality monitoring system. You have access to the COMPLETE farm quality report dataset across ALL years, CRM activity data, user/staff information, and AI-generated insights.
+    const systemPrompt = `You are a data analyst for Chrysal's cut flower post-harvest quality monitoring system. You have access to the COMPLETE farm quality report dataset across ALL years, staff attribution data, CRM activities, and AI-generated insights.
 
-You understand the following data fields for each weekly quality report per farm:
-- **pH (Intake & Export)**: Water pH. Ideal 3.5–5.0. Above 5.5 = bacterial risk.
-- **EC (Intake & Export)**: Electrical Conductivity in μS/cm. Ideal 200–800. High = stem blockage risk.
-- **Cold store temperature (Intake & Export)**: Should be 1–4°C. Spikes above 6°C = quality risk.
-- **Cold store humidity (Intake & Export)**: Should be 80–95%. Below 70% = dehydration. Above 95% = Botrytis risk.
-- **Quality rating**: 1=Good, 2=Average, 3=Bad.
-- **Water quality rating**: Same scale.
-- **Processing speed rating**: Same scale.
-- **Stem length & head size**: Measured values.
-- **Cold store hours (Intake & Export)**: Time spent in cold storage.
-- **Quality flowers note**: Staff observations about flower quality (diseases, damage, pests).
-- **Protocol changes note**: Staff observations about protocol deviations.
-- **General comment**: Additional sign-off notes.
-- **Dipping location, treatments (intake & export)**: Chemical treatment details.
-- **Packing quality, packrate, truck type, used liner**: Dispatch quality data.
-- **Dipping stand, using nets**: Intake handling data.
-- **createdBy**: The name of the person who created/filled in the quality report.
-- **submittedBy**: The name of the person who submitted the report.
-- **updatedBy**: The name of the person who last updated the report.
-- **signoffName**: The sign-off name on the report.
-- **weekNr format**: YYWW (e.g., 2612 = week 12 of 2026, 2540 = week 40 of 2025).
+DATA FORMAT — each farm has "d" (weekly data array) with abbreviated keys:
+w=weekNr(YYWW), iPh=intakePH, iEc=intakeEC, iT=intakeTemp, iH=intakeHumidity, ePh=exportPH, eEc=exportEC, eT=exportTemp, eH=exportHumidity, qR=qualityRating(1=Good,2=Avg,3=Bad), wQ=waterQuality, pS=processingSpeed, sL=stemLength, hS=headSize, cH=coldStoreHours, qN=qualityNote, pN=protocolNote, gC=generalComment, cBy=createdBy(person name), sby=submittedBy(person name), pQ=packingQuality, pR=packrate, eWQ=exportWaterQuality, eCH=exportColdStoreHours.
 
-IMPORTANT: The data spans ALL years (not just the current year). When asked about "who did the most reports", count the number of weekly reports where createdBy or submittedBy matches a person's name. Do NOT rely on comments alone — use the createdBy/submittedBy fields.
+STAFF SUMMARY — a pre-aggregated table showing each person's total reportsCreated, reportsSubmitted, and number of farms they cover. Use this for "who did the most reports" type questions.
+
+IDEAL RANGES: pH 3.5–5.0 (>5.5=bacterial risk), EC 200–800 μS/cm, Temp 1–4°C (>6°C=risk), Humidity 80–95%.
 
 When answering:
-1. Be specific — cite farm names, week numbers, and actual values.
-2. When asked for tables, format them as markdown tables.
-3. When asked about trends, describe direction and magnitude.
+1. Be specific — cite farm names, week numbers, actual values, and person names.
+2. Format tables as markdown tables when asked.
+3. For attribution questions (who created/submitted reports), use the staffSummary data AND the cBy/sby fields in weekly data.
 4. Be concise but thorough. Use bullet points for lists.
-5. If the data doesn't contain enough information to answer, say so clearly.
-6. You have access to CRM activity data per farm (visits, calls, tasks) and AI-generated exception and seasonality reports — use these to provide richer context.
-7. When suggesting actions, consider post-harvest products for water quality/pH/EC issues and protocol improvements for handling/temperature/humidity problems.
-8. You can answer questions about individual staff members, their report counts, which farms they manage, and performance comparisons.`;
+5. If data is insufficient, say so clearly.
+6. Use CRM activity data and AI exception/seasonality reports for richer context.
+7. Suggest post-harvest products for water/pH/EC issues, protocol improvements for handling/temperature/humidity.`;
 
     let userContextMessage = farmData
-      ? `Here is the current farm quality data I have access to:\n\n${JSON.stringify(farmData, null, 1)}\n\nPlease use this data to answer the user's questions.`
-      : "No farm data is currently available.";
+      ? `Farm quality data (compressed):\n${JSON.stringify(farmData)}`
+      : "No farm data available.";
+
+    if (staffSummary) {
+      userContextMessage += `\n\nStaff report attribution summary:\n${JSON.stringify(staffSummary)}`;
+    }
 
     if (exceptionAnalysis) {
-      userContextMessage += `\n\nHere is the latest AI Exception Report analysis (quality issues, farm insights, industry insight):\n${JSON.stringify(exceptionAnalysis, null, 1)}`;
+    if (exceptionAnalysis) {
+      userContextMessage += `\n\nException Report:\n${JSON.stringify(exceptionAnalysis)}`;
     }
     if (seasonalityAnalysis) {
-      userContextMessage += `\n\nHere is the latest AI Seasonality Report analysis (seasonal patterns, weather deductions):\n${JSON.stringify(seasonalityAnalysis, null, 1)}`;
+      userContextMessage += `\n\nSeasonality Report:\n${JSON.stringify(seasonalityAnalysis)}`;
     }
 
     const allMessages = [
