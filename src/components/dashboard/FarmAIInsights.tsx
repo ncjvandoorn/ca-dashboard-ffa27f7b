@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield } from "lucide-react";
+import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield, ClipboardList } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
+import type { Activity } from "@/lib/csvParser";
 
 interface FarmInsight {
   farmId: string;
