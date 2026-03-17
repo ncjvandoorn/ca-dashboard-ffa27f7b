@@ -51,7 +51,22 @@ const Index = () => {
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
+  const [exceptionAnalysis, setExceptionAnalysis] = useState<any>(null);
+  const [seasonalityAnalysis, setSeasonalityAnalysis] = useState<any>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
+
+  // Load cached AI analyses for AI agent context
+  useEffect(() => {
+    async function loadCachedAnalyses() {
+      const [exc, sea] = await Promise.all([
+        supabase.from("exception_report_cache").select("analysis").order("created_at", { ascending: false }).limit(1).single(),
+        supabase.from("seasonality_report_cache").select("analysis").order("created_at", { ascending: false }).limit(1).single(),
+      ]);
+      if (exc.data?.analysis) setExceptionAnalysis(exc.data.analysis);
+      if (sea.data?.analysis) setSeasonalityAnalysis(sea.data.analysis);
+    }
+    loadCachedAnalyses();
+  }, []);
 
 
   // Extract available years from data
