@@ -79,6 +79,7 @@ export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps
       results.push({
         farmId,
         farmName: accountMap.get(farmId) || farmId,
+        managerName,
         totalReports: total,
         qualityNotesFilled,
         protocolNotesFilled,
