@@ -174,6 +174,7 @@ const Index = () => {
           <div ref={dashboardRef}>
             <ControlBar
               accounts={farmsWithData}
+              allAccounts={accounts || []}
               selectedFarmId={activeFarmId}
               onFarmChange={setSelectedFarmId}
               years={availableYears}
