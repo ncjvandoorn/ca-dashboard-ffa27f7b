@@ -481,7 +481,8 @@ export default function Trials() {
                         <TableCell className="text-center tabular-nums">{t.caDuration || "—"}</TableCell>
                         <TableCell className="text-center tabular-nums">{t.vlDuration}</TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
