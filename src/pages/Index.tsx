@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { useAccounts, useQualityReports, useActivities } from "@/hooks/useQualityData";
+import { useAccounts, useQualityReports, useActivities, useUsers } from "@/hooks/useQualityData";
 import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
