@@ -78,7 +78,7 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[]) {
   return summaries;
 }
 
-export function AIAgent({ reports, accounts }: AIAgentProps) {
+export function AIAgent({ reports, accounts, activities, exceptionAnalysis, seasonalityAnalysis }: AIAgentProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
