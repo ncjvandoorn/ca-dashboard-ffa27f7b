@@ -41,9 +41,16 @@ When answering:
 
 The data provided covers quality reports with weekly readings. The weekNr format is YYWW (e.g., 2612 = week 12 of 2026).`;
 
-    const userContextMessage = farmData
+    let userContextMessage = farmData
       ? `Here is the current farm quality data I have access to:\n\n${JSON.stringify(farmData, null, 1)}\n\nPlease use this data to answer the user's questions.`
       : "No farm data is currently available.";
+
+    if (exceptionAnalysis) {
+      userContextMessage += `\n\nHere is the latest AI Exception Report analysis (quality issues, farm insights, industry insight):\n${JSON.stringify(exceptionAnalysis, null, 1)}`;
+    }
+    if (seasonalityAnalysis) {
+      userContextMessage += `\n\nHere is the latest AI Seasonality Report analysis (seasonal patterns, weather deductions):\n${JSON.stringify(seasonalityAnalysis, null, 1)}`;
+    }
 
     const allMessages = [
       { role: "system", content: systemPrompt },
