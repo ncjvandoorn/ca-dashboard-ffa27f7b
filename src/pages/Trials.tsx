@@ -165,7 +165,8 @@ export default function Trials() {
 
           {/* ─── CAPACITY PLANNER ─── */}
           <TabsContent value="capacity">
-            <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center gap-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 flex items-center gap-4 flex-1">
               <div className="w-2 h-2 rounded-full bg-accent" />
               <p className="text-sm text-foreground">
                 Showing <span className="font-semibold">90-day</span> capacity forecast from today.
