@@ -45,6 +45,7 @@ const Index = () => {
   const { isAdmin } = useAuth();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
+  const { data: activities } = useActivities();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
