@@ -114,9 +114,14 @@ const Index = () => {
   const managerName = useMemo(() => {
     if (!farmReports.length || !users?.length) return null;
     const lastReport = farmReports[farmReports.length - 1];
-    if (!lastReport.submittedByUserId) return null;
-    const user = users.find((u) => u.id === lastReport.submittedByUserId);
-    return user?.name || null;
+    const userMap = new Map(users.map((u) => [u.id, u.name]));
+    return (
+      (lastReport.submittedByUserId ? userMap.get(lastReport.submittedByUserId) : null) ||
+      (lastReport.createdByUserId ? userMap.get(lastReport.createdByUserId) : null) ||
+      (lastReport.updatedByUserId ? userMap.get(lastReport.updatedByUserId) : null) ||
+      lastReport.signoffName ||
+      null
+    );
   }, [farmReports, users]);
 
   const handleDashboardExport = useCallback(async () => {
