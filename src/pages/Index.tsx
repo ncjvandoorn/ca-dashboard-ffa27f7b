@@ -256,7 +256,7 @@ const Index = () => {
             </div>
 
             {/* AI Insights for selected farm */}
-            <FarmAIInsights farmId={activeFarmId} />
+            <FarmAIInsights farmId={activeFarmId} farmName={farmName} activities={activities || []} />
 
             {/* Quality Tables */}
             <QualityTables reports={farmReports} />
