@@ -74,7 +74,14 @@ export async function loadTrials(): Promise<Trial[]> {
   })).filter((t) => t.trialNumber !== "");
 }
 
-/** Build capacity table: for each date, how many vases in CA1-CA4, Transport/Retail, VL Room */
+/** Trial info attached to a capacity row */
+export interface CapacityTrialInfo {
+  trial: Trial;
+  phase: "ca" | "transport" | "vl";
+  chamber?: string;
+}
+
+/** Build capacity table: for each date, how many boxes in CA1-CA4, vases in Transport/Retail & VL Room */
 export interface CapacityRow {
   date: string;
   ca1: number;
@@ -84,6 +91,7 @@ export interface CapacityRow {
   transport: number;
   vlRoom: number;
   total: number;
+  trials: CapacityTrialInfo[];
 }
 
 function addDays(dateStr: string, days: number): string {
@@ -108,46 +116,41 @@ export function buildCapacityTable(trials: Trial[], startDate: string, days: num
 
   for (let i = 0; i < days; i++) {
     const date = addDays(startDate, i);
-    const row: CapacityRow = { date, ca1: 0, ca2: 0, ca3: 0, ca4: 0, transport: 0, vlRoom: 0, total: 0 };
+    const row: CapacityRow = { date, ca1: 0, ca2: 0, ca3: 0, ca4: 0, transport: 0, vlRoom: 0, total: 0, trials: [] };
 
     for (const trial of trials) {
       if (!trial.startDate || !trial.vlStart || !trial.vlEnd) continue;
-      const bunches = trial.bunches;
-      if (bunches <= 0) continue;
 
       if (trial.trialType === "VL") {
-        // VL trial: vases in VL room from vlStart to vlEnd (exclusive of vlEnd)
+        if (trial.bunches <= 0) continue;
         if (date >= trial.vlStart && date < trial.vlEnd) {
-          row.vlRoom += bunches;
+          row.vlRoom += trial.bunches;
+          row.trials.push({ trial, phase: "vl" });
         }
       } else {
-        // SF trial: 
-        // Phase 1: CA chamber for caDuration days starting from startDate
+        // SF trial
         const caEnd = addDays(trial.startDate, trial.caDuration);
-        // Phase 2: transport/retail from caEnd to vlStart
-        // Phase 3: VL room from vlStart to vlEnd (exclusive of vlEnd)
-        
         const chambers = parseChambers(trial.caChamber);
-        
+
         if (date >= trial.startDate && date < caEnd) {
-          // In CA chamber(s) - split bunches across chambers
-          const perChamber = chambers.length > 0 ? bunches : 0;
-          // Actually bunches is total, distribute equally... 
-          // But from data it seems bunches is total. Put total in each listed chamber seems wrong.
-          // Looking at data: bunches=40, chambers=CA1,CA2,CA3,CA4 -> spread evenly
-          const bunchesPerChamber = chambers.length > 0 ? Math.ceil(bunches / chambers.length) : 0;
+          // CA phase uses BOXES
+          const boxes = trial.boxes > 0 ? trial.boxes : 1;
+          const boxesPerChamber = chambers.length > 0 ? Math.ceil(boxes / chambers.length) : 0;
           for (const ch of chambers) {
-            if (ch === "CA1") row.ca1 += bunchesPerChamber;
-            else if (ch === "CA2") row.ca2 += bunchesPerChamber;
-            else if (ch === "CA3") row.ca3 += bunchesPerChamber;
-            else if (ch === "CA4") row.ca4 += bunchesPerChamber;
+            if (ch === "CA1") row.ca1 += boxesPerChamber;
+            else if (ch === "CA2") row.ca2 += boxesPerChamber;
+            else if (ch === "CA3") row.ca3 += boxesPerChamber;
+            else if (ch === "CA4") row.ca4 += boxesPerChamber;
           }
+          row.trials.push({ trial, phase: "ca", chamber: trial.caChamber });
         } else if (date >= caEnd && date < trial.vlStart) {
-          // Transport/retail phase
-          row.transport += bunches;
+          if (trial.bunches <= 0) continue;
+          row.transport += trial.bunches;
+          row.trials.push({ trial, phase: "transport" });
         } else if (date >= trial.vlStart && date < trial.vlEnd) {
-          // VL room
-          row.vlRoom += bunches;
+          if (trial.bunches <= 0) continue;
+          row.vlRoom += trial.bunches;
+          row.trials.push({ trial, phase: "vl" });
         }
       }
     }
