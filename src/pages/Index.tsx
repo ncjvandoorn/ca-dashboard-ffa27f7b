@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef, useCallback } from "react";
-import { useAccounts, useQualityReports } from "@/hooks/useQualityData";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useAccounts, useQualityReports, useActivities } from "@/hooks/useQualityData";
 import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -16,6 +16,7 @@ import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
   const valid = values.filter((v): v is number => v !== null);
@@ -45,11 +46,27 @@ const Index = () => {
   const { isAdmin } = useAuth();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
+  const { data: activities } = useActivities();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
+  const [exceptionAnalysis, setExceptionAnalysis] = useState<any>(null);
+  const [seasonalityAnalysis, setSeasonalityAnalysis] = useState<any>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
+
+  // Load cached AI analyses for AI agent context
+  useEffect(() => {
+    async function loadCachedAnalyses() {
+      const [exc, sea] = await Promise.all([
+        supabase.from("exception_report_cache").select("analysis").order("created_at", { ascending: false }).limit(1).single(),
+        supabase.from("seasonality_report_cache").select("analysis").order("created_at", { ascending: false }).limit(1).single(),
+      ]);
+      if (exc.data?.analysis) setExceptionAnalysis(exc.data.analysis);
+      if (sea.data?.analysis) setSeasonalityAnalysis(sea.data.analysis);
+    }
+    loadCachedAnalyses();
+  }, []);
 
 
   // Extract available years from data
@@ -184,6 +201,9 @@ const Index = () => {
                 <AIAgent
                   reports={yearFilteredReports}
                   accounts={accounts || []}
+                  activities={activities || []}
+                  exceptionAnalysis={exceptionAnalysis}
+                  seasonalityAnalysis={seasonalityAnalysis}
                 />
                 {isAdmin && (
                   <ReportingCheck
@@ -255,7 +275,7 @@ const Index = () => {
             </div>
 
             {/* AI Insights for selected farm */}
-            <FarmAIInsights farmId={activeFarmId} />
+            <FarmAIInsights farmId={activeFarmId} farmName={farmName} activities={activities || []} />
 
             {/* Quality Tables */}
             <QualityTables reports={farmReports} />

@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, farmData } = await req.json();
+    const { messages, farmData, exceptionAnalysis, seasonalityAnalysis } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -38,12 +38,21 @@ When answering:
 3. When asked about trends, describe direction and magnitude.
 4. Be concise but thorough. Use bullet points for lists.
 5. If the data doesn't contain enough information to answer, say so clearly.
+6. You also have access to CRM activity data per farm (visits, calls, tasks) and AI-generated exception and seasonality reports — use these to provide richer context about farm performance and recommended actions.
+7. When suggesting actions, consider post-harvest products for water quality/pH/EC issues and protocol improvements for handling/temperature/humidity problems.
 
 The data provided covers quality reports with weekly readings. The weekNr format is YYWW (e.g., 2612 = week 12 of 2026).`;
 
-    const userContextMessage = farmData
+    let userContextMessage = farmData
       ? `Here is the current farm quality data I have access to:\n\n${JSON.stringify(farmData, null, 1)}\n\nPlease use this data to answer the user's questions.`
       : "No farm data is currently available.";
+
+    if (exceptionAnalysis) {
+      userContextMessage += `\n\nHere is the latest AI Exception Report analysis (quality issues, farm insights, industry insight):\n${JSON.stringify(exceptionAnalysis, null, 1)}`;
+    }
+    if (seasonalityAnalysis) {
+      userContextMessage += `\n\nHere is the latest AI Seasonality Report analysis (seasonal patterns, weather deductions):\n${JSON.stringify(seasonalityAnalysis, null, 1)}`;
+    }
 
     const allMessages = [
       { role: "system", content: systemPrompt },

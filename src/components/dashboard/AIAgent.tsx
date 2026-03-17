@@ -15,11 +15,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { QualityReport, Account } from "@/lib/csvParser";
+import type { QualityReport, Account, Activity } from "@/lib/csvParser";
 
 interface AIAgentProps {
   reports: QualityReport[];
   accounts: Account[];
+  activities?: Activity[];
+  exceptionAnalysis?: any;
+  seasonalityAnalysis?: any;
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -75,7 +78,7 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[]) {
   return summaries;
 }
 
-export function AIAgent({ reports, accounts }: AIAgentProps) {
+export function AIAgent({ reports, accounts, activities, exceptionAnalysis, seasonalityAnalysis }: AIAgentProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -84,7 +87,27 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContentRef = useRef<HTMLDivElement>(null);
 
-  const farmData = useMemo(() => buildFarmDataContext(reports, accounts), [reports, accounts]);
+  const farmData = useMemo(() => {
+    const base = buildFarmDataContext(reports, accounts);
+    // Attach activities per farm
+    if (activities?.length) {
+      const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
+      for (const summary of base) {
+        const farmActivities = activities
+          .filter((a) => a.accountId === summary.farmId)
+          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+          .slice(0, 20)
+          .map((a) => ({
+            type: a.type,
+            status: a.status,
+            subject: a.subject,
+            date: a.startsAt ? new Date(a.startsAt).toISOString().slice(0, 10) : null,
+          }));
+        (summary as any).recentActivities = farmActivities;
+      }
+    }
+    return base;
+  }, [reports, accounts, activities]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -133,6 +156,8 @@ export function AIAgent({ reports, accounts }: AIAgentProps) {
           body: JSON.stringify({
             messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
             farmData,
+            exceptionAnalysis: exceptionAnalysis || null,
+            seasonalityAnalysis: seasonalityAnalysis || null,
           }),
         });
 

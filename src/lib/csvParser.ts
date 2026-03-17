@@ -77,6 +77,33 @@ export async function loadAccounts(): Promise<Account[]> {
   }));
 }
 
+export interface Activity {
+  id: string;
+  accountId: string;
+  type: string;
+  status: string;
+  subject: string;
+  description: string;
+  startsAt: number | null;
+  completedAt: number | null;
+  createdAt: number | null;
+}
+
+export async function loadActivities(): Promise<Activity[]> {
+  const url = await getDataFileUrl("activity.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    accountId: row.accountId || "",
+    type: row.type || "",
+    status: row.status || "",
+    subject: parseStr(row.subject) || "",
+    description: parseStr(row.description) || "",
+    startsAt: parseNum(row.startsAt),
+    completedAt: parseNum(row.completedAt),
+    createdAt: parseNum(row.createdAt),
+  }));
+}
+
 export async function loadQualityReports(): Promise<QualityReport[]> {
   const url = await getDataFileUrl("qualityReport.csv");
   return fetchCsv(url, (row) => ({
