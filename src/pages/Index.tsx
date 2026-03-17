@@ -107,7 +107,7 @@ const Index = () => {
       .sort((a, b) => a.weekNr - b.weekNr);
   }, [yearFilteredReports, activeFarmId]);
 
-  const farmName = farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
+  const farmName = accounts?.find((a) => a.id === activeFarmId)?.name || farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
 
   const handleDashboardExport = useCallback(async () => {
     if (!dashboardRef.current) return;
