@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { loadTrials, buildCapacityTable, type Trial, type CapacityRow, type CapacityTrialInfo } from "@/lib/trialsParser";
@@ -14,7 +14,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut, Download } from "lucide-react";
+import { exportElementToPdf } from "@/lib/exportPdf";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -45,6 +46,19 @@ export default function Trials() {
   const [cropFilter, setCropFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("vlStart");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [exporting, setExporting] = useState(false);
+  const capacityRef = useRef<HTMLDivElement>(null);
+  const overviewRef = useRef<HTMLDivElement>(null);
+
+  const handleExport = async (ref: React.RefObject<HTMLDivElement | null>, name: string) => {
+    if (!ref.current || exporting) return;
+    setExporting(true);
+    try {
+      await exportElementToPdf(ref.current, name);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     loadTrials().then((data) => {
@@ -151,19 +165,25 @@ export default function Trials() {
 
           {/* ─── CAPACITY PLANNER ─── */}
           <TabsContent value="capacity">
-            <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center gap-4">
-              <div className="w-2 h-2 rounded-full bg-accent" />
-              <p className="text-sm text-foreground">
-                Showing <span className="font-semibold">90-day</span> capacity forecast from today.
-                VL Room max capacity: <span className="font-semibold">{VL_CAPACITY} vases</span>.
-                CA rooms counted in <span className="font-semibold">boxes</span>. Transport/Retail &amp; VL Room in <span className="font-semibold">vases</span>.
-                {peakVL >= VL_CAPACITY && (
-                  <span className="text-destructive font-semibold ml-2">⚠ Capacity exceeded on some days!</span>
-                )}
-              </p>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 flex items-center gap-4 flex-1">
+                <div className="w-2 h-2 rounded-full bg-accent" />
+                <p className="text-sm text-foreground">
+                  Showing <span className="font-semibold">90-day</span> capacity forecast from today.
+                  VL Room max capacity: <span className="font-semibold">{VL_CAPACITY} vases</span>.
+                  CA rooms counted in <span className="font-semibold">boxes</span>. Transport/Retail &amp; VL Room in <span className="font-semibold">vases</span>.
+                  {peakVL >= VL_CAPACITY && (
+                    <span className="text-destructive font-semibold ml-2">⚠ Capacity exceeded on some days!</span>
+                  )}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled={exporting} onClick={() => handleExport(capacityRef, "Capacity-Planner")}>
+                <Download className="h-4 w-4" />
+                PDF
+              </Button>
             </div>
 
-            <div className="bg-card rounded-xl shadow-card overflow-hidden">
+            <div ref={capacityRef} className="bg-card rounded-xl shadow-card overflow-hidden">
               <div className="overflow-auto max-h-[600px]">
                 <Table>
                   <TableHeader className="sticky top-0 bg-card z-10">
@@ -247,6 +267,10 @@ export default function Trials() {
           <TabsContent value="overview">
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
+              <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled={exporting} onClick={() => handleExport(overviewRef, "Trial-Overview")}>
+                <Download className="h-4 w-4" />
+                PDF
+              </Button>
               <div className="relative flex-1 min-w-[200px] max-w-[320px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -286,7 +310,7 @@ export default function Trials() {
               <span className="text-xs text-muted-foreground tabular-nums">{filteredTrials.length} trials</span>
             </div>
 
-            <div className="bg-card rounded-xl shadow-card overflow-hidden">
+            <div ref={overviewRef} className="bg-card rounded-xl shadow-card overflow-hidden">
               <div className="overflow-auto max-h-[700px]">
                 <Table>
                   <TableHeader className="sticky top-0 bg-card z-10">
