@@ -47,6 +47,7 @@ const Index = () => {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const { data: activities } = useActivities();
+  const { data: users } = useUsers();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("0e668ede-6c66-4bf0-a87c-043303dfd5a7");
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
