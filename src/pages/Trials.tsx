@@ -46,6 +46,19 @@ export default function Trials() {
   const [cropFilter, setCropFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("vlStart");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [exporting, setExporting] = useState(false);
+  const capacityRef = useRef<HTMLDivElement>(null);
+  const overviewRef = useRef<HTMLDivElement>(null);
+
+  const handleExport = async (ref: React.RefObject<HTMLDivElement | null>, name: string) => {
+    if (!ref.current || exporting) return;
+    setExporting(true);
+    try {
+      await exportElementToPdf(ref.current, name);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     loadTrials().then((data) => {
