@@ -11,11 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import type { QualityReport, Account } from "@/lib/csvParser";
+import type { QualityReport, Account, User } from "@/lib/csvParser";
 
 interface ReportingCheckProps {
   reports: QualityReport[];
   accounts: Account[];
+  users: User[];
 }
 
 interface FarmCompliance {
