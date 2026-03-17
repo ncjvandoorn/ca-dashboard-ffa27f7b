@@ -15,11 +15,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { QualityReport, Account } from "@/lib/csvParser";
+import type { QualityReport, Account, Activity } from "@/lib/csvParser";
 
 interface AIAgentProps {
   reports: QualityReport[];
   accounts: Account[];
+  activities?: Activity[];
+  exceptionAnalysis?: any;
+  seasonalityAnalysis?: any;
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
