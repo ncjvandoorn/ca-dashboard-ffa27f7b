@@ -37,8 +37,9 @@ const SAMPLE_QUESTIONS = [
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-agent`;
 
-function buildFarmDataContext(reports: QualityReport[], accounts: Account[]) {
+function buildFarmDataContext(reports: QualityReport[], accounts: Account[], users: User[]) {
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
   const byFarm = new Map<string, QualityReport[]>();
 
   for (const r of reports) {
@@ -72,6 +73,21 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[]) {
         qualityNote: r.qrGenQualityFlowers,
         protocolNote: r.qrGenProtocolChanges,
         generalComment: r.generalComment,
+        signoffName: r.signoffName,
+        createdBy: r.createdByUserId ? userMap.get(r.createdByUserId) || r.createdByUserId : null,
+        submittedBy: r.submittedByUserId ? userMap.get(r.submittedByUserId) || r.submittedByUserId : null,
+        updatedBy: r.updatedByUserId ? userMap.get(r.updatedByUserId) || r.updatedByUserId : null,
+        dippingLocation: r.qrGenDippingLocation,
+        intakeTreatment: r.qrIntakeTreatment,
+        exportTreatment: r.qrExportTreatment,
+        exportWaterQuality: r.qrExportWaterQuality,
+        exportColdStoreHours: r.qrExportColdstoreHours,
+        packingQuality: r.qrDispatchPackingQuality,
+        packrate: r.qrDispatchPackrate,
+        truckType: r.qrDispatchTruckType,
+        usedLiner: r.qrDispatchUsedLiner,
+        dippingStand: r.qrIntakeDippingStand,
+        usingNets: r.qrIntakeUsingNets,
       })),
     });
   }
