@@ -201,7 +201,7 @@ export default function Trials() {
                             </TableRow>
                           </PopoverTrigger>
                           {hasTrials && (
-                            <PopoverContent className="w-[420px] max-h-[400px] overflow-auto p-0" side="right" align="start">
+                            <PopoverContent className="w-[420px] max-h-[400px] overflow-auto p-0" side="bottom" align="center">
                               <div className="px-4 py-3 border-b border-border">
                                 <p className="text-sm font-semibold">{row.date} — {row.trials.length} trial(s)</p>
                               </div>
