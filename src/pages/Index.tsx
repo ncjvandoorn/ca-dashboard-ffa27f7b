@@ -217,9 +217,10 @@ const Index = () => {
               </div>
               <div className="flex items-center gap-2">
                 <AIAgent
-                  reports={yearFilteredReports}
+                  reports={reports || []}
                   accounts={accounts || []}
                   activities={activities || []}
+                  users={users || []}
                   exceptionAnalysis={exceptionAnalysis}
                   seasonalityAnalysis={seasonalityAnalysis}
                 />
