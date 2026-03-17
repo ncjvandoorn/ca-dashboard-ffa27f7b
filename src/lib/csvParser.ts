@@ -162,6 +162,7 @@ export async function loadQualityReports(): Promise<QualityReport[]> {
     qrPackProcessingSpeed: parseNum(row.qrPackProcessingSpeed),
     signoffName: parseStr(row.signoffName),
     submittedAt: parseNum(row.submittedAt),
+    submittedByUserId: parseStr(row.submittedByUserId),
     generalComment: parseStr(row.generalComment),
   }));
 }
