@@ -5,6 +5,7 @@ export interface Account {
   id: string;
   name: string;
   publicId: string;
+  servicesEnabled: string;
 }
 
 export interface QualityReport {
