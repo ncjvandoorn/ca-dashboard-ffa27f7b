@@ -15,12 +15,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { QualityReport, Account, Activity } from "@/lib/csvParser";
+import type { QualityReport, Account, Activity, User } from "@/lib/csvParser";
 
 interface AIAgentProps {
   reports: QualityReport[];
   accounts: Account[];
   activities?: Activity[];
+  users?: User[];
   exceptionAnalysis?: any;
   seasonalityAnalysis?: any;
 }
@@ -36,8 +37,9 @@ const SAMPLE_QUESTIONS = [
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-agent`;
 
-function buildFarmDataContext(reports: QualityReport[], accounts: Account[]) {
+function buildFarmDataContext(reports: QualityReport[], accounts: Account[], users: User[]) {
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
   const byFarm = new Map<string, QualityReport[]>();
 
   for (const r of reports) {
@@ -71,6 +73,21 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[]) {
         qualityNote: r.qrGenQualityFlowers,
         protocolNote: r.qrGenProtocolChanges,
         generalComment: r.generalComment,
+        signoffName: r.signoffName,
+        createdBy: r.createdByUserId ? userMap.get(r.createdByUserId) || r.createdByUserId : null,
+        submittedBy: r.submittedByUserId ? userMap.get(r.submittedByUserId) || r.submittedByUserId : null,
+        updatedBy: r.updatedByUserId ? userMap.get(r.updatedByUserId) || r.updatedByUserId : null,
+        dippingLocation: r.qrGenDippingLocation,
+        intakeTreatment: r.qrIntakeTreatment,
+        exportTreatment: r.qrExportTreatment,
+        exportWaterQuality: r.qrExportWaterQuality,
+        exportColdStoreHours: r.qrExportColdstoreHours,
+        packingQuality: r.qrDispatchPackingQuality,
+        packrate: r.qrDispatchPackrate,
+        truckType: r.qrDispatchTruckType,
+        usedLiner: r.qrDispatchUsedLiner,
+        dippingStand: r.qrIntakeDippingStand,
+        usingNets: r.qrIntakeUsingNets,
       })),
     });
   }
@@ -78,7 +95,7 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[]) {
   return summaries;
 }
 
-export function AIAgent({ reports, accounts, activities, exceptionAnalysis, seasonalityAnalysis }: AIAgentProps) {
+export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis }: AIAgentProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -88,10 +105,9 @@ export function AIAgent({ reports, accounts, activities, exceptionAnalysis, seas
   const chatContentRef = useRef<HTMLDivElement>(null);
 
   const farmData = useMemo(() => {
-    const base = buildFarmDataContext(reports, accounts);
+    const base = buildFarmDataContext(reports, accounts, users || []);
     // Attach activities per farm
     if (activities?.length) {
-      const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
       for (const summary of base) {
         const farmActivities = activities
           .filter((a) => a.accountId === summary.farmId)
@@ -107,7 +123,7 @@ export function AIAgent({ reports, accounts, activities, exceptionAnalysis, seas
       }
     }
     return base;
-  }, [reports, accounts, activities]);
+  }, [reports, accounts, activities, users]);
 
   useEffect(() => {
     if (scrollRef.current) {
