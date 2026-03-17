@@ -165,20 +165,25 @@ export default function Trials() {
 
           {/* ─── CAPACITY PLANNER ─── */}
           <TabsContent value="capacity">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4 mb-6">
               <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 flex items-center gap-4 flex-1">
-              <div className="w-2 h-2 rounded-full bg-accent" />
-              <p className="text-sm text-foreground">
-                Showing <span className="font-semibold">90-day</span> capacity forecast from today.
-                VL Room max capacity: <span className="font-semibold">{VL_CAPACITY} vases</span>.
-                CA rooms counted in <span className="font-semibold">boxes</span>. Transport/Retail &amp; VL Room in <span className="font-semibold">vases</span>.
-                {peakVL >= VL_CAPACITY && (
-                  <span className="text-destructive font-semibold ml-2">⚠ Capacity exceeded on some days!</span>
-                )}
-              </p>
+                <div className="w-2 h-2 rounded-full bg-accent" />
+                <p className="text-sm text-foreground">
+                  Showing <span className="font-semibold">90-day</span> capacity forecast from today.
+                  VL Room max capacity: <span className="font-semibold">{VL_CAPACITY} vases</span>.
+                  CA rooms counted in <span className="font-semibold">boxes</span>. Transport/Retail &amp; VL Room in <span className="font-semibold">vases</span>.
+                  {peakVL >= VL_CAPACITY && (
+                    <span className="text-destructive font-semibold ml-2">⚠ Capacity exceeded on some days!</span>
+                  )}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled={exporting} onClick={() => handleExport(capacityRef, "Capacity-Planner")}>
+                <Download className="h-4 w-4" />
+                PDF
+              </Button>
             </div>
 
-            <div className="bg-card rounded-xl shadow-card overflow-hidden">
+            <div ref={capacityRef} className="bg-card rounded-xl shadow-card overflow-hidden">
               <div className="overflow-auto max-h-[600px]">
                 <Table>
                   <TableHeader className="sticky top-0 bg-card z-10">
