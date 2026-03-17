@@ -226,6 +226,7 @@ export default function Trials() {
                                       <span className="text-muted-foreground">Crop</span><span>{info.trial.flowerCrop}</span>
                                       <span className="text-muted-foreground">Variety</span><span>{info.trial.variety}</span>
                                       <span className="text-muted-foreground">Vases</span><span>{info.trial.bunches}</span>
+                                      {info.trial.caDuration > 0 && (<><span className="text-muted-foreground">CA Duration</span><span>{info.trial.caDuration} days</span></>)}
                                     </div>
                                   </div>
                                 ))}
