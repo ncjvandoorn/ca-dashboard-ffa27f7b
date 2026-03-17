@@ -135,8 +135,17 @@ export function FarmAIInsights({ farmId, farmName, activities }: FarmAIInsightsP
         AI Quality Insights (Last 12 Weeks)
       </h3>
 
-      <div className={`rounded-xl border p-5 ${config.border} ${config.bg}`}>
-        <div className="flex items-start gap-3">
+      <div className={`rounded-xl border p-5 ${config.border} ${config.bg} relative`}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="absolute top-3 right-3 gap-1.5 text-xs"
+          onClick={() => setActivityOpen(true)}
+        >
+          <ClipboardList className="h-3.5 w-3.5" />
+          Activity
+        </Button>
+        <div className="flex items-start gap-3 pr-24">
           <div className={`mt-0.5 p-1.5 rounded-full ${config.iconBg}`}>
             <Icon className="w-4 h-4" />
           </div>
