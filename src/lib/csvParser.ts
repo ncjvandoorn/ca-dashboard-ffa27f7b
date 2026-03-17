@@ -165,6 +165,8 @@ export async function loadQualityReports(): Promise<QualityReport[]> {
     signoffName: parseStr(row.signoffName),
     submittedAt: parseNum(row.submittedAt),
     submittedByUserId: parseStr(row.submittedByUserId),
+    createdByUserId: parseStr(row.createdById),
+    updatedByUserId: parseStr(row.updatedById),
     generalComment: parseStr(row.generalComment),
   }));
 }
