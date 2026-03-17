@@ -43,10 +43,11 @@ When answering:
     }
 
     if (exceptionAnalysis) {
-      userContextMessage += `\n\nHere is the latest AI Exception Report analysis (quality issues, farm insights, industry insight):\n${JSON.stringify(exceptionAnalysis, null, 1)}`;
+    if (exceptionAnalysis) {
+      userContextMessage += `\n\nException Report:\n${JSON.stringify(exceptionAnalysis)}`;
     }
     if (seasonalityAnalysis) {
-      userContextMessage += `\n\nHere is the latest AI Seasonality Report analysis (seasonal patterns, weather deductions):\n${JSON.stringify(seasonalityAnalysis, null, 1)}`;
+      userContextMessage += `\n\nSeasonality Report:\n${JSON.stringify(seasonalityAnalysis)}`;
     }
 
     const allMessages = [
