@@ -114,24 +114,26 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
 
   const farmData = useMemo(() => {
     const base = buildFarmDataContext(reports, accounts, users || []);
-    // Attach activities per farm
+    // Attach activities per farm (limit to 10 most recent)
     if (activities?.length) {
       for (const summary of base) {
         const farmActivities = activities
-          .filter((a) => a.accountId === summary.farmId)
+          .filter((a) => a.accountId === (summary as any).farmId)
           .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-          .slice(0, 20)
-          .map((a) => ({
+          .slice(0, 10)
+          .map((a) => compact({
             type: a.type,
             status: a.status,
             subject: a.subject,
             date: a.startsAt ? new Date(a.startsAt).toISOString().slice(0, 10) : null,
           }));
-        (summary as any).recentActivities = farmActivities;
+        if (farmActivities.length) (summary as any).activities = farmActivities;
       }
     }
     return base;
   }, [reports, accounts, activities, users]);
+
+  const staffSummary = useMemo(() => buildStaffSummary(reports, users || []), [reports, users]);
 
   useEffect(() => {
     if (scrollRef.current) {
