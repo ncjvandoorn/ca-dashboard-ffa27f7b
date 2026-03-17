@@ -170,10 +170,10 @@ export default function Trials() {
                     <TableRow>
                       <TableHead className="min-w-[100px] sticky left-0 bg-card z-20">Date</TableHead>
                       <TableHead className="text-center min-w-[70px]">Day</TableHead>
-                      <TableHead className="text-center min-w-[70px]">CA1</TableHead>
-                      <TableHead className="text-center min-w-[70px]">CA2</TableHead>
-                      <TableHead className="text-center min-w-[70px]">CA3</TableHead>
-                      <TableHead className="text-center min-w-[70px]">CA4</TableHead>
+                      <TableHead className="text-center min-w-[70px]">CA1 (boxes)</TableHead>
+                      <TableHead className="text-center min-w-[70px]">CA2 (boxes)</TableHead>
+                      <TableHead className="text-center min-w-[70px]">CA3 (boxes)</TableHead>
+                      <TableHead className="text-center min-w-[70px]">CA4 (boxes)</TableHead>
                       <TableHead className="text-center min-w-[100px]">Transport / Retail</TableHead>
                       <TableHead className="text-center min-w-[100px]">VL Room</TableHead>
                     </TableRow>
