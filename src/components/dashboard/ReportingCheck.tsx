@@ -92,7 +92,7 @@ export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps
     }
 
     return results.sort((a, b) => a.overallPct - b.overallPct);
-  }, [reports, accounts]);
+  }, [reports, accounts, users]);
 
   const avgOverall = farmCompliance.length > 0
     ? farmCompliance.reduce((s, f) => s + f.overallPct, 0) / farmCompliance.length
