@@ -250,11 +250,40 @@ export default function Trials() {
                       const weekend = isWeekend(row.date);
                       const vlOver = row.vlRoom >= VL_CAPACITY;
                       const hasTrials = row.trials.length > 0;
+                      // Check for schedule violations among trials active on this date
+                      const rowViolations: ScheduleViolation[] = [];
+                      const seenTrials = new Set<string>();
+                      for (const info of row.trials) {
+                        if (seenTrials.has(info.trial.trialNumber)) continue;
+                        seenTrials.add(info.trial.trialNumber);
+                        const v = violationMap.get(info.trial.trialNumber);
+                        if (v) rowViolations.push(v);
+                      }
+                      const hasViolation = rowViolations.length > 0;
                       return (
                         <Popover key={row.date}>
                           <PopoverTrigger asChild>
                             <TableRow className={`${weekend ? "bg-muted/30" : ""} ${hasTrials ? "cursor-pointer hover:bg-accent/10" : ""}`}>
-                              <TableCell className="font-mono text-xs sticky left-0 bg-card z-10">{row.date}</TableCell>
+                              <TableCell className="font-mono text-xs sticky left-0 bg-card z-10">
+                                <span className="inline-flex items-center gap-1.5">
+                                  {row.date}
+                                  {hasViolation && (
+                                    <button
+                                      type="button"
+                                      className="text-warning hover:text-warning/80 transition-colors"
+                                      title="Schedule violation"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedViolations(rowViolations);
+                                        setSelectedViolationDate(row.date);
+                                        setViolationDialogOpen(true);
+                                      }}
+                                    >
+                                      <AlertTriangle className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                </span>
+                              </TableCell>
                               <TableCell className="text-center text-xs text-muted-foreground">{dayName}</TableCell>
                               <TableCell className="text-center tabular-nums">{row.ca1 || ""}</TableCell>
                               <TableCell className="text-center tabular-nums">{row.ca2 || ""}</TableCell>
