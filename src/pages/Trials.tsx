@@ -310,7 +310,7 @@ export default function Trials() {
               <span className="text-xs text-muted-foreground tabular-nums">{filteredTrials.length} trials</span>
             </div>
 
-            <div className="bg-card rounded-xl shadow-card overflow-hidden">
+            <div ref={overviewRef} className="bg-card rounded-xl shadow-card overflow-hidden">
               <div className="overflow-auto max-h-[700px]">
                 <Table>
                   <TableHeader className="sticky top-0 bg-card z-10">
