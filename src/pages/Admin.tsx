@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion } from "lucide-react";
+import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface LoginLog {
@@ -31,6 +31,12 @@ interface QuestionLog {
   asked_at: string;
 }
 
+const DATA_FILES = [
+  { key: "trials.xlsx", label: "Trials Data", accept: ".xlsx", icon: FileSpreadsheet },
+  { key: "qualityReport.csv", label: "Quality Report", accept: ".csv", icon: FileText },
+  { key: "account.csv", label: "Account Data", accept: ".csv", icon: FileText },
+] as const;
+
 const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -39,9 +45,25 @@ const Admin = () => {
   const [logsLoading, setLogsLoading] = useState(true);
   const [questions, setQuestions] = useState<QuestionLog[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [uploading, setUploading] = useState<string | null>(null);
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleFileUpload = async (filename: string, file: File) => {
+    setUploading(filename);
+    try {
+      const { error } = await supabase.storage
+        .from("data-files")
+        .upload(filename, file, { upsert: true, cacheControl: "0" });
+      if (error) throw error;
+      toast({ title: "Uploaded", description: `${filename} updated successfully. Refresh the dashboard to see changes.` });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const fetchLogs = async () => {
     setLogsLoading(true);
@@ -161,6 +183,62 @@ const Admin = () => {
                 Update Password
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Data File Uploads */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Upload className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Data Files</CardTitle>
+                <CardDescription>Upload updated data files. Keep the same filename format.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {DATA_FILES.map(({ key, label, accept, icon: Icon }) => (
+                <div key={key} className="border border-border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{label}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground font-mono">{key}</p>
+                  <label className="block">
+                    <input
+                      type="file"
+                      accept={accept}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload(key, file);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2"
+                      disabled={uploading === key}
+                      asChild
+                    >
+                      <span>
+                        {uploading === key ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5" />
+                        )}
+                        {uploading === key ? "Uploading…" : "Upload"}
+                      </span>
+                    </Button>
+                  </label>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 

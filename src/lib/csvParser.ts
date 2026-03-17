@@ -1,4 +1,5 @@
 import Papa from "papaparse";
+import { getDataFileUrl } from "./dataFileUrl";
 
 export interface Account {
   id: string;
@@ -68,7 +69,8 @@ async function fetchCsv<T>(url: string, transform: (row: Record<string, string>)
 }
 
 export async function loadAccounts(): Promise<Account[]> {
-  return fetchCsv("/data/account.csv", (row) => ({
+  const url = await getDataFileUrl("account.csv");
+  return fetchCsv(url, (row) => ({
     id: row.id,
     name: row.name || "Unknown",
     publicId: row.publicId || "",
@@ -76,7 +78,8 @@ export async function loadAccounts(): Promise<Account[]> {
 }
 
 export async function loadQualityReports(): Promise<QualityReport[]> {
-  return fetchCsv("/data/qualityReport.csv", (row) => ({
+  const url = await getDataFileUrl("qualityReport.csv");
+  return fetchCsv(url, (row) => ({
     id: row.id,
     farmAccountId: row.farmAccountId,
     weekNr: parseInt(row.weekNr) || 0,

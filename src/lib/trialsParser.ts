@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { getDataFileUrl } from "./dataFileUrl";
 
 export interface Trial {
   trialNumber: string;
@@ -46,7 +47,8 @@ function parseDate(val: any): string {
 }
 
 export async function loadTrials(): Promise<Trial[]> {
-  const response = await fetch("/data/trials.xlsx");
+  const url = await getDataFileUrl("trials.xlsx");
+  const response = await fetch(url);
   const buffer = await response.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array" });
   const ws = wb.Sheets[wb.SheetNames[0]];
