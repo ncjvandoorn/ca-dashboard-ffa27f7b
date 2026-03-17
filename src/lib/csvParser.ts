@@ -68,6 +68,8 @@ export interface QualityReport {
   signoffName: string | null;
   submittedAt: number | null;
   submittedByUserId: string | null;
+  createdByUserId: string | null;
+  updatedByUserId: string | null;
   generalComment: string | null;
 }
 
