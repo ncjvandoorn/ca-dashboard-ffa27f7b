@@ -55,7 +55,20 @@ export default function Trials() {
     if (!ref.current || exporting) return;
     setExporting(true);
     try {
+      // Temporarily remove scroll constraints so html2canvas captures all content
+      const scrollContainers = ref.current.querySelectorAll<HTMLElement>('.overflow-auto');
+      const saved: { el: HTMLElement; maxH: string; overflow: string }[] = [];
+      scrollContainers.forEach((el) => {
+        saved.push({ el, maxH: el.style.maxHeight, overflow: el.style.overflow });
+        el.style.maxHeight = 'none';
+        el.style.overflow = 'visible';
+      });
       await exportElementToPdf(ref.current, name);
+      // Restore scroll constraints
+      saved.forEach(({ el, maxH, overflow }) => {
+        el.style.maxHeight = maxH;
+        el.style.overflow = overflow;
+      });
     } finally {
       setExporting(false);
     }
