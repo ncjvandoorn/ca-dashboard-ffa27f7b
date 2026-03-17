@@ -201,6 +201,9 @@ const Index = () => {
                 <AIAgent
                   reports={yearFilteredReports}
                   accounts={accounts || []}
+                  activities={activities || []}
+                  exceptionAnalysis={exceptionAnalysis}
+                  seasonalityAnalysis={seasonalityAnalysis}
                 />
                 {isAdmin && (
                   <ReportingCheck
