@@ -48,7 +48,7 @@ const Index = () => {
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const { data: activities } = useActivities();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
-  const [selectedYear, setSelectedYear] = useState<string>("26");
+  const [selectedYear, setSelectedYear] = useState<string>("25");
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
   const [exceptionAnalysis, setExceptionAnalysis] = useState<any>(null);
