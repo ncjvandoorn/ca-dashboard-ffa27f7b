@@ -75,6 +75,7 @@ export async function loadAccounts(): Promise<Account[]> {
     id: row.id,
     name: row.name || "Unknown",
     publicId: row.publicId || "",
+    servicesEnabled: row.servicesEnabled || "",
   }));
 }
 
