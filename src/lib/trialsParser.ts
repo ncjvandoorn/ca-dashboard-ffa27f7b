@@ -91,8 +91,8 @@ export interface ScheduleViolation {
  */
 export function validateTrialSchedule(trial: Trial): ScheduleViolation | null {
   const client = trial.trialClient.toLowerCase().trim();
-  // Only validate TC and Commercial
-  if (client !== "tc" && client !== "commercial") return null;
+  // Only validate TC and Commercial (values may be "TC trial", "Commercial trial", etc.)
+  if (!client.includes("tc") && !client.includes("commercial")) return null;
 
   const issues: string[] = [];
 
