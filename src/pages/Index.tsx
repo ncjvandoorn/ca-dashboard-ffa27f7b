@@ -96,9 +96,8 @@ const Index = () => {
 
   // Reset farm selection if current farm not in filtered list
   const activeFarmId = useMemo(() => {
-    if (selectedFarmId && farmsWithData.some((a) => a.id === selectedFarmId)) {
-      return selectedFarmId;
-    }
+    // If a farm is explicitly selected (even without data), keep it
+    if (selectedFarmId) return selectedFarmId;
     return farmsWithData[0]?.id || "";
   }, [selectedFarmId, farmsWithData]);
 
@@ -108,7 +107,7 @@ const Index = () => {
       .sort((a, b) => a.weekNr - b.weekNr);
   }, [yearFilteredReports, activeFarmId]);
 
-  const farmName = farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
+  const farmName = accounts?.find((a) => a.id === activeFarmId)?.name || farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
 
   const handleDashboardExport = useCallback(async () => {
     if (!dashboardRef.current) return;
@@ -174,6 +173,7 @@ const Index = () => {
           <div ref={dashboardRef}>
             <ControlBar
               accounts={farmsWithData}
+              allAccounts={accounts || []}
               selectedFarmId={activeFarmId}
               onFarmChange={setSelectedFarmId}
               years={availableYears}

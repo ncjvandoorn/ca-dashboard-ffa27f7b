@@ -101,26 +101,10 @@ export function FarmAIInsights({ farmId, farmName, activities }: FarmAIInsightsP
     loadCache();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="mb-8 rounded-xl border border-border bg-card p-6">
-        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-          <Info className="w-4 h-4" />
-          Loading AI insights…
-        </div>
-      </div>
-    );
-  }
+  // Always render — show activity button even without insights
+  const farmInsight = analysis?.allFarmInsights?.find((f) => f.farmId === farmId);
 
-  if (!analysis) return null;
-
-  // Look up this farm in allFarmInsights first (covers all farms)
-  const farmInsight = analysis.allFarmInsights?.find((f) => f.farmId === farmId);
-
-  if (!farmInsight) return null;
-
-  const config = statusConfig[farmInsight.status] || statusConfig.stable;
-  const Icon = config.icon;
+  const config = farmInsight ? (statusConfig[farmInsight.status] || statusConfig.stable) : null;
 
   return (
     <motion.div
@@ -135,47 +119,65 @@ export function FarmAIInsights({ farmId, farmName, activities }: FarmAIInsightsP
         AI Quality Insights (Last 12 Weeks)
       </h3>
 
-      <div className={`rounded-xl border p-5 ${config.border} ${config.bg} relative`}>
-        <Button
-          variant="outline"
-          size="sm"
-          className="absolute top-3 right-3 gap-1.5 text-xs"
-          onClick={() => setActivityOpen(true)}
-        >
-          <ClipboardList className="h-3.5 w-3.5" />
-          Activity
-        </Button>
-        <div className="flex items-start gap-3 pr-24">
-          <div className={`mt-0.5 p-1.5 rounded-full ${config.iconBg}`}>
-            <Icon className="w-4 h-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-semibold text-foreground text-sm uppercase tracking-wide">
-                {config.label}
-              </span>
+      {farmInsight && config ? (
+        <div className={`rounded-xl border p-5 ${config.border} ${config.bg} relative`}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="absolute top-3 right-3 gap-1.5 text-xs"
+            onClick={() => setActivityOpen(true)}
+          >
+            <ClipboardList className="h-3.5 w-3.5" />
+            Activity
+          </Button>
+          <div className="flex items-start gap-3 pr-24">
+            <div className={`mt-0.5 p-1.5 rounded-full ${config.iconBg}`}>
+              <config.icon className="w-4 h-4" />
             </div>
-            <p className="text-sm text-foreground/80 mb-3">{farmInsight.summary}</p>
-            <ul className="space-y-1.5">
-              {farmInsight.details.map((d, i) => (
-                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                  <span className={`mt-1.5 w-1.5 h-1.5 rounded-full ${config.dot} shrink-0`} />
-                  {d}
-                </li>
-              ))}
-            </ul>
-            {farmInsight.keyMetrics.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {farmInsight.keyMetrics.map((m) => (
-                  <Badge key={m} variant="outline" className={`text-xs ${config.badgeBorder}`}>
-                    {m}
-                  </Badge>
-                ))}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-semibold text-foreground text-sm uppercase tracking-wide">
+                  {config.label}
+                </span>
               </div>
-            )}
+              <p className="text-sm text-foreground/80 mb-3">{farmInsight.summary}</p>
+              <ul className="space-y-1.5">
+                {farmInsight.details.map((d, i) => (
+                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <span className={`mt-1.5 w-1.5 h-1.5 rounded-full ${config.dot} shrink-0`} />
+                    {d}
+                  </li>
+                ))}
+              </ul>
+              {farmInsight.keyMetrics.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {farmInsight.keyMetrics.map((m) => (
+                    <Badge key={m} variant="outline" className={`text-xs ${config.badgeBorder}`}>
+                      {m}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="rounded-xl border border-border bg-muted/20 p-5 relative">
+          <Button
+            variant="outline"
+            size="sm"
+            className="absolute top-3 right-3 gap-1.5 text-xs"
+            onClick={() => setActivityOpen(true)}
+          >
+            <ClipboardList className="h-3.5 w-3.5" />
+            Activity
+          </Button>
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <Info className="w-4 h-4" />
+            No AI quality insights available for this farm yet.
+          </div>
+        </div>
+      )}
       <ActivityDialog
         open={activityOpen}
         onOpenChange={setActivityOpen}
