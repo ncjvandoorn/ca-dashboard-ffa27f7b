@@ -138,6 +138,7 @@ export default function Trials() {
       const v = validateTrialSchedule(trial);
       if (v) map.set(trial.trialNumber, v);
     }
+    
     return map;
   }, [trials]);
 
@@ -433,9 +434,29 @@ export default function Trials() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTrials.map((t, i) => (
+                    {filteredTrials.map((t, i) => {
+                      const violation = violationMap.get(t.trialNumber);
+                      return (
                       <TableRow key={`${t.trialNumber}-${i}`}>
-                        <TableCell className="font-mono text-xs whitespace-nowrap">{t.trialNumber}</TableCell>
+                        <TableCell className="font-mono text-xs whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5">
+                            {t.trialNumber}
+                            {violation && (
+                              <button
+                                type="button"
+                                className="text-warning hover:text-warning/80 transition-colors"
+                                title="Schedule violation"
+                                onClick={() => {
+                                  setSelectedViolations([violation]);
+                                  setSelectedViolationDate(t.trialNumber);
+                                  setViolationDialogOpen(true);
+                                }}
+                              >
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </span>
+                        </TableCell>
                         <TableCell className="text-xs whitespace-nowrap">{t.trialReference}</TableCell>
                         <TableCell>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -460,7 +481,8 @@ export default function Trials() {
                         <TableCell className="text-center tabular-nums">{t.caDuration || "—"}</TableCell>
                         <TableCell className="text-center tabular-nums">{t.vlDuration}</TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
