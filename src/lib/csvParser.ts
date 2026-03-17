@@ -8,6 +8,25 @@ export interface Account {
   servicesEnabled: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  position: string;
+  countryName: string;
+}
+
+export async function loadUsers(): Promise<User[]> {
+  const url = await getDataFileUrl("user.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    name: row.name || "Unknown",
+    email: row.email || "",
+    position: row.position || "",
+    countryName: row.countryName || "",
+  }));
+}
+
 export interface QualityReport {
   id: string;
   farmAccountId: string;
