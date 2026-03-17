@@ -11,16 +11,18 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import type { QualityReport, Account } from "@/lib/csvParser";
+import type { QualityReport, Account, User } from "@/lib/csvParser";
 
 interface ReportingCheckProps {
   reports: QualityReport[];
   accounts: Account[];
+  users: User[];
 }
 
 interface FarmCompliance {
   farmId: string;
   farmName: string;
+  managerName: string | null;
   totalReports: number;
   qualityNotesFilled: number;
   protocolNotesFilled: number;
@@ -37,13 +39,14 @@ function isNoteFilled(value: string | null): boolean {
   return trimmed.length > 0 && trimmed !== "-" && trimmed !== "n/a" && trimmed !== "na" && trimmed !== "none";
 }
 
-export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
+export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps) {
   const [open, setOpen] = useState(false);
   const [expandedFarm, setExpandedFarm] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const farmCompliance = useMemo(() => {
     const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
+    const userMap = new Map(users.map((u) => [u.id, u.name]));
     const byFarm = new Map<string, QualityReport[]>();
 
     for (const r of reports) {
@@ -58,6 +61,12 @@ export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
       const total = farmReports.length;
       if (total === 0) continue;
 
+      // Find manager from last report
+      const sorted = [...farmReports].sort((a, b) => a.weekNr - b.weekNr);
+      const lastReport = sorted[sorted.length - 1];
+      const managerName = lastReport.submittedByUserId ? (userMap.get(lastReport.submittedByUserId) || null) : null;
+      if (total === 0) continue;
+
       const qualityNotesFilled = farmReports.filter((r) => isNoteFilled(r.qrGenQualityFlowers)).length;
       const protocolNotesFilled = farmReports.filter((r) => isNoteFilled(r.qrGenProtocolChanges)).length;
       const generalCommentFilled = farmReports.filter((r) => isNoteFilled(r.generalComment)).length;
@@ -70,6 +79,7 @@ export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
       results.push({
         farmId,
         farmName: accountMap.get(farmId) || farmId,
+        managerName,
         totalReports: total,
         qualityNotesFilled,
         protocolNotesFilled,
@@ -82,7 +92,7 @@ export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
     }
 
     return results.sort((a, b) => a.overallPct - b.overallPct);
-  }, [reports, accounts]);
+  }, [reports, accounts, users]);
 
   const avgOverall = farmCompliance.length > 0
     ? farmCompliance.reduce((s, f) => s + f.overallPct, 0) / farmCompliance.length
@@ -171,6 +181,9 @@ export function ReportingCheck({ reports, accounts }: ReportingCheckProps) {
                   <div className="flex items-center gap-2">
                     {statusIcon(farm.overallPct)}
                     <span className="font-medium text-sm text-foreground">{farm.farmName}</span>
+                    {farm.managerName && (
+                      <span className="text-xs text-muted-foreground">| {farm.managerName}</span>
+                    )}
                     <span className="text-xs text-muted-foreground">({farm.totalReports} reports)</span>
                   </div>
                   <div className="flex items-center gap-3">
