@@ -36,7 +36,7 @@ function isWeekend(dateStr: string): boolean {
 type SortKey = keyof Trial;
 type SortDir = "asc" | "desc";
 
-export default function Trials() {
+export default function Planner() {
   const navigate = useNavigate();
   const { signOut, isAdmin } = useAuth();
   const [trials, setTrials] = useState<Trial[]>([]);
