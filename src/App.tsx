@@ -7,7 +7,8 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
 import Admin from "./pages/Admin.tsx";
-import Trials from "./pages/Trials.tsx";
+import Planner from "./pages/Planner.tsx";
+import TrialsDashboard from "./pages/TrialsDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { Loader2 } from "lucide-react";
 
