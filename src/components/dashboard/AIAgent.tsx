@@ -319,7 +319,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Ask questions about farm quality data. I can analyze trends, compare farms, and create tables.
+            Ask questions about quality and trial data. I can analyze trends, compare farms, and create tables.
           </p>
         </DialogHeader>
 
