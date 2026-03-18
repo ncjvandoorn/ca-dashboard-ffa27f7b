@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings, LogOut, FlaskConical, Search } from "lucide-react";
+import { Settings, LogOut, FlaskConical, CalendarRange, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Account } from "@/lib/csvParser";
 
