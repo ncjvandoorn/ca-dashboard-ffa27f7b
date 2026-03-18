@@ -398,7 +398,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about farm quality data…"
+              placeholder="Ask about quality & trial data…"
               disabled={isLoading}
               className="flex-1"
             />

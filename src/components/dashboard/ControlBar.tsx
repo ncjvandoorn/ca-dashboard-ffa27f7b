@@ -55,7 +55,7 @@ export function ControlBar({ accounts, allAccounts, selectedFarmId, onFarmChange
               Quality & Trials
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Farm quality parameters over time
+              Quality & trial insights at a glance
             </p>
           </div>
         </div>
