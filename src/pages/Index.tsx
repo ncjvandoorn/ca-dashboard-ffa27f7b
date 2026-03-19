@@ -246,7 +246,7 @@ const Index = () => {
                   open={exceptionOpen}
                   onOpenChange={setExceptionOpen}
                 />
-                <Button variant="outline" size="sm" onClick={() => window.location.href = "/report"} className="gap-2">
+                <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                   All Reports
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleDashboardExport} className="gap-2">
