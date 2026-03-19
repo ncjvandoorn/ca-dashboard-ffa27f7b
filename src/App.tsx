@@ -9,6 +9,7 @@ import Login from "./pages/Login.tsx";
 import Admin from "./pages/Admin.tsx";
 import Planner from "./pages/Planner.tsx";
 import TrialsDashboard from "./pages/TrialsDashboard.tsx";
+import AllReports from "./pages/AllReports.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { Loader2 } from "lucide-react";
 
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/planner" element={<ProtectedRoute><Planner /></ProtectedRoute>} />
             <Route path="/trials" element={<ProtectedRoute><TrialsDashboard /></ProtectedRoute>} />
+            <Route path="/report" element={<ProtectedRoute><AllReports /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
