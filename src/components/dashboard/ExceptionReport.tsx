@@ -69,8 +69,31 @@ interface AIAnalysis {
   industryInsight: string;
 }
 
-function buildFarmSummaries(reports: QualityReport[], accounts: Account[], currentWeek: number) {
-  const minWeek = currentWeek - WINDOW + 1;
+interface WeekWindow {
+  recentWeeks: number[];
+  priorWeeks: number[];
+  minWeek: number;
+  maxWeek: number;
+  cacheWeek: number;
+}
+
+function getWeekWindow(reports: QualityReport[]): WeekWindow {
+  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0))).sort((a, b) => a - b);
+  const recentWeeks = uniqueWeeks.slice(-WINDOW);
+  const priorWeeks = uniqueWeeks.slice(Math.max(0, uniqueWeeks.length - WINDOW * 2), Math.max(0, uniqueWeeks.length - WINDOW));
+
+  return {
+    recentWeeks,
+    priorWeeks,
+    minWeek: recentWeeks[0] ?? 0,
+    maxWeek: recentWeeks[recentWeeks.length - 1] ?? 0,
+    cacheWeek: recentWeeks[recentWeeks.length - 1] ?? getCurrentWeekNr(),
+  };
+}
+
+function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recentWeeks: number[], priorWeeks: number[]) {
+  const recentSet = new Set(recentWeeks);
+  const priorSet = new Set(priorWeeks);
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
 
   const recentByFarm = new Map<string, QualityReport[]>();
@@ -78,10 +101,10 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[], curre
 
   for (const r of reports) {
     if (r.weekNr <= 0) continue;
-    if (r.weekNr >= minWeek && r.weekNr <= currentWeek) {
+    if (recentSet.has(r.weekNr)) {
       if (!recentByFarm.has(r.farmAccountId)) recentByFarm.set(r.farmAccountId, []);
       recentByFarm.get(r.farmAccountId)!.push(r);
-    } else if (r.weekNr >= minWeek - WINDOW && r.weekNr < minWeek) {
+    } else if (priorSet.has(r.weekNr)) {
       if (!olderByFarm.has(r.farmAccountId)) olderByFarm.set(r.farmAccountId, []);
       olderByFarm.get(r.farmAccountId)!.push(r);
     }
