@@ -254,6 +254,7 @@ const AllReports = () => {
                       
                       <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.qrGenQualityFlowers || ""}>{fmt(r.qrGenQualityFlowers)}</td>
                       <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.qrGenProtocolChanges || ""}>{fmt(r.qrGenProtocolChanges)}</td>
+                      <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.generalComment || ""}>{fmt(r.generalComment)}</td>
                       {/* Intake */}
                       <td className="px-3 py-2.5 tabular-nums whitespace-nowrap border-l border-border/30">{fmt(r.qrIntakeHeadSize)}</td>
                       <td className="px-3 py-2.5 tabular-nums whitespace-nowrap">{fmt(r.qrIntakeStemLength)}</td>
