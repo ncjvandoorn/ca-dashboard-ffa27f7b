@@ -122,12 +122,14 @@ Return at most 10 farms in needsAttention, mostImproved, and topPerformers. For 
     const yr = sat.getFullYear() % 100;
     const currentWeekNr = yr * 100 + wk;
 
-    const userPrompt = `Analyze the following farm quality data summaries from the last 12 weeks of cut flower post-harvest monitoring. Today is week ${currentWeekNr} (weekNr format is YYWW).
+    const userPrompt = `Analyze the following farm quality data summaries from the last 12 available weeks of cut flower post-harvest monitoring.
+
+Analysis week range (YYWW): ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?? currentWeekNr}.
 
 Each farm summary includes weekly readings for intake and export cold store parameters, quality ratings, and other post-harvest metrics. **Pay special attention to the qualityFlowersNote, protocolChangesNote, and generalComment fields** — these are written by our experienced field staff and represent direct, first-hand observations. Reference them explicitly in your analysis when they provide relevant context.
 
 Farm data:
-${JSON.stringify(farmSummaries, null, 2)}
+${JSON.stringify(farmSummaries)}
 
 Identify which farms need attention (worst performing, worsening trends, dangerous parameter combinations, staff-flagged issues) and which have shown the most improvement. Consider the full post-harvest context — don't just flag outliers mechanically, think about what combinations of metrics signal real risk to flower quality and vase life. Quote or paraphrase staff notes when they support your findings.`;
 
