@@ -83,7 +83,8 @@ interface WeekWindow {
 }
 
 function getWeekWindow(reports: QualityReport[]): WeekWindow {
-  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0))).sort((a, b) => a - b);
+  const currentWeek = getCurrentWeekNr();
+  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0 && w <= currentWeek))).sort((a, b) => a - b);
   const recentWeeks = uniqueWeeks.slice(-WINDOW);
   const priorWeeks = uniqueWeeks.slice(Math.max(0, uniqueWeeks.length - WINDOW * 2), Math.max(0, uniqueWeeks.length - WINDOW));
 

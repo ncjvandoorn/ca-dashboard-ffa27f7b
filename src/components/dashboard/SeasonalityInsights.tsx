@@ -32,6 +32,23 @@ interface SeasonalityInsightsProps {
 
 const WINDOW = 12;
 
+/** Week nr in YYWW format. Week 1 = the Sat–Fri week containing Jan 1. Weeks start Saturday. */
+function getCurrentWeekNr(): number {
+  const now = new Date();
+  const daysSinceSat = (now.getDay() + 1) % 7;
+  const currentSat = new Date(now);
+  currentSat.setDate(now.getDate() - daysSinceSat);
+  currentSat.setHours(0, 0, 0, 0);
+  const jan1 = new Date(currentSat.getFullYear(), 0, 1);
+  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
+  const week1Sat = new Date(jan1);
+  week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
+  week1Sat.setHours(0, 0, 0, 0);
+  const weekNum = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
+  const year = currentSat.getFullYear() % 100;
+  return year * 100 + weekNum;
+}
+
 interface WeeklyAssessment {
   weekNr: number;
   weatherSummary: string;
@@ -64,7 +81,8 @@ interface SeasonalityAnalysis {
 }
 
 function getSeasonalityWeekWindow(reports: QualityReport[]) {
-  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0))).sort((a, b) => a - b);
+  const currentWeek = getCurrentWeekNr();
+  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0 && w <= currentWeek))).sort((a, b) => a - b);
   const recentWeeks = uniqueWeeks.slice(-WINDOW);
   return { weeks: new Set(recentWeeks), min: recentWeeks[0] ?? 0, max: recentWeeks[recentWeeks.length - 1] ?? 0 };
 }
@@ -133,21 +151,6 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
   const contentRef = useRef<HTMLDivElement>(null);
   const weekWindow = useMemo(() => getSeasonalityWeekWindow(reports), [reports]);
 
-  const getCurrentWeekNr = useCallback((): number => {
-    const now = new Date();
-    const daysSinceSat = (now.getDay() + 1) % 7;
-    const currentSat = new Date(now);
-    currentSat.setDate(now.getDate() - daysSinceSat);
-    currentSat.setHours(0, 0, 0, 0);
-    const jan1 = new Date(currentSat.getFullYear(), 0, 1);
-    const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
-    const week1Sat = new Date(jan1);
-    week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
-    week1Sat.setHours(0, 0, 0, 0);
-    const weekNum = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
-    const year = currentSat.getFullYear() % 100;
-    return year * 100 + weekNum;
-  }, []);
 
   const runAnalysis = useCallback(async (forceRefresh = false) => {
     setLoading(true);
@@ -213,7 +216,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
     } finally {
       setLoading(false);
     }
-  }, [reports, accounts, getCurrentWeekNr]);
+  }, [reports, accounts, weekWindow]);
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
