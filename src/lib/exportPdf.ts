@@ -3,6 +3,8 @@ import jsPDF from "jspdf";
 
 interface ExportOptions {
   orientation?: "p" | "l";
+  scale?: number;
+  quality?: number;
 }
 
 /**
