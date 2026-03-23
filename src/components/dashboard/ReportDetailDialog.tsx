@@ -12,6 +12,7 @@ import type { QualityReport } from "@/lib/csvParser";
 interface ReportDetailDialogProps {
   report: QualityReport | null;
   farmName: string;
+  createdByName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
