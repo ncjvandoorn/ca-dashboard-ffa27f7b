@@ -85,34 +85,32 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[]) {
     const older = olderByFarm.get(farmId) || [];
     const olderSorted = [...older].sort((a, b) => a.weekNr - b.weekNr);
 
+    // Use abbreviated keys to reduce payload size
     const extractWeekly = (reps: QualityReport[]) =>
-      reps.map((r) => ({
-        week: r.weekNr,
-        intakePh: r.qrIntakePh,
-        intakeEc: r.qrIntakeEc,
-        intakeTemp: r.qrIntakeTempColdstore,
-        intakeHumidity: r.qrIntakeHumidityColdstore,
-        intakeColdstoreHours: r.qrIntakeColdstoreHours,
-        intakeWaterQuality: r.qrIntakeWaterQuality,
-        intakeTreatment: r.qrIntakeTreatment,
-        intakeHeadSize: r.qrIntakeHeadSize,
-        intakeStemLength: r.qrIntakeStemLength,
-        exportPh: r.qrExportPh,
-        exportEc: r.qrExportEc,
-        exportTemp: r.qrExportTempColdstore,
-        exportHumidity: r.qrExportHumidityColdstore,
-        exportColdstoreHours: r.qrExportColdstoreHours,
-        exportWaterQuality: r.qrExportWaterQuality,
-        exportTreatment: r.qrExportTreatment,
-        qualityRating: r.qrGenQualityRating,
-        qualityFlowersNote: r.qrGenQualityFlowers,
-        protocolChangesNote: r.qrGenProtocolChanges,
-        generalComment: r.generalComment,
-        processingSpeed: r.qrPackProcessingSpeed,
-        packingQuality: r.qrDispatchPackingQuality,
-        packrate: r.qrDispatchPackrate,
-        truckType: r.qrDispatchTruckType,
-      }));
+      reps.map((r) => {
+        const entry: Record<string, any> = {
+          w: r.weekNr,
+          iPh: r.qrIntakePh,
+          iEc: r.qrIntakeEc,
+          iT: r.qrIntakeTempColdstore,
+          iH: r.qrIntakeHumidityColdstore,
+          ePh: r.qrExportPh,
+          eEc: r.qrExportEc,
+          eT: r.qrExportTempColdstore,
+          eH: r.qrExportHumidityColdstore,
+          qR: r.qrGenQualityRating,
+          wQ: r.qrIntakeWaterQuality,
+          pS: r.qrPackProcessingSpeed,
+          sL: r.qrIntakeStemLength,
+          hS: r.qrIntakeHeadSize,
+          cH: r.qrIntakeColdstoreHours,
+        };
+        // Only include notes when non-empty to save tokens
+        if (r.qrGenQualityFlowers) entry.qN = r.qrGenQualityFlowers;
+        if (r.qrGenProtocolChanges) entry.pN = r.qrGenProtocolChanges;
+        if (r.generalComment) entry.gC = r.generalComment;
+        return entry;
+      });
 
     summaries.push({
       farmId,
