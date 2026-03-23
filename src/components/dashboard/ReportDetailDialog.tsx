@@ -110,7 +110,7 @@ export function ReportDetailDialog({ report, farmName, createdByName, open, onOp
           </DialogHeader>
 
           {/* Header info bar */}
-          <div className="grid grid-cols-3 gap-3 rounded-xl bg-primary/5 border border-primary/20 p-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl bg-primary/5 border border-primary/20 p-3">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-primary" />
               <div>
@@ -123,6 +123,13 @@ export function ReportDetailDialog({ report, farmName, createdByName, open, onOp
               <div>
                 <p className="text-[10px] uppercase text-muted-foreground font-medium">Farm</p>
                 <p className="text-sm font-bold text-foreground">{farmName}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-[10px] uppercase text-muted-foreground font-medium">Created By</p>
+                <p className="text-sm font-bold text-foreground">{createdByName || "—"}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
