@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
-import { CalendarDays, Home, Leaf } from "lucide-react";
+import { CalendarDays, Home, Leaf, User } from "lucide-react";
 import type { QualityReport } from "@/lib/csvParser";
 
 interface ReportDetailDialogProps {
