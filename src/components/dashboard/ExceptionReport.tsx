@@ -237,9 +237,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
       setAnalysis(versionedAnalysis as unknown as AIAnalysis);
     } catch (e: any) {
       console.error("Exception analysis error:", e);
-      const msg = e?.name === "AbortError"
-        ? "Analysis timed out after 30 seconds. Please retry."
-        : (e?.message || "Analysis failed");
+      const msg = e?.message || "Analysis failed";
       setError(msg);
       toast({
         title: "Analysis Error",
