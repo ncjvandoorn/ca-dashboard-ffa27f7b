@@ -46,6 +46,11 @@ const AllReports = () => {
     return new Map(accounts.map((a) => [a.id, a.name]));
   }, [accounts]);
 
+  const userMap = useMemo(() => {
+    if (!users) return new Map<string, string>();
+    return new Map(users.map((u) => [u.id, u.name]));
+  }, [users]);
+
   const availableYears = useMemo(() => {
     if (!reports) return [];
     const years = new Set<number>();
