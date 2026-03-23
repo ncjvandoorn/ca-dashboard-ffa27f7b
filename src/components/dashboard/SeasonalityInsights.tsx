@@ -216,7 +216,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
     } finally {
       setLoading(false);
     }
-  }, [reports, accounts, getCurrentWeekNr]);
+  }, [reports, accounts, weekWindow]);
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
