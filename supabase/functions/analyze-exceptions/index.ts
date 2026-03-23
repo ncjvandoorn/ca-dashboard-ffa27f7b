@@ -112,15 +112,18 @@ IMPORTANT: The "allFarmInsights" array MUST contain an entry for EVERY farm in t
 Return at most 10 farms in needsAttention, mostImproved, and topPerformers. For "needsAttention", rank by severity (critical first, then warning). For "mostImproved", focus on farms that have shown the clearest positive trajectory over recent weeks. For "topPerformers", highlight farms that consistently outperform their peers. Only include farms where there is genuine signal — do not pad the lists. If fewer than 10 qualify, return fewer. Be specific and actionable in your findings.`;
 
     const now = new Date();
-    const day = now.getDay();
-    const daysSinceSat = (day + 1) % 7;
-    const sat = new Date(now);
-    sat.setDate(now.getDate() - daysSinceSat);
-    const jan1 = new Date(sat.getFullYear(), 0, 1);
-    const dys = Math.floor((sat.getTime() - jan1.getTime()) / 86400000);
-    const wk = Math.ceil((dys + jan1.getDay() + 1) / 7);
-    const yr = sat.getFullYear() % 100;
-    const currentWeekNr = yr * 100 + wk;
+    const daysSinceSat = (now.getDay() + 1) % 7;
+    const currentSat = new Date(now);
+    currentSat.setDate(now.getDate() - daysSinceSat);
+    currentSat.setHours(0, 0, 0, 0);
+    const jan1 = new Date(currentSat.getFullYear(), 0, 1);
+    const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
+    const week1Sat = new Date(jan1);
+    week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
+    week1Sat.setHours(0, 0, 0, 0);
+    const currentWeekNr = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
+    const yr = currentSat.getFullYear() % 100;
+    const currentWeekNrFmt = yr * 100 + currentWeekNr;
 
     const userPrompt = `Analyze the following farm quality data summaries from the last 12 available weeks of cut flower post-harvest monitoring.
 
