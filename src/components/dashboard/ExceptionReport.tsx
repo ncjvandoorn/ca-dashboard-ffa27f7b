@@ -143,27 +143,6 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
   const [weekRange, setWeekRange] = useState({ min: 0, max: 0 });
   const contentRef = useRef<HTMLDivElement>(null);
 
-  /**
-   * Compute current YYWW week number.
-   * Week runs Saturday–Friday. Today (Mon 16 Mar 2026) = week 2612.
-   * Saturday 21 Mar 2026 starts week 2613.
-   */
-  const getCurrentWeekNr = useCallback((): number => {
-    const now = new Date();
-    // Shift so Saturday=day0: (day+1)%7 maps Sat→0,Sun→1,...Fri→6
-    // Find the Saturday that started this week
-    const day = now.getDay(); // 0=Sun
-    const daysSinceSat = (day + 1) % 7; // Sat=0, Sun=1, Mon=2...Fri=6
-    const saturday = new Date(now);
-    saturday.setDate(now.getDate() - daysSinceSat);
-
-    // Get ISO week of that Saturday to derive YYWW
-    const jan1 = new Date(saturday.getFullYear(), 0, 1);
-    const days = Math.floor((saturday.getTime() - jan1.getTime()) / 86400000);
-    const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
-    const year = saturday.getFullYear() % 100;
-    return year * 100 + weekNum;
-  }, []);
 
   const runAnalysis = useCallback(async (forceRefresh = false) => {
     setLoading(true);
