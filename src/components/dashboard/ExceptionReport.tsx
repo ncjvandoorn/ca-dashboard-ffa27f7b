@@ -172,45 +172,53 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
     setError(null);
     setFromCache(false);
 
-    const currentWeek = getCurrentWeekNr();
-    const minWeek = currentWeek - WINDOW + 1;
-    setWeekRange({ min: minWeek, max: currentWeek });
+    const { minWeek, maxWeek, cacheWeek, recentWeeks, priorWeeks } = weekWindow;
 
     try {
+      if (recentWeeks.length < 2) {
+        setError("No weekly report data available for the last 12 weeks.");
+        return;
+      }
+
       // Check cache first (unless forcing refresh)
       if (!forceRefresh) {
         const { data: cached } = await supabase
           .from("exception_report_cache")
           .select("analysis")
-          .eq("week_nr", currentWeek)
+          .eq("week_nr", cacheWeek)
           .maybeSingle();
 
         if (cached?.analysis) {
           setAnalysis(cached.analysis as unknown as AIAnalysis);
           setFromCache(true);
-          setLoading(false);
           return;
         }
       }
 
       // No cache — run AI analysis
-      const farmSummaries = buildFarmSummaries(reports, accounts, currentWeek);
+      const farmSummaries = buildFarmSummaries(reports, accounts, recentWeeks, priorWeeks);
 
       if (farmSummaries.length === 0) {
-        setError("No farms with sufficient data in the last 10 weeks.");
-        setLoading(false);
+        setError("No farms with sufficient data in the last 12 weeks.");
         return;
       }
 
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-exceptions`;
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch(functionUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ farmSummaries }),
-      });
+        signal: controller.signal,
+        body: JSON.stringify({
+          farmSummaries,
+          weekRange: { min: minWeek, max: maxWeek },
+        }),
+      }).finally(() => window.clearTimeout(timeoutId));
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -223,12 +231,14 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
       // Save to cache (upsert)
       await supabase
         .from("exception_report_cache")
-        .upsert({ week_nr: currentWeek, analysis: data }, { onConflict: "week_nr" });
+        .upsert({ week_nr: cacheWeek, analysis: data }, { onConflict: "week_nr" });
 
       setAnalysis(data as AIAnalysis);
     } catch (e: any) {
       console.error("Exception analysis error:", e);
-      const msg = e?.message || "Analysis failed";
+      const msg = e?.name === "AbortError"
+        ? "Analysis timed out after 30 seconds. Please retry."
+        : (e?.message || "Analysis failed");
       setError(msg);
       toast({
         title: "Analysis Error",
@@ -238,7 +248,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
     } finally {
       setLoading(false);
     }
-  }, [reports, accounts]);
+  }, [reports, accounts, weekWindow]);
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
