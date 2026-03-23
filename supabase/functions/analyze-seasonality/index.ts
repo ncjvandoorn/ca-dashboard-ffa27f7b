@@ -56,9 +56,19 @@ East African flower growing seasons context:
 - **Short rains**: October–December (moderate rainfall, mixed pest pressure)
 - **Dry cool**: January–February (lower temps, better quality generally, but frost risk at altitude)
 
+**CRITICAL ANTI-HALLUCINATION RULES — YOU MUST FOLLOW THESE:**
+1. **ONLY report pests and diseases that are EXPLICITLY mentioned in staff notes (qualityFlowersNote, protocolChangesNote, generalComment).** Do NOT infer pest/disease presence from numerical data alone.
+2. **If NO staff notes mention a particular pest or disease, do NOT include it in the pestAndDisease array.** An empty array is acceptable if no pests/diseases are mentioned.
+3. **Weather deductions must be based on observable data patterns (humidity readings, staff weather mentions, quality patterns across multiple farms).** Do NOT fabricate specific weather events.
+4. **Every farm name in farmsAffected MUST match a farm in the input data.** Never invent farm names.
+5. **Every weekNr in weeksObserved MUST be a week that exists in the input data.** Never invent week numbers.
+6. **Quality impact scores must be justified by actual data patterns** — do not assign high scores without evidence of widespread quality drops in the data.
+7. **The outlook section should be clearly marked as a projection based on seasonal patterns,** not presented as certain fact. Use language like "typically" and "historically."
+8. **avgQualityRating values MUST be calculated from actual qR values in the data,** not estimated.
+
 Analyze the data and provide:
 1. A weekly weather/conditions assessment
-2. Detailed pest & disease incidence tracking with farm-level detail
+2. Detailed pest & disease incidence tracking with farm-level detail (ONLY from explicit staff note mentions)
 3. A quality impact score per week (1-10, where 10 = severe negative impact)
 4. Overall seasonal summary and outlook
 
