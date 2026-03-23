@@ -196,7 +196,7 @@ const AllReports = () => {
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Created</th>
                     {/* General */}
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap border-l border-border">Quality Rating</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Dipping Location</th>
+                    
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Quality of Flowers</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Protocol Changes</th>
                     {/* Intake */}
@@ -232,7 +232,7 @@ const AllReports = () => {
                   {/* Section header row */}
                   <tr className="border-b border-border bg-muted/10">
                     <th colSpan={3} className="sticky left-0 bg-muted/10 z-10 px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"></th>
-                    <th colSpan={4} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">General</th>
+                    <th colSpan={3} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">General</th>
                     <th colSpan={11} className="px-3 py-1 text-[10px] font-bold uppercase text-accent-foreground border-l border-border">Intake Area & Cold Store</th>
                     <th colSpan={7} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border">Export Cold Store</th>
                     <th colSpan={1} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border">Packhouse</th>
@@ -248,7 +248,7 @@ const AllReports = () => {
                       <td className="px-3 py-2.5 whitespace-nowrap tabular-nums text-muted-foreground text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
                       {/* General */}
                       <td className="px-3 py-2.5 whitespace-nowrap border-l border-border/30">{ratingLabel(r.qrGenQualityRating)}</td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">{fmt(r.qrGenDippingLocation)}</td>
+                      
                       <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.qrGenQualityFlowers || ""}>{fmt(r.qrGenQualityFlowers)}</td>
                       <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.qrGenProtocolChanges || ""}>{fmt(r.qrGenProtocolChanges)}</td>
                       {/* Intake */}
