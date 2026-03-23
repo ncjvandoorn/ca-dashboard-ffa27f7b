@@ -89,6 +89,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export function ReportDetailDialog({ report, farmName, createdByName, open, onOpenChange }: ReportDetailDialogProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
+  const handleExportPdf = useCallback(async () => {
+    const el = contentRef.current;
+    if (!el || !report) return;
+    try {
+      await exportSectionsPdf(el, `report-${farmName.replace(/\s+/g, "-")}-wk${report.weekNr}`);
+      toast({ title: "PDF exported", description: `report-${farmName.replace(/\s+/g, "-")}-wk${report.weekNr}.pdf downloaded` });
+    } catch (e: any) {
+      console.error("PDF export failed:", e);
+      toast({ title: "Export failed", description: e?.message || "Unknown error", variant: "destructive" });
+    }
+  }, [report, farmName]);
+
   if (!report) return null;
 
   const createdDate = report.createdAt
