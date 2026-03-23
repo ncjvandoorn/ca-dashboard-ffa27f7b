@@ -90,7 +90,7 @@ Return your analysis as a JSON object with this exact structure:
       "keyMetrics": ["pH", "EC", etc.]
     }
   ],
-  "industryInsight": "One paragraph of overall observations about the group of farms"
+  "industryInsight": "Overall observations split into 2-3 SHORT paragraphs separated by \\n\\n. First paragraph: key patterns. Second paragraph: main areas of concern. Third (optional): actionable recommendations. Each paragraph 2-3 sentences MAX."
 }
 
 IMPORTANT: The "allFarmInsights" array MUST contain an entry for EVERY farm in the input data, not just the exceptional ones. This provides a per-farm quality summary for each farm regardless of whether they appear in needsAttention, mostImproved, or topPerformers. Use these status levels:
