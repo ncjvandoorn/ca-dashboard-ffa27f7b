@@ -286,7 +286,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Weeks {weekRange.min}–{weekRange.max} · AI-powered post-harvest quality analysis
+            Weeks {weekWindow.minWeek}–{weekWindow.maxWeek} · AI-powered post-harvest quality analysis
           </p>
         </DialogHeader>
 
