@@ -32,6 +32,23 @@ interface SeasonalityInsightsProps {
 
 const WINDOW = 12;
 
+/** Week nr in YYWW format. Week 1 = the Sat–Fri week containing Jan 1. Weeks start Saturday. */
+function getCurrentWeekNr(): number {
+  const now = new Date();
+  const daysSinceSat = (now.getDay() + 1) % 7;
+  const currentSat = new Date(now);
+  currentSat.setDate(now.getDate() - daysSinceSat);
+  currentSat.setHours(0, 0, 0, 0);
+  const jan1 = new Date(currentSat.getFullYear(), 0, 1);
+  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
+  const week1Sat = new Date(jan1);
+  week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
+  week1Sat.setHours(0, 0, 0, 0);
+  const weekNum = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
+  const year = currentSat.getFullYear() % 100;
+  return year * 100 + weekNum;
+}
+
 interface WeeklyAssessment {
   weekNr: number;
   weatherSummary: string;
