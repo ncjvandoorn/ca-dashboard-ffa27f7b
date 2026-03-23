@@ -96,6 +96,15 @@ IMPORTANT: The "allFarmInsights" array MUST contain an entry for EVERY farm in t
 - "good": Performing well across most metrics
 - "excellent": Consistently outstanding performance
 
+**CRITICAL ANTI-HALLUCINATION RULES — YOU MUST FOLLOW THESE:**
+1. **ONLY reference data that is actually present in the input.** Never invent farm names, values, week numbers, or staff observations.
+2. **Every numerical value you cite (pH, EC, temp, humidity, etc.) MUST come directly from the provided data.** Do not estimate, average, or fabricate values.
+3. **When quoting or paraphrasing staff notes, ONLY use text that actually appears in qualityFlowersNote, protocolChangesNote, or generalComment fields.** Never invent staff observations.
+4. **If a farm has insufficient data to draw conclusions, say so explicitly** in its summary rather than guessing.
+5. **Do NOT infer pest/disease issues unless staff notes explicitly mention them.** Numerical anomalies alone should be reported as "parameter deviations" not assumed diagnoses.
+6. **Do NOT fabricate improvement trends.** Only report improvement if the data clearly shows values moving from bad to good across sequential weeks.
+7. **If fewer than 3 farms qualify for a category (needsAttention, mostImproved, topPerformers), return fewer.** Never pad lists with marginal cases.
+
 Return at most 10 farms in needsAttention, mostImproved, and topPerformers. For "needsAttention", rank by severity (critical first, then warning). For "mostImproved", focus on farms that have shown the clearest positive trajectory over recent weeks. For "topPerformers", highlight farms that consistently outperform their peers. Only include farms where there is genuine signal — do not pad the lists. If fewer than 10 qualify, return fewer. Be specific and actionable in your findings.`;
 
     const userPrompt = `Analyze the following farm quality data summaries from the last 12 weeks (one quarter) of cut flower post-harvest monitoring. Today is week 12 of 2026 (weekNr format is YYWW, so current = 2612).

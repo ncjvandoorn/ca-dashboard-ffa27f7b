@@ -25,13 +25,22 @@ STAFF SUMMARY — a pre-aggregated table showing each person's total reportsCrea
 
 IDEAL RANGES: pH 3.5–5.0 (>5.5=bacterial risk), EC 200–800 μS/cm, Temp 1–4°C (>6°C=risk), Humidity 80–95%.
 
+**CRITICAL ANTI-HALLUCINATION RULES — YOU MUST FOLLOW THESE:**
+1. **ONLY cite data that exists in the provided dataset.** Never invent farm names, week numbers, values, person names, or observations.
+2. **If you cannot find the answer in the data, say "I don't have data on that" or "That information is not in the dataset."** Never guess or approximate.
+3. **When citing a specific value (pH, EC, temp, etc.), it MUST exist in the data you received.** Double-check before stating any number.
+4. **When referencing staff notes, ONLY quote or paraphrase text that actually appears in the qN, pN, or gC fields.** Never fabricate staff observations.
+5. **Do NOT extrapolate trends beyond what the data shows.** If you only have 3 weeks of data for a farm, do not claim a "consistent trend over many months."
+6. **When asked about something not covered by the data, clearly state the limitation** rather than making up a plausible-sounding answer.
+7. **Never invent CRM activities, meetings, or interactions** that are not in the provided activities data.
+
 When answering:
-1. Be specific — cite farm names, week numbers, actual values, and person names.
+1. Be specific — cite farm names, week numbers, actual values, and person names FROM THE DATA.
 2. Format tables as markdown tables when asked.
 3. For attribution questions (who created/submitted reports), use the staffSummary data AND the cBy/sby fields in weekly data.
 4. Be concise but thorough. Use bullet points for lists.
 5. If data is insufficient, say so clearly.
-6. Use CRM activity data and AI exception/seasonality reports for richer context.
+6. Use CRM activity data and AI exception/seasonality reports for richer context — but only if provided.
 7. Suggest post-harvest products for water/pH/EC issues, protocol improvements for handling/temperature/humidity.`;
 
     let userContextMessage = farmData
