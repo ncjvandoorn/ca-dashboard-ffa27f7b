@@ -22,9 +22,20 @@ interface ExceptionReportProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const CURRENT_WEEK = 2612;
 const WINDOW = 12;
-const MIN_WEEK = CURRENT_WEEK - WINDOW + 1;
+
+function getCurrentWeekNr(): number {
+  const now = new Date();
+  const day = now.getDay();
+  const daysSinceSat = (day + 1) % 7;
+  const saturday = new Date(now);
+  saturday.setDate(now.getDate() - daysSinceSat);
+  const jan1 = new Date(saturday.getFullYear(), 0, 1);
+  const days = Math.floor((saturday.getTime() - jan1.getTime()) / 86400000);
+  const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
+  const year = saturday.getFullYear() % 100;
+  return year * 100 + weekNum;
+}
 
 interface AttentionFarm {
   farmId: string;
@@ -58,19 +69,19 @@ interface AIAnalysis {
   industryInsight: string;
 }
 
-function buildFarmSummaries(reports: QualityReport[], accounts: Account[]) {
+function buildFarmSummaries(reports: QualityReport[], accounts: Account[], currentWeek: number) {
+  const minWeek = currentWeek - WINDOW + 1;
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
 
-  // Get reports in the analysis window and the prior window for trend comparison
   const recentByFarm = new Map<string, QualityReport[]>();
   const olderByFarm = new Map<string, QualityReport[]>();
 
   for (const r of reports) {
     if (r.weekNr <= 0) continue;
-    if (r.weekNr >= MIN_WEEK && r.weekNr <= CURRENT_WEEK) {
+    if (r.weekNr >= minWeek && r.weekNr <= currentWeek) {
       if (!recentByFarm.has(r.farmAccountId)) recentByFarm.set(r.farmAccountId, []);
       recentByFarm.get(r.farmAccountId)!.push(r);
-    } else if (r.weekNr >= MIN_WEEK - WINDOW && r.weekNr < MIN_WEEK) {
+    } else if (r.weekNr >= minWeek - WINDOW && r.weekNr < minWeek) {
       if (!olderByFarm.has(r.farmAccountId)) olderByFarm.set(r.farmAccountId, []);
       olderByFarm.get(r.farmAccountId)!.push(r);
     }
@@ -129,29 +140,9 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
+  const [weekRange, setWeekRange] = useState({ min: 0, max: 0 });
   const contentRef = useRef<HTMLDivElement>(null);
 
-  /**
-   * Compute current YYWW week number.
-   * Week runs Saturday–Friday. Today (Mon 16 Mar 2026) = week 2612.
-   * Saturday 21 Mar 2026 starts week 2613.
-   */
-  const getCurrentWeekNr = useCallback((): number => {
-    const now = new Date();
-    // Shift so Saturday=day0: (day+1)%7 maps Sat→0,Sun→1,...Fri→6
-    // Find the Saturday that started this week
-    const day = now.getDay(); // 0=Sun
-    const daysSinceSat = (day + 1) % 7; // Sat=0, Sun=1, Mon=2...Fri=6
-    const saturday = new Date(now);
-    saturday.setDate(now.getDate() - daysSinceSat);
-
-    // Get ISO week of that Saturday to derive YYWW
-    const jan1 = new Date(saturday.getFullYear(), 0, 1);
-    const days = Math.floor((saturday.getTime() - jan1.getTime()) / 86400000);
-    const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
-    const year = saturday.getFullYear() % 100;
-    return year * 100 + weekNum;
-  }, []);
 
   const runAnalysis = useCallback(async (forceRefresh = false) => {
     setLoading(true);
@@ -159,6 +150,8 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
     setFromCache(false);
 
     const currentWeek = getCurrentWeekNr();
+    const minWeek = currentWeek - WINDOW + 1;
+    setWeekRange({ min: minWeek, max: currentWeek });
 
     try {
       // Check cache first (unless forcing refresh)
@@ -178,7 +171,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
       }
 
       // No cache — run AI analysis
-      const farmSummaries = buildFarmSummaries(reports, accounts);
+      const farmSummaries = buildFarmSummaries(reports, accounts, currentWeek);
 
       if (farmSummaries.length === 0) {
         setError("No farms with sufficient data in the last 10 weeks.");
@@ -260,7 +253,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Weeks {MIN_WEEK}–{CURRENT_WEEK} · AI-powered post-harvest quality analysis
+            Weeks {weekRange.min}–{weekRange.max} · AI-powered post-harvest quality analysis
           </p>
         </DialogHeader>
 
@@ -288,7 +281,11 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
             {analysis.industryInsight && (
               <div className="chrysal-gradient-subtle rounded-lg p-4 mt-2 flex gap-3">
                 <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-foreground leading-relaxed">{analysis.industryInsight}</p>
+                <div className="text-sm text-foreground leading-relaxed space-y-2">
+                  {analysis.industryInsight.split(/\n\n?/).filter(Boolean).map((para, i) => (
+                    <p key={i}>{para}</p>
+                  ))}
+                </div>
               </div>
             )}
 
