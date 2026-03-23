@@ -16,7 +16,22 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // Fetch admin AI instructions
+    let adminInstructions = "";
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const res = await fetch(`${supabaseUrl}/rest/v1/ai_instructions?select=instructions&limit=1`, {
+        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        if (rows?.[0]?.instructions) adminInstructions = rows[0].instructions;
+      }
+    } catch (_) { /* ignore */ }
+
     const systemPrompt = `You are an expert horticultural meteorologist and post-harvest quality analyst for the cut flower industry in East Africa (primarily Kenya). You specialize in interpreting how seasonal weather patterns — rain, temperature swings, humidity, pest pressure, disease — manifest in post-harvest quality data and field staff observations.
+${adminInstructions ? `\n**ADMIN INSTRUCTIONS (follow these closely):**\n${adminInstructions}\n` : ""}
 
 Your task is to analyze 10 weeks of multi-farm post-harvest data to deduce the prevailing weather/seasonality conditions during that period. You are NOT analyzing individual farm performance — you are looking for CROSS-FARM patterns that reveal environmental conditions.
 
