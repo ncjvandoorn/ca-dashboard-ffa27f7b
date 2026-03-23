@@ -100,7 +100,7 @@ const AllReports = () => {
     });
 
     return data;
-  }, [reports, selectedYear, selectedFarm, selectedRating, search, accountMap]);
+  }, [reports, selectedYear, selectedFarm, selectedRating, search, accountMap, userMap]);
 
   const farmsInData = useMemo(() => {
     if (!reports || !accounts) return [];
