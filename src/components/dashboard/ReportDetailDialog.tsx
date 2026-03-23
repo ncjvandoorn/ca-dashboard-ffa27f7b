@@ -10,8 +10,6 @@ import { CalendarDays, FileDown, Home, Leaf, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { exportSectionsPdf } from "@/lib/exportPdfSections";
 import type { QualityReport } from "@/lib/csvParser";
-import { CalendarDays, Home, Leaf, User } from "lucide-react";
-import type { QualityReport } from "@/lib/csvParser";
 
 interface ReportDetailDialogProps {
   report: QualityReport | null;
