@@ -116,7 +116,7 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[]) {
       farmId,
       farmName: accountMap.get(farmId) || "Unknown",
       recentWeeks: extractWeekly(sorted),
-      priorWeeks: extractWeekly(olderSorted),
+      priorWeeks: extractWeekly(olderSorted.slice(-4)),
       reportCount: sorted.length,
     });
   }
