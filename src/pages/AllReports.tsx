@@ -35,7 +35,7 @@ const AllReports = () => {
   const { data: users } = useUsers();
   const tableRef = useRef<HTMLDivElement>(null);
 
-  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("26");
   const [selectedFarm, setSelectedFarm] = useState<string>("all");
   const [selectedRating, setSelectedRating] = useState<string>("all");
   const [search, setSearch] = useState("");
