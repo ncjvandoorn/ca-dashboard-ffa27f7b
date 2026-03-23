@@ -111,7 +111,18 @@ IMPORTANT: The "allFarmInsights" array MUST contain an entry for EVERY farm in t
 
 Return at most 10 farms in needsAttention, mostImproved, and topPerformers. For "needsAttention", rank by severity (critical first, then warning). For "mostImproved", focus on farms that have shown the clearest positive trajectory over recent weeks. For "topPerformers", highlight farms that consistently outperform their peers. Only include farms where there is genuine signal — do not pad the lists. If fewer than 10 qualify, return fewer. Be specific and actionable in your findings.`;
 
-    const userPrompt = `Analyze the following farm quality data summaries from the last 12 weeks (one quarter) of cut flower post-harvest monitoring. Today is week 12 of 2026 (weekNr format is YYWW, so current = 2612).
+    const now = new Date();
+    const day = now.getDay();
+    const daysSinceSat = (day + 1) % 7;
+    const sat = new Date(now);
+    sat.setDate(now.getDate() - daysSinceSat);
+    const jan1 = new Date(sat.getFullYear(), 0, 1);
+    const dys = Math.floor((sat.getTime() - jan1.getTime()) / 86400000);
+    const wk = Math.ceil((dys + jan1.getDay() + 1) / 7);
+    const yr = sat.getFullYear() % 100;
+    const currentWeekNr = yr * 100 + wk;
+
+    const userPrompt = `Analyze the following farm quality data summaries from the last 12 weeks of cut flower post-harvest monitoring. Today is week ${currentWeekNr} (weekNr format is YYWW).
 
 Each farm summary includes weekly readings for intake and export cold store parameters, quality ratings, and other post-harvest metrics. **Pay special attention to the qualityFlowersNote, protocolChangesNote, and generalComment fields** — these are written by our experienced field staff and represent direct, first-hand observations. Reference them explicitly in your analysis when they provide relevant context.
 
