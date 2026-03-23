@@ -127,7 +127,7 @@ Return at most 10 farms in needsAttention, mostImproved, and topPerformers. For 
 
     const userPrompt = `Analyze the following farm quality data summaries from the last 12 available weeks of cut flower post-harvest monitoring.
 
-Analysis week range (YYWW): ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?? currentWeekNr}.
+Analysis week range (YYWW): ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?? currentWeekNrFmt}.
 
 Each farm summary includes weekly readings for intake and export cold store parameters, quality ratings, and other post-harvest metrics. **Pay special attention to the qualityFlowersNote, protocolChangesNote, and generalComment fields** — these are written by our experienced field staff and represent direct, first-hand observations. Reference them explicitly in your analysis when they provide relevant context.
 
