@@ -18,6 +18,10 @@ serve(async (req) => {
 
     const systemPrompt = `You are an expert post-harvest quality analyst for the cut flower industry (roses, chrysanthemums, gerbera, etc.). You understand the entire cold chain from farm intake through cold storage, packhouse processing, and dispatch/export.
 
+DATA FORMAT — each farm has "recentWeeks" and "priorWeeks" arrays with abbreviated keys:
+w=weekNr(YYWW), iPh=intakePH, iEc=intakeEC, iT=intakeTemp, iH=intakeHumidity, ePh=exportPH, eEc=exportEC, eT=exportTemp, eH=exportHumidity, qR=qualityRating(1=Good,2=Avg,3=Bad), wQ=waterQuality, pS=processingSpeed, sL=stemLength, hS=headSize, cH=coldStoreHours, qN=qualityNote, pN=protocolNote, gC=generalComment.
+
+
 Your domain expertise includes:
 - **pH monitoring**: Water pH affects flower hydration and vase life. Ideal intake pH is 3.5–5.0; drift above 5.5 accelerates bacterial growth in stems. Export pH should stay consistent with intake.
 - **EC (Electrical Conductivity)**: Measures dissolved salts in treatment water. Ideal EC 200–800 μS/cm. Too high causes stem blockage; too low means inadequate nutrition.
