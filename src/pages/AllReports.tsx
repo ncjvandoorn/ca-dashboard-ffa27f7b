@@ -231,7 +231,7 @@ const AllReports = () => {
                   </tr>
                   {/* Section header row */}
                   <tr className="border-b border-border bg-muted/10">
-                    <th colSpan={2} className="sticky left-0 bg-muted/10 z-10 px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"></th>
+                    <th colSpan={3} className="sticky left-0 bg-muted/10 z-10 px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"></th>
                     <th colSpan={4} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">General</th>
                     <th colSpan={11} className="px-3 py-1 text-[10px] font-bold uppercase text-accent-foreground border-l border-border">Intake Area & Cold Store</th>
                     <th colSpan={7} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border">Export Cold Store</th>
