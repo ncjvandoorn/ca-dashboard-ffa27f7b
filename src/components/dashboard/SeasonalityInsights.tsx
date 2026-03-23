@@ -154,7 +154,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
     setError(null);
     setFromCache(false);
 
-    const currentWeek = getCurrentWeekNr();
+    const currentWeek = weekWindow.max || getCurrentWeekNr();
 
     try {
       // Check cache first (unless forcing refresh)
