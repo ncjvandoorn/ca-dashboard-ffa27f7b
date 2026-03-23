@@ -230,12 +230,14 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
       const data = await response.json();
       if (data?.error) throw new Error(data.error);
 
+      const versionedAnalysis = { ...(data as Record<string, unknown>), __v: ANALYSIS_VERSION };
+
       // Save to cache (upsert)
       await supabase
         .from("exception_report_cache")
-        .upsert({ week_nr: cacheWeek, analysis: data }, { onConflict: "week_nr" });
+        .upsert({ week_nr: cacheWeek, analysis: versionedAnalysis }, { onConflict: "week_nr" });
 
-      setAnalysis(data as AIAnalysis);
+      setAnalysis(versionedAnalysis as AIAnalysis);
     } catch (e: any) {
       console.error("Exception analysis error:", e);
       const msg = e?.name === "AbortError"
