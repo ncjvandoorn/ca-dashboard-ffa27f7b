@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAccounts, useQualityReports } from "@/hooks/useQualityData";
+import { useAccounts, useQualityReports, useUsers } from "@/hooks/useQualityData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,6 +32,7 @@ const AllReports = () => {
   const navigate = useNavigate();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
+  const { data: users } = useUsers();
   const tableRef = useRef<HTMLDivElement>(null);
 
   const [selectedYear, setSelectedYear] = useState<string>("all");
@@ -44,6 +45,11 @@ const AllReports = () => {
     if (!accounts) return new Map<string, string>();
     return new Map(accounts.map((a) => [a.id, a.name]));
   }, [accounts]);
+
+  const userMap = useMemo(() => {
+    if (!users) return new Map<string, string>();
+    return new Map(users.map((u) => [u.id, u.name]));
+  }, [users]);
 
   const availableYears = useMemo(() => {
     if (!reports) return [];
@@ -200,6 +206,7 @@ const AllReports = () => {
                     {/* Identity */}
                     <th className="sticky left-0 bg-muted/30 z-10 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Week</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Farm</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Created By</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Created</th>
                     {/* General */}
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap border-l border-border">Quality Rating</th>
@@ -239,7 +246,7 @@ const AllReports = () => {
                   </tr>
                   {/* Section header row */}
                   <tr className="border-b border-border bg-muted/10">
-                    <th colSpan={3} className="sticky left-0 bg-muted/10 z-10 px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"></th>
+                    <th colSpan={4} className="sticky left-0 bg-muted/10 z-10 px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"></th>
                     <th colSpan={4} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">General</th>
                     <th colSpan={11} className="px-3 py-1 text-[10px] font-bold uppercase text-accent-foreground border-l border-border">Intake Area & Cold Store</th>
                     <th colSpan={7} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border">Export Cold Store</th>
@@ -253,6 +260,7 @@ const AllReports = () => {
                     <tr key={r.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors cursor-pointer" onClick={() => setSelectedReport(r)}>
                       <td className="sticky left-0 bg-card z-10 px-3 py-2.5 font-medium tabular-nums whitespace-nowrap">{r.weekNr}</td>
                       <td className="px-3 py-2.5 whitespace-nowrap font-medium">{accountMap.get(r.farmAccountId) || "—"}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground">{userMap.get(r.createdByUserId || "") || "—"}</td>
                       <td className="px-3 py-2.5 whitespace-nowrap tabular-nums text-muted-foreground text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
                       {/* General */}
                       <td className="px-3 py-2.5 whitespace-nowrap border-l border-border/30">{ratingLabel(r.qrGenQualityRating)}</td>
@@ -307,6 +315,7 @@ const AllReports = () => {
         <ReportDetailDialog
           report={selectedReport}
           farmName={selectedReport ? (accountMap.get(selectedReport.farmAccountId) || "Unknown") : ""}
+          createdByName={selectedReport ? (userMap.get(selectedReport.createdByUserId || "") || "—") : "—"}
           open={!!selectedReport}
           onOpenChange={(open) => { if (!open) setSelectedReport(null); }}
         />

@@ -6,12 +6,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
-import { CalendarDays, Home, Leaf } from "lucide-react";
+import { CalendarDays, Home, Leaf, User } from "lucide-react";
 import type { QualityReport } from "@/lib/csvParser";
 
 interface ReportDetailDialogProps {
   report: QualityReport | null;
   farmName: string;
+  createdByName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -81,7 +82,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function ReportDetailDialog({ report, farmName, open, onOpenChange }: ReportDetailDialogProps) {
+export function ReportDetailDialog({ report, farmName, createdByName, open, onOpenChange }: ReportDetailDialogProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
   if (!report) return null;
@@ -109,7 +110,7 @@ export function ReportDetailDialog({ report, farmName, open, onOpenChange }: Rep
           </DialogHeader>
 
           {/* Header info bar */}
-          <div className="grid grid-cols-3 gap-3 rounded-xl bg-primary/5 border border-primary/20 p-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl bg-primary/5 border border-primary/20 p-3">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-primary" />
               <div>
@@ -122,6 +123,13 @@ export function ReportDetailDialog({ report, farmName, open, onOpenChange }: Rep
               <div>
                 <p className="text-[10px] uppercase text-muted-foreground font-medium">Farm</p>
                 <p className="text-sm font-bold text-foreground">{farmName}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-[10px] uppercase text-muted-foreground font-medium">Created By</p>
+                <p className="text-sm font-bold text-foreground">{createdByName || "—"}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
