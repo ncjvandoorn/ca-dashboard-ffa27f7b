@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, FileDown, Search } from "lucide-react";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
+import { ReportDetailDialog } from "@/components/dashboard/ReportDetailDialog";
 import type { QualityReport } from "@/lib/csvParser";
 
 function weekYear(weekNr: number): number {
@@ -37,6 +38,7 @@ const AllReports = () => {
   const [selectedFarm, setSelectedFarm] = useState<string>("all");
   const [selectedRating, setSelectedRating] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [selectedReport, setSelectedReport] = useState<QualityReport | null>(null);
 
   const accountMap = useMemo(() => {
     if (!accounts) return new Map<string, string>();
@@ -199,6 +201,7 @@ const AllReports = () => {
                     
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Quality of Flowers</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Protocol Changes</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">General Comment</th>
                     {/* Intake */}
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap border-l border-border">Head Size</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Stem Length</th>
@@ -232,7 +235,7 @@ const AllReports = () => {
                   {/* Section header row */}
                   <tr className="border-b border-border bg-muted/10">
                     <th colSpan={3} className="sticky left-0 bg-muted/10 z-10 px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"></th>
-                    <th colSpan={3} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">General</th>
+                    <th colSpan={4} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">General</th>
                     <th colSpan={11} className="px-3 py-1 text-[10px] font-bold uppercase text-accent-foreground border-l border-border">Intake Area & Cold Store</th>
                     <th colSpan={7} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border">Export Cold Store</th>
                     <th colSpan={1} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border">Packhouse</th>
@@ -242,7 +245,7 @@ const AllReports = () => {
                 </thead>
                 <tbody>
                   {filtered.map((r) => (
-                    <tr key={r.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                    <tr key={r.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors cursor-pointer" onClick={() => setSelectedReport(r)}>
                       <td className="sticky left-0 bg-card z-10 px-3 py-2.5 font-medium tabular-nums whitespace-nowrap">{r.weekNr}</td>
                       <td className="px-3 py-2.5 whitespace-nowrap font-medium">{accountMap.get(r.farmAccountId) || "—"}</td>
                       <td className="px-3 py-2.5 whitespace-nowrap tabular-nums text-muted-foreground text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
@@ -251,6 +254,7 @@ const AllReports = () => {
                       
                       <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.qrGenQualityFlowers || ""}>{fmt(r.qrGenQualityFlowers)}</td>
                       <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.qrGenProtocolChanges || ""}>{fmt(r.qrGenProtocolChanges)}</td>
+                      <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.generalComment || ""}>{fmt(r.generalComment)}</td>
                       {/* Intake */}
                       <td className="px-3 py-2.5 tabular-nums whitespace-nowrap border-l border-border/30">{fmt(r.qrIntakeHeadSize)}</td>
                       <td className="px-3 py-2.5 tabular-nums whitespace-nowrap">{fmt(r.qrIntakeStemLength)}</td>
@@ -294,6 +298,13 @@ const AllReports = () => {
             </div>
           </div>
         )}
+
+        <ReportDetailDialog
+          report={selectedReport}
+          farmName={selectedReport ? (accountMap.get(selectedReport.farmAccountId) || "Unknown") : ""}
+          open={!!selectedReport}
+          onOpenChange={(open) => { if (!open) setSelectedReport(null); }}
+        />
       </div>
     </div>
   );
