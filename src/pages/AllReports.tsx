@@ -148,10 +148,10 @@ const AllReports = () => {
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search farm or week…"
+              placeholder="Search farm, week, or notes…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-48 h-9"
+              className="w-56 h-9"
             />
           </div>
           <Select value={selectedYear} onValueChange={setSelectedYear}>
