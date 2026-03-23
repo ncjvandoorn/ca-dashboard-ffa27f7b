@@ -24,6 +24,15 @@ interface ExceptionReportProps {
 
 const WINDOW = 12;
 const ANALYSIS_VERSION = 2;
+const NOTE_WEEKS_RECENT = 4;
+const NOTE_WEEKS_PRIOR = 2;
+
+function trimNote(note?: string | null, maxLen = 140): string | undefined {
+  if (!note) return undefined;
+  const cleaned = note.replace(/\s+/g, " ").trim();
+  if (!cleaned) return undefined;
+  return cleaned.length <= maxLen ? cleaned : `${cleaned.slice(0, maxLen - 1)}…`;
+}
 
 /** Week nr in YYWW format. Week 1 = the Sat–Fri week containing Jan 1. Weeks start Saturday. */
 function getCurrentWeekNr(): number {
@@ -100,6 +109,8 @@ function getWeekWindow(reports: QualityReport[]): WeekWindow {
 function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recentWeeks: number[], priorWeeks: number[]) {
   const recentSet = new Set(recentWeeks);
   const priorSet = new Set(priorWeeks);
+  const recentNoteWeeks = new Set(recentWeeks.slice(-NOTE_WEEKS_RECENT));
+  const priorNoteWeeks = new Set(priorWeeks.slice(-NOTE_WEEKS_PRIOR));
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
 
   const recentByFarm = new Map<string, QualityReport[]>();
@@ -126,7 +137,7 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recen
     const olderSorted = [...older].sort((a, b) => a.weekNr - b.weekNr);
 
     // Use abbreviated keys to reduce payload size
-    const extractWeekly = (reps: QualityReport[]) =>
+    const extractWeekly = (reps: QualityReport[], noteWeeks: Set<number>) =>
       reps.map((r) => {
         const entry: Record<string, any> = {
           w: r.weekNr,
@@ -134,29 +145,30 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recen
           iEc: r.qrIntakeEc,
           iT: r.qrIntakeTempColdstore,
           iH: r.qrIntakeHumidityColdstore,
-          ePh: r.qrExportPh,
-          eEc: r.qrExportEc,
           eT: r.qrExportTempColdstore,
           eH: r.qrExportHumidityColdstore,
           qR: r.qrGenQualityRating,
           wQ: r.qrIntakeWaterQuality,
           pS: r.qrPackProcessingSpeed,
-          sL: r.qrIntakeStemLength,
-          hS: r.qrIntakeHeadSize,
-          cH: r.qrIntakeColdstoreHours,
         };
-        // Only include notes when non-empty to save tokens
-        if (r.qrGenQualityFlowers) entry.qN = r.qrGenQualityFlowers;
-        if (r.qrGenProtocolChanges) entry.pN = r.qrGenProtocolChanges;
-        if (r.generalComment) entry.gC = r.generalComment;
+
+        if (noteWeeks.has(r.weekNr)) {
+          const qualityNote = trimNote(r.qrGenQualityFlowers);
+          const protocolNote = trimNote(r.qrGenProtocolChanges);
+          const generalComment = trimNote(r.generalComment);
+          if (qualityNote) entry.qN = qualityNote;
+          if (protocolNote) entry.pN = protocolNote;
+          if (generalComment) entry.gC = generalComment;
+        }
+
         return entry;
       });
 
     summaries.push({
       farmId,
       farmName: accountMap.get(farmId) || "Unknown",
-      recentWeeks: extractWeekly(sorted),
-      priorWeeks: extractWeekly(olderSorted.slice(-4)),
+      recentWeeks: extractWeekly(sorted, recentNoteWeeks),
+      priorWeeks: extractWeekly(olderSorted.slice(-NOTE_WEEKS_PRIOR), priorNoteWeeks),
       reportCount: sorted.length,
     });
   }
@@ -243,6 +255,26 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
     } catch (e: any) {
       console.error("Exception analysis error:", e);
       const msg = e?.message || "Analysis failed";
+
+      const { data: latestCached } = await supabase
+        .from("exception_report_cache")
+        .select("analysis")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const latestAnalysis = latestCached?.analysis as { __v?: number } | undefined;
+      if (latestAnalysis && latestAnalysis.__v === ANALYSIS_VERSION) {
+        setAnalysis(latestCached.analysis as unknown as AIAnalysis);
+        setFromCache(true);
+        setError(null);
+        toast({
+          title: "Using cached report",
+          description: "Live analysis timed out, so the latest cached report was loaded.",
+        });
+        return;
+      }
+
       setError(msg);
       toast({
         title: "Analysis Error",
