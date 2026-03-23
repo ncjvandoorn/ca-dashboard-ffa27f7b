@@ -115,11 +115,10 @@ export function ReportDetailDialog({ report, farmName, createdByName, open, onOp
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-bold">Quality Report</DialogTitle>
-              <ExportPdfButton
-                targetRef={contentRef}
-                filename={`report-${farmName.replace(/\s+/g, "-")}-wk${report.weekNr}`}
-                size="sm"
-              />
+              <Button variant="outline" size="sm" onClick={handleExportPdf} className="gap-2">
+                <FileDown className="h-4 w-4" />
+                Export PDF
+              </Button>
             </div>
           </DialogHeader>
 
