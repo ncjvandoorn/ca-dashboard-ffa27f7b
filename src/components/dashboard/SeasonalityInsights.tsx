@@ -131,6 +131,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const weekWindow = useMemo(() => getSeasonalityWeekWindow(reports), [reports]);
 
   const getCurrentWeekNr = useCallback((): number => {
     const now = new Date();
