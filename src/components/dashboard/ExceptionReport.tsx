@@ -237,7 +237,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
         .from("exception_report_cache")
         .upsert({ week_nr: cacheWeek, analysis: versionedAnalysis }, { onConflict: "week_nr" });
 
-      setAnalysis(versionedAnalysis as AIAnalysis);
+      setAnalysis(versionedAnalysis as unknown as AIAnalysis);
     } catch (e: any) {
       console.error("Exception analysis error:", e);
       const msg = e?.name === "AbortError"
