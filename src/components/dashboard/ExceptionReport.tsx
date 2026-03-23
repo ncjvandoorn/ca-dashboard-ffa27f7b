@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { AlertTriangle, TrendingUp, TrendingDown, ArrowRight, Sparkles, Loader2, AlertCircle, Info, RefreshCw } from "lucide-react";
@@ -23,6 +23,7 @@ interface ExceptionReportProps {
 }
 
 const WINDOW = 12;
+const ANALYSIS_VERSION = 2;
 
 function getCurrentWeekNr(): number {
   const now = new Date();
@@ -69,8 +70,31 @@ interface AIAnalysis {
   industryInsight: string;
 }
 
-function buildFarmSummaries(reports: QualityReport[], accounts: Account[], currentWeek: number) {
-  const minWeek = currentWeek - WINDOW + 1;
+interface WeekWindow {
+  recentWeeks: number[];
+  priorWeeks: number[];
+  minWeek: number;
+  maxWeek: number;
+  cacheWeek: number;
+}
+
+function getWeekWindow(reports: QualityReport[]): WeekWindow {
+  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0))).sort((a, b) => a - b);
+  const recentWeeks = uniqueWeeks.slice(-WINDOW);
+  const priorWeeks = uniqueWeeks.slice(Math.max(0, uniqueWeeks.length - WINDOW * 2), Math.max(0, uniqueWeeks.length - WINDOW));
+
+  return {
+    recentWeeks,
+    priorWeeks,
+    minWeek: recentWeeks[0] ?? 0,
+    maxWeek: recentWeeks[recentWeeks.length - 1] ?? 0,
+    cacheWeek: recentWeeks[recentWeeks.length - 1] ?? getCurrentWeekNr(),
+  };
+}
+
+function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recentWeeks: number[], priorWeeks: number[]) {
+  const recentSet = new Set(recentWeeks);
+  const priorSet = new Set(priorWeeks);
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
 
   const recentByFarm = new Map<string, QualityReport[]>();
@@ -78,10 +102,10 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[], curre
 
   for (const r of reports) {
     if (r.weekNr <= 0) continue;
-    if (r.weekNr >= minWeek && r.weekNr <= currentWeek) {
+    if (recentSet.has(r.weekNr)) {
       if (!recentByFarm.has(r.farmAccountId)) recentByFarm.set(r.farmAccountId, []);
       recentByFarm.get(r.farmAccountId)!.push(r);
-    } else if (r.weekNr >= minWeek - WINDOW && r.weekNr < minWeek) {
+    } else if (priorSet.has(r.weekNr)) {
       if (!olderByFarm.has(r.farmAccountId)) olderByFarm.set(r.farmAccountId, []);
       olderByFarm.get(r.farmAccountId)!.push(r);
     }
@@ -140,7 +164,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
-  const [weekRange, setWeekRange] = useState({ min: 0, max: 0 });
+  const weekWindow = useMemo(() => getWeekWindow(reports), [reports]);
   const contentRef = useRef<HTMLDivElement>(null);
 
 
@@ -149,45 +173,54 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
     setError(null);
     setFromCache(false);
 
-    const currentWeek = getCurrentWeekNr();
-    const minWeek = currentWeek - WINDOW + 1;
-    setWeekRange({ min: minWeek, max: currentWeek });
+    const { minWeek, maxWeek, cacheWeek, recentWeeks, priorWeeks } = weekWindow;
 
     try {
+      if (recentWeeks.length < 2) {
+        setError("No weekly report data available for the last 12 weeks.");
+        return;
+      }
+
       // Check cache first (unless forcing refresh)
       if (!forceRefresh) {
         const { data: cached } = await supabase
           .from("exception_report_cache")
           .select("analysis")
-          .eq("week_nr", currentWeek)
+          .eq("week_nr", cacheWeek)
           .maybeSingle();
 
-        if (cached?.analysis) {
+        const cachedAnalysis = cached?.analysis as { __v?: number } | undefined;
+        if (cachedAnalysis && cachedAnalysis.__v === ANALYSIS_VERSION) {
           setAnalysis(cached.analysis as unknown as AIAnalysis);
           setFromCache(true);
-          setLoading(false);
           return;
         }
       }
 
       // No cache — run AI analysis
-      const farmSummaries = buildFarmSummaries(reports, accounts, currentWeek);
+      const farmSummaries = buildFarmSummaries(reports, accounts, recentWeeks, priorWeeks);
 
       if (farmSummaries.length === 0) {
-        setError("No farms with sufficient data in the last 10 weeks.");
-        setLoading(false);
+        setError("No farms with sufficient data in the last 12 weeks.");
         return;
       }
 
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-exceptions`;
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch(functionUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ farmSummaries }),
-      });
+        signal: controller.signal,
+        body: JSON.stringify({
+          farmSummaries,
+          weekRange: { min: minWeek, max: maxWeek },
+        }),
+      }).finally(() => window.clearTimeout(timeoutId));
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -197,15 +230,19 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
       const data = await response.json();
       if (data?.error) throw new Error(data.error);
 
+      const versionedAnalysis = { ...(data as Record<string, unknown>), __v: ANALYSIS_VERSION };
+
       // Save to cache (upsert)
       await supabase
         .from("exception_report_cache")
-        .upsert({ week_nr: currentWeek, analysis: data }, { onConflict: "week_nr" });
+        .upsert({ week_nr: cacheWeek, analysis: versionedAnalysis }, { onConflict: "week_nr" });
 
-      setAnalysis(data as AIAnalysis);
+      setAnalysis(versionedAnalysis as unknown as AIAnalysis);
     } catch (e: any) {
       console.error("Exception analysis error:", e);
-      const msg = e?.message || "Analysis failed";
+      const msg = e?.name === "AbortError"
+        ? "Analysis timed out after 30 seconds. Please retry."
+        : (e?.message || "Analysis failed");
       setError(msg);
       toast({
         title: "Analysis Error",
@@ -215,7 +252,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
     } finally {
       setLoading(false);
     }
-  }, [reports, accounts]);
+  }, [reports, accounts, weekWindow]);
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
@@ -253,7 +290,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Weeks {weekRange.min}–{weekRange.max} · AI-powered post-harvest quality analysis
+            Weeks {weekWindow.minWeek}–{weekWindow.maxWeek} · AI-powered post-harvest quality analysis
           </p>
         </DialogHeader>
 
