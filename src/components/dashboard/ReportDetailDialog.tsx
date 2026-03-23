@@ -82,7 +82,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function ReportDetailDialog({ report, farmName, open, onOpenChange }: ReportDetailDialogProps) {
+export function ReportDetailDialog({ report, farmName, createdByName, open, onOpenChange }: ReportDetailDialogProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
   if (!report) return null;

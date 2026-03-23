@@ -315,6 +315,7 @@ const AllReports = () => {
         <ReportDetailDialog
           report={selectedReport}
           farmName={selectedReport ? (accountMap.get(selectedReport.farmAccountId) || "Unknown") : ""}
+          createdByName={selectedReport ? (userMap.get(selectedReport.createdByUserId || "") || "—") : "—"}
           open={!!selectedReport}
           onOpenChange={(open) => { if (!open) setSelectedReport(null); }}
         />
