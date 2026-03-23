@@ -30,9 +30,7 @@ interface SeasonalityInsightsProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const CURRENT_WEEK = 2612;
 const WINDOW = 12;
-const MIN_WEEK = CURRENT_WEEK - WINDOW + 1;
 
 interface WeeklyAssessment {
   weekNr: number;
