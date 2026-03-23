@@ -32,6 +32,7 @@ const AllReports = () => {
   const navigate = useNavigate();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
+  const { data: users } = useUsers();
   const tableRef = useRef<HTMLDivElement>(null);
 
   const [selectedYear, setSelectedYear] = useState<string>("all");
