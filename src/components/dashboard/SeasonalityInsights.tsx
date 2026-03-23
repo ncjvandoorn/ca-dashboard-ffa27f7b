@@ -64,7 +64,8 @@ interface SeasonalityAnalysis {
 }
 
 function getSeasonalityWeekWindow(reports: QualityReport[]) {
-  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0))).sort((a, b) => a - b);
+  const currentWeek = getCurrentWeekNr();
+  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0 && w <= currentWeek))).sort((a, b) => a - b);
   const recentWeeks = uniqueWeeks.slice(-WINDOW);
   return { weeks: new Set(recentWeeks), min: recentWeeks[0] ?? 0, max: recentWeeks[recentWeeks.length - 1] ?? 0 };
 }
