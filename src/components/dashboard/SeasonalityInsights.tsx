@@ -63,12 +63,18 @@ interface SeasonalityAnalysis {
   averageQualityByWeek: WeeklyQuality[];
 }
 
-function buildAllFarmSummaries(reports: QualityReport[], accounts: Account[]) {
+function getSeasonalityWeekWindow(reports: QualityReport[]) {
+  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0))).sort((a, b) => a - b);
+  const recentWeeks = uniqueWeeks.slice(-WINDOW);
+  return { weeks: new Set(recentWeeks), min: recentWeeks[0] ?? 0, max: recentWeeks[recentWeeks.length - 1] ?? 0 };
+}
+
+function buildAllFarmSummaries(reports: QualityReport[], accounts: Account[], weekSet: Set<number>) {
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
   const byFarm = new Map<string, QualityReport[]>();
 
   for (const r of reports) {
-    if (r.weekNr >= MIN_WEEK && r.weekNr <= CURRENT_WEEK) {
+    if (weekSet.has(r.weekNr)) {
       if (!byFarm.has(r.farmAccountId)) byFarm.set(r.farmAccountId, []);
       byFarm.get(r.farmAccountId)!.push(r);
     }
