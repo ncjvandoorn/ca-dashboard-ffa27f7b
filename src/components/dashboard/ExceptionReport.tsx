@@ -302,7 +302,11 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
             {analysis.industryInsight && (
               <div className="chrysal-gradient-subtle rounded-lg p-4 mt-2 flex gap-3">
                 <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-foreground leading-relaxed">{analysis.industryInsight}</p>
+                <div className="text-sm text-foreground leading-relaxed space-y-2">
+                  {analysis.industryInsight.split(/\n\n?/).filter(Boolean).map((para, i) => (
+                    <p key={i}>{para}</p>
+                  ))}
+                </div>
               </div>
             )}
 
