@@ -23,6 +23,7 @@ interface ExceptionReportProps {
 }
 
 const WINDOW = 12;
+const ANALYSIS_VERSION = 2;
 
 function getCurrentWeekNr(): number {
   const now = new Date();
