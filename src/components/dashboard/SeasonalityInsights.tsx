@@ -174,7 +174,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
       }
 
       // No cache — run AI analysis
-      const farmSummaries = buildAllFarmSummaries(reports, accounts);
+      const farmSummaries = buildAllFarmSummaries(reports, accounts, weekWindow.weeks);
       if (farmSummaries.length === 0) {
         setError("No farms with data in the last 12 weeks.");
         setLoading(false);
