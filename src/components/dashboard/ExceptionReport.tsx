@@ -189,7 +189,8 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
           .eq("week_nr", cacheWeek)
           .maybeSingle();
 
-        if (cached?.analysis) {
+        const cachedAnalysis = cached?.analysis as { __v?: number } | undefined;
+        if (cachedAnalysis && cachedAnalysis.__v === ANALYSIS_VERSION) {
           setAnalysis(cached.analysis as unknown as AIAnalysis);
           setFromCache(true);
           return;
