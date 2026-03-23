@@ -192,7 +192,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
       }
 
       // No cache — run AI analysis
-      const farmSummaries = buildFarmSummaries(reports, accounts);
+      const farmSummaries = buildFarmSummaries(reports, accounts, currentWeek);
 
       if (farmSummaries.length === 0) {
         setError("No farms with sufficient data in the last 10 weeks.");
