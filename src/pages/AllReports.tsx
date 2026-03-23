@@ -52,7 +52,7 @@ const AllReports = () => {
 
   const filtered = useMemo(() => {
     if (!reports) return [];
-    let data = [...reports].filter((r) => r.weekNr > 0);
+    let data = [...reports].filter((r) => r.weekNr > 0 && r.submittedAt);
 
     if (selectedYear !== "all") {
       const y = parseInt(selectedYear);
