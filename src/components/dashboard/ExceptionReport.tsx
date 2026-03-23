@@ -206,8 +206,6 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
       }
 
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-exceptions`;
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch(functionUrl, {
         method: "POST",
@@ -215,12 +213,11 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        signal: controller.signal,
         body: JSON.stringify({
           farmSummaries,
           weekRange: { min: minWeek, max: maxWeek },
         }),
-      }).finally(() => window.clearTimeout(timeoutId));
+      });
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -240,9 +237,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
       setAnalysis(versionedAnalysis as unknown as AIAnalysis);
     } catch (e: any) {
       console.error("Exception analysis error:", e);
-      const msg = e?.name === "AbortError"
-        ? "Analysis timed out after 30 seconds. Please retry."
-        : (e?.message || "Analysis failed");
+      const msg = e?.message || "Analysis failed";
       setError(msg);
       toast({
         title: "Analysis Error",
