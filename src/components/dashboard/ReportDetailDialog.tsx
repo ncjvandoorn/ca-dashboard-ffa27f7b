@@ -1,11 +1,15 @@
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, FileDown, Home, Leaf, User } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { exportSectionsPdf } from "@/lib/exportPdfSections";
+import type { QualityReport } from "@/lib/csvParser";
 import { CalendarDays, Home, Leaf, User } from "lucide-react";
 import type { QualityReport } from "@/lib/csvParser";
 
