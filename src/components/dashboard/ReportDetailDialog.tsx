@@ -73,7 +73,7 @@ function NoteField({ label, value }: { label: string; value: string | null }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+    <div className="rounded-xl border border-border bg-card p-4 space-y-3" data-pdf-section>
       <h3 className="text-sm font-bold text-primary uppercase tracking-wide">{title}</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {children}
