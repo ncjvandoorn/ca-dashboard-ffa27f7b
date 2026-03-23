@@ -201,6 +201,7 @@ const AllReports = () => {
                     
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Quality of Flowers</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Protocol Changes</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">General Comment</th>
                     {/* Intake */}
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap border-l border-border">Head Size</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Stem Length</th>
