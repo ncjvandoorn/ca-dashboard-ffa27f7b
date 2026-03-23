@@ -38,6 +38,7 @@ const AllReports = () => {
   const [selectedFarm, setSelectedFarm] = useState<string>("all");
   const [selectedRating, setSelectedRating] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [selectedReport, setSelectedReport] = useState<QualityReport | null>(null);
 
   const accountMap = useMemo(() => {
     if (!accounts) return new Map<string, string>();
