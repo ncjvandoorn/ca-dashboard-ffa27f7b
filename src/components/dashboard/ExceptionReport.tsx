@@ -163,7 +163,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
-  const [weekRange, setWeekRange] = useState({ min: 0, max: 0 });
+  const weekWindow = useMemo(() => getWeekWindow(reports), [reports]);
   const contentRef = useRef<HTMLDivElement>(null);
 
 
