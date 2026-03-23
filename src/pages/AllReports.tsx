@@ -71,7 +71,13 @@ const AllReports = () => {
       const q = search.toLowerCase();
       data = data.filter((r) => {
         const farmName = accountMap.get(r.farmAccountId) || "";
-        return farmName.toLowerCase().includes(q) || String(r.weekNr).includes(q);
+        return (
+          farmName.toLowerCase().includes(q) ||
+          String(r.weekNr).includes(q) ||
+          (r.qrGenQualityFlowers || "").toLowerCase().includes(q) ||
+          (r.qrGenProtocolChanges || "").toLowerCase().includes(q) ||
+          (r.generalComment || "").toLowerCase().includes(q)
+        );
       });
     }
 
