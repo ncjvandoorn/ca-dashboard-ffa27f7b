@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_instructions: {
+        Row: {
+          id: string
+          instructions: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          instructions?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          instructions?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exception_report_cache: {
         Row: {
           analysis: Json

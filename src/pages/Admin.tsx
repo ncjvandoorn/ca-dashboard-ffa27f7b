@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText } from "lucide-react";
+import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 
 interface LoginLog {
   id: string;
@@ -48,6 +49,9 @@ const Admin = () => {
   const [questions, setQuestions] = useState<QuestionLog[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [aiInstructions, setAiInstructions] = useState("");
+  const [aiInstructionsLoading, setAiInstructionsLoading] = useState(true);
+  const [aiInstructionsSaving, setAiInstructionsSaving] = useState(false);
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -64,6 +68,44 @@ const Admin = () => {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
       setUploading(null);
+    }
+  };
+
+  const fetchAiInstructions = async () => {
+    setAiInstructionsLoading(true);
+    const { data } = await supabase
+      .from("ai_instructions" as any)
+      .select("instructions")
+      .limit(1)
+      .maybeSingle();
+    setAiInstructions((data as any)?.instructions || "");
+    setAiInstructionsLoading(false);
+  };
+
+  const saveAiInstructions = async () => {
+    setAiInstructionsSaving(true);
+    try {
+      const { data: existing } = await supabase
+        .from("ai_instructions" as any)
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("ai_instructions" as any)
+          .update({ instructions: aiInstructions, updated_at: new Date().toISOString() } as any)
+          .eq("id", (existing as any).id);
+      } else {
+        await supabase
+          .from("ai_instructions" as any)
+          .insert({ instructions: aiInstructions } as any);
+      }
+      toast({ title: "Saved", description: "AI instructions updated successfully." });
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiInstructionsSaving(false);
     }
   };
 
@@ -92,6 +134,7 @@ const Admin = () => {
   useEffect(() => {
     fetchLogs();
     fetchQuestions();
+    fetchAiInstructions();
   }, []);
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -189,6 +232,46 @@ const Admin = () => {
         </Card>
 
         {/* Data File Uploads */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bot className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">AI Instructions</CardTitle>
+                <CardDescription>
+                  Custom instructions applied to all AI features (Exception Report, Seasonality Insights, AI Agent).
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {aiInstructionsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Textarea
+                  value={aiInstructions}
+                  onChange={(e) => setAiInstructions(e.target.value)}
+                  placeholder="e.g. Focus on pH and temperature issues. Always mention recommended Chrysal products. Ignore farms with fewer than 3 reports..."
+                  className="min-h-[160px] text-sm"
+                  maxLength={4000}
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">{aiInstructions.length} / 4000 characters</p>
+                  <Button onClick={saveAiInstructions} disabled={aiInstructionsSaving} size="sm" className="gap-2">
+                    {aiInstructionsSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    Save Instructions
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="mb-8">
           <CardHeader>
             <div className="flex items-center gap-3">
