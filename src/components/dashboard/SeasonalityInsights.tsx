@@ -30,9 +30,7 @@ interface SeasonalityInsightsProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const CURRENT_WEEK = 2612;
 const WINDOW = 12;
-const MIN_WEEK = CURRENT_WEEK - WINDOW + 1;
 
 interface WeeklyAssessment {
   weekNr: number;
@@ -65,12 +63,18 @@ interface SeasonalityAnalysis {
   averageQualityByWeek: WeeklyQuality[];
 }
 
-function buildAllFarmSummaries(reports: QualityReport[], accounts: Account[]) {
+function getSeasonalityWeekWindow(reports: QualityReport[]) {
+  const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0))).sort((a, b) => a - b);
+  const recentWeeks = uniqueWeeks.slice(-WINDOW);
+  return { weeks: new Set(recentWeeks), min: recentWeeks[0] ?? 0, max: recentWeeks[recentWeeks.length - 1] ?? 0 };
+}
+
+function buildAllFarmSummaries(reports: QualityReport[], accounts: Account[], weekSet: Set<number>) {
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
   const byFarm = new Map<string, QualityReport[]>();
 
   for (const r of reports) {
-    if (r.weekNr >= MIN_WEEK && r.weekNr <= CURRENT_WEEK) {
+    if (weekSet.has(r.weekNr)) {
       if (!byFarm.has(r.farmAccountId)) byFarm.set(r.farmAccountId, []);
       byFarm.get(r.farmAccountId)!.push(r);
     }
@@ -127,6 +131,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const weekWindow = useMemo(() => getSeasonalityWeekWindow(reports), [reports]);
 
   const getCurrentWeekNr = useCallback((): number => {
     const now = new Date();
@@ -149,7 +154,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
     setError(null);
     setFromCache(false);
 
-    const currentWeek = getCurrentWeekNr();
+    const currentWeek = weekWindow.max || getCurrentWeekNr();
 
     try {
       // Check cache first (unless forcing refresh)
@@ -169,7 +174,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
       }
 
       // No cache — run AI analysis
-      const farmSummaries = buildAllFarmSummaries(reports, accounts);
+      const farmSummaries = buildAllFarmSummaries(reports, accounts, weekWindow.weeks);
       if (farmSummaries.length === 0) {
         setError("No farms with data in the last 12 weeks.");
         setLoading(false);
@@ -253,7 +258,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Weeks {MIN_WEEK}–{CURRENT_WEEK} · Weather & pest patterns from quality data
+            Weeks {weekWindow.min}–{weekWindow.max} · Weather & pest patterns from quality data
           </p>
         </DialogHeader>
 
