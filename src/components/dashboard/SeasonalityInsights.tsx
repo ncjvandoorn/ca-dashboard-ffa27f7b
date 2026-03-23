@@ -258,7 +258,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            Weeks {MIN_WEEK}–{CURRENT_WEEK} · Weather & pest patterns from quality data
+            Weeks {weekWindow.min}–{weekWindow.max} · Weather & pest patterns from quality data
           </p>
         </DialogHeader>
 
