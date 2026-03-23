@@ -50,7 +50,7 @@ export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps
     const byFarm = new Map<string, QualityReport[]>();
 
     for (const r of reports) {
-      if (r.weekNr <= 0) continue;
+      if (r.weekNr <= 0 || !r.submittedAt) continue;
       if (!byFarm.has(r.farmAccountId)) byFarm.set(r.farmAccountId, []);
       byFarm.get(r.farmAccountId)!.push(r);
     }
