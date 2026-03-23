@@ -171,6 +171,8 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
     setFromCache(false);
 
     const currentWeek = getCurrentWeekNr();
+    const minWeek = currentWeek - WINDOW + 1;
+    setWeekRange({ min: minWeek, max: currentWeek });
 
     try {
       // Check cache first (unless forcing refresh)
