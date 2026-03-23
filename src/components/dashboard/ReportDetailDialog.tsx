@@ -1,12 +1,14 @@
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
-import { CalendarDays, Home, Leaf, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, FileDown, Home, Leaf, User } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { exportSectionsPdf } from "@/lib/exportPdfSections";
 import type { QualityReport } from "@/lib/csvParser";
 
 interface ReportDetailDialogProps {
@@ -73,7 +75,7 @@ function NoteField({ label, value }: { label: string; value: string | null }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+    <div className="rounded-xl border border-border bg-card p-4 space-y-3" data-pdf-section>
       <h3 className="text-sm font-bold text-primary uppercase tracking-wide">{title}</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {children}
@@ -84,6 +86,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export function ReportDetailDialog({ report, farmName, createdByName, open, onOpenChange }: ReportDetailDialogProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const handleExportPdf = useCallback(async () => {
+    const el = contentRef.current;
+    if (!el || !report) return;
+    try {
+      await exportSectionsPdf(el, `report-${farmName.replace(/\s+/g, "-")}-wk${report.weekNr}`);
+      toast({ title: "PDF exported", description: `report-${farmName.replace(/\s+/g, "-")}-wk${report.weekNr}.pdf downloaded` });
+    } catch (e: any) {
+      console.error("PDF export failed:", e);
+      toast({ title: "Export failed", description: e?.message || "Unknown error", variant: "destructive" });
+    }
+  }, [report, farmName]);
 
   if (!report) return null;
 
@@ -101,11 +115,10 @@ export function ReportDetailDialog({ report, farmName, createdByName, open, onOp
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-bold">Quality Report</DialogTitle>
-              <ExportPdfButton
-                targetRef={contentRef}
-                filename={`report-${farmName.replace(/\s+/g, "-")}-wk${report.weekNr}`}
-                size="sm"
-              />
+              <Button variant="outline" size="sm" onClick={handleExportPdf} className="gap-2">
+                <FileDown className="h-4 w-4" />
+                Export PDF
+              </Button>
             </div>
           </DialogHeader>
 

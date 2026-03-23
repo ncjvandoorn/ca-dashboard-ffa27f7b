@@ -3,6 +3,8 @@ import jsPDF from "jspdf";
 
 interface ExportOptions {
   orientation?: "p" | "l";
+  scale?: number;
+  quality?: number;
 }
 
 /**
@@ -13,6 +15,8 @@ interface ExportOptions {
  */
 export async function exportElementToPdf(element: HTMLElement, filename: string, options?: ExportOptions) {
   const orientation = options?.orientation ?? "p";
+  const scale = options?.scale ?? 2;
+  const quality = options?.quality ?? 0.85;
   const isLandscape = orientation === "l";
 
   // Temporarily expand scrollable containers for full capture
@@ -26,7 +30,7 @@ export async function exportElementToPdf(element: HTMLElement, filename: string,
   });
 
   const canvas = await html2canvas(element, {
-    scale: 1.5,
+    scale,
     useCORS: true,
     backgroundColor: "#ffffff",
     logging: false,
@@ -40,7 +44,7 @@ export async function exportElementToPdf(element: HTMLElement, filename: string,
     el.style.width = width;
   });
 
-  const imgData = canvas.toDataURL("image/jpeg", 0.75);
+  const imgData = canvas.toDataURL("image/jpeg", quality);
 
   const margin = 10; // mm
   const pageWidth = isLandscape ? 297 : 210; // A4
