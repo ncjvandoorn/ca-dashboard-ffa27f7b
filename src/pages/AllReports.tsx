@@ -103,13 +103,12 @@ const AllReports = () => {
   const handleExport = useCallback(async () => {
     if (!tableRef.current) return;
     try {
-      // Temporarily expand for full capture
       const el = tableRef.current;
       const prev = el.style.maxHeight;
       const prevOverflow = el.style.overflow;
       el.style.maxHeight = "none";
       el.style.overflow = "visible";
-      await exportElementToPdf(el, `all-reports${selectedYear !== "all" ? `-${selectedYear}` : ""}${selectedFarm !== "all" ? `-${accountMap.get(selectedFarm) || "farm"}` : ""}`);
+      await exportElementToPdf(el, `all-reports${selectedYear !== "all" ? `-${selectedYear}` : ""}${selectedFarm !== "all" ? `-${accountMap.get(selectedFarm) || "farm"}` : ""}`, { orientation: "l" });
       el.style.maxHeight = prev;
       el.style.overflow = prevOverflow;
       toast({ title: "PDF exported" });
