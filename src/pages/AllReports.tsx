@@ -206,6 +206,7 @@ const AllReports = () => {
                     {/* Identity */}
                     <th className="sticky left-0 bg-muted/30 z-10 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Week</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Farm</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Created By</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Created</th>
                     {/* General */}
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap border-l border-border">Quality Rating</th>
