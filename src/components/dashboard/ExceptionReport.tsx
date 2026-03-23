@@ -22,9 +22,20 @@ interface ExceptionReportProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const CURRENT_WEEK = 2612;
 const WINDOW = 12;
-const MIN_WEEK = CURRENT_WEEK - WINDOW + 1;
+
+function getCurrentWeekNr(): number {
+  const now = new Date();
+  const day = now.getDay();
+  const daysSinceSat = (day + 1) % 7;
+  const saturday = new Date(now);
+  saturday.setDate(now.getDate() - daysSinceSat);
+  const jan1 = new Date(saturday.getFullYear(), 0, 1);
+  const days = Math.floor((saturday.getTime() - jan1.getTime()) / 86400000);
+  const weekNum = Math.ceil((days + jan1.getDay() + 1) / 7);
+  const year = saturday.getFullYear() % 100;
+  return year * 100 + weekNum;
+}
 
 interface AttentionFarm {
   farmId: string;
