@@ -114,7 +114,31 @@ const AllReports = () => {
       const prevOverflow = el.style.overflow;
       el.style.maxHeight = "none";
       el.style.overflow = "visible";
-      await exportElementToPdf(el, `all-reports${selectedYear !== "all" ? `-${selectedYear}` : ""}${selectedFarm !== "all" ? `-${accountMap.get(selectedFarm) || "farm"}` : ""}`, { orientation: "l" });
+
+      // Hide columns beyond General Comment (keep first 8 columns: index 0-7)
+      const VISIBLE_COLS = 8;
+      const table = el.querySelector("table");
+      const allRows = table ? table.querySelectorAll("tr") : [];
+      const hiddenCells: HTMLElement[] = [];
+
+      allRows.forEach((row, rowIdx) => {
+        const cells = row.children;
+        let colIdx = 0;
+        for (let i = 0; i < cells.length; i++) {
+          const cell = cells[i] as HTMLElement;
+          const span = parseInt(cell.getAttribute("colspan") || "1", 10);
+          if (colIdx + span > VISIBLE_COLS) {
+            cell.style.display = "none";
+            hiddenCells.push(cell);
+          }
+          colIdx += span;
+        }
+      });
+
+      await exportElementToPdf(el, `all-reports${selectedYear !== "all" ? `-${selectedYear}` : ""}${selectedFarm !== "all" ? `-${accountMap.get(selectedFarm) || "farm"}` : ""}`, { orientation: "l", scale: 2, quality: 0.85 });
+
+      // Restore hidden cells
+      hiddenCells.forEach((cell) => { cell.style.display = ""; });
       el.style.maxHeight = prev;
       el.style.overflow = prevOverflow;
       toast({ title: "PDF exported" });
