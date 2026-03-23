@@ -260,6 +260,7 @@ const AllReports = () => {
                     <tr key={r.id} className="border-b border-border/50 hover:bg-primary/5 transition-colors cursor-pointer" onClick={() => setSelectedReport(r)}>
                       <td className="sticky left-0 bg-card z-10 px-3 py-2.5 font-medium tabular-nums whitespace-nowrap">{r.weekNr}</td>
                       <td className="px-3 py-2.5 whitespace-nowrap font-medium">{accountMap.get(r.farmAccountId) || "—"}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground">{userMap.get(r.createdByUserId || "") || "—"}</td>
                       <td className="px-3 py-2.5 whitespace-nowrap tabular-nums text-muted-foreground text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
                       {/* General */}
                       <td className="px-3 py-2.5 whitespace-nowrap border-l border-border/30">{ratingLabel(r.qrGenQualityRating)}</td>
