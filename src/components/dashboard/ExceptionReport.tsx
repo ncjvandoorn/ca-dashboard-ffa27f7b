@@ -69,19 +69,19 @@ interface AIAnalysis {
   industryInsight: string;
 }
 
-function buildFarmSummaries(reports: QualityReport[], accounts: Account[]) {
+function buildFarmSummaries(reports: QualityReport[], accounts: Account[], currentWeek: number) {
+  const minWeek = currentWeek - WINDOW + 1;
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
 
-  // Get reports in the analysis window and the prior window for trend comparison
   const recentByFarm = new Map<string, QualityReport[]>();
   const olderByFarm = new Map<string, QualityReport[]>();
 
   for (const r of reports) {
     if (r.weekNr <= 0) continue;
-    if (r.weekNr >= MIN_WEEK && r.weekNr <= CURRENT_WEEK) {
+    if (r.weekNr >= minWeek && r.weekNr <= currentWeek) {
       if (!recentByFarm.has(r.farmAccountId)) recentByFarm.set(r.farmAccountId, []);
       recentByFarm.get(r.farmAccountId)!.push(r);
-    } else if (r.weekNr >= MIN_WEEK - WINDOW && r.weekNr < MIN_WEEK) {
+    } else if (r.weekNr >= minWeek - WINDOW && r.weekNr < minWeek) {
       if (!olderByFarm.has(r.farmAccountId)) olderByFarm.set(r.farmAccountId, []);
       olderByFarm.get(r.farmAccountId)!.push(r);
     }
