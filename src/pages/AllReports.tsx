@@ -248,7 +248,7 @@ const AllReports = () => {
                       <td className="px-3 py-2.5 whitespace-nowrap tabular-nums text-muted-foreground text-xs">{r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
                       {/* General */}
                       <td className="px-3 py-2.5 whitespace-nowrap border-l border-border/30">{ratingLabel(r.qrGenQualityRating)}</td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">{fmt(r.qrGenDippingLocation)}</td>
+                      
                       <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.qrGenQualityFlowers || ""}>{fmt(r.qrGenQualityFlowers)}</td>
                       <td className="px-3 py-2.5 max-w-[200px] truncate" title={r.qrGenProtocolChanges || ""}>{fmt(r.qrGenProtocolChanges)}</td>
                       {/* Intake */}
