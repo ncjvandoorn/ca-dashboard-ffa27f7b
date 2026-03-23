@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, FileDown, Search } from "lucide-react";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
+import { ReportDetailDialog } from "@/components/dashboard/ReportDetailDialog";
 import type { QualityReport } from "@/lib/csvParser";
 
 function weekYear(weekNr: number): number {
