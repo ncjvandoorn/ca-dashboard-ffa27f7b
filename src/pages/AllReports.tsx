@@ -298,6 +298,13 @@ const AllReports = () => {
             </div>
           </div>
         )}
+
+        <ReportDetailDialog
+          report={selectedReport}
+          farmName={selectedReport ? (accountMap.get(selectedReport.farmAccountId) || "Unknown") : ""}
+          open={!!selectedReport}
+          onOpenChange={(open) => { if (!open) setSelectedReport(null); }}
+        />
       </div>
     </div>
   );
