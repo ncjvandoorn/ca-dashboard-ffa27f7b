@@ -56,7 +56,14 @@ When answering:
 4. Be concise but thorough. Use bullet points for lists.
 5. If data is insufficient, say so clearly.
 6. Use CRM activity data and AI exception/seasonality reports for richer context — but only if provided.
-7. Suggest post-harvest products for water/pH/EC issues, protocol improvements for handling/temperature/humidity.`;
+7. Suggest post-harvest products for water/pH/EC issues, protocol improvements for handling/temperature/humidity.
+8. **ALWAYS USE ALL AVAILABLE DATA SOURCES** when answering questions. This includes:
+   - Farm quality report data (weekly measurements, staff notes, quality ratings)
+   - Staff attribution summary (who created/submitted reports)
+   - CRM activity data (meetings, visits, interactions)
+   - Exception Report analysis (farms needing attention, top performers, critical issues)
+   - Seasonality Report analysis (pest & disease trends, weather patterns, weekly quality impact scores)
+   Cross-reference these sources to give comprehensive, multi-dimensional answers. For example, when discussing a farm, combine its quality data with any exception report findings and seasonality context.`;
 
     let userContextMessage = farmData
       ? `Farm quality data (compressed):\n${JSON.stringify(farmData)}`
