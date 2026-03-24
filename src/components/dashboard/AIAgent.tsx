@@ -84,6 +84,7 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[], use
   for (const [farmId, farmReports] of byFarm) {
     const sorted = [...farmReports].sort((a, b) => a.weekNr - b.weekNr);
     summaries.push({
+      farmId,
       farm: accountMap.get(farmId) || farmId,
       d: sorted.map((r) => compact({
         w: r.weekNr,
@@ -114,22 +115,30 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
 
   const farmData = useMemo(() => {
     const base = buildFarmDataContext(reports, accounts, users || []);
-    // Attach activities per farm (limit to 10 most recent)
+
+    // Attach ALL activities per farm (no truncation)
     if (activities?.length) {
       for (const summary of base) {
         const farmActivities = activities
           .filter((a) => a.accountId === (summary as any).farmId)
-          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-          .slice(0, 10)
+          .sort((a, b) => (b.createdAt || b.startsAt || 0) - (a.createdAt || a.startsAt || 0))
           .map((a) => compact({
+            id: a.id,
             type: a.type,
             status: a.status,
             subject: a.subject,
-            date: a.startsAt ? new Date(a.startsAt).toISOString().slice(0, 10) : null,
+            description: a.description,
+            startDate: a.startsAt ? new Date(a.startsAt).toISOString().slice(0, 10) : null,
+            completedDate: a.completedAt ? new Date(a.completedAt).toISOString().slice(0, 10) : null,
+            createdDate: a.createdAt ? new Date(a.createdAt).toISOString().slice(0, 10) : null,
           }));
-        if (farmActivities.length) (summary as any).activities = farmActivities;
+
+        if (farmActivities.length) {
+          (summary as any).activities = farmActivities;
+        }
       }
     }
+
     return base;
   }, [reports, accounts, activities, users]);
 
