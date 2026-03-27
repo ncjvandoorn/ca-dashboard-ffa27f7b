@@ -115,17 +115,16 @@ const Index = () => {
     return filtered;
   }, [reports, selectedYear, customerAllowedFarmIds]);
 
-  // Farms that have data in the selected year
+  // Farms that have data in the selected year, sorted alphabetically
   const farmsWithData = useMemo(() => {
     if (!accounts) return [];
     const farmIds = new Set(yearFilteredReports.map((r) => r.farmAccountId));
-    return accounts.filter((a) => farmIds.has(a.id));
+    return accounts.filter((a) => farmIds.has(a.id)).sort((a, b) => a.name.localeCompare(b.name));
   }, [accounts, yearFilteredReports]);
 
-  // Reset farm selection if current farm not in filtered list
+  // Auto-select first farm alphabetically when no valid selection exists
   const activeFarmId = useMemo(() => {
-    // If a farm is explicitly selected (even without data), keep it
-    if (selectedFarmId) return selectedFarmId;
+    if (selectedFarmId && farmsWithData.some((f) => f.id === selectedFarmId)) return selectedFarmId;
     return farmsWithData[0]?.id || "";
   }, [selectedFarmId, farmsWithData]);
 
