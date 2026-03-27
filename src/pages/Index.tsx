@@ -228,17 +228,17 @@ const Index = () => {
               selectedCustomerId={selectedCustomerId}
               onCustomerChange={(id) => {
                 setSelectedCustomerId(id);
-                // Reset farm if current farm isn't in the new customer's farms
+                // Reset farm to first alphabetically from customer's farms
                 if (id) {
                   const allowedFarmIds = new Set(
                     (customerFarms || [])
                       .filter((cf) => cf.customerAccountId === id && !cf.deletedAt)
                       .map((cf) => cf.farmAccountId)
                   );
-                  if (!allowedFarmIds.has(selectedFarmId)) {
-                    const firstFarm = farmsWithData.find((f) => allowedFarmIds.has(f.id));
-                    if (firstFarm) setSelectedFarmId(firstFarm.id);
-                  }
+                  const sorted = farmsWithData
+                    .filter((f) => allowedFarmIds.has(f.id))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                  setSelectedFarmId(sorted[0]?.id || "");
                 }
               }}
             />
