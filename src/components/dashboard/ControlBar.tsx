@@ -139,7 +139,11 @@ export function ControlBar({
     if (selectedCustomerId) {
       const allowedFarmIds = new Set(
         customerFarms
-          .filter((cf) => cf.customerAccountId === selectedCustomerId && !cf.deletedAt)
+          .filter((cf) =>
+            cf.customerAccountId === selectedCustomerId &&
+            cf.farmAccountConsent === "1" &&
+            !cf.deletedAt
+          )
           .map((cf) => cf.farmAccountId)
       );
       farms = farms.filter((a) => allowedFarmIds.has(a.id));
@@ -158,13 +162,29 @@ export function ControlBar({
     [customers, customerFarms]
   );
 
-  // Global search across all accounts
+  // Global search scoped to the currently allowed farm universe
   const [search, setSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
+  const searchableAccounts = useMemo(() => {
+    if (selectedCustomerId) {
+      const allowedFarmIds = new Set(
+        customerFarms
+          .filter((cf) =>
+            cf.customerAccountId === selectedCustomerId &&
+            cf.farmAccountConsent === "1" &&
+            !cf.deletedAt
+          )
+          .map((cf) => cf.farmAccountId)
+      );
+      return allAccounts.filter((a) => allowedFarmIds.has(a.id));
+    }
+    return isCustomer ? accounts : allAccounts;
+  }, [selectedCustomerId, customerFarms, allAccounts, isCustomer, accounts]);
+
   const searchResults = search.length >= 2
-    ? allAccounts
+    ? searchableAccounts
         .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
         .sort((a, b) => a.name.localeCompare(b.name))
         .slice(0, 15)

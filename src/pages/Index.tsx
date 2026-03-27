@@ -74,19 +74,48 @@ const Index = () => {
   }, []);
 
 
-  // For customers: compute allowed farm IDs (consent = "1" and has relationship)
-  const customerAllowedFarmIds = useMemo(() => {
-    if (!isCustomer || !customerAccount || !customerFarms) return null;
-    return new Set(
-      customerFarms
-        .filter((cf) =>
-          cf.customerAccountId === customerAccount.customerAccountId &&
-          cf.farmAccountConsent === "1" &&
-          !cf.deletedAt
-        )
-        .map((cf) => cf.farmAccountId)
-    );
-  }, [isCustomer, customerAccount, customerFarms]);
+  // Compute scoped farm visibility (selected customer + role-based customer access).
+  // Fail closed while customer mappings are loading.
+  const visibleFarmIds = useMemo(() => {
+    if (!customerFarms) {
+      if (isCustomer || selectedCustomerId) return new Set<string>();
+      return null;
+    }
+
+    let allowed: Set<string> | null = null;
+
+    if (selectedCustomerId) {
+      allowed = new Set(
+        customerFarms
+          .filter((cf) =>
+            cf.customerAccountId === selectedCustomerId &&
+            cf.farmAccountConsent === "1" &&
+            !cf.deletedAt
+          )
+          .map((cf) => cf.farmAccountId)
+      );
+    }
+
+    if (isCustomer) {
+      if (!customerAccount) return new Set<string>();
+
+      const customerScoped = new Set(
+        customerFarms
+          .filter((cf) =>
+            cf.customerAccountId === customerAccount.customerAccountId &&
+            cf.farmAccountConsent === "1" &&
+            !cf.deletedAt
+          )
+          .map((cf) => cf.farmAccountId)
+      );
+
+      allowed = allowed
+        ? new Set([...allowed].filter((farmId) => customerScoped.has(farmId)))
+        : customerScoped;
+    }
+
+    return allowed;
+  }, [isCustomer, customerAccount, customerFarms, selectedCustomerId]);
 
   // For customers, auto-set customer filter and lock it
   useEffect(() => {
@@ -95,32 +124,48 @@ const Index = () => {
     }
   }, [isCustomer, customerAccount]);
 
-  // Extract available years from data
-  const availableYears = useMemo(() => {
+  const scopedReports = useMemo(() => {
     if (!reports) return [];
+    if (!visibleFarmIds) return reports;
+    return reports.filter((r) => visibleFarmIds.has(r.farmAccountId));
+  }, [reports, visibleFarmIds]);
+
+  const scopedAccounts = useMemo(() => {
+    if (!accounts) return [];
+    if (!visibleFarmIds) return accounts;
+    return accounts.filter((a) => visibleFarmIds.has(a.id));
+  }, [accounts, visibleFarmIds]);
+
+  const scopedActivities = useMemo(() => {
+    if (!activities) return [];
+    if (!visibleFarmIds) return activities;
+    return activities.filter((a) => visibleFarmIds.has(a.accountId));
+  }, [activities, visibleFarmIds]);
+
+  // Extract available years from scoped data
+  const availableYears = useMemo(() => {
+    if (!scopedReports.length) return [];
     const years = new Set<number>();
-    for (const r of reports) {
+    for (const r of scopedReports) {
       if (r.weekNr > 0) years.add(weekYear(r.weekNr));
     }
     return [...years].sort((a, b) => b - a);
-  }, [reports]);
+  }, [scopedReports]);
 
-  // Filter reports by selected year AND customer restrictions
+  // Filter reports by selected year inside the scoped visibility window
   const yearFilteredReports = useMemo(() => {
-    if (!reports) return [];
-    let filtered = selectedYear === "all" ? reports : reports.filter((r) => weekYear(r.weekNr) === parseInt(selectedYear));
-    if (customerAllowedFarmIds) {
-      filtered = filtered.filter((r) => customerAllowedFarmIds.has(r.farmAccountId));
-    }
-    return filtered;
-  }, [reports, selectedYear, customerAllowedFarmIds]);
+    if (!scopedReports.length) return [];
+    return selectedYear === "all"
+      ? scopedReports
+      : scopedReports.filter((r) => weekYear(r.weekNr) === parseInt(selectedYear));
+  }, [scopedReports, selectedYear]);
 
   // Farms that have data in the selected year, sorted alphabetically
   const farmsWithData = useMemo(() => {
-    if (!accounts) return [];
+    if (!scopedAccounts.length) return [];
     const farmIds = new Set(yearFilteredReports.map((r) => r.farmAccountId));
-    return accounts.filter((a) => farmIds.has(a.id)).sort((a, b) => a.name.localeCompare(b.name));
-  }, [accounts, yearFilteredReports]);
+    return scopedAccounts.filter((a) => farmIds.has(a.id)).sort((a, b) => a.name.localeCompare(b.name));
+  }, [scopedAccounts, yearFilteredReports]);
 
   // Auto-select first farm alphabetically when no valid selection exists
   const activeFarmId = useMemo(() => {
@@ -134,7 +179,7 @@ const Index = () => {
       .sort((a, b) => a.weekNr - b.weekNr);
   }, [yearFilteredReports, activeFarmId]);
 
-  const farmName = accounts?.find((a) => a.id === activeFarmId)?.name || farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
+  const farmName = scopedAccounts.find((a) => a.id === activeFarmId)?.name || farmsWithData.find((a) => a.id === activeFarmId)?.name || "—";
 
   // Find the manager name from the last quality report's submittedByUserId
   const managerName = useMemo(() => {
@@ -214,7 +259,7 @@ const Index = () => {
           <div ref={dashboardRef}>
             <ControlBar
               accounts={farmsWithData}
-              allAccounts={accounts || []}
+              allAccounts={scopedAccounts}
               selectedFarmId={activeFarmId}
               onFarmChange={setSelectedFarmId}
               years={availableYears}
@@ -227,17 +272,22 @@ const Index = () => {
               selectedCustomerId={selectedCustomerId}
               onCustomerChange={(id) => {
                 setSelectedCustomerId(id);
-                // Reset farm to first alphabetically from customer's farms
                 if (id) {
                   const allowedFarmIds = new Set(
                     (customerFarms || [])
-                      .filter((cf) => cf.customerAccountId === id && !cf.deletedAt)
+                      .filter((cf) =>
+                        cf.customerAccountId === id &&
+                        cf.farmAccountConsent === "1" &&
+                        !cf.deletedAt
+                      )
                       .map((cf) => cf.farmAccountId)
                   );
                   const sorted = farmsWithData
                     .filter((f) => allowedFarmIds.has(f.id))
                     .sort((a, b) => a.name.localeCompare(b.name));
                   setSelectedFarmId(sorted[0]?.id || "");
+                } else {
+                  setSelectedFarmId("");
                 }
               }}
             />
@@ -259,39 +309,36 @@ const Index = () => {
               </div>
               <div className="flex items-center gap-2">
                 <AIAgent
-                  reports={customerAllowedFarmIds ? (reports || []).filter((r) => customerAllowedFarmIds.has(r.farmAccountId)) : (reports || [])}
-                  accounts={customerAllowedFarmIds ? (accounts || []).filter((a) => customerAllowedFarmIds.has(a.id)) : (accounts || [])}
-                  activities={isCustomer ? [] : (activities || [])}
+                  reports={scopedReports}
+                  accounts={scopedAccounts}
+                  activities={isCustomer ? [] : scopedActivities}
                   users={isCustomer ? [] : (users || [])}
-                  exceptionAnalysis={isCustomer ? null : exceptionAnalysis}
-                  seasonalityAnalysis={isCustomer ? null : seasonalityAnalysis}
+                  exceptionAnalysis={visibleFarmIds ? null : exceptionAnalysis}
+                  seasonalityAnalysis={visibleFarmIds ? null : seasonalityAnalysis}
                 />
                 {isAdmin && (
                   <ReportingCheck
                     reports={yearFilteredReports}
-                    accounts={accounts || []}
+                    accounts={scopedAccounts}
                     users={users || []}
                   />
                 )}
                 {!isCustomer && (
                   <SeasonalityInsights
                     reports={yearFilteredReports}
-                    accounts={accounts || []}
+                    accounts={scopedAccounts}
                     open={seasonalityOpen}
                     onOpenChange={setSeasonalityOpen}
                   />
                 )}
                 <ExceptionReport
-                  reports={isCustomer && customerAllowedFarmIds
-                    ? yearFilteredReports
-                    : yearFilteredReports}
-                  accounts={isCustomer && customerAllowedFarmIds
-                    ? (accounts || []).filter((a) => customerAllowedFarmIds.has(a.id))
-                    : (accounts || [])}
+                  reports={yearFilteredReports}
+                  accounts={scopedAccounts}
                   onSelectFarm={(id) => { setSelectedFarmId(id); }}
                   open={exceptionOpen}
                   onOpenChange={setExceptionOpen}
                   hideRefresh={isCustomer}
+                  useSharedCache={!isCustomer && !selectedCustomerId}
                 />
                 <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                   All Reports

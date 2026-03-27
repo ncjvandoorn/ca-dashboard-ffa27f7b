@@ -21,6 +21,7 @@ interface ExceptionReportProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   hideRefresh?: boolean;
+  useSharedCache?: boolean;
 }
 
 const WINDOW = 12;
@@ -177,14 +178,53 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recen
   return summaries;
 }
 
-export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenChange, hideRefresh }: ExceptionReportProps) {
+function scopeAnalysisToFarms(raw: any, allowedFarmIds: Set<string>) {
+  if (!raw) return raw;
+
+  const filterByFarm = (items: any) =>
+    Array.isArray(items)
+      ? items.filter((item) => item?.farmId && allowedFarmIds.has(item.farmId))
+      : [];
+
+  const needsAttention = filterByFarm(raw.needsAttention);
+  const mostImproved = filterByFarm(raw.mostImproved);
+  const topPerformers = filterByFarm(raw.topPerformers);
+  const allFarmInsights = filterByFarm(raw.allFarmInsights);
+
+  const removedScopedData =
+    (Array.isArray(raw.needsAttention) && raw.needsAttention.length !== needsAttention.length) ||
+    (Array.isArray(raw.mostImproved) && raw.mostImproved.length !== mostImproved.length) ||
+    (Array.isArray(raw.topPerformers) && raw.topPerformers.length !== topPerformers.length) ||
+    (Array.isArray(raw.allFarmInsights) && raw.allFarmInsights.length !== allFarmInsights.length);
+
+  return {
+    ...raw,
+    needsAttention,
+    mostImproved,
+    topPerformers,
+    allFarmInsights,
+    industryInsight: removedScopedData
+      ? "Analysis is scoped to the currently allowed farms only."
+      : (raw.industryInsight || ""),
+  };
+}
+
+export function ExceptionReport({
+  reports,
+  accounts,
+  onSelectFarm,
+  open,
+  onOpenChange,
+  hideRefresh,
+  useSharedCache = true,
+}: ExceptionReportProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const weekWindow = useMemo(() => getWeekWindow(reports), [reports]);
+  const allowedFarmIds = useMemo(() => new Set(accounts.map((a) => a.id)), [accounts]);
   const contentRef = useRef<HTMLDivElement>(null);
-
 
   const runAnalysis = useCallback(async (forceRefresh = false) => {
     setLoading(true);
@@ -192,6 +232,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
     setFromCache(false);
 
     const { minWeek, maxWeek, cacheWeek, recentWeeks, priorWeeks } = weekWindow;
+    const shouldUseSharedCache = useSharedCache && allowedFarmIds.size > 0;
 
     try {
       if (recentWeeks.length < 2) {
@@ -199,8 +240,8 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
         return;
       }
 
-      // Check cache first (unless forcing refresh)
-      if (!forceRefresh) {
+      // Check shared cache first (unless forcing refresh)
+      if (shouldUseSharedCache && !forceRefresh) {
         const { data: cached } = await supabase
           .from("exception_report_cache")
           .select("analysis")
@@ -209,13 +250,14 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
 
         const cachedAnalysis = cached?.analysis as { __v?: number } | undefined;
         if (cachedAnalysis && cachedAnalysis.__v === ANALYSIS_VERSION) {
-          setAnalysis(cached.analysis as unknown as AIAnalysis);
+          const scopedCached = scopeAnalysisToFarms(cachedAnalysis, allowedFarmIds);
+          setAnalysis(scopedCached as AIAnalysis);
           setFromCache(true);
           return;
         }
       }
 
-      // No cache — run AI analysis
+      // No valid cache — run AI analysis for current scope
       const farmSummaries = buildFarmSummaries(reports, accounts, recentWeeks, priorWeeks);
 
       if (farmSummaries.length === 0) {
@@ -246,34 +288,40 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
       if (data?.error) throw new Error(data.error);
 
       const versionedAnalysis = { ...(data as Record<string, unknown>), __v: ANALYSIS_VERSION };
+      const scopedAnalysis = scopeAnalysisToFarms(versionedAnalysis, allowedFarmIds);
 
-      // Save to cache (upsert)
-      await supabase
-        .from("exception_report_cache")
-        .upsert({ week_nr: cacheWeek, analysis: versionedAnalysis }, { onConflict: "week_nr" });
+      // Save to shared cache only for global/internal scope
+      if (shouldUseSharedCache) {
+        await supabase
+          .from("exception_report_cache")
+          .upsert({ week_nr: cacheWeek, analysis: versionedAnalysis }, { onConflict: "week_nr" });
+      }
 
-      setAnalysis(versionedAnalysis as unknown as AIAnalysis);
+      setAnalysis(scopedAnalysis as AIAnalysis);
     } catch (e: any) {
       console.error("Exception analysis error:", e);
       const msg = e?.message || "Analysis failed";
 
-      const { data: latestCached } = await supabase
-        .from("exception_report_cache")
-        .select("analysis")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (shouldUseSharedCache) {
+        const { data: latestCached } = await supabase
+          .from("exception_report_cache")
+          .select("analysis")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const latestAnalysis = latestCached?.analysis as { __v?: number } | undefined;
-      if (latestAnalysis && latestAnalysis.__v === ANALYSIS_VERSION) {
-        setAnalysis(latestCached.analysis as unknown as AIAnalysis);
-        setFromCache(true);
-        setError(null);
-        toast({
-          title: "Using cached report",
-          description: "Live analysis timed out, so the latest cached report was loaded.",
-        });
-        return;
+        const latestAnalysis = latestCached?.analysis as { __v?: number } | undefined;
+        if (latestAnalysis && latestAnalysis.__v === ANALYSIS_VERSION) {
+          const scopedLatest = scopeAnalysisToFarms(latestAnalysis, allowedFarmIds);
+          setAnalysis(scopedLatest as AIAnalysis);
+          setFromCache(true);
+          setError(null);
+          toast({
+            title: "Using cached report",
+            description: "Live analysis timed out, so the latest cached report was loaded.",
+          });
+          return;
+        }
       }
 
       setError(msg);
@@ -285,7 +333,7 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
     } finally {
       setLoading(false);
     }
-  }, [reports, accounts, weekWindow]);
+  }, [reports, accounts, weekWindow, allowedFarmIds, useSharedCache]);
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
