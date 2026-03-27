@@ -121,7 +121,7 @@ export function ControlBar({
   customerFarms, selectedCustomerId, onCustomerChange,
 }: ControlBarProps) {
   const navigate = useNavigate();
-  const { signOut, isAdmin } = useAuth();
+  const { signOut, isAdmin, isCustomer, customerAccount } = useAuth();
 
   // Build customer list from customerFarms + accounts
   const customers = useMemo(() => {
