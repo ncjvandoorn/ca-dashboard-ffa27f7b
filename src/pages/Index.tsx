@@ -260,12 +260,12 @@ const Index = () => {
               </div>
               <div className="flex items-center gap-2">
                 <AIAgent
-                  reports={reports || []}
-                  accounts={accounts || []}
-                  activities={activities || []}
-                  users={users || []}
-                  exceptionAnalysis={exceptionAnalysis}
-                  seasonalityAnalysis={seasonalityAnalysis}
+                  reports={customerAllowedFarmIds ? (reports || []).filter((r) => customerAllowedFarmIds.has(r.farmAccountId)) : (reports || [])}
+                  accounts={customerAllowedFarmIds ? (accounts || []).filter((a) => customerAllowedFarmIds.has(a.id)) : (accounts || [])}
+                  activities={isCustomer ? [] : (activities || [])}
+                  users={isCustomer ? [] : (users || [])}
+                  exceptionAnalysis={isCustomer ? null : exceptionAnalysis}
+                  seasonalityAnalysis={isCustomer ? null : seasonalityAnalysis}
                 />
                 {isAdmin && (
                   <ReportingCheck
@@ -274,18 +274,25 @@ const Index = () => {
                     users={users || []}
                   />
                 )}
-                <SeasonalityInsights
-                  reports={yearFilteredReports}
-                  accounts={accounts || []}
-                  open={seasonalityOpen}
-                  onOpenChange={setSeasonalityOpen}
-                />
+                {!isCustomer && (
+                  <SeasonalityInsights
+                    reports={yearFilteredReports}
+                    accounts={accounts || []}
+                    open={seasonalityOpen}
+                    onOpenChange={setSeasonalityOpen}
+                  />
+                )}
                 <ExceptionReport
-                  reports={yearFilteredReports}
-                  accounts={accounts || []}
+                  reports={isCustomer && customerAllowedFarmIds
+                    ? yearFilteredReports
+                    : yearFilteredReports}
+                  accounts={isCustomer && customerAllowedFarmIds
+                    ? (accounts || []).filter((a) => customerAllowedFarmIds.has(a.id))
+                    : (accounts || [])}
                   onSelectFarm={(id) => { setSelectedFarmId(id); }}
                   open={exceptionOpen}
                   onOpenChange={setExceptionOpen}
+                  hideRefresh={isCustomer}
                 />
                 <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                   All Reports
