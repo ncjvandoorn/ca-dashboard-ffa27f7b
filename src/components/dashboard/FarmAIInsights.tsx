@@ -28,6 +28,7 @@ interface FarmAIInsightsProps {
   farmId: string;
   farmName: string;
   activities: Activity[];
+  hideActivity?: boolean;
 }
 
 const statusConfig = {
