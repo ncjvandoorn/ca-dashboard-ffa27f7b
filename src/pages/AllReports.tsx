@@ -34,7 +34,23 @@ const AllReports = () => {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const { data: users } = useUsers();
+  const { data: customerFarms } = useCustomerFarms();
+  const { isCustomer, customerAccount } = useAuth();
   const tableRef = useRef<HTMLDivElement>(null);
+
+  // Customer farm filter
+  const customerAllowedFarmIds = useMemo(() => {
+    if (!isCustomer || !customerAccount || !customerFarms) return null;
+    return new Set(
+      customerFarms
+        .filter((cf) =>
+          cf.customerAccountId === customerAccount.customerAccountId &&
+          cf.farmAccountConsent === "1" &&
+          !cf.deletedAt
+        )
+        .map((cf) => cf.farmAccountId)
+    );
+  }, [isCustomer, customerAccount, customerFarms]);
 
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [selectedFarm, setSelectedFarm] = useState<string>("all");
