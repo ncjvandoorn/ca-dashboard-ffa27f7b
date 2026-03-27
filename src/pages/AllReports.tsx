@@ -124,9 +124,12 @@ const AllReports = () => {
 
   const farmsInData = useMemo(() => {
     if (!reports || !accounts) return [];
-    const ids = new Set(reports.map((r) => r.farmAccountId));
+    const scopedReports = customerAllowedFarmIds
+      ? reports.filter((r) => customerAllowedFarmIds.has(r.farmAccountId))
+      : reports;
+    const ids = new Set(scopedReports.map((r) => r.farmAccountId));
     return accounts.filter((a) => ids.has(a.id)).sort((a, b) => a.name.localeCompare(b.name));
-  }, [reports, accounts]);
+  }, [reports, accounts, customerAllowedFarmIds]);
 
   const handleExport = useCallback(async () => {
     if (!tableRef.current) return;
