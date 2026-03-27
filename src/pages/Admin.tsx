@@ -444,6 +444,126 @@ const Admin = () => {
           </CardContent>
         </Card>
 
+        {/* Customer Account Management */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Customer Accounts</CardTitle>
+                  <CardDescription>Create and manage customer login accounts linked to customer entities</CardDescription>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={fetchCustomerAccounts} disabled={customersLoading}>
+                <RefreshCw className={`h-4 w-4 ${customersLoading ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Create new customer */}
+            <div className="border border-border rounded-lg p-4 mb-6 space-y-4">
+              <p className="text-sm font-medium">Create New Customer Account</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs">Username</Label>
+                  <Input
+                    placeholder="e.g. floraholland"
+                    value={newCustUsername}
+                    onChange={(e) => setNewCustUsername(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">{newCustUsername ? `${newCustUsername}@chrysal.app` : "Will become username@chrysal.app"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Password</Label>
+                  <Input
+                    value={newCustPassword}
+                    onChange={(e) => setNewCustPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Link to Customer Account</Label>
+                <select
+                  value={newCustAccountId}
+                  onChange={(e) => setNewCustAccountId(e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Select a customer account…</option>
+                  {availableCustomerAccountIds.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Switch checked={newCustTrials} onCheckedChange={setNewCustTrials} />
+                  <Label className="text-sm">Can see Trials Dashboard</Label>
+                </div>
+                <Button onClick={createCustomerAccount} disabled={creatingCustomer} size="sm" className="gap-2">
+                  {creatingCustomer ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                  Create Account
+                </Button>
+              </div>
+            </div>
+
+            {/* Existing customer accounts */}
+            {customersLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : customerAccounts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No customer accounts created yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Linked Customer</TableHead>
+                      <TableHead>Trials Access</TableHead>
+                      <TableHead className="w-[80px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customerAccounts.map((ca: any) => (
+                      <TableRow key={ca.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-accent" />
+                            <span className="font-medium text-sm">{ca.username}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {customerNameMap.get(ca.customer_account_id) || ca.customer_account_id}
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={ca.can_see_trials}
+                            onCheckedChange={(checked) => updateCustomerAccount(ca.id, { canSeeTrials: checked })}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteCustomerAccount(ca.id, ca.user_id, ca.username)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Login Logbook */}
         <Card>
           <CardHeader>
