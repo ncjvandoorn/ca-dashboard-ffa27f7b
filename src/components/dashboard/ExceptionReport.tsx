@@ -295,7 +295,7 @@ export function ExceptionReport({
       if (data?.error) throw new Error(data.error);
 
       const versionedAnalysis = { ...(data as Record<string, unknown>), __v: ANALYSIS_VERSION };
-      const scopedAnalysis = scopeAnalysisToFarms(versionedAnalysis, allowedFarmIds);
+      const scopedAnalysis = isCustomerScope ? scopeAnalysisToFarms(versionedAnalysis, allowedFarmIds) : versionedAnalysis;
 
       // Save to shared cache only for global/internal scope
       if (shouldUseSharedCache) {
