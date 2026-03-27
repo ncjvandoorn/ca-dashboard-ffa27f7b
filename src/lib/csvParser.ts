@@ -32,12 +32,10 @@ export interface QualityReport {
   farmAccountId: string;
   weekNr: number;
   createdAt: number;
-  // General
   qrGenQualityRating: number | null;
   qrGenQualityFlowers: string | null;
   qrGenDippingLocation: string | null;
   qrGenProtocolChanges: string | null;
-  // Intake
   qrIntakePh: number | null;
   qrIntakeEc: number | null;
   qrIntakeHeadSize: number | null;
@@ -49,7 +47,6 @@ export interface QualityReport {
   qrIntakeTreatment: string | null;
   qrIntakeDippingStand: string | null;
   qrIntakeUsingNets: string | null;
-  // Export
   qrExportPh: number | null;
   qrExportEc: number | null;
   qrExportTempColdstore: number | null;
@@ -57,14 +54,11 @@ export interface QualityReport {
   qrExportColdstoreHours: number | null;
   qrExportWaterQuality: number | null;
   qrExportTreatment: string | null;
-  // Dispatch
   qrDispatchPackingQuality: number | null;
   qrDispatchPackrate: number | null;
   qrDispatchTruckType: string | null;
   qrDispatchUsedLiner: string | null;
-  // Packhouse
   qrPackProcessingSpeed: number | null;
-  // Sign off
   signoffName: string | null;
   submittedAt: number | null;
   submittedByUserId: string | null;
@@ -150,47 +144,6 @@ export async function loadCustomerFarms(): Promise<CustomerFarm[]> {
 }
 
 export async function loadQualityReports(): Promise<QualityReport[]> {
-  const url = await getDataFileUrl("qualityReport.csv");
-  return fetchCsv(url, (row) => ({
-    id: row.id,
-    farmAccountId: row.farmAccountId,
-    weekNr: parseInt(row.weekNr) || 0,
-    createdAt: parseInt(row.createdAt) || 0,
-    qrGenQualityRating: parseNum(row.qrGenQualityRating),
-    qrGenQualityFlowers: parseStr(row.qrGenQualityFlowers),
-    qrGenDippingLocation: parseStr(row.qrGenDippingLocation),
-    qrGenProtocolChanges: parseStr(row.qrGenProtocolChanges),
-    qrIntakePh: parseNum(row.qrIntakePh),
-    qrIntakeEc: parseNum(row.qrIntakeEc),
-    qrIntakeHeadSize: parseNum(row.qrIntakeHeadSize),
-    qrIntakeStemLength: parseNum(row.qrIntakeStemLength),
-    qrIntakeTempColdstore: parseNum(row.qrIntakeTempColdstore),
-    qrIntakeHumidityColdstore: parseNum(row.qrIntakeHumidityColdstore),
-    qrIntakeColdstoreHours: parseNum(row.qrIntakeColdstoreHours),
-    qrIntakeWaterQuality: parseNum(row.qrIntakeWaterQuality),
-    qrIntakeTreatment: parseStr(row.qrIntakeTreatment),
-    qrIntakeDippingStand: parseStr(row.qrIntakeDippingStand),
-    qrIntakeUsingNets: parseStr(row.qrIntakeUsingNets),
-    qrExportPh: parseNum(row.qrExportPh),
-    qrExportEc: parseNum(row.qrExportEc),
-    qrExportTempColdstore: parseNum(row.qrExportTempColdstore),
-    qrExportHumidityColdstore: parseNum(row.qrExportHumidityColdstore),
-    qrExportColdstoreHours: parseNum(row.qrExportColdstoreHours),
-    qrExportWaterQuality: parseNum(row.qrExportWaterQuality),
-    qrExportTreatment: parseStr(row.qrExportTreatment),
-    qrDispatchPackingQuality: parseNum(row.qrDispatchPackingQuality),
-    qrDispatchPackrate: parseNum(row.qrDispatchPackrate),
-    qrDispatchTruckType: parseStr(row.qrDispatchTruckType),
-    qrDispatchUsedLiner: parseStr(row.qrDispatchUsedLiner),
-    qrPackProcessingSpeed: parseNum(row.qrPackProcessingSpeed),
-    signoffName: parseStr(row.signoffName),
-    submittedAt: parseNum(row.submittedAt),
-    submittedByUserId: parseStr(row.submittedByUserId),
-    createdByUserId: parseStr(row.createdById),
-    updatedByUserId: parseStr(row.updatedById),
-    generalComment: parseStr(row.generalComment),
-  }));
-}
   const url = await getDataFileUrl("qualityReport.csv");
   return fetchCsv(url, (row) => ({
     id: row.id,
