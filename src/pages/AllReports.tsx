@@ -78,6 +78,9 @@ const AllReports = () => {
   const filtered = useMemo(() => {
     if (!reports) return [];
     let data = [...reports].filter((r) => r.weekNr > 0 && r.submittedAt);
+    if (customerAllowedFarmIds) {
+      data = data.filter((r) => customerAllowedFarmIds.has(r.farmAccountId));
+    }
 
     if (selectedYear !== "all") {
       const y = parseInt(selectedYear);
