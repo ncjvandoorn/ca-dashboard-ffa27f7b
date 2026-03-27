@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAccounts, useQualityReports, useActivities, useUsers } from "@/hooks/useQualityData";
+import { useAccounts, useQualityReports, useActivities, useUsers, useCustomerFarms } from "@/hooks/useQualityData";
 import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -50,7 +50,9 @@ const Index = () => {
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const { data: activities } = useActivities();
   const { data: users } = useUsers();
+  const { data: customerFarms } = useCustomerFarms();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("0e668ede-6c66-4bf0-a87c-043303dfd5a7");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
@@ -197,9 +199,25 @@ const Index = () => {
               selectedYear={selectedYear}
               onYearChange={(y) => {
                 setSelectedYear(y);
-                // Keep current farm — activeFarmId logic handles fallback
               }}
               farmCount={farmsWithData.length}
+              customerFarms={customerFarms || []}
+              selectedCustomerId={selectedCustomerId}
+              onCustomerChange={(id) => {
+                setSelectedCustomerId(id);
+                // Reset farm if current farm isn't in the new customer's farms
+                if (id) {
+                  const allowedFarmIds = new Set(
+                    (customerFarms || [])
+                      .filter((cf) => cf.customerAccountId === id && !cf.deletedAt)
+                      .map((cf) => cf.farmAccountId)
+                  );
+                  if (!allowedFarmIds.has(selectedFarmId)) {
+                    const firstFarm = farmsWithData.find((f) => allowedFarmIds.has(f.id));
+                    if (firstFarm) setSelectedFarmId(firstFarm.id);
+                  }
+                }
+              }}
             />
 
             {/* Summary strip */}

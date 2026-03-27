@@ -128,7 +128,69 @@ export async function loadActivities(): Promise<Activity[]> {
   }));
 }
 
+export interface CustomerFarm {
+  id: string;
+  customerAccountId: string;
+  farmAccountId: string;
+  farmAccountConsent: string;
+  createdAt: number | null;
+  deletedAt: number | null;
+}
+
+export async function loadCustomerFarms(): Promise<CustomerFarm[]> {
+  const url = await getDataFileUrl("customerFarm.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    customerAccountId: row.customerAccountId || "",
+    farmAccountId: row.farmAccountId || "",
+    farmAccountConsent: row.farmAccountConsent || "",
+    createdAt: parseNum(row.createdAt),
+    deletedAt: parseNum(row.deletedAt),
+  }));
+}
+
 export async function loadQualityReports(): Promise<QualityReport[]> {
+  const url = await getDataFileUrl("qualityReport.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    farmAccountId: row.farmAccountId,
+    weekNr: parseInt(row.weekNr) || 0,
+    createdAt: parseInt(row.createdAt) || 0,
+    qrGenQualityRating: parseNum(row.qrGenQualityRating),
+    qrGenQualityFlowers: parseStr(row.qrGenQualityFlowers),
+    qrGenDippingLocation: parseStr(row.qrGenDippingLocation),
+    qrGenProtocolChanges: parseStr(row.qrGenProtocolChanges),
+    qrIntakePh: parseNum(row.qrIntakePh),
+    qrIntakeEc: parseNum(row.qrIntakeEc),
+    qrIntakeHeadSize: parseNum(row.qrIntakeHeadSize),
+    qrIntakeStemLength: parseNum(row.qrIntakeStemLength),
+    qrIntakeTempColdstore: parseNum(row.qrIntakeTempColdstore),
+    qrIntakeHumidityColdstore: parseNum(row.qrIntakeHumidityColdstore),
+    qrIntakeColdstoreHours: parseNum(row.qrIntakeColdstoreHours),
+    qrIntakeWaterQuality: parseNum(row.qrIntakeWaterQuality),
+    qrIntakeTreatment: parseStr(row.qrIntakeTreatment),
+    qrIntakeDippingStand: parseStr(row.qrIntakeDippingStand),
+    qrIntakeUsingNets: parseStr(row.qrIntakeUsingNets),
+    qrExportPh: parseNum(row.qrExportPh),
+    qrExportEc: parseNum(row.qrExportEc),
+    qrExportTempColdstore: parseNum(row.qrExportTempColdstore),
+    qrExportHumidityColdstore: parseNum(row.qrExportHumidityColdstore),
+    qrExportColdstoreHours: parseNum(row.qrExportColdstoreHours),
+    qrExportWaterQuality: parseNum(row.qrExportWaterQuality),
+    qrExportTreatment: parseStr(row.qrExportTreatment),
+    qrDispatchPackingQuality: parseNum(row.qrDispatchPackingQuality),
+    qrDispatchPackrate: parseNum(row.qrDispatchPackrate),
+    qrDispatchTruckType: parseStr(row.qrDispatchTruckType),
+    qrDispatchUsedLiner: parseStr(row.qrDispatchUsedLiner),
+    qrPackProcessingSpeed: parseNum(row.qrPackProcessingSpeed),
+    signoffName: parseStr(row.signoffName),
+    submittedAt: parseNum(row.submittedAt),
+    submittedByUserId: parseStr(row.submittedByUserId),
+    createdByUserId: parseStr(row.createdById),
+    updatedByUserId: parseStr(row.updatedById),
+    generalComment: parseStr(row.generalComment),
+  }));
+}
   const url = await getDataFileUrl("qualityReport.csv");
   return fetchCsv(url, (row) => ({
     id: row.id,
