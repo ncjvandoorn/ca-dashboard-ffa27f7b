@@ -534,6 +534,7 @@ export function ExceptionReport({
                 <div className="space-y-2">
                   {analysis.topPerformers.map((farm, i) => (
                     <motion.button
+                      data-pdf-section
                       key={farm.farmId}
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
