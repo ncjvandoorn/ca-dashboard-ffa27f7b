@@ -143,10 +143,115 @@ const Admin = () => {
     setQuestionsLoading(false);
   };
 
+  const manageCustomerUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-customers`;
+
+  const fetchCustomerAccounts = async () => {
+    setCustomersLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: "list" }),
+      });
+      const data = await res.json();
+      setCustomerAccounts(data.accounts || []);
+    } catch {
+      setCustomerAccounts([]);
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  const createCustomerAccount = async () => {
+    if (!newCustUsername || !newCustAccountId) {
+      toast({ title: "Error", description: "Username and customer account are required", variant: "destructive" });
+      return;
+    }
+    setCreatingCustomer(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          action: "create",
+          username: newCustUsername,
+          password: newCustPassword,
+          customerAccountId: newCustAccountId,
+          canSeeTrials: newCustTrials,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast({ title: "Created", description: `Customer account ${newCustUsername} created successfully.` });
+      setNewCustUsername("");
+      setNewCustPassword("CA@2026");
+      setNewCustAccountId("");
+      setNewCustTrials(false);
+      fetchCustomerAccounts();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setCreatingCustomer(false);
+    }
+  };
+
+  const updateCustomerAccount = async (id: string, updates: Record<string, any>) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: "update", id, ...updates }),
+      });
+      fetchCustomerAccounts();
+    } catch {}
+  };
+
+  const deleteCustomerAccount = async (id: string, userId: string, username: string) => {
+    if (!confirm(`Delete customer account "${username}"? This cannot be undone.`)) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: "delete", id, userId }),
+      });
+      toast({ title: "Deleted", description: `Customer account ${username} deleted.` });
+      fetchCustomerAccounts();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // Build customer name lookup from accounts
+  const customerNameMap = new Map(
+    (allAccounts || []).map((a) => [a.id, a.name])
+  );
+
+  // Build list of unique customer account IDs from customerFarms
+  const availableCustomerAccountIds = [...new Set((customerFarms || []).map((cf) => cf.customerAccountId))]
+    .map((id) => ({ id, name: customerNameMap.get(id) || id }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   useEffect(() => {
     fetchLogs();
     fetchQuestions();
     fetchAiInstructions();
+    fetchCustomerAccounts();
   }, []);
 
   const handleChangePassword = async (e: React.FormEvent) => {
