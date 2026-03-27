@@ -191,9 +191,6 @@ export async function loadQualityReports(): Promise<QualityReport[]> {
     generalComment: parseStr(row.generalComment),
   }));
 }
-  const url = await getDataFileUrl("qualityReport.csv");
-  return fetchCsv(url, (row) => ({
-    id: row.id,
     farmAccountId: row.farmAccountId,
     weekNr: parseInt(row.weekNr) || 0,
     createdAt: parseInt(row.createdAt) || 0,
