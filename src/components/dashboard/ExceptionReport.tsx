@@ -257,6 +257,12 @@ export function ExceptionReport({
         }
       }
 
+      // If refresh is hidden (customer), never generate a new analysis — cache-only
+      if (hideRefresh) {
+        setError("No cached analysis available yet. Please check back later.");
+        return;
+      }
+
       // No valid cache — run AI analysis for current scope
       const farmSummaries = buildFarmSummaries(reports, accounts, recentWeeks, priorWeeks);
 

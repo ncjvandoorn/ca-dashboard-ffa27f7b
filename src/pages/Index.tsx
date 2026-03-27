@@ -338,7 +338,7 @@ const Index = () => {
                   open={exceptionOpen}
                   onOpenChange={setExceptionOpen}
                   hideRefresh={isCustomer}
-                  useSharedCache={!isCustomer && !selectedCustomerId}
+                  useSharedCache={true}
                 />
                 <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                   All Reports
