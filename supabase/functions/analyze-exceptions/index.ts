@@ -337,16 +337,31 @@ Identify which farms need attention (worst performing, worsening trends, dangero
     }
 
     const result = await response.json();
-    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      console.error("No tool call in response:", JSON.stringify(result));
-      return new Response(
-        JSON.stringify({ error: "AI did not return structured analysis" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    let analysis: unknown;
 
-    const analysis = JSON.parse(toolCall.function.arguments);
+    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+    if (toolCall) {
+      analysis = JSON.parse(toolCall.function.arguments);
+    } else {
+      // Fallback: try to extract JSON from the message content
+      const content = result.choices?.[0]?.message?.content ?? "";
+      console.warn("No tool call in response, attempting content parse. finish_reason:", result.choices?.[0]?.finish_reason);
+      try {
+        let cleaned = content.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+        const jsonStart = cleaned.search(/[\{\[]/);
+        const jsonEnd = cleaned.lastIndexOf(jsonStart !== -1 && cleaned[jsonStart] === '[' ? ']' : '}');
+        if (jsonStart === -1 || jsonEnd === -1) throw new Error("No JSON found in content");
+        cleaned = cleaned.substring(jsonStart, jsonEnd + 1)
+          .replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+        analysis = JSON.parse(cleaned);
+      } catch (parseErr) {
+        console.error("Failed to parse content fallback:", parseErr, "Content:", content.substring(0, 500));
+        return new Response(
+          JSON.stringify({ error: "AI did not return structured analysis" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     return new Response(JSON.stringify(analysis), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
