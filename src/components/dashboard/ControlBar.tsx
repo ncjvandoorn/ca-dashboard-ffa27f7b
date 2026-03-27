@@ -19,6 +19,7 @@ interface ControlBarProps {
   customerFarms: CustomerFarm[];
   selectedCustomerId: string;
   onCustomerChange: (id: string) => void;
+  hideSearch?: boolean;
 }
 
 function SearchableDropdown({
