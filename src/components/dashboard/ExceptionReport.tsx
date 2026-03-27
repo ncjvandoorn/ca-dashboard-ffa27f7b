@@ -473,8 +473,8 @@ export function ExceptionReport({
             </div>
 
             {/* Most Improved */}
-            <div className="mt-6" data-pdf-section>
-              <div className="flex items-center gap-2 mb-3">
+            <div className="mt-6">
+              <div data-pdf-section className="flex items-center gap-2 mb-3">
                 <TrendingUp className="h-4 w-4 text-accent" />
                 <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                   Most Improved
