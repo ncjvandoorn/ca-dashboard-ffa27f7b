@@ -319,7 +319,7 @@ export function ExceptionReport({
 
         const latestAnalysis = latestCached?.analysis as { __v?: number } | undefined;
         if (latestAnalysis && latestAnalysis.__v === ANALYSIS_VERSION) {
-          const scopedLatest = scopeAnalysisToFarms(latestAnalysis, allowedFarmIds);
+          const scopedLatest = isCustomerScope ? scopeAnalysisToFarms(latestAnalysis, allowedFarmIds) : latestAnalysis;
           setAnalysis(scopedLatest as AIAnalysis);
           setFromCache(true);
           setError(null);
