@@ -20,6 +20,7 @@ interface ExceptionReportProps {
   onSelectFarm: (farmId: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  hideRefresh?: boolean;
 }
 
 const WINDOW = 12;
