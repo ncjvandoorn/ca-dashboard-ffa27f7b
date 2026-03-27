@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAccounts, useQualityReports, useActivities, useUsers } from "@/hooks/useQualityData";
+import { useAccounts, useQualityReports, useActivities, useUsers, useCustomerFarms } from "@/hooks/useQualityData";
 import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
