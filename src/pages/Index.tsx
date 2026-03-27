@@ -347,8 +347,8 @@ const Index = () => {
               />
             </div>
 
-            {/* AI Insights for selected farm */}
-            <FarmAIInsights farmId={activeFarmId} farmName={farmName} activities={activities || []} />
+            {/* AI Insights for selected farm — hidden for customers (uses activity data) */}
+            {!isCustomer && <FarmAIInsights farmId={activeFarmId} farmName={farmName} activities={activities || []} />}
 
             {/* Quality Tables */}
             <QualityTables reports={farmReports} />
