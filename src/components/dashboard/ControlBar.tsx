@@ -213,15 +213,17 @@ export function ControlBar({
             </Select>
           </div>
 
-          {/* Customer filter */}
-          <SearchableDropdown
-            label="Customer"
-            placeholder="All customers"
-            items={[{ id: "", name: "All customers" }, ...customerItems]}
-            value={selectedCustomerId}
-            onChange={onCustomerChange}
-            width="w-[240px]"
-          />
+          {/* Customer filter — hidden for customer users */}
+          {!isCustomer && (
+            <SearchableDropdown
+              label="Customer"
+              placeholder="All customers"
+              items={[{ id: "", name: "All customers" }, ...customerItems]}
+              value={selectedCustomerId}
+              onChange={onCustomerChange}
+              width="w-[240px]"
+            />
+          )}
 
           {/* Farm filter */}
           <SearchableDropdown
