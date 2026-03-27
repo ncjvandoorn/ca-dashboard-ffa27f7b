@@ -45,7 +45,7 @@ function weekYear(weekNr: number): number {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isCustomer, customerAccount } = useAuth();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const { data: activities } = useActivities();
