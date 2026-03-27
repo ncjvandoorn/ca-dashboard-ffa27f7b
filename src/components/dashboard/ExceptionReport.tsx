@@ -251,7 +251,7 @@ export function ExceptionReport({
 
         const cachedAnalysis = cached?.analysis as { __v?: number } | undefined;
         if (cachedAnalysis && cachedAnalysis.__v === ANALYSIS_VERSION) {
-          const scopedCached = scopeAnalysisToFarms(cachedAnalysis, allowedFarmIds);
+          const scopedCached = isCustomerScope ? scopeAnalysisToFarms(cachedAnalysis, allowedFarmIds) : cachedAnalysis;
           setAnalysis(scopedCached as AIAnalysis);
           setFromCache(true);
           return;
