@@ -519,10 +519,12 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
                   Loaded from cache · Generated this week
                 </p>
               )}
-              <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
-                <RefreshCw className="h-3 w-3" />
-                {fromCache ? "Refresh Analysis" : "Re-analyze"}
-              </Button>
+              {!hideRefresh && (
+                <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
+                  <RefreshCw className="h-3 w-3" />
+                  {fromCache ? "Refresh Analysis" : "Re-analyze"}
+                </Button>
+              )}
             </div>
           </>
         )}
