@@ -11,6 +11,7 @@ import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
 
 interface LoginLog {
   id: string;
