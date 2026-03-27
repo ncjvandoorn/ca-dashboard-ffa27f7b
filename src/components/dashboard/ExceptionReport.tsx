@@ -224,6 +224,7 @@ export function ExceptionReport({
   const [fromCache, setFromCache] = useState(false);
   const weekWindow = useMemo(() => getWeekWindow(reports), [reports]);
   const allowedFarmIds = useMemo(() => new Set(accounts.map((a) => a.id)), [accounts]);
+  const isCustomerScope = !!hideRefresh; // only customers have hideRefresh=true
   const contentRef = useRef<HTMLDivElement>(null);
 
   const runAnalysis = useCallback(async (forceRefresh = false) => {
@@ -250,7 +251,7 @@ export function ExceptionReport({
 
         const cachedAnalysis = cached?.analysis as { __v?: number } | undefined;
         if (cachedAnalysis && cachedAnalysis.__v === ANALYSIS_VERSION) {
-          const scopedCached = scopeAnalysisToFarms(cachedAnalysis, allowedFarmIds);
+          const scopedCached = isCustomerScope ? scopeAnalysisToFarms(cachedAnalysis, allowedFarmIds) : cachedAnalysis;
           setAnalysis(scopedCached as AIAnalysis);
           setFromCache(true);
           return;
@@ -294,7 +295,7 @@ export function ExceptionReport({
       if (data?.error) throw new Error(data.error);
 
       const versionedAnalysis = { ...(data as Record<string, unknown>), __v: ANALYSIS_VERSION };
-      const scopedAnalysis = scopeAnalysisToFarms(versionedAnalysis, allowedFarmIds);
+      const scopedAnalysis = isCustomerScope ? scopeAnalysisToFarms(versionedAnalysis, allowedFarmIds) : versionedAnalysis;
 
       // Save to shared cache only for global/internal scope
       if (shouldUseSharedCache) {
@@ -318,7 +319,7 @@ export function ExceptionReport({
 
         const latestAnalysis = latestCached?.analysis as { __v?: number } | undefined;
         if (latestAnalysis && latestAnalysis.__v === ANALYSIS_VERSION) {
-          const scopedLatest = scopeAnalysisToFarms(latestAnalysis, allowedFarmIds);
+          const scopedLatest = isCustomerScope ? scopeAnalysisToFarms(latestAnalysis, allowedFarmIds) : latestAnalysis;
           setAnalysis(scopedLatest as AIAnalysis);
           setFromCache(true);
           setError(null);
