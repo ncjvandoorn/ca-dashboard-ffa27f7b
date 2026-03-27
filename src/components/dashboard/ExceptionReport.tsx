@@ -224,6 +224,7 @@ export function ExceptionReport({
   const [fromCache, setFromCache] = useState(false);
   const weekWindow = useMemo(() => getWeekWindow(reports), [reports]);
   const allowedFarmIds = useMemo(() => new Set(accounts.map((a) => a.id)), [accounts]);
+  const isCustomerScope = !!hideRefresh; // only customers have hideRefresh=true
   const contentRef = useRef<HTMLDivElement>(null);
 
   const runAnalysis = useCallback(async (forceRefresh = false) => {
