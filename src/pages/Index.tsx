@@ -74,6 +74,27 @@ const Index = () => {
   }, []);
 
 
+  // For customers: compute allowed farm IDs (consent = "1" and has relationship)
+  const customerAllowedFarmIds = useMemo(() => {
+    if (!isCustomer || !customerAccount || !customerFarms) return null;
+    return new Set(
+      customerFarms
+        .filter((cf) =>
+          cf.customerAccountId === customerAccount.customerAccountId &&
+          cf.farmAccountConsent === "1" &&
+          !cf.deletedAt
+        )
+        .map((cf) => cf.farmAccountId)
+    );
+  }, [isCustomer, customerAccount, customerFarms]);
+
+  // For customers, auto-set customer filter and lock it
+  useEffect(() => {
+    if (isCustomer && customerAccount) {
+      setSelectedCustomerId(customerAccount.customerAccountId);
+    }
+  }, [isCustomer, customerAccount]);
+
   // Extract available years from data
   const availableYears = useMemo(() => {
     if (!reports) return [];
@@ -84,13 +105,15 @@ const Index = () => {
     return [...years].sort((a, b) => b - a);
   }, [reports]);
 
-  // Filter reports by selected year
+  // Filter reports by selected year AND customer restrictions
   const yearFilteredReports = useMemo(() => {
     if (!reports) return [];
-    if (selectedYear === "all") return reports;
-    const y = parseInt(selectedYear);
-    return reports.filter((r) => weekYear(r.weekNr) === y);
-  }, [reports, selectedYear]);
+    let filtered = selectedYear === "all" ? reports : reports.filter((r) => weekYear(r.weekNr) === parseInt(selectedYear));
+    if (customerAllowedFarmIds) {
+      filtered = filtered.filter((r) => customerAllowedFarmIds.has(r.farmAccountId));
+    }
+    return filtered;
+  }, [reports, selectedYear, customerAllowedFarmIds]);
 
   // Farms that have data in the selected year
   const farmsWithData = useMemo(() => {
