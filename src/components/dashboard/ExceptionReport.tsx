@@ -374,7 +374,7 @@ export function ExceptionReport({
               AI Exception Report
             </DialogTitle>
             {analysis && !loading && (
-              <ExportPdfButton targetRef={contentRef} filename="exception-report" size="sm" />
+              <ExportPdfButton targetRef={contentRef} filename="exception-report" size="sm" useSections />
             )}
           </div>
           <p className="text-sm text-muted-foreground">
@@ -404,7 +404,7 @@ export function ExceptionReport({
           <>
             {/* Industry insight */}
             {analysis.industryInsight && (
-              <div className="chrysal-gradient-subtle rounded-lg p-4 mt-2 flex gap-3">
+              <div data-pdf-section className="chrysal-gradient-subtle rounded-lg p-4 mt-2 flex gap-3">
                 <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-foreground leading-relaxed space-y-2">
                   {analysis.industryInsight.split(/\n\n?/).filter(Boolean).map((para, i) => (
@@ -415,7 +415,7 @@ export function ExceptionReport({
             )}
 
             {/* Needs Attention */}
-            <div className="mt-5">
+            <div className="mt-5" data-pdf-section>
               <div className="flex items-center gap-2 mb-3">
                 <TrendingDown className="h-4 w-4 text-destructive" />
                 <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
@@ -428,6 +428,7 @@ export function ExceptionReport({
                 ) : (
                   analysis.needsAttention.map((farm, i) => (
                     <motion.button
+                      data-pdf-section
                       key={farm.farmId}
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -472,7 +473,7 @@ export function ExceptionReport({
             </div>
 
             {/* Most Improved */}
-            <div className="mt-6">
+            <div className="mt-6" data-pdf-section>
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="h-4 w-4 text-accent" />
                 <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
@@ -485,6 +486,7 @@ export function ExceptionReport({
                 ) : (
                   analysis.mostImproved.map((farm, i) => (
                     <motion.button
+                      data-pdf-section
                       key={farm.farmId}
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -532,6 +534,7 @@ export function ExceptionReport({
                 <div className="space-y-2">
                   {analysis.topPerformers.map((farm, i) => (
                     <motion.button
+                      data-pdf-section
                       key={farm.farmId}
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
