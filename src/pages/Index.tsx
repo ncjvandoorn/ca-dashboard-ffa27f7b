@@ -51,7 +51,7 @@ const Index = () => {
   const { data: activities } = useActivities();
   const { data: users } = useUsers();
   const { data: customerFarms } = useCustomerFarms();
-  const [selectedFarmId, setSelectedFarmId] = useState<string>("0e668ede-6c66-4bf0-a87c-043303dfd5a7");
+  const [selectedFarmId, setSelectedFarmId] = useState<string>("");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
@@ -115,17 +115,16 @@ const Index = () => {
     return filtered;
   }, [reports, selectedYear, customerAllowedFarmIds]);
 
-  // Farms that have data in the selected year
+  // Farms that have data in the selected year, sorted alphabetically
   const farmsWithData = useMemo(() => {
     if (!accounts) return [];
     const farmIds = new Set(yearFilteredReports.map((r) => r.farmAccountId));
-    return accounts.filter((a) => farmIds.has(a.id));
+    return accounts.filter((a) => farmIds.has(a.id)).sort((a, b) => a.name.localeCompare(b.name));
   }, [accounts, yearFilteredReports]);
 
-  // Reset farm selection if current farm not in filtered list
+  // Auto-select first farm alphabetically when no valid selection exists
   const activeFarmId = useMemo(() => {
-    // If a farm is explicitly selected (even without data), keep it
-    if (selectedFarmId) return selectedFarmId;
+    if (selectedFarmId && farmsWithData.some((f) => f.id === selectedFarmId)) return selectedFarmId;
     return farmsWithData[0]?.id || "";
   }, [selectedFarmId, farmsWithData]);
 
