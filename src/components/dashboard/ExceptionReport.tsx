@@ -374,7 +374,7 @@ export function ExceptionReport({
               AI Exception Report
             </DialogTitle>
             {analysis && !loading && (
-              <ExportPdfButton targetRef={contentRef} filename="exception-report" size="sm" />
+              <ExportPdfButton targetRef={contentRef} filename="exception-report" size="sm" useSections />
             )}
           </div>
           <p className="text-sm text-muted-foreground">
