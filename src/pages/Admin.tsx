@@ -55,9 +55,18 @@ const Admin = () => {
   const [aiInstructions, setAiInstructions] = useState("");
   const [aiInstructionsLoading, setAiInstructionsLoading] = useState(true);
   const [aiInstructionsSaving, setAiInstructionsSaving] = useState(false);
+  const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(true);
+  const [newCustUsername, setNewCustUsername] = useState("");
+  const [newCustPassword, setNewCustPassword] = useState("CA@2026");
+  const [newCustAccountId, setNewCustAccountId] = useState("");
+  const [newCustTrials, setNewCustTrials] = useState(false);
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: allAccounts } = useAccounts();
+  const { data: customerFarms } = useCustomerFarms();
 
   const handleFileUpload = async (filename: string, file: File) => {
     setUploading(filename);
