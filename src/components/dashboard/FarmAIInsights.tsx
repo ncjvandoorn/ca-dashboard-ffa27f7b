@@ -79,7 +79,7 @@ const statusConfig = {
   },
 };
 
-export function FarmAIInsights({ farmId, farmName, activities }: FarmAIInsightsProps) {
+export function FarmAIInsights({ farmId, farmName, activities, hideActivity }: FarmAIInsightsProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [activityOpen, setActivityOpen] = useState(false);
