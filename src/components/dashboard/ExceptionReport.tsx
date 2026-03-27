@@ -177,7 +177,7 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recen
   return summaries;
 }
 
-export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenChange }: ExceptionReportProps) {
+export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenChange, hideRefresh }: ExceptionReportProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
