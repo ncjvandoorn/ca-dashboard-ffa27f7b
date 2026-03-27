@@ -191,7 +191,7 @@ export async function loadQualityReports(): Promise<QualityReport[]> {
     generalComment: parseStr(row.generalComment),
   }));
 }
-    farmAccountId: row.farmAccountId,
+
     weekNr: parseInt(row.weekNr) || 0,
     createdAt: parseInt(row.createdAt) || 0,
     qrGenQualityRating: parseNum(row.qrGenQualityRating),
