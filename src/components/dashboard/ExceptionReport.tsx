@@ -20,6 +20,7 @@ interface ExceptionReportProps {
   onSelectFarm: (farmId: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  hideRefresh?: boolean;
 }
 
 const WINDOW = 12;
@@ -176,7 +177,7 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recen
   return summaries;
 }
 
-export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenChange }: ExceptionReportProps) {
+export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenChange, hideRefresh }: ExceptionReportProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -518,10 +519,12 @@ export function ExceptionReport({ reports, accounts, onSelectFarm, open, onOpenC
                   Loaded from cache · Generated this week
                 </p>
               )}
-              <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
-                <RefreshCw className="h-3 w-3" />
-                {fromCache ? "Refresh Analysis" : "Re-analyze"}
-              </Button>
+              {!hideRefresh && (
+                <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
+                  <RefreshCw className="h-3 w-3" />
+                  {fromCache ? "Refresh Analysis" : "Re-analyze"}
+                </Button>
+              )}
             </div>
           </>
         )}

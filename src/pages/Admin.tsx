@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot } from "lucide-react";
+import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot, Users, Plus, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
 
 interface LoginLog {
   id: string;
@@ -53,9 +55,18 @@ const Admin = () => {
   const [aiInstructions, setAiInstructions] = useState("");
   const [aiInstructionsLoading, setAiInstructionsLoading] = useState(true);
   const [aiInstructionsSaving, setAiInstructionsSaving] = useState(false);
+  const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(true);
+  const [newCustUsername, setNewCustUsername] = useState("");
+  const [newCustPassword, setNewCustPassword] = useState("CA@2026");
+  const [newCustAccountId, setNewCustAccountId] = useState("");
+  const [newCustTrials, setNewCustTrials] = useState(false);
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: allAccounts } = useAccounts();
+  const { data: customerFarms } = useCustomerFarms();
 
   const handleFileUpload = async (filename: string, file: File) => {
     setUploading(filename);
@@ -132,10 +143,115 @@ const Admin = () => {
     setQuestionsLoading(false);
   };
 
+  const manageCustomerUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-customers`;
+
+  const fetchCustomerAccounts = async () => {
+    setCustomersLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: "list" }),
+      });
+      const data = await res.json();
+      setCustomerAccounts(data.accounts || []);
+    } catch {
+      setCustomerAccounts([]);
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  const createCustomerAccount = async () => {
+    if (!newCustUsername || !newCustAccountId) {
+      toast({ title: "Error", description: "Username and customer account are required", variant: "destructive" });
+      return;
+    }
+    setCreatingCustomer(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          action: "create",
+          username: newCustUsername,
+          password: newCustPassword,
+          customerAccountId: newCustAccountId,
+          canSeeTrials: newCustTrials,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast({ title: "Created", description: `Customer account ${newCustUsername} created successfully.` });
+      setNewCustUsername("");
+      setNewCustPassword("CA@2026");
+      setNewCustAccountId("");
+      setNewCustTrials(false);
+      fetchCustomerAccounts();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setCreatingCustomer(false);
+    }
+  };
+
+  const updateCustomerAccount = async (id: string, updates: Record<string, any>) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: "update", id, ...updates }),
+      });
+      fetchCustomerAccounts();
+    } catch {}
+  };
+
+  const deleteCustomerAccount = async (id: string, userId: string, username: string) => {
+    if (!confirm(`Delete customer account "${username}"? This cannot be undone.`)) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: "delete", id, userId }),
+      });
+      toast({ title: "Deleted", description: `Customer account ${username} deleted.` });
+      fetchCustomerAccounts();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // Build customer name lookup from accounts
+  const customerNameMap = new Map(
+    (allAccounts || []).map((a) => [a.id, a.name])
+  );
+
+  // Build list of unique customer account IDs from customerFarms
+  const availableCustomerAccountIds = [...new Set((customerFarms || []).map((cf) => cf.customerAccountId))]
+    .map((id) => ({ id, name: customerNameMap.get(id) || id }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   useEffect(() => {
     fetchLogs();
     fetchQuestions();
     fetchAiInstructions();
+    fetchCustomerAccounts();
   }, []);
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -325,6 +441,126 @@ const Admin = () => {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Customer Account Management */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Customer Accounts</CardTitle>
+                  <CardDescription>Create and manage customer login accounts linked to customer entities</CardDescription>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={fetchCustomerAccounts} disabled={customersLoading}>
+                <RefreshCw className={`h-4 w-4 ${customersLoading ? "animate-spin" : ""}`} />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Create new customer */}
+            <div className="border border-border rounded-lg p-4 mb-6 space-y-4">
+              <p className="text-sm font-medium">Create New Customer Account</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs">Username</Label>
+                  <Input
+                    placeholder="e.g. floraholland"
+                    value={newCustUsername}
+                    onChange={(e) => setNewCustUsername(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">{newCustUsername ? `${newCustUsername}@chrysal.app` : "Will become username@chrysal.app"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Password</Label>
+                  <Input
+                    value={newCustPassword}
+                    onChange={(e) => setNewCustPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Link to Customer Account</Label>
+                <select
+                  value={newCustAccountId}
+                  onChange={(e) => setNewCustAccountId(e.target.value)}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Select a customer account…</option>
+                  {availableCustomerAccountIds.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Switch checked={newCustTrials} onCheckedChange={setNewCustTrials} />
+                  <Label className="text-sm">Can see Trials Dashboard</Label>
+                </div>
+                <Button onClick={createCustomerAccount} disabled={creatingCustomer} size="sm" className="gap-2">
+                  {creatingCustomer ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                  Create Account
+                </Button>
+              </div>
+            </div>
+
+            {/* Existing customer accounts */}
+            {customersLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : customerAccounts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No customer accounts created yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Linked Customer</TableHead>
+                      <TableHead>Trials Access</TableHead>
+                      <TableHead className="w-[80px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customerAccounts.map((ca: any) => (
+                      <TableRow key={ca.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-accent" />
+                            <span className="font-medium text-sm">{ca.username}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {customerNameMap.get(ca.customer_account_id) || ca.customer_account_id}
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={ca.can_see_trials}
+                            onCheckedChange={(checked) => updateCustomerAccount(ca.id, { canSeeTrials: checked })}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteCustomerAccount(ca.id, ca.user_id, ca.username)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
 

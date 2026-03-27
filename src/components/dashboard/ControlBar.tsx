@@ -121,7 +121,7 @@ export function ControlBar({
   customerFarms, selectedCustomerId, onCustomerChange,
 }: ControlBarProps) {
   const navigate = useNavigate();
-  const { signOut, isAdmin } = useAuth();
+  const { signOut, isAdmin, isCustomer, customerAccount } = useAuth();
 
   // Build customer list from customerFarms + accounts
   const customers = useMemo(() => {
@@ -213,15 +213,17 @@ export function ControlBar({
             </Select>
           </div>
 
-          {/* Customer filter */}
-          <SearchableDropdown
-            label="Customer"
-            placeholder="All customers"
-            items={[{ id: "", name: "All customers" }, ...customerItems]}
-            value={selectedCustomerId}
-            onChange={onCustomerChange}
-            width="w-[240px]"
-          />
+          {/* Customer filter — hidden for customer users */}
+          {!isCustomer && (
+            <SearchableDropdown
+              label="Customer"
+              placeholder="All customers"
+              items={[{ id: "", name: "All customers" }, ...customerItems]}
+              value={selectedCustomerId}
+              onChange={onCustomerChange}
+              width="w-[240px]"
+            />
+          )}
 
           {/* Farm filter */}
           <SearchableDropdown
@@ -274,12 +276,16 @@ export function ControlBar({
           </div>
 
           <div className="flex items-center gap-1 ml-2 border-l border-border pl-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/planner")} title="Trial Planner">
-              <CalendarRange className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/trials")} title="Trials Dashboard">
-              <FlaskConical className="h-4 w-4" />
-            </Button>
+            {!isCustomer && (
+              <Button variant="ghost" size="icon" onClick={() => navigate("/planner")} title="Trial Planner">
+                <CalendarRange className="h-4 w-4" />
+              </Button>
+            )}
+            {(!isCustomer || customerAccount?.canSeeTrials) && (
+              <Button variant="ghost" size="icon" onClick={() => navigate("/trials")} title="Trials Dashboard">
+                <FlaskConical className="h-4 w-4" />
+              </Button>
+            )}
             {isAdmin && (
               <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin Settings">
                 <Settings className="h-4 w-4" />

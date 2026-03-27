@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAccounts, useQualityReports, useUsers } from "@/hooks/useQualityData";
+import { useAccounts, useQualityReports, useUsers, useCustomerFarms } from "@/hooks/useQualityData";
+import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,7 +34,23 @@ const AllReports = () => {
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const { data: users } = useUsers();
+  const { data: customerFarms } = useCustomerFarms();
+  const { isCustomer, customerAccount } = useAuth();
   const tableRef = useRef<HTMLDivElement>(null);
+
+  // Customer farm filter
+  const customerAllowedFarmIds = useMemo(() => {
+    if (!isCustomer || !customerAccount || !customerFarms) return null;
+    return new Set(
+      customerFarms
+        .filter((cf) =>
+          cf.customerAccountId === customerAccount.customerAccountId &&
+          cf.farmAccountConsent === "1" &&
+          !cf.deletedAt
+        )
+        .map((cf) => cf.farmAccountId)
+    );
+  }, [isCustomer, customerAccount, customerFarms]);
 
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [selectedFarm, setSelectedFarm] = useState<string>("all");
@@ -61,6 +78,9 @@ const AllReports = () => {
   const filtered = useMemo(() => {
     if (!reports) return [];
     let data = [...reports].filter((r) => r.weekNr > 0 && r.submittedAt);
+    if (customerAllowedFarmIds) {
+      data = data.filter((r) => customerAllowedFarmIds.has(r.farmAccountId));
+    }
 
     if (selectedYear !== "all") {
       const y = parseInt(selectedYear);
