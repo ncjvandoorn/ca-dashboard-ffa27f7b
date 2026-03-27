@@ -404,7 +404,7 @@ export function ExceptionReport({
           <>
             {/* Industry insight */}
             {analysis.industryInsight && (
-              <div className="chrysal-gradient-subtle rounded-lg p-4 mt-2 flex gap-3">
+              <div data-pdf-section className="chrysal-gradient-subtle rounded-lg p-4 mt-2 flex gap-3">
                 <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-foreground leading-relaxed space-y-2">
                   {analysis.industryInsight.split(/\n\n?/).filter(Boolean).map((para, i) => (
