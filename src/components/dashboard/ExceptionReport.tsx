@@ -415,8 +415,8 @@ export function ExceptionReport({
             )}
 
             {/* Needs Attention */}
-            <div className="mt-5" data-pdf-section>
-              <div className="flex items-center gap-2 mb-3">
+            <div className="mt-5">
+              <div data-pdf-section className="flex items-center gap-2 mb-3">
                 <TrendingDown className="h-4 w-4 text-destructive" />
                 <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                   Needs Attention
@@ -473,8 +473,8 @@ export function ExceptionReport({
             </div>
 
             {/* Most Improved */}
-            <div className="mt-6" data-pdf-section>
-              <div className="flex items-center gap-2 mb-3">
+            <div className="mt-6">
+              <div data-pdf-section className="flex items-center gap-2 mb-3">
                 <TrendingUp className="h-4 w-4 text-accent" />
                 <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                   Most Improved
@@ -525,7 +525,7 @@ export function ExceptionReport({
             {/* Top Performers */}
             {analysis.topPerformers && analysis.topPerformers.length > 0 && (
               <div className="mt-6">
-                <div className="flex items-center gap-2 mb-3">
+                <div data-pdf-section className="flex items-center gap-2 mb-3">
                   <Sparkles className="h-4 w-4 text-primary" />
                   <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                     Top Performers
