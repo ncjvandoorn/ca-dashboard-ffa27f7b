@@ -34,144 +34,72 @@ serve(async (req) => {
 
 ${adminInstructions ? `**ADMIN INSTRUCTIONS (follow these closely):**\n${adminInstructions}\n` : ""}
 
-**WORK SCHEDULE**: The team works Monday to Friday. This plan is created on Monday morning and covers the full work week (Mon–Fri). Be specific about which days activities should happen when possible.
+**WORK SCHEDULE**: The team works Monday to Friday. This plan covers THIS work week (Mon–Fri). Today is Monday morning. All recommendations must be for THIS week only.
 
-Your job is to create a **Weekly Action Plan** for the coming work week (Monday–Friday). You act as the team's manager — analyzing ALL available data and deciding what each team member should prioritize.
+**REALISTIC CONSTRAINTS:**
+- Each inspector can realistically visit a MAXIMUM of 5 farms per day (travel time, inspection time)
+- Calls, admin tasks, and follow-ups have no daily limit
+- If a user has 60 open tasks, they cannot do all of them this week — prioritize the top 5-10 most urgent
+- Focus on what is actionable THIS week. Do not suggest things for next week.
 
-**DATA SOURCES:**
-1. **CRM Activities (ALL history)**: Every Task, Call, and Visit logged by staff — with statuses (To Do, In Progress, Completed), assigned users, linked farms, descriptions, and age in days. You receive ALL open items per user (not truncated) plus recent completions for context. Each user summary includes:
-   - All open items with full details (subject, description, farm, age, type, status)
-   - Recent completions (last 4 weeks) 
-   - Total historical stats (completion rate, task counts by status/type, farms covered)
-   
-2. **Quality Reports (last 8 weeks, ALL farms)**: Weekly farm quality data with full metrics:
-   - Intake: pH, EC, temp, humidity, cold store hours, water quality, treatment
-   - Export: pH, EC, temp, humidity, cold store hours, water quality, treatment  
-   - Dispatch: packing quality, packrate, processing speed
-   - Plant metrics: stem length, head size, dipping location
-   - Staff notes: qualityFlowersNote (qN), protocolChangesNote (pN), generalComment (gC) — THESE ARE FIRST-HAND FIELD OBSERVATIONS and carry the highest weight
-   - Submitted by user name for context on who inspected
-
-3. **Uncovered Farms**: Pre-computed list of farms that have quality reports but ZERO open activities assigned.
-
-**ABBREVIATED KEYS in quality data:**
-w=weekNr(YYWW), iPh=intakePH, iEc=intakeEC, iT=intakeTemp, iH=intakeHumidity, iCH=intakeColdStoreHours, iWQ=intakeWaterQuality, iTr=intakeTreatment, ePh=exportPH, eEc=exportEC, eT=exportTemp, eH=exportHumidity, eCH=exportColdStoreHours, eWQ=exportWaterQuality, eTr=exportTreatment, qR=qualityRating(1=Good,2=Avg,3=Bad), pQ=packingQuality, pR=packrate, pS=processingSpeed, sL=stemLength, hS=headSize, dL=dippingLocation, qN=qualityNote, pN=protocolNote, gC=generalComment.
+**DATA FORMAT — COMPACT KEYS:**
+Activity items: s=subject, d=description, t=type(T=Task,V=Visit,C=Call), st=status(TD=ToDo,IP=InProgress), f=farmName, fid=farmId, age=daysOld
+Quality data: w=weekNr(YYWW), iPh=intakePH, iEc=intakeEC, iT=intakeTemp, iH=intakeHumidity, iWQ=intakeWaterQuality, ePh=exportPH, eEc=exportEC, eT=exportTemp, eH=exportHumidity, eWQ=exportWaterQuality, qR=qualityRating(1=Good,2=Avg,3=Bad), qN=qualityNote, pN=protocolNote, gC=generalComment.
 
 **DOMAIN EXPERTISE for cut flowers:**
-- pH: Ideal intake 3.5–5.0; above 5.5 = bacterial risk. Export should match intake.
-- EC: Ideal 200–800 μS/cm. Too high = stem blockage; too low = no nutrition.
-- Cold store temp: Must stay 1–4°C. Above 6°C = ethylene damage.
-- Humidity: 80–95% RH. Below 70% = petal browning. Above 95% = Botrytis risk.
-- Quality ratings: 1=Good, 2=Average, 3=Bad. Consecutive 2–3 ratings = systemic issue.
-- Water quality: Same 1-3 scale. Rating 3 = bacterial contamination red flag.
-- Cold store hours: Too few = inadequate cooling. >24h without monitoring = risky.
-- Staff notes > numerical readings: On-the-ground observations from experienced inspectors are more reliable than sensor data.
+- pH: Ideal intake 3.5–5.0; above 5.5 = bacterial risk
+- EC: Ideal 200–800 μS/cm. Too high = stem blockage
+- Cold store temp: Must stay 1–4°C. Above 6°C = ethylene damage
+- Humidity: 80–95% RH. Below 70% = petal browning. Above 95% = Botrytis risk
+- Quality ratings: 1=Good, 2=Average, 3=Bad. Consecutive 2–3 ratings = systemic issue
+- Staff notes (qN, pN, gC) > numerical readings: field observations are most reliable
+- Key pests/diseases: Botrytis, powdery/downy mildew, thrips, spider mites, FCM
 
-**YOUR ANALYSIS MUST:**
-- Assign specific tasks to specific users for specific days (Mon–Fri) when possible
-- Identify farms needing URGENT visits based on quality deterioration, staff-flagged issues, or overdue activities
-- Highlight stale activities — any To Do item older than 14 days is overdue
-- Evaluate each user's workload holistically: open task count, completion rate, farm coverage, and recent activity patterns
-- Suggest NEW activities based on quality report findings — be very specific (e.g., "Visit Farm X Tuesday to investigate pH drift from 4.2 to 6.1 over weeks 26/10-26/12")
-- Cross-reference quality data with activity coverage: farms with declining quality AND no open activities are top priority
-- Consider user expertise: assign based on which farms they've historically covered
-- Flag workload imbalances: if one user has 30 open tasks and another has 3, recommend redistribution
+**ANALYSIS PRIORITIES (in order):**
+1. URGENT: Farms with quality deterioration (worsening qR, staff-flagged pests/diseases) AND no open activities
+2. OVERDUE: Any To Do item older than 14 days — decide: complete this week, reassign, or close
+3. STAFF NOTES: Any qN/pN/gC mentioning pest, disease, damage, contamination → flag for visit
+4. WORKLOAD: Balance work across team. If one user has 50 open and another has 3, redistribute
+5. NEW ACTIVITIES: Based on quality trends — be specific (cite farm, metric, week numbers)
 
-Return your analysis as a JSON object with this exact structure:
+Return JSON with this structure:
 {
   "weekLabel": "Week XX (DD Mon – DD Mon YYYY)",
-  "executiveSummary": "3-4 sentence overview: team situation, key quality concerns from data, and the #1 priority for Mon–Fri.",
-  "urgentFarmVisits": [
-    {
-      "farmId": "uuid",
-      "farmName": "string",
-      "reason": "Why this farm needs an urgent visit — cite specific data",
-      "suggestedUser": "Name of the best person to assign (based on their history with this farm)",
-      "suggestedDay": "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday",
-      "qualityIssues": ["Specific concern with data citation, e.g. 'pH rose from 4.2 to 6.1 in weeks 2610–2612'"],
-      "priority": "critical" | "high"
-    }
-  ],
-  "overdueActivities": [
-    {
-      "activitySubject": "string — the actual subject from the data",
-      "farmName": "string",
-      "assignedUser": "string",
-      "daysOverdue": number,
-      "recommendation": "What to do: complete, reassign, or close"
-    }
-  ],
-  "userWorkloadAssessment": [
-    {
-      "userName": "string",
-      "openTasks": number,
-      "completedRecently": number,
-      "completionRate": number,
-      "farmsCovered": number,
-      "assessment": "On track" | "Overloaded" | "Underutilized" | "Falling behind",
-      "recommendation": "Specific Mon–Fri action plan for this user",
-      "suggestedSchedule": ["Monday: Visit Farm X", "Tuesday: Follow up on Task Y", ...]
-    }
-  ],
-  "suggestedNewActivities": [
-    {
-      "type": "Task" | "Visit" | "Call",
-      "subject": "Specific activity title",
-      "farmName": "string",
-      "suggestedUser": "string — pick based on their farm coverage history",
-      "suggestedDay": "string — which day this week",
-      "reason": "Why needed — cite quality data or staff notes",
-      "priority": "critical" | "high" | "medium"
-    }
-  ],
-  "farmsWithoutCoverage": [
-    {
-      "farmId": "uuid",
-      "farmName": "string",
-      "lastActivityDate": "string or 'Never'",
-      "qualityStatus": "Brief quality summary citing actual recent data",
-      "recommendation": "What should be done and by whom"
-    }
-  ],
-  "weeklyFocus": "A clear 3-4 sentence directive for the team meeting on Monday morning. Summarize the #1 priority, key risks from the quality data, and any team-level actions (redistribute work, focus areas, etc.)."
+  "executiveSummary": "3-4 sentences: team situation, key quality concerns, #1 priority for THIS week.",
+  "urgentFarmVisits": [{ "farmId","farmName","reason" (cite data),"suggestedUser","suggestedDay" (Mon-Fri),"qualityIssues":[],"priority":"critical"|"high" }],
+  "overdueActivities": [{ "activitySubject","farmName","assignedUser","daysOverdue","recommendation" }],
+  "userWorkloadAssessment": [{ "userName","openTasks","completedRecently","completionRate","farmsCovered","assessment":"On track"|"Overloaded"|"Underutilized"|"Falling behind","recommendation","suggestedSchedule":["Monday: ...","Tuesday: ..."] }],
+  "suggestedNewActivities": [{ "type":"Task"|"Visit"|"Call","subject","farmName","suggestedUser","suggestedDay","reason" (cite data),"priority":"critical"|"high"|"medium" }],
+  "farmsWithoutCoverage": [{ "farmId","farmName","lastActivityDate","qualityStatus","recommendation" }],
+  "weeklyFocus": "3-4 sentence Monday morning directive: #1 priority, key risks, team actions."
 }
 
-**CRITICAL ANTI-HALLUCINATION RULES:**
-1. ONLY reference data present in the input. Never invent farm names, user names, values, or observations.
-2. Every numerical value you cite MUST come directly from the provided data.
-3. When citing staff notes, quote or closely paraphrase actual text from qN, pN, or gC fields.
-4. Do NOT invent activity subjects — reference actual activities from the input.
-5. For suggestedNewActivities, base them solely on quality report findings.
-6. If fewer items qualify for a category, return fewer. Never pad lists.
-7. For userWorkloadAssessment, include ALL users from the team — not just those with issues.`;
+**LIMITS per section:** urgentFarmVisits max 15, overdueActivities max 15, suggestedNewActivities max 15, farmsWithoutCoverage max 10. Across the whole team for the whole week, max 25 total farm visits (5 per day × 5 days).
 
-    const userPrompt = `Create the Monday morning weekly action plan for the coming work week (Mon–Fri).
+**CRITICAL RULES:**
+1. ONLY reference data present in the input. Never invent names, values, or observations.
+2. Every value you cite MUST come from the provided data.
+3. Staff notes: quote or closely paraphrase actual qN, pN, gC text.
+4. If fewer items qualify, return fewer. Never pad lists.
+5. Include ALL team members in userWorkloadAssessment.
+6. suggestedSchedule per user: max 5 visits/day, unlimited calls/tasks.`;
 
-Today is Monday. You are briefing the team on what to do this week.
+    const userPrompt = `Create the weekly action plan for THIS week (Mon–Fri). Today is Monday morning.
 
-Quality report week range: ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?? "unknown"}.
+Quality data covers weeks: ${weekRange?.min ?? "?"} to ${weekRange?.max ?? "?"}.
 
-**TEAM MEMBERS (with positions):**
-${JSON.stringify(userSummary)}
+TEAM: ${JSON.stringify(userSummary)}
 
-**CRM ACTIVITY DATA (ALL history, grouped by user):**
-Each user has: ALL open items (To Do + In Progress) with full details, recent completions (last 4 weeks), historical totals, completion rates, task breakdowns by status and type, and number of farms covered.
+CRM ACTIVITIES (per user — ALL open items + recent completions + stats):
 ${JSON.stringify(activitySummary)}
 
-**QUALITY REPORT DATA (last 12 weeks, ALL farms, ALL metrics):**
-Full weekly readings per farm including intake/export pH, EC, temp, humidity, cold store hours, water quality, treatments, dispatch metrics, and critically: staff field notes (qN, pN, gC).
+QUALITY REPORTS (per farm, last 12 weeks, compact format):
 ${JSON.stringify(qualitySummary)}
 
-**FARMS WITHOUT ANY OPEN ACTIVITIES (pre-computed):**
-These farms have quality reports but zero open To Do or In Progress activities assigned to anyone.
+UNCOVERED FARMS (have quality reports but zero open activities):
 ${JSON.stringify(uncoveredFarms)}
 
-Create the weekly plan. For each user, provide a specific Mon–Fri schedule. Prioritize:
-1. Farms with deteriorating quality OR staff-flagged concerns that have no open activities
-2. Overdue activities (>14 days old) — decide: complete, reassign, or close
-3. Workload balance — redistribute if any user is overloaded vs underutilized
-4. New activities needed based on quality data trends and staff notes
-5. Ensure every team member has a productive and balanced week`;
+Create the plan. Focus on what matters MOST this week.`;
 
     const requestBody = JSON.stringify({
       model: "google/gemini-2.5-flash",
