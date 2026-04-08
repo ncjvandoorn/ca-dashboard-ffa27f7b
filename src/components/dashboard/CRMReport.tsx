@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
+import { getCrmVisibleUserIds } from "@/lib/crmUserFilter";
 import { ActivityAnalysis } from "./crm/ActivityAnalysis";
 import { ComingWeekView } from "./crm/ComingWeekView";
 
@@ -63,15 +64,24 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
 
+  const crmVisibleIds = useMemo(() => getCrmVisibleUserIds(), []);
+
   const activeUsers = useMemo(() => {
     const ids = new Set<string>();
     for (const a of activities) {
       if (a.assignedUserId) ids.add(a.assignedUserId);
     }
     return [...ids]
+      .filter((id) => !crmVisibleIds || crmVisibleIds.includes(id))
       .map((id) => ({ id, name: userMap.get(id) || id.slice(0, 8) }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [activities, userMap]);
+  }, [activities, userMap, crmVisibleIds]);
+
+  // Pre-filter activities to only include CRM-visible users
+  const crmActivities = useMemo(() => {
+    if (!crmVisibleIds) return activities;
+    return activities.filter((a) => !a.assignedUserId || crmVisibleIds.includes(a.assignedUserId));
+  }, [activities, crmVisibleIds]);
 
   const filteredActivities = useMemo(() => {
     if (selectedUserId === "all") return activities;
