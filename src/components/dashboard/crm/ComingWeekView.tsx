@@ -242,11 +242,19 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     };
 
     const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=Sun
+    // Find Monday of this week
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7)); // Mon=0 offset
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
+    const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const todayDate = `${days[today.getDay()]} ${today.getDate()} ${today.toLocaleString("en-GB", { month: "long", year: "numeric" })}`;
+    const todayDate = `${days[dayOfWeek]} ${fmt(today)}`;
+    const weekDates = `Monday ${fmt(monday)} – Friday ${fmt(friday)}`;
     const currentWeekNr = getCurrentWeekNr();
 
-    return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr };
+    return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr, weekDates };
   }, [allActivities, reports, activeUsers, userMap, accountMap, users]);
 
   const runAnalysis = useCallback(async () => {

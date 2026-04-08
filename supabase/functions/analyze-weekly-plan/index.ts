@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr } = await req.json();
+    const { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr, weekDates } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -34,7 +34,7 @@ serve(async (req) => {
 
 ${adminInstructions ? `**ADMIN INSTRUCTIONS (follow these closely):**\n${adminInstructions}\n` : ""}
 
-**WORK SCHEDULE**: The team works Monday to Friday. Today is ${todayDate || "a weekday"}. The current week number is ${currentWeekNr || "unknown"} (format YYWW). This plan covers the REMAINING days of THIS current work week. If today is Wednesday, plan for Wed–Fri. If Monday, plan Mon–Fri. All recommendations must be for THIS week only — never plan for next week.
+**WORK SCHEDULE**: The team works Monday to Friday. Today is ${todayDate || "a weekday"}. THIS week runs from ${weekDates || "Monday to Friday"}. The current week number is ${currentWeekNr || "unknown"} (format YYWW). This plan ALWAYS covers the FULL work week Monday–Friday, even if generated mid-week. All recommendations and schedules must use days Monday through Friday of THIS week. Never plan for next week.
 
 **REALISTIC CONSTRAINTS:**
 - Each inspector can realistically visit a MAXIMUM of 5 farms per day (travel time, inspection time)
@@ -71,7 +71,7 @@ Return JSON with this structure:
   "userWorkloadAssessment": [{ "userName","openTasks","completedRecently","completionRate","farmsCovered","assessment":"On track"|"Overloaded"|"Underutilized"|"Falling behind","recommendation","suggestedSchedule":["Monday: ...","Tuesday: ..."] }],
   "suggestedNewActivities": [{ "type":"Task"|"Visit"|"Call","subject","farmName","suggestedUser","suggestedDay","reason" (cite data),"priority":"critical"|"high"|"medium" }],
   "farmsWithoutCoverage": [{ "farmId","farmName","lastActivityDate","qualityStatus","recommendation" }],
-  "weeklyFocus": "3-4 sentence Monday morning directive: #1 priority, key risks, team actions."
+  "weeklyFocus": "3-4 sentence team directive for this week. Summarize #1 priority, key risks, team actions."
 }
 
 **LIMITS per section:** urgentFarmVisits max 15, overdueActivities max 15, suggestedNewActivities max 15, farmsWithoutCoverage max 10. Across the whole team for the whole week, max 25 total farm visits (5 per day × 5 days).
@@ -84,8 +84,8 @@ Return JSON with this structure:
 5. Include ALL team members in userWorkloadAssessment.
 6. suggestedSchedule per user: max 5 visits/day, unlimited calls/tasks.`;
 
-    const userPrompt = `Create the action plan for THIS week. Today is ${todayDate || "a weekday"}, current week ${currentWeekNr || "?"}.
-Plan ONLY for the remaining days of THIS week (not next week).
+    const userPrompt = `Create the action plan for THIS week (${weekDates || "Mon–Fri"}). Today is ${todayDate || "a weekday"}, week ${currentWeekNr || "?"}.
+The plan must cover Monday through Friday. The weekLabel should reflect "${weekDates || "Mon–Fri"}".
 
 Quality data covers weeks: ${weekRange?.min ?? "?"} to ${weekRange?.max ?? "?"}.
 
@@ -100,7 +100,7 @@ ${JSON.stringify(qualitySummary)}
 UNCOVERED FARMS (have quality reports but zero open activities):
 ${JSON.stringify(uncoveredFarms)}
 
-Create the plan for the remaining days of THIS week ${currentWeekNr || ""}. Focus on what matters MOST.`;
+Create the full Mon–Fri plan. Focus on what matters MOST.`;
 
     const requestBody = JSON.stringify({
       model: "google/gemini-2.5-flash",
