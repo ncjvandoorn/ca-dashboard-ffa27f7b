@@ -240,9 +240,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       max: allWeeks.length > 0 ? allWeeks[0] : undefined,
     };
 
-    const now = new Date();
+    const today = new Date();
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const todayDate = `${days[now.getDay()]} ${now.getDate()} ${now.toLocaleString("en-GB", { month: "long", year: "numeric" })}`;
+    const todayDate = `${days[today.getDay()]} ${today.getDate()} ${today.toLocaleString("en-GB", { month: "long", year: "numeric" })}`;
     const currentWeekNr = getCurrentWeekNr();
 
     return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr };
