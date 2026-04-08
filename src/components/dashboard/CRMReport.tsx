@@ -79,6 +79,11 @@ function ActivityAnalysis({
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
 
+  const filteredActivities = useMemo(() => {
+    if (selectedUserId === "all") return allActivities;
+    return allActivities.filter((a) => a.assignedUserId === selectedUserId);
+  }, [allActivities, selectedUserId]);
+
   const stats = useMemo(() => {
     const byUser: Record<string, { total: number; completed: number; inProgress: number; toDo: number; noStatus: number; byMonth: Record<string, number> }> = {};
 
