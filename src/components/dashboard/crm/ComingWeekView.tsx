@@ -53,8 +53,6 @@ function formatDate(ts: number | null): string {
 interface WeeklyPlan {
   weekLabel: string;
   executiveSummary: string;
-  urgentFarmVisits: { farmId: string; farmName: string; reason: string; suggestedUser: string; qualityIssues: string[]; priority: "critical" | "high" }[];
-  overdueActivities: { activitySubject: string; farmName: string; assignedUser: string; daysOverdue: number; recommendation: string }[];
   urgentFarmVisits: { farmId: string; farmName: string; reason: string; suggestedUser: string; suggestedDay?: string; qualityIssues: string[]; priority: "critical" | "high" }[];
   overdueActivities: { activitySubject: string; farmName: string; assignedUser: string; daysOverdue: number; recommendation: string }[];
   userWorkloadAssessment: { userName: string; openTasks: number; completedRecently: number; completionRate: number; farmsCovered?: number; assessment: string; recommendation: string; suggestedSchedule?: string[] }[];
