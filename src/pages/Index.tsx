@@ -12,6 +12,7 @@ import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights"
 import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
 import { AIAgent } from "@/components/dashboard/AIAgent";
+import { CRMReport } from "@/components/dashboard/CRMReport";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -316,7 +317,12 @@ const Index = () => {
                   exceptionAnalysis={visibleFarmIds ? null : exceptionAnalysis}
                   seasonalityAnalysis={visibleFarmIds ? null : seasonalityAnalysis}
                 />
-                {isAdmin && (
+                 <CRMReport
+                    activities={scopedActivities}
+                    users={users || []}
+                    accounts={scopedAccounts}
+                  />
+                 {isAdmin && (
                   <ReportingCheck
                     reports={yearFilteredReports}
                     accounts={scopedAccounts}
