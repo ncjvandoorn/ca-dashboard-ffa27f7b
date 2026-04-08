@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Sparkles, Loader2, RefreshCw,
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
@@ -84,6 +85,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
+  const pdfRef = useRef<HTMLDivElement>(null);
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
@@ -308,8 +310,12 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           <Users className="h-3 w-3 mr-1" />
           {activeUsers.length} team members
         </Badge>
+        {plan && (
+          <ExportPdfButton targetRef={pdfRef} filename="weekly-plan" label="Export PDF" />
+        )}
       </div>
 
+      <div ref={pdfRef} className="space-y-6">
       {/* Open tasks overview */}
       <div>
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -538,6 +544,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           <p className="text-xs text-muted-foreground mt-1">This may take a moment</p>
         </div>
       )}
+      </div>
     </div>
   );
 }
