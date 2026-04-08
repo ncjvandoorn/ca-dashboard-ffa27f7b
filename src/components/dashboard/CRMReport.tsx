@@ -87,7 +87,7 @@ function ActivityAnalysis({
   const stats = useMemo(() => {
     const byUser: Record<string, { total: number; completed: number; inProgress: number; toDo: number; noStatus: number; byMonth: Record<string, number> }> = {};
 
-    for (const a of activities) {
+    for (const a of filteredActivities) {
       const uid = a.assignedUserId || a.ownerUserId || "unassigned";
       if (!byUser[uid]) byUser[uid] = { total: 0, completed: 0, inProgress: 0, toDo: 0, noStatus: 0, byMonth: {} };
       const u = byUser[uid];
@@ -112,18 +112,18 @@ function ActivityAnalysis({
         completionRate: s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [activities, userMap]);
+  }, [filteredActivities, userMap]);
 
   const totalStats = useMemo(() => {
-    const total = activities.length;
-    const completed = activities.filter((a) => a.status === "Completed").length;
-    const inProgress = activities.filter((a) => a.status === "In Progress").length;
-    const toDo = activities.filter((a) => a.status === "To Do").length;
+    const total = filteredActivities.length;
+    const completed = filteredActivities.filter((a) => a.status === "Completed").length;
+    const inProgress = filteredActivities.filter((a) => a.status === "In Progress").length;
+    const toDo = filteredActivities.filter((a) => a.status === "To Do").length;
     const noStatus = total - completed - inProgress - toDo;
 
     // Monthly trend
     const byMonth: Record<string, number> = {};
-    for (const a of activities) {
+    for (const a of filteredActivities) {
       if (a.createdAt) {
         const d = new Date(a.createdAt);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -133,14 +133,14 @@ function ActivityAnalysis({
 
     // Activities by type
     const byType: Record<string, number> = {};
-    for (const a of activities) {
+    for (const a of filteredActivities) {
       const t = a.type || "Unknown";
       byType[t] = (byType[t] || 0) + 1;
     }
 
     // By farm
     const byFarm: Record<string, number> = {};
-    for (const a of activities) {
+    for (const a of filteredActivities) {
       if (a.accountId) {
         const name = accountMap.get(a.accountId) || a.accountId.slice(0, 8);
         byFarm[name] = (byFarm[name] || 0) + 1;
@@ -149,7 +149,7 @@ function ActivityAnalysis({
     const topFarms = Object.entries(byFarm).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
     return { total, completed, inProgress, toDo, noStatus, byMonth, byType, topFarms, completionRate: total > 0 ? Math.round((completed / total) * 100) : 0 };
-  }, [activities, accountMap]);
+  }, [filteredActivities, accountMap]);
 
   const sortedMonths = Object.entries(totalStats.byMonth).sort((a, b) => a[0].localeCompare(b[0]));
   const maxMonthly = Math.max(...sortedMonths.map(([, v]) => v), 1);
