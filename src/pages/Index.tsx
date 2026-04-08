@@ -307,7 +307,7 @@ const Index = () => {
                 <CRMReport
                   activities={activities || []}
                   users={users || []}
-                  accounts={scopedAccounts}
+                  accounts={accounts || []}
                   reports={reports || []}
                 />
               )}
