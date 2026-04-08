@@ -287,6 +287,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
             Last generated: {new Date(cachedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
           </span>
         )}
+        <Badge variant="secondary" className="text-[10px]">
+          <Users className="h-3 w-3 mr-1" />
+          {activeUsers.length} team members
+        </Badge>
       </div>
 
       {/* Open tasks overview */}
