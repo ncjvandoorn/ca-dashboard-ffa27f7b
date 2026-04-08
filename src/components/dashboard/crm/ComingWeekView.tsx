@@ -95,6 +95,12 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .sort((a, b) => (a.startsAt || a.createdAt || 0) - (b.startsAt || b.createdAt || 0));
   }, [allActivities]);
 
+  // Build a stable filter key from activeUsers so cache is per-filter
+  const filterKey = useMemo(() => {
+    const ids = activeUsers.map((u) => u.id).sort();
+    return ids.join(",");
+  }, [activeUsers]);
+
   // Load cached plan on mount
   const loadCached = useCallback(async () => {
     const currentWeek = getCurrentWeekNr();
@@ -106,10 +112,14 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .limit(1)
       .single();
     if (data?.analysis) {
-      setPlan(data.analysis as unknown as WeeklyPlan);
-      setCachedAt(data.created_at);
+      const cached = data.analysis as any;
+      // Only use cache if it was generated with the same user filter
+      if (cached._filterKey === filterKey) {
+        setPlan(cached as unknown as WeeklyPlan);
+        setCachedAt(data.created_at);
+      }
     }
-  }, []);
+  }, [filterKey]);
 
   // Load on first render
   useState(() => { loadCached(); });
@@ -240,12 +250,13 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       const analysis = data.analysis as WeeklyPlan;
       setPlan(analysis);
 
-      // Cache it
+      // Cache it with filter key embedded
       const currentWeek = getCurrentWeekNr();
+      const analysisWithKey = { ...analysis, _filterKey: filterKey };
       await supabase.from("weekly_plan_cache").delete().eq("week_nr", currentWeek);
-      await supabase.from("weekly_plan_cache").insert({ week_nr: currentWeek, analysis: analysis as any });
+      await supabase.from("weekly_plan_cache").insert({ week_nr: currentWeek, analysis: analysisWithKey as any });
       setCachedAt(new Date().toISOString());
-      toast({ title: "Weekly plan generated" });
+      toast({ title: "Weekly plan generated", description: `Analyzed ${activeUsers.length} team members` });
     } catch (e: any) {
       console.error("Weekly plan error:", e);
       toast({ title: "Analysis failed", description: e.message, variant: "destructive" });
@@ -276,6 +287,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
             Last generated: {new Date(cachedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
           </span>
         )}
+        <Badge variant="secondary" className="text-[10px]">
+          <Users className="h-3 w-3 mr-1" />
+          {activeUsers.length} team members
+        </Badge>
       </div>
 
       {/* Open tasks overview */}
