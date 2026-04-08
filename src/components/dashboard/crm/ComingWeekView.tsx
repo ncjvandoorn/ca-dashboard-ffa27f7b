@@ -354,6 +354,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-sm">{v.farmName}</span>
                       <div className="flex items-center gap-1.5">
+                        {v.suggestedDay && <Badge variant="secondary" className="text-[10px]">{v.suggestedDay}</Badge>}
                         <Badge variant="outline" className="text-[10px] uppercase">{v.priority}</Badge>
                         <Badge variant="secondary" className="text-[10px]">→ {v.suggestedUser}</Badge>
                       </div>
@@ -392,8 +393,16 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                       <span>Open: <b className="text-foreground">{u.openTasks}</b></span>
                       <span>Completed: <b className="text-accent">{u.completedRecently}</b></span>
                       <span>Rate: <b className="text-foreground">{u.completionRate}%</b></span>
+                      {u.farmsCovered !== undefined && <span>Farms: <b className="text-foreground">{u.farmsCovered}</b></span>}
                     </div>
-                    <p className="text-xs text-muted-foreground italic">{u.recommendation}</p>
+                    <p className="text-xs text-muted-foreground italic mb-1">{u.recommendation}</p>
+                    {u.suggestedSchedule && u.suggestedSchedule.length > 0 && (
+                      <div className="mt-2 pl-2 border-l-2 border-primary/20 space-y-0.5">
+                        {u.suggestedSchedule.map((item, j) => (
+                          <p key={j} className="text-[11px] text-foreground">{item}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
