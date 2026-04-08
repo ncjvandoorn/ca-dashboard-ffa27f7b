@@ -60,6 +60,7 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"board" | "analysis" | "coming-week">("board");
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({ "To Do": 25, "In Progress": 25, "Completed": 25 });
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
