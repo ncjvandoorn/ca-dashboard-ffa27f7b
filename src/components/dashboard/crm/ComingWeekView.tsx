@@ -138,28 +138,28 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (a.type) u.byType[a.type] = (u.byType[a.type] || 0) + 1;
       if (a.accountId) u.farmsCovered.add(a.accountId);
 
-      const item = {
-        sub: a.subject?.slice(0, 100),
-        desc: a.description?.slice(0, 120) || undefined,
-        type: a.type,
-        status: a.status,
-        farm: a.accountId ? accountMap.get(a.accountId) : undefined,
-        farmId: a.accountId || undefined,
-        startsAt: a.startsAt ? formatDate(a.startsAt) : undefined,
-        createdAt: a.createdAt ? formatDate(a.createdAt) : undefined,
-        completedAt: a.completedAt ? formatDate(a.completedAt) : undefined,
-        daysOld: a.createdAt ? Math.floor((now - a.createdAt) / 86400000) : undefined,
-      };
-
       if (a.status === "Completed") {
         u.totalCompleted++;
-        // Keep last 4 weeks of completed for context
-        const fourWeeksMs = 4 * 7 * 86400000;
-        if ((a.completedAt || a.createdAt || 0) > now - fourWeeksMs) {
-          u.recentCompleted.push(item);
+        // Keep last 2 weeks of completed for context (trimmed)
+        const twoWeeksMs = 2 * 7 * 86400000;
+        if ((a.completedAt || a.createdAt || 0) > now - twoWeeksMs) {
+          u.recentCompleted.push({
+            sub: a.subject?.slice(0, 60),
+            type: a.type,
+            farm: a.accountId ? accountMap.get(a.accountId) : undefined,
+            completedAt: a.completedAt ? formatDate(a.completedAt) : undefined,
+          });
         }
       } else if (a.status === "To Do" || a.status === "In Progress") {
-        u.open.push(item); // ALL open items — no limit
+        u.open.push({
+          sub: a.subject?.slice(0, 60),
+          desc: a.description?.slice(0, 80) || undefined,
+          type: a.type,
+          status: a.status,
+          farm: a.accountId ? accountMap.get(a.accountId) : undefined,
+          farmId: a.accountId || undefined,
+          daysOld: a.createdAt ? Math.floor((now - a.createdAt) / 86400000) : undefined,
+        });
       }
     }
 
