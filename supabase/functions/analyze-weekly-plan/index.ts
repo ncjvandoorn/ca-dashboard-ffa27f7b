@@ -145,27 +145,33 @@ Return your analysis as a JSON object with this exact structure:
 6. If fewer items qualify for a category, return fewer. Never pad lists.
 7. For userWorkloadAssessment, include ALL users from the team — not just those with issues.`;
 
-    const userPrompt = `Create the weekly action plan for the coming week based on the following data.
+    const userPrompt = `Create the Monday morning weekly action plan for the coming work week (Mon–Fri).
 
-Week range analyzed: ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?? "unknown"}.
+Today is Monday. You are briefing the team on what to do this week.
 
-**TEAM MEMBERS:**
+Quality report week range: ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?? "unknown"}.
+
+**TEAM MEMBERS (with positions):**
 ${JSON.stringify(userSummary)}
 
-**CRM ACTIVITY SUMMARY (recent 8 weeks):**
-Activities grouped by user showing open tasks, recent completions, and activity details.
+**CRM ACTIVITY DATA (ALL history, grouped by user):**
+Each user has: ALL open items (To Do + In Progress) with full details, recent completions (last 4 weeks), historical totals, completion rates, task breakdowns by status and type, and number of farms covered.
 ${JSON.stringify(activitySummary)}
 
-**QUALITY REPORT SUMMARY (recent 12 weeks):**
-Farm quality data with readings and staff notes.
+**QUALITY REPORT DATA (last 12 weeks, ALL farms, ALL metrics):**
+Full weekly readings per farm including intake/export pH, EC, temp, humidity, cold store hours, water quality, treatments, dispatch metrics, and critically: staff field notes (qN, pN, gC).
 ${JSON.stringify(qualitySummary)}
 
-Analyze this data and create the weekly action plan. Focus on:
-1. Which farms need urgent attention based on quality deterioration or staff-flagged issues
-2. Which open activities are overdue and need follow-up
-3. How each team member is performing and whether workload needs rebalancing
-4. What NEW activities should be created based on quality findings
-5. Which farms have quality concerns but no scheduled activities`;
+**FARMS WITHOUT ANY OPEN ACTIVITIES (pre-computed):**
+These farms have quality reports but zero open To Do or In Progress activities assigned to anyone.
+${JSON.stringify(uncoveredFarms)}
+
+Create the weekly plan. For each user, provide a specific Mon–Fri schedule. Prioritize:
+1. Farms with deteriorating quality OR staff-flagged concerns that have no open activities
+2. Overdue activities (>14 days old) — decide: complete, reassign, or close
+3. Workload balance — redistribute if any user is overloaded vs underutilized
+4. New activities needed based on quality data trends and staff notes
+5. Ensure every team member has a productive and balanced week`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
