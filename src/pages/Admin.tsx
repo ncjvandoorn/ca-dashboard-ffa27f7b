@@ -426,11 +426,77 @@ const Admin = () => {
           </CardContent>
         </Card>
 
+        {/* CRM User Filter */}
         <Card className="mb-8">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Upload className="h-5 w-5 text-primary" />
+                <ClipboardList className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">CRM Report Users</CardTitle>
+                <CardDescription>
+                  Select which users to show in the CRM Report. Uncheck users you don't need to see.
+                  {crmSelectedUserIds.size > 0 && (
+                    <span className="text-primary font-medium"> ({crmSelectedUserIds.size} selected)</span>
+                  )}
+                  {crmSelectedUserIds.size === 0 && (
+                    <span className="text-muted-foreground"> (showing all)</span>
+                  )}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {crmActiveUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Loading users...</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Button variant="outline" size="sm" onClick={selectAllCrmUsers}>
+                    Show All
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {crmActiveUsers.length} users with activities
+                  </span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {crmActiveUsers.map((u) => {
+                    const isChecked = crmSelectedUserIds.size === 0 || crmSelectedUserIds.has(u.id);
+                    const actCount = (allActivities || []).filter((a) => a.assignedUserId === u.id).length;
+                    return (
+                      <label
+                        key={u.id}
+                        className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                          isChecked ? "border-primary/30 bg-primary/5" : "border-border bg-muted/20 opacity-60"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={crmSelectedUserIds.size === 0 ? true : crmSelectedUserIds.has(u.id)}
+                          onCheckedChange={() => {
+                            if (crmSelectedUserIds.size === 0) {
+                              // Switching from "all" to specific: select all EXCEPT this one
+                              const allIds = crmActiveUsers.map((x) => x.id).filter((id) => id !== u.id);
+                              setCrmSelectedUserIds(new Set(allIds));
+                              setCrmVisibleUserIds(allIds);
+                            } else {
+                              toggleCrmUser(u.id);
+                            }
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{u.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{u.position || "—"} · {actCount} activities</p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
               </div>
               <div>
                 <CardTitle className="text-lg">Data Files</CardTitle>
