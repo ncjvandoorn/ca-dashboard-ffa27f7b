@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot, Users, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot, Users, Plus, Trash2, ClipboardList } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAccounts, useCustomerFarms, useUsers, useActivities } from "@/hooks/useQualityData";
+import { getCrmVisibleUserIds, setCrmVisibleUserIds } from "@/lib/crmUserFilter";
 
 interface LoginLog {
   id: string;
