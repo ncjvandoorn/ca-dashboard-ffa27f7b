@@ -60,6 +60,7 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"board" | "analysis" | "coming-week">("board");
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({ "To Do": 25, "In Progress": 25, "Completed": 25 });
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
@@ -172,7 +173,7 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
                             <Badge variant="secondary" className="text-xs ml-auto">{items.length}</Badge>
                           </div>
                           <div className={`rounded-xl border p-2 min-h-[200px] space-y-2 ${statusStyle[status] || "border-border bg-muted/20"}`}>
-                            {items.slice(0, 50).map((activity, i) => {
+                            {items.slice(0, visibleCounts[status] || 25).map((activity, i) => {
                               const Icon = typeIcon[activity.type] || ClipboardList;
                               const assignedName = activity.assignedUserId ? userMap.get(activity.assignedUserId) : null;
                               const farmName = activity.accountId ? accountMap.get(activity.accountId) : null;
@@ -181,7 +182,7 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
                                   key={activity.id}
                                   initial={{ opacity: 0, y: 4 }}
                                   animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: i * 0.015 }}
+                                  transition={{ delay: Math.min(i, 25) * 0.015 }}
                                   className="rounded-lg border border-border bg-background p-3 shadow-sm"
                                 >
                                   <div className="flex items-start gap-2 mb-1.5">
@@ -219,8 +220,13 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
                             {items.length === 0 && (
                               <p className="text-xs text-muted-foreground text-center py-8">No activities</p>
                             )}
-                            {items.length > 50 && (
-                              <p className="text-xs text-muted-foreground text-center pt-1">+{items.length - 50} more</p>
+                            {items.length > (visibleCounts[status] || 25) && (
+                              <button
+                                onClick={() => setVisibleCounts((prev) => ({ ...prev, [status]: (prev[status] || 25) + 25 }))}
+                                className="text-xs text-primary hover:underline text-center w-full pt-1 cursor-pointer"
+                              >
+                                +{items.length - (visibleCounts[status] || 25)} more — show 25 more
+                              </button>
                             )}
                           </div>
                         </div>
