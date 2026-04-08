@@ -293,69 +293,69 @@ const Index = () => {
               }}
             />
 
-            {/* Summary strip */}
-            <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-accent" />
-                <p className="text-sm text-foreground">
-                  Showing <span className="font-semibold">{farmReports.length}</span> reports for{" "}
-                  <span className="font-semibold">{farmName}</span>
-                  {managerName && (
-                    <span className="text-muted-foreground"> | {managerName}</span>
-                  )}
-                  {selectedYear !== "all" && (
-                    <span className="text-muted-foreground"> · 20{selectedYear}</span>
-                  )}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <AIAgent
-                  reports={scopedReports}
+            {/* Action buttons row */}
+            <div className="flex items-center gap-2 flex-wrap mb-3">
+              <AIAgent
+                reports={scopedReports}
+                accounts={scopedAccounts}
+                activities={isCustomer ? [] : scopedActivities}
+                users={isCustomer ? [] : (users || [])}
+                exceptionAnalysis={visibleFarmIds ? null : exceptionAnalysis}
+                seasonalityAnalysis={visibleFarmIds ? null : seasonalityAnalysis}
+              />
+              {!isCustomer && (
+                <CRMReport
+                  activities={activities || []}
+                  users={users || []}
                   accounts={scopedAccounts}
-                  activities={isCustomer ? [] : scopedActivities}
-                  users={isCustomer ? [] : (users || [])}
-                  exceptionAnalysis={visibleFarmIds ? null : exceptionAnalysis}
-                  seasonalityAnalysis={visibleFarmIds ? null : seasonalityAnalysis}
                 />
-                 {!isCustomer && (
-                   <CRMReport
-                     activities={activities || []}
-                     users={users || []}
-                     accounts={scopedAccounts}
-                   />
-                 )}
-                 {isAdmin && (
-                  <ReportingCheck
-                    reports={yearFilteredReports}
-                    accounts={scopedAccounts}
-                    users={users || []}
-                  />
-                )}
-                {!isCustomer && (
-                  <SeasonalityInsights
-                    reports={yearFilteredReports}
-                    accounts={scopedAccounts}
-                    open={seasonalityOpen}
-                    onOpenChange={setSeasonalityOpen}
-                  />
-                )}
-                <ExceptionReport
+              )}
+              {isAdmin && (
+                <ReportingCheck
                   reports={yearFilteredReports}
                   accounts={scopedAccounts}
-                  onSelectFarm={(id) => { setSelectedFarmId(id); }}
-                  open={exceptionOpen}
-                  onOpenChange={setExceptionOpen}
-                  hideRefresh={isCustomer}
-                  useSharedCache={true}
+                  users={users || []}
                 />
-                <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
-                  All Reports
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleDashboardExport} className="gap-2">
-                  <FileDown className="h-4 w-4" />
-                  Export PDF
-                </Button>
-              </div>
+              )}
+              {!isCustomer && (
+                <SeasonalityInsights
+                  reports={yearFilteredReports}
+                  accounts={scopedAccounts}
+                  open={seasonalityOpen}
+                  onOpenChange={setSeasonalityOpen}
+                />
+              )}
+              <ExceptionReport
+                reports={yearFilteredReports}
+                accounts={scopedAccounts}
+                onSelectFarm={(id) => { setSelectedFarmId(id); }}
+                open={exceptionOpen}
+                onOpenChange={setExceptionOpen}
+                hideRefresh={isCustomer}
+                useSharedCache={true}
+              />
+              <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
+                All Reports
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDashboardExport} className="gap-2">
+                <FileDown className="h-4 w-4" />
+                Export PDF
+              </Button>
+            </div>
+
+            {/* Farm info strip */}
+            <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-accent shrink-0" />
+              <p className="text-base text-foreground">
+                Showing <span className="font-bold text-primary">{farmReports.length}</span> reports for{" "}
+                <span className="font-bold text-primary">{farmName}</span>
+                {managerName && (
+                  <span className="text-muted-foreground font-medium"> | {managerName}</span>
+                )}
+                {selectedYear !== "all" && (
+                  <span className="text-muted-foreground font-medium"> · 20{selectedYear}</span>
+                )}
+              </p>
             </div>
 
             {/* KPI Cards */}
