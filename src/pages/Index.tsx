@@ -317,6 +317,9 @@ const Index = () => {
                   users={users || []}
                 />
               )}
+              <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
+                All Reports
+              </Button>
               {!isCustomer && (
                 <SeasonalityInsights
                   reports={yearFilteredReports}
@@ -334,9 +337,6 @@ const Index = () => {
                 hideRefresh={isCustomer}
                 useSharedCache={true}
               />
-              <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
-                All Reports
-              </Button>
               <Button variant="outline" size="sm" onClick={handleDashboardExport} className="gap-2">
                 <FileDown className="h-4 w-4" />
                 Export PDF
