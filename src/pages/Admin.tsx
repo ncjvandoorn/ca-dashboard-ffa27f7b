@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot, Users, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot, Users, Plus, Trash2, ClipboardList } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAccounts, useCustomerFarms, useUsers, useActivities } from "@/hooks/useQualityData";
+import { getCrmVisibleUserIds, setCrmVisibleUserIds } from "@/lib/crmUserFilter";
 
 interface LoginLog {
   id: string;
@@ -62,10 +64,15 @@ const Admin = () => {
   const [newCustAccountId, setNewCustAccountId] = useState("");
   const [newCustTrials, setNewCustTrials] = useState(false);
   const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [crmSelectedUserIds, setCrmSelectedUserIds] = useState<Set<string>>(
+    () => new Set(getCrmVisibleUserIds() || [])
+  );
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: allAccounts } = useAccounts();
+  const { data: allUsers } = useUsers();
+  const { data: allActivities } = useActivities();
   const { data: customerFarms } = useCustomerFarms();
 
   const handleFileUpload = async (filename: string, file: File) => {
@@ -247,6 +254,36 @@ const Admin = () => {
     .map((id) => ({ id, name: customerNameMap.get(id) || id }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  // CRM active users — users that have activities assigned to them
+  const crmActiveUsers = useMemo(() => {
+    if (!allUsers || !allActivities) return [];
+    const assignedIds = new Set<string>();
+    for (const a of allActivities) {
+      if (a.assignedUserId) assignedIds.add(a.assignedUserId);
+    }
+    const userMap = new Map(allUsers.map((u) => [u.id, u]));
+    return [...assignedIds]
+      .map((id) => userMap.get(id))
+      .filter(Boolean)
+      .sort((a, b) => a!.name.localeCompare(b!.name)) as typeof allUsers;
+  }, [allUsers, allActivities]);
+
+  const toggleCrmUser = (userId: string) => {
+    setCrmSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      setCrmVisibleUserIds([...next]);
+      return next;
+    });
+  };
+
+  const selectAllCrmUsers = () => {
+    setCrmSelectedUserIds(new Set());
+    setCrmVisibleUserIds([]);
+    toast({ title: "CRM filter cleared", description: "All users will be shown in CRM Report." });
+  };
+
   useEffect(() => {
     fetchLogs();
     fetchQuestions();
@@ -383,6 +420,77 @@ const Admin = () => {
                     {aiInstructionsSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                     Save Instructions
                   </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* CRM User Filter */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <ClipboardList className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">CRM Report Users</CardTitle>
+                <CardDescription>
+                  Select which users to show in the CRM Report. Uncheck users you don't need to see.
+                  {crmSelectedUserIds.size > 0 && (
+                    <span className="text-primary font-medium"> ({crmSelectedUserIds.size} selected)</span>
+                  )}
+                  {crmSelectedUserIds.size === 0 && (
+                    <span className="text-muted-foreground"> (showing all)</span>
+                  )}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {crmActiveUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Loading users...</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Button variant="outline" size="sm" onClick={selectAllCrmUsers}>
+                    Show All
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {crmActiveUsers.length} users with activities
+                  </span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {crmActiveUsers.map((u) => {
+                    const isChecked = crmSelectedUserIds.size === 0 || crmSelectedUserIds.has(u.id);
+                    const actCount = (allActivities || []).filter((a) => a.assignedUserId === u.id).length;
+                    return (
+                      <label
+                        key={u.id}
+                        className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                          isChecked ? "border-primary/30 bg-primary/5" : "border-border bg-muted/20 opacity-60"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={crmSelectedUserIds.size === 0 ? true : crmSelectedUserIds.has(u.id)}
+                          onCheckedChange={() => {
+                            if (crmSelectedUserIds.size === 0) {
+                              // Switching from "all" to specific: select all EXCEPT this one
+                              const allIds = crmActiveUsers.map((x) => x.id).filter((id) => id !== u.id);
+                              setCrmSelectedUserIds(new Set(allIds));
+                              setCrmVisibleUserIds(allIds);
+                            } else {
+                              toggleCrmUser(u.id);
+                            }
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{u.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{u.position || "—"} · {actCount} activities</p>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             )}
