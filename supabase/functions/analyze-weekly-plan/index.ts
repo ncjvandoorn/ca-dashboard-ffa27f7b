@@ -173,6 +173,121 @@ Create the weekly plan. For each user, provide a specific Mon–Fri schedule. Pr
 4. New activities needed based on quality data trends and staff notes
 5. Ensure every team member has a productive and balanced week`;
 
+    const requestBody = JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "report_weekly_plan",
+            description: "Return the weekly action plan for the coming week",
+            parameters: {
+              type: "object",
+              properties: {
+                weekLabel: { type: "string" },
+                executiveSummary: { type: "string" },
+                urgentFarmVisits: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      farmId: { type: "string" },
+                      farmName: { type: "string" },
+                      reason: { type: "string" },
+                      suggestedUser: { type: "string" },
+                      suggestedDay: { type: "string" },
+                      qualityIssues: { type: "array", items: { type: "string" } },
+                      priority: { type: "string", enum: ["critical", "high"] },
+                    },
+                    required: ["farmId", "farmName", "reason", "suggestedUser", "suggestedDay", "qualityIssues", "priority"],
+                    additionalProperties: false,
+                  },
+                },
+                overdueActivities: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      activitySubject: { type: "string" },
+                      farmName: { type: "string" },
+                      assignedUser: { type: "string" },
+                      daysOverdue: { type: "number" },
+                      recommendation: { type: "string" },
+                    },
+                    required: ["activitySubject", "farmName", "assignedUser", "daysOverdue", "recommendation"],
+                    additionalProperties: false,
+                  },
+                },
+                userWorkloadAssessment: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      userName: { type: "string" },
+                      openTasks: { type: "number" },
+                      completedRecently: { type: "number" },
+                      completionRate: { type: "number" },
+                      farmsCovered: { type: "number" },
+                      assessment: { type: "string", enum: ["On track", "Overloaded", "Underutilized", "Falling behind"] },
+                      recommendation: { type: "string" },
+                      suggestedSchedule: { type: "array", items: { type: "string" } },
+                    },
+                    required: ["userName", "openTasks", "completedRecently", "completionRate", "farmsCovered", "assessment", "recommendation", "suggestedSchedule"],
+                    additionalProperties: false,
+                  },
+                },
+                suggestedNewActivities: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      type: { type: "string", enum: ["Task", "Visit", "Call"] },
+                      subject: { type: "string" },
+                      farmName: { type: "string" },
+                      suggestedUser: { type: "string" },
+                      suggestedDay: { type: "string" },
+                      reason: { type: "string" },
+                      priority: { type: "string", enum: ["critical", "high", "medium"] },
+                    },
+                    required: ["type", "subject", "farmName", "suggestedUser", "suggestedDay", "reason", "priority"],
+                    additionalProperties: false,
+                  },
+                },
+                farmsWithoutCoverage: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      farmId: { type: "string" },
+                      farmName: { type: "string" },
+                      lastActivityDate: { type: "string" },
+                      qualityStatus: { type: "string" },
+                      recommendation: { type: "string" },
+                    },
+                    required: ["farmId", "farmName", "lastActivityDate", "qualityStatus", "recommendation"],
+                    additionalProperties: false,
+                  },
+                },
+                weeklyFocus: { type: "string" },
+              },
+              required: ["weekLabel", "executiveSummary", "urgentFarmVisits", "overdueActivities", "userWorkloadAssessment", "suggestedNewActivities", "farmsWithoutCoverage", "weeklyFocus"],
+              additionalProperties: false,
+            },
+          },
+        },
+      ],
+      tool_choice: {
+        type: "function",
+        function: { name: "report_weekly_plan" },
+      },
+    });
+
+    console.log("Payload size:", requestBody.length, "bytes");
+
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -181,118 +296,7 @@ Create the weekly plan. For each user, provide a specific Mon–Fri schedule. Pr
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "report_weekly_plan",
-                description: "Return the weekly action plan for the coming week",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    weekLabel: { type: "string" },
-                    executiveSummary: { type: "string" },
-                    urgentFarmVisits: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          farmId: { type: "string" },
-                          farmName: { type: "string" },
-                          reason: { type: "string" },
-                          suggestedUser: { type: "string" },
-                          suggestedDay: { type: "string" },
-                          qualityIssues: { type: "array", items: { type: "string" } },
-                          priority: { type: "string", enum: ["critical", "high"] },
-                        },
-                        required: ["farmId", "farmName", "reason", "suggestedUser", "suggestedDay", "qualityIssues", "priority"],
-                        additionalProperties: false,
-                      },
-                    },
-                    overdueActivities: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          activitySubject: { type: "string" },
-                          farmName: { type: "string" },
-                          assignedUser: { type: "string" },
-                          daysOverdue: { type: "number" },
-                          recommendation: { type: "string" },
-                        },
-                        required: ["activitySubject", "farmName", "assignedUser", "daysOverdue", "recommendation"],
-                        additionalProperties: false,
-                      },
-                    },
-                    userWorkloadAssessment: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          userName: { type: "string" },
-                          openTasks: { type: "number" },
-                          completedRecently: { type: "number" },
-                          completionRate: { type: "number" },
-                          farmsCovered: { type: "number" },
-                          assessment: { type: "string", enum: ["On track", "Overloaded", "Underutilized", "Falling behind"] },
-                          recommendation: { type: "string" },
-                          suggestedSchedule: { type: "array", items: { type: "string" } },
-                        },
-                        required: ["userName", "openTasks", "completedRecently", "completionRate", "farmsCovered", "assessment", "recommendation", "suggestedSchedule"],
-                        additionalProperties: false,
-                      },
-                    },
-                    suggestedNewActivities: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          type: { type: "string", enum: ["Task", "Visit", "Call"] },
-                          subject: { type: "string" },
-                          farmName: { type: "string" },
-                          suggestedUser: { type: "string" },
-                          suggestedDay: { type: "string" },
-                          reason: { type: "string" },
-                          priority: { type: "string", enum: ["critical", "high", "medium"] },
-                        },
-                        required: ["type", "subject", "farmName", "suggestedUser", "suggestedDay", "reason", "priority"],
-                        additionalProperties: false,
-                      },
-                    },
-                    farmsWithoutCoverage: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          farmId: { type: "string" },
-                          farmName: { type: "string" },
-                          lastActivityDate: { type: "string" },
-                          qualityStatus: { type: "string" },
-                          recommendation: { type: "string" },
-                        },
-                        required: ["farmId", "farmName", "lastActivityDate", "qualityStatus", "recommendation"],
-                        additionalProperties: false,
-                      },
-                    },
-                    weeklyFocus: { type: "string" },
-                  },
-                  required: ["weekLabel", "executiveSummary", "urgentFarmVisits", "overdueActivities", "userWorkloadAssessment", "suggestedNewActivities", "farmsWithoutCoverage", "weeklyFocus"],
-                  additionalProperties: false,
-                },
-              },
-            },
-          ],
-          tool_choice: {
-            type: "function",
-            function: { name: "report_weekly_plan" },
-          },
-        }),
+        body: requestBody,
       }
     );
 
