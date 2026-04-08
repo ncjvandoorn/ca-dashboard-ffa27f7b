@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms } = await req.json();
+    const { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -34,7 +34,7 @@ serve(async (req) => {
 
 ${adminInstructions ? `**ADMIN INSTRUCTIONS (follow these closely):**\n${adminInstructions}\n` : ""}
 
-**WORK SCHEDULE**: The team works Monday to Friday. This plan covers THIS work week (Mon–Fri). Today is Monday morning. All recommendations must be for THIS week only.
+**WORK SCHEDULE**: The team works Monday to Friday. Today is ${todayDate || "a weekday"}. The current week number is ${currentWeekNr || "unknown"} (format YYWW). This plan covers the REMAINING days of THIS current work week. If today is Wednesday, plan for Wed–Fri. If Monday, plan Mon–Fri. All recommendations must be for THIS week only — never plan for next week.
 
 **REALISTIC CONSTRAINTS:**
 - Each inspector can realistically visit a MAXIMUM of 5 farms per day (travel time, inspection time)
@@ -84,7 +84,8 @@ Return JSON with this structure:
 5. Include ALL team members in userWorkloadAssessment.
 6. suggestedSchedule per user: max 5 visits/day, unlimited calls/tasks.`;
 
-    const userPrompt = `Create the weekly action plan for THIS week (Mon–Fri). Today is Monday morning.
+    const userPrompt = `Create the action plan for THIS week. Today is ${todayDate || "a weekday"}, current week ${currentWeekNr || "?"}.
+Plan ONLY for the remaining days of THIS week (not next week).
 
 Quality data covers weeks: ${weekRange?.min ?? "?"} to ${weekRange?.max ?? "?"}.
 
@@ -99,7 +100,7 @@ ${JSON.stringify(qualitySummary)}
 UNCOVERED FARMS (have quality reports but zero open activities):
 ${JSON.stringify(uncoveredFarms)}
 
-Create the plan. Focus on what matters MOST this week.`;
+Create the plan for the remaining days of THIS week ${currentWeekNr || ""}. Focus on what matters MOST.`;
 
     const requestBody = JSON.stringify({
       model: "google/gemini-2.5-flash",
