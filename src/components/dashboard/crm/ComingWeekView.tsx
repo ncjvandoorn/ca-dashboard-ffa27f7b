@@ -90,9 +90,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
   // Open tasks (To Do + In Progress)
   const openTasks = useMemo(() => {
+    const fourWeeksAgo = Date.now() - 4 * 7 * 86400000;
     return allActivities
-      .filter((a) => a.status === "To Do" || a.status === "In Progress")
-      .sort((a, b) => (a.startsAt || a.createdAt || 0) - (b.startsAt || b.createdAt || 0));
+      .filter((a) => (a.status === "To Do" || a.status === "In Progress") && (a.createdAt || 0) >= fourWeeksAgo)
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }, [allActivities]);
 
   // Build a stable filter key from activeUsers so cache is per-filter
