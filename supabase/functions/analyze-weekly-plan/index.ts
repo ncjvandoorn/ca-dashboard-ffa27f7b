@@ -329,15 +329,22 @@ Create the weekly plan. For each user, provide a specific Mon–Fri schedule. Pr
       analysis = JSON.parse(toolCall.function.arguments);
     } else {
       const content = result.choices?.[0]?.message?.content ?? "";
-      console.warn("No tool call in response, attempting content parse.");
+      console.warn("No tool call in response, content:", content.slice(0, 300));
+      // Try to extract JSON from content
       try {
         let cleaned = content.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
         const jsonStart = cleaned.search(/[\{\[]/);
-        if (jsonStart > 0) cleaned = cleaned.slice(jsonStart);
+        const jsonEnd = cleaned.lastIndexOf('}');
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+          cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+        }
+        // Fix trailing commas
+        cleaned = cleaned.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
         analysis = JSON.parse(cleaned);
       } catch {
+        // If content is garbage (like "Hello Sunshine"), return a clear error
         return new Response(
-          JSON.stringify({ error: "Failed to parse AI response", raw: content.slice(0, 500) }),
+          JSON.stringify({ error: `AI returned unexpected response. Please try again. (${content.slice(0, 80)})` }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
