@@ -116,41 +116,60 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
   const buildPayload = useCallback(() => {
     const now = Date.now();
-    const eightWeeksMs = ACTIVITY_WINDOW_WEEKS * 7 * 86400000;
-    const recentActivities = allActivities.filter((a) => {
-      const ts = a.createdAt || a.startsAt || 0;
-      return ts > now - eightWeeksMs;
-    });
 
-    // Group activities by user
-    const actByUser: Record<string, { open: any[]; completed: any[]; total: number }> = {};
-    for (const a of recentActivities) {
+    // ALL activities — group by user with full detail on open items, summarized completed
+    const actByUser: Record<string, { open: any[]; recentCompleted: any[]; totalCompleted: number; totalAll: number; byStatus: Record<string, number>; byType: Record<string, number>; farmsCovered: Set<string> }> = {};
+    for (const a of allActivities) {
       const uid = a.assignedUserId || a.ownerUserId || "unassigned";
-      if (!actByUser[uid]) actByUser[uid] = { open: [], completed: [], total: 0 };
-      actByUser[uid].total++;
+      if (!actByUser[uid]) actByUser[uid] = { open: [], recentCompleted: [], totalCompleted: 0, totalAll: 0, byStatus: {}, byType: {}, farmsCovered: new Set() };
+      const u = actByUser[uid];
+      u.totalAll++;
+      u.byStatus[a.status] = (u.byStatus[a.status] || 0) + 1;
+      if (a.type) u.byType[a.type] = (u.byType[a.type] || 0) + 1;
+      if (a.accountId) u.farmsCovered.add(a.accountId);
+
       const item = {
-        sub: a.subject?.slice(0, 80),
+        sub: a.subject?.slice(0, 100),
+        desc: a.description?.slice(0, 120) || undefined,
         type: a.type,
+        status: a.status,
         farm: a.accountId ? accountMap.get(a.accountId) : undefined,
         farmId: a.accountId || undefined,
         startsAt: a.startsAt ? formatDate(a.startsAt) : undefined,
         createdAt: a.createdAt ? formatDate(a.createdAt) : undefined,
+        completedAt: a.completedAt ? formatDate(a.completedAt) : undefined,
         daysOld: a.createdAt ? Math.floor((now - a.createdAt) / 86400000) : undefined,
       };
-      if (a.status === "Completed") actByUser[uid].completed.push(item);
-      else if (a.status === "To Do" || a.status === "In Progress") actByUser[uid].open.push(item);
+
+      if (a.status === "Completed") {
+        u.totalCompleted++;
+        // Keep last 4 weeks of completed for context
+        const fourWeeksMs = 4 * 7 * 86400000;
+        if ((a.completedAt || a.createdAt || 0) > now - fourWeeksMs) {
+          u.recentCompleted.push(item);
+        }
+      } else if (a.status === "To Do" || a.status === "In Progress") {
+        u.open.push(item); // ALL open items — no limit
+      }
     }
 
-    const activitySummary = Object.entries(actByUser).map(([uid, data]) => ({
-      user: userMap.get(uid) || uid.slice(0, 8),
-      openTasks: data.open.length,
-      completedRecently: data.completed.length,
-      total: data.total,
-      completionRate: data.total > 0 ? Math.round((data.completed.length / data.total) * 100) : 0,
-      openItems: data.open.slice(0, 20),
-    }));
+    const activitySummary = Object.entries(actByUser)
+      .filter(([uid]) => uid !== "unassigned")
+      .map(([uid, data]) => ({
+        userId: uid,
+        user: userMap.get(uid) || uid.slice(0, 8),
+        openTasks: data.open.length,
+        totalCompleted: data.totalCompleted,
+        totalAll: data.totalAll,
+        completionRate: data.totalAll > 0 ? Math.round((data.totalCompleted / data.totalAll) * 100) : 0,
+        byStatus: data.byStatus,
+        byType: data.byType,
+        farmsCoveredCount: data.farmsCovered.size,
+        openItems: data.open, // ALL open items
+        recentCompletions: data.recentCompleted.slice(0, 15),
+      }));
 
-    // Quality report summaries (last 12 weeks)
+    // ALL quality reports — full 12 weeks per farm with all metrics and notes
     const allWeeks = [...new Set(reports.map((r) => r.weekNr))].sort((a, b) => b - a);
     const recentWeeks = new Set(allWeeks.slice(0, WINDOW));
     const recentReports = reports.filter((r) => recentWeeks.has(r.weekNr));
@@ -162,29 +181,54 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       byFarm[fid].push({
         w: r.weekNr,
         iPh: r.qrIntakePh, iEc: r.qrIntakeEc, iT: r.qrIntakeTempColdstore, iH: r.qrIntakeHumidityColdstore,
+        iCH: r.qrIntakeColdstoreHours, iWQ: r.qrIntakeWaterQuality, iTr: trimNote(r.qrIntakeTreatment, 60),
         ePh: r.qrExportPh, eEc: r.qrExportEc, eT: r.qrExportTempColdstore, eH: r.qrExportHumidityColdstore,
-        qR: r.qrGenQualityRating, wQ: r.qrIntakeWaterQuality,
-        qN: trimNote(r.qrGenQualityFlowers),
-        pN: trimNote(r.qrGenProtocolChanges),
-        gC: trimNote(r.generalComment),
+        eCH: r.qrExportColdstoreHours, eWQ: r.qrExportWaterQuality, eTr: trimNote(r.qrExportTreatment, 60),
+        qR: r.qrGenQualityRating, pQ: r.qrDispatchPackingQuality, pR: r.qrDispatchPackrate,
+        pS: r.qrPackProcessingSpeed, sL: r.qrIntakeStemLength, hS: r.qrIntakeHeadSize,
+        dL: trimNote(r.qrGenDippingLocation, 60),
+        qN: trimNote(r.qrGenQualityFlowers, 200),
+        pN: trimNote(r.qrGenProtocolChanges, 200),
+        gC: trimNote(r.generalComment, 200),
+        submittedBy: r.submittedByUserId ? userMap.get(r.submittedByUserId) : undefined,
       });
     }
 
     const qualitySummary = Object.entries(byFarm).map(([fid, weeks]) => ({
       farmId: fid,
       farmName: accountMap.get(fid) || fid.slice(0, 8),
-      weeks: weeks.sort((a: any, b: any) => b.w - a.w).slice(0, 6),
+      totalReports: weeks.length,
+      weeks: weeks.sort((a: any, b: any) => b.w - a.w), // ALL 12 weeks, not truncated
     }));
 
-    const userSummary = activeUsers.map((u) => ({ id: u.id, name: u.name }));
+    // Cross-reference: which farms have quality reports but NO open activities?
+    const farmsWithReports = new Set(Object.keys(byFarm));
+    const farmsWithOpenActivities = new Set<string>();
+    for (const a of allActivities) {
+      if ((a.status === "To Do" || a.status === "In Progress") && a.accountId) {
+        farmsWithOpenActivities.add(a.accountId);
+      }
+    }
+    const uncoveredFarms = [...farmsWithReports]
+      .filter((fid) => !farmsWithOpenActivities.has(fid))
+      .map((fid) => ({
+        farmId: fid,
+        farmName: accountMap.get(fid) || fid.slice(0, 8),
+      }));
+
+    const userSummary = activeUsers.map((u) => ({
+      id: u.id,
+      name: u.name,
+      position: users.find((usr) => usr.id === u.id)?.position || undefined,
+    }));
 
     const weekRange = {
-      min: allWeeks[allWeeks.length - 1],
-      max: allWeeks[0],
+      min: allWeeks.length > 0 ? allWeeks[allWeeks.length - 1] : undefined,
+      max: allWeeks.length > 0 ? allWeeks[0] : undefined,
     };
 
-    return { activitySummary, qualitySummary, userSummary, weekRange };
-  }, [allActivities, reports, activeUsers, userMap, accountMap]);
+    return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms };
+  }, [allActivities, reports, activeUsers, userMap, accountMap, users]);
 
   const runAnalysis = useCallback(async () => {
     setLoading(true);
