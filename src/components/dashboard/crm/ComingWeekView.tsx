@@ -175,13 +175,13 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         byStatus: data.byStatus,
         byType: data.byType,
         farmsCoveredCount: data.farmsCovered.size,
-        openItems: data.open, // ALL open items
-        recentCompletions: data.recentCompleted.slice(0, 15),
+        openItems: data.open.slice(0, 30), // Cap per user to control payload
+        recentCompletions: data.recentCompleted.slice(0, 8),
       }));
 
-    // ALL quality reports — full 12 weeks per farm with all metrics and notes
+    // Quality reports — last 8 weeks per farm with trimmed notes
     const allWeeks = [...new Set(reports.map((r) => r.weekNr))].sort((a, b) => b - a);
-    const recentWeeks = new Set(allWeeks.slice(0, WINDOW));
+    const recentWeeks = new Set(allWeeks.slice(0, 8));
     const recentReports = reports.filter((r) => recentWeeks.has(r.weekNr));
 
     const byFarm: Record<string, any[]> = {};
@@ -191,16 +191,13 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       byFarm[fid].push({
         w: r.weekNr,
         iPh: r.qrIntakePh, iEc: r.qrIntakeEc, iT: r.qrIntakeTempColdstore, iH: r.qrIntakeHumidityColdstore,
-        iCH: r.qrIntakeColdstoreHours, iWQ: r.qrIntakeWaterQuality, iTr: trimNote(r.qrIntakeTreatment, 60),
+        iCH: r.qrIntakeColdstoreHours, iWQ: r.qrIntakeWaterQuality,
         ePh: r.qrExportPh, eEc: r.qrExportEc, eT: r.qrExportTempColdstore, eH: r.qrExportHumidityColdstore,
-        eCH: r.qrExportColdstoreHours, eWQ: r.qrExportWaterQuality, eTr: trimNote(r.qrExportTreatment, 60),
+        eCH: r.qrExportColdstoreHours, eWQ: r.qrExportWaterQuality,
         qR: r.qrGenQualityRating, pQ: r.qrDispatchPackingQuality, pR: r.qrDispatchPackrate,
-        pS: r.qrPackProcessingSpeed, sL: r.qrIntakeStemLength, hS: r.qrIntakeHeadSize,
-        dL: trimNote(r.qrGenDippingLocation, 60),
-        qN: trimNote(r.qrGenQualityFlowers, 200),
-        pN: trimNote(r.qrGenProtocolChanges, 200),
-        gC: trimNote(r.generalComment, 200),
-        submittedBy: r.submittedByUserId ? userMap.get(r.submittedByUserId) : undefined,
+        qN: trimNote(r.qrGenQualityFlowers, 100),
+        pN: trimNote(r.qrGenProtocolChanges, 100),
+        gC: trimNote(r.generalComment, 100),
       });
     }
 
