@@ -464,9 +464,11 @@ export function CRMReport({ activities, users, accounts }: CRMReportProps) {
                 </>
               ) : (
                 <ActivityAnalysis
-                  activities={filteredActivities}
+                  allActivities={activities}
                   users={users}
                   accounts={accounts}
+                  activeUsers={activeUsers}
+                  selectedUserId={selectedUserId}
                   onBack={() => setView("board")}
                 />
               )}
