@@ -98,6 +98,8 @@ export async function loadAccounts(): Promise<Account[]> {
 export interface Activity {
   id: string;
   accountId: string;
+  assignedUserId: string;
+  ownerUserId: string;
   type: string;
   status: string;
   subject: string;
@@ -112,6 +114,8 @@ export async function loadActivities(): Promise<Activity[]> {
   return fetchCsv(url, (row) => ({
     id: row.id,
     accountId: row.accountId || "",
+    assignedUserId: row.assignedUserId || "",
+    ownerUserId: row.ownerUserId || "",
     type: row.type || "",
     status: row.status || "",
     subject: parseStr(row.subject) || "",
