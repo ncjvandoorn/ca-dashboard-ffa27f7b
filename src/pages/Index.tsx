@@ -317,11 +317,13 @@ const Index = () => {
                   exceptionAnalysis={visibleFarmIds ? null : exceptionAnalysis}
                   seasonalityAnalysis={visibleFarmIds ? null : seasonalityAnalysis}
                 />
-                 <CRMReport
-                    activities={scopedActivities}
-                    users={users || []}
-                    accounts={scopedAccounts}
-                  />
+                 {!isCustomer && (
+                   <CRMReport
+                     activities={activities || []}
+                     users={users || []}
+                     accounts={scopedAccounts}
+                   />
+                 )}
                  {isAdmin && (
                   <ReportingCheck
                     reports={yearFilteredReports}
