@@ -230,7 +230,7 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
                 </>
               ) : view === "analysis" ? (
                 <ActivityAnalysis
-                  allActivities={activities}
+                  allActivities={crmActivities}
                   users={users}
                   accounts={accounts}
                   activeUsers={activeUsers}
@@ -239,7 +239,7 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
                 />
               ) : (
                 <ComingWeekView
-                  allActivities={activities}
+                  allActivities={crmActivities}
                   users={users}
                   accounts={accounts}
                   reports={reports}
