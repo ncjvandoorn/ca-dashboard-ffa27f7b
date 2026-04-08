@@ -310,8 +310,12 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           <Users className="h-3 w-3 mr-1" />
           {activeUsers.length} team members
         </Badge>
+        {plan && (
+          <ExportPdfButton targetRef={pdfRef} filename="weekly-plan" label="Export PDF" />
+        )}
       </div>
 
+      <div ref={pdfRef} className="space-y-6">
       {/* Open tasks overview */}
       <div>
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
