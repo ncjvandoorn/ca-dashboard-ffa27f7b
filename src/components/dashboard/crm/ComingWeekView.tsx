@@ -424,9 +424,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                       <div className="flex items-start gap-2">
                         <Icon className="h-4 w-4 mt-0.5 shrink-0" />
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-0.5">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                             <span className="font-medium text-sm">{a.subject}</span>
                             <Badge variant="outline" className="text-[9px]">{a.priority}</Badge>
+                            {a.suggestedDay && <Badge variant="secondary" className="text-[9px]">{a.suggestedDay}</Badge>}
                           </div>
                           <p className="text-xs text-muted-foreground">
                             {a.farmName} · Assign to <b>{a.suggestedUser}</b>
