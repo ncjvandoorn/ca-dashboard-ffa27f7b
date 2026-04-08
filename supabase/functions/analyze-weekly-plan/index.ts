@@ -44,7 +44,7 @@ Your job is to create a **Weekly Action Plan** for the coming work week (Mondayâ
    - Recent completions (last 4 weeks) 
    - Total historical stats (completion rate, task counts by status/type, farms covered)
    
-2. **Quality Reports (last 12 weeks, ALL farms)**: Weekly farm quality data with full metrics:
+2. **Quality Reports (last 8 weeks, ALL farms)**: Weekly farm quality data with full metrics:
    - Intake: pH, EC, temp, humidity, cold store hours, water quality, treatment
    - Export: pH, EC, temp, humidity, cold store hours, water quality, treatment  
    - Dispatch: packing quality, packrate, processing speed
