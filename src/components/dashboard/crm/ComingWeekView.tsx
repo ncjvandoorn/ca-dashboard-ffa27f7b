@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
