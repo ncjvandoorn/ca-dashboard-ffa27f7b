@@ -55,8 +55,10 @@ interface WeeklyPlan {
   executiveSummary: string;
   urgentFarmVisits: { farmId: string; farmName: string; reason: string; suggestedUser: string; qualityIssues: string[]; priority: "critical" | "high" }[];
   overdueActivities: { activitySubject: string; farmName: string; assignedUser: string; daysOverdue: number; recommendation: string }[];
-  userWorkloadAssessment: { userName: string; openTasks: number; completedRecently: number; completionRate: number; assessment: string; recommendation: string }[];
-  suggestedNewActivities: { type: string; subject: string; farmName: string; suggestedUser: string; reason: string; priority: "critical" | "high" | "medium" }[];
+  urgentFarmVisits: { farmId: string; farmName: string; reason: string; suggestedUser: string; suggestedDay?: string; qualityIssues: string[]; priority: "critical" | "high" }[];
+  overdueActivities: { activitySubject: string; farmName: string; assignedUser: string; daysOverdue: number; recommendation: string }[];
+  userWorkloadAssessment: { userName: string; openTasks: number; completedRecently: number; completionRate: number; farmsCovered?: number; assessment: string; recommendation: string; suggestedSchedule?: string[] }[];
+  suggestedNewActivities: { type: string; subject: string; farmName: string; suggestedUser: string; suggestedDay?: string; reason: string; priority: "critical" | "high" | "medium" }[];
   farmsWithoutCoverage: { farmId: string; farmName: string; lastActivityDate: string; qualityStatus: string; recommendation: string }[];
   weeklyFocus: string;
 }
