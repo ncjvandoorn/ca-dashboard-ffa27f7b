@@ -323,7 +323,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           Open Tasks ({openTasks.length})
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto">
-          {openTasks.slice(0, 40).map((a) => {
+          {openTasks.map((a) => {
             const Icon = typeIcon[a.type] || ClipboardList;
             const assignedName = a.assignedUserId ? userMap.get(a.assignedUserId) : null;
             const farmName = a.accountId ? accountMap.get(a.accountId) : null;
