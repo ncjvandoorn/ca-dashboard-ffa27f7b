@@ -317,7 +317,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
       <div ref={pdfRef} className="space-y-6">
       {/* Open tasks overview */}
-      <div>
+      <div data-pdf-section>
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
           <CalendarCheck className="h-4 w-4" />
           Open Tasks ({openTasks.length})
@@ -359,7 +359,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       {plan && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           {/* Executive Summary */}
-          <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+          <div data-pdf-section className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
             <h3 className="text-sm font-bold text-primary mb-1 flex items-center gap-2">
               <Target className="h-4 w-4" />
               {plan.weekLabel || "Coming Week"}
@@ -368,14 +368,14 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           </div>
 
           {/* Weekly Focus */}
-          <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
+          <div data-pdf-section className="rounded-lg border border-accent/30 bg-accent/5 p-4">
             <h4 className="text-xs font-bold text-accent uppercase tracking-wider mb-1">🎯 Weekly Focus</h4>
             <p className="text-sm text-foreground">{plan.weeklyFocus}</p>
           </div>
 
           {/* Urgent Farm Visits */}
           {plan.urgentFarmVisits?.length > 0 && (
-            <div>
+            <div data-pdf-section>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-destructive" />
                 Urgent Farm Visits
@@ -413,7 +413,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
           {/* User Workload Assessment */}
           {plan.userWorkloadAssessment?.length > 0 && (
-            <div>
+            <div data-pdf-section>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                 <UserCheck className="h-4 w-4" />
                 Team Workload Assessment
@@ -449,7 +449,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
           {/* Suggested New Activities */}
           {plan.suggestedNewActivities?.length > 0 && (
-            <div>
+            <div data-pdf-section>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                 <PlusCircle className="h-4 w-4 text-primary" />
                 Suggested New Activities
@@ -482,7 +482,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
           {/* Overdue Activities */}
           {plan.overdueActivities?.length > 0 && (
-            <div>
+            <div data-pdf-section>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 Overdue Activities
               </h4>
@@ -503,7 +503,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
           {/* Farms Without Coverage */}
           {plan.farmsWithoutCoverage?.length > 0 && (
-            <div>
+            <div data-pdf-section>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Eye className="h-4 w-4" />
                 Farms Without Recent Coverage
