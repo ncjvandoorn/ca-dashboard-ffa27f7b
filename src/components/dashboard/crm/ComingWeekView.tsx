@@ -544,6 +544,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           <p className="text-xs text-muted-foreground mt-1">This may take a moment</p>
         </div>
       )}
+      </div>
     </div>
   );
 }
