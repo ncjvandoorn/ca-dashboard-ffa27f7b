@@ -254,7 +254,36 @@ const Admin = () => {
     .map((id) => ({ id, name: customerNameMap.get(id) || id }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  useEffect(() => {
+  // CRM active users — users that have activities assigned to them
+  const crmActiveUsers = useMemo(() => {
+    if (!allUsers || !allActivities) return [];
+    const assignedIds = new Set<string>();
+    for (const a of allActivities) {
+      if (a.assignedUserId) assignedIds.add(a.assignedUserId);
+    }
+    const userMap = new Map(allUsers.map((u) => [u.id, u]));
+    return [...assignedIds]
+      .map((id) => userMap.get(id))
+      .filter(Boolean)
+      .sort((a, b) => a!.name.localeCompare(b!.name)) as typeof allUsers;
+  }, [allUsers, allActivities]);
+
+  const toggleCrmUser = (userId: string) => {
+    setCrmSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      setCrmVisibleUserIds([...next]);
+      return next;
+    });
+  };
+
+  const selectAllCrmUsers = () => {
+    setCrmSelectedUserIds(new Set());
+    setCrmVisibleUserIds([]);
+    toast({ title: "CRM filter cleared", description: "All users will be shown in CRM Report." });
+  };
+
     fetchLogs();
     fetchQuestions();
     fetchAiInstructions();
