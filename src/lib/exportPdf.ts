@@ -34,32 +34,21 @@ export async function exportElementToPdf(
   const maxContentHeight = pageHeight - margin * 2;
   const sectionGap = 3; // mm between sections
 
-  // Temporarily expand scrollable containers for full capture
-  const scrollContainers = element.querySelectorAll<HTMLElement>(
-    ".overflow-x-auto, .overflow-auto, .overflow-y-auto"
+  // Temporarily expand ALL scrollable / height-constrained containers
+  const constrained = element.querySelectorAll<HTMLElement>(
+    ".overflow-x-auto, .overflow-auto, .overflow-y-auto, [class*='max-h-']"
   );
   const savedStyles: {
     el: HTMLElement;
-    overflow: string;
-    maxWidth: string;
-    maxHeight: string;
-    width: string;
-    height: string;
+    cssText: string;
   }[] = [];
-  scrollContainers.forEach((el) => {
-    savedStyles.push({
-      el,
-      overflow: el.style.overflow,
-      maxWidth: el.style.maxWidth,
-      maxHeight: el.style.maxHeight,
-      width: el.style.width,
-      height: el.style.height,
-    });
-    el.style.overflow = "visible";
-    el.style.maxWidth = "none";
-    el.style.maxHeight = "none";
-    el.style.width = `${el.scrollWidth}px`;
-    el.style.height = `${el.scrollHeight}px`;
+  constrained.forEach((el) => {
+    savedStyles.push({ el, cssText: el.style.cssText });
+    // Use !important to override Tailwind utility classes
+    el.style.setProperty("overflow", "visible", "important");
+    el.style.setProperty("max-height", "none", "important");
+    el.style.setProperty("max-width", "none", "important");
+    el.style.setProperty("height", `${el.scrollHeight}px`, "important");
   });
 
   // Determine sections: explicit [data-pdf-section] markers, or direct children
@@ -89,13 +78,9 @@ export async function exportElementToPdf(
     });
   }
 
-  // Restore scroll containers
-  savedStyles.forEach(({ el, overflow, maxWidth, maxHeight, width, height }) => {
-    el.style.overflow = overflow;
-    el.style.maxWidth = maxWidth;
-    el.style.maxHeight = maxHeight;
-    el.style.width = width;
-    el.style.height = height;
+  // Restore constrained containers
+  savedStyles.forEach(({ el, cssText }) => {
+    el.style.cssText = cssText;
   });
 
   if (blocks.length === 0) return;
