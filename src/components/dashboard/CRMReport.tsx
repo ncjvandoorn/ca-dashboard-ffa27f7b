@@ -61,23 +61,33 @@ function timeAgo(timestamp: number | null): string {
 
 /* ─── Activity Analysis Sub-view ─── */
 function ActivityAnalysis({
-  activities,
+  allActivities,
   users,
   accounts,
+  activeUsers,
+  selectedUserId: initialUserId,
   onBack,
 }: {
-  activities: Activity[];
+  allActivities: Activity[];
   users: User[];
   accounts: Account[];
+  activeUsers: { id: string; name: string }[];
+  selectedUserId: string;
   onBack: () => void;
 }) {
+  const [selectedUserId, setSelectedUserId] = useState(initialUserId);
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
+
+  const filteredActivities = useMemo(() => {
+    if (selectedUserId === "all") return allActivities;
+    return allActivities.filter((a) => a.assignedUserId === selectedUserId);
+  }, [allActivities, selectedUserId]);
 
   const stats = useMemo(() => {
     const byUser: Record<string, { total: number; completed: number; inProgress: number; toDo: number; noStatus: number; byMonth: Record<string, number> }> = {};
 
-    for (const a of activities) {
+    for (const a of filteredActivities) {
       const uid = a.assignedUserId || a.ownerUserId || "unassigned";
       if (!byUser[uid]) byUser[uid] = { total: 0, completed: 0, inProgress: 0, toDo: 0, noStatus: 0, byMonth: {} };
       const u = byUser[uid];
@@ -102,18 +112,18 @@ function ActivityAnalysis({
         completionRate: s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [activities, userMap]);
+  }, [filteredActivities, userMap]);
 
   const totalStats = useMemo(() => {
-    const total = activities.length;
-    const completed = activities.filter((a) => a.status === "Completed").length;
-    const inProgress = activities.filter((a) => a.status === "In Progress").length;
-    const toDo = activities.filter((a) => a.status === "To Do").length;
+    const total = filteredActivities.length;
+    const completed = filteredActivities.filter((a) => a.status === "Completed").length;
+    const inProgress = filteredActivities.filter((a) => a.status === "In Progress").length;
+    const toDo = filteredActivities.filter((a) => a.status === "To Do").length;
     const noStatus = total - completed - inProgress - toDo;
 
     // Monthly trend
     const byMonth: Record<string, number> = {};
-    for (const a of activities) {
+    for (const a of filteredActivities) {
       if (a.createdAt) {
         const d = new Date(a.createdAt);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -123,14 +133,14 @@ function ActivityAnalysis({
 
     // Activities by type
     const byType: Record<string, number> = {};
-    for (const a of activities) {
+    for (const a of filteredActivities) {
       const t = a.type || "Unknown";
       byType[t] = (byType[t] || 0) + 1;
     }
 
     // By farm
     const byFarm: Record<string, number> = {};
-    for (const a of activities) {
+    for (const a of filteredActivities) {
       if (a.accountId) {
         const name = accountMap.get(a.accountId) || a.accountId.slice(0, 8);
         byFarm[name] = (byFarm[name] || 0) + 1;
@@ -139,18 +149,34 @@ function ActivityAnalysis({
     const topFarms = Object.entries(byFarm).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
     return { total, completed, inProgress, toDo, noStatus, byMonth, byType, topFarms, completionRate: total > 0 ? Math.round((completed / total) * 100) : 0 };
-  }, [activities, accountMap]);
+  }, [filteredActivities, accountMap]);
 
   const sortedMonths = Object.entries(totalStats.byMonth).sort((a, b) => a[0].localeCompare(b[0]));
   const maxMonthly = Math.max(...sortedMonths.map(([, v]) => v), 1);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5">
           <ArrowLeft className="h-4 w-4" />
           Back to Board
         </Button>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+            <SelectTrigger className="w-[200px] h-8 text-sm">
+              <SelectValue placeholder="All Users" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Users</SelectItem>
+              {activeUsers.map((u) => (
+                <SelectItem key={u.id} value={u.id}>
+                  {u.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Overview cards */}
@@ -454,9 +480,11 @@ export function CRMReport({ activities, users, accounts }: CRMReportProps) {
                 </>
               ) : (
                 <ActivityAnalysis
-                  activities={filteredActivities}
+                  allActivities={activities}
                   users={users}
                   accounts={accounts}
+                  activeUsers={activeUsers}
+                  selectedUserId={selectedUserId}
                   onBack={() => setView("board")}
                 />
               )}
