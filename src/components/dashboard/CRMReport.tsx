@@ -84,9 +84,9 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
   }, [activities, crmVisibleIds]);
 
   const filteredActivities = useMemo(() => {
-    if (selectedUserId === "all") return activities;
-    return activities.filter((a) => a.assignedUserId === selectedUserId);
-  }, [activities, selectedUserId]);
+    if (selectedUserId === "all") return crmActivities;
+    return crmActivities.filter((a) => a.assignedUserId === selectedUserId);
+  }, [crmActivities, selectedUserId]);
 
   const columns = useMemo(() => {
     const cols: Record<string, Activity[]> = { "To Do": [], "In Progress": [], "Completed": [] };
