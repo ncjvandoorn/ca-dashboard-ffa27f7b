@@ -188,6 +188,27 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_plan_cache: {
+        Row: {
+          analysis: Json
+          created_at: string
+          id: string
+          week_nr: number
+        }
+        Insert: {
+          analysis: Json
+          created_at?: string
+          id?: string
+          week_nr: number
+        }
+        Update: {
+          analysis?: Json
+          created_at?: string
+          id?: string
+          week_nr?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

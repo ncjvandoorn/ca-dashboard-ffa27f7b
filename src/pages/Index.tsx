@@ -308,6 +308,7 @@ const Index = () => {
                   activities={activities || []}
                   users={users || []}
                   accounts={scopedAccounts}
+                  reports={reports || []}
                 />
               )}
               {isAdmin && (
