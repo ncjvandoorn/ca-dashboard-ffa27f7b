@@ -284,6 +284,7 @@ const Admin = () => {
     toast({ title: "CRM filter cleared", description: "All users will be shown in CRM Report." });
   };
 
+  useEffect(() => {
     fetchLogs();
     fetchQuestions();
     fetchAiInstructions();
