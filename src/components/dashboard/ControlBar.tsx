@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Settings, LogOut, FlaskConical, CalendarRange, Search, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Account, CustomerFarm } from "@/lib/csvParser";
+import chrysalLogo from "@/assets/chrysal-logo.png";
 
 interface ControlBarProps {
   accounts: Account[];
@@ -202,8 +203,8 @@ export function ControlBar({
     <header className="sticky top-0 z-10 backdrop-blur-sm py-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="chrysal-gradient rounded-xl px-4 py-2">
-            <span className="text-lg font-bold tracking-wide text-primary-foreground">CHRYSAL</span>
+          <div className="chrysal-gradient rounded-xl px-4 py-2 flex items-center">
+            <img src={chrysalLogo} alt="Chrysal" className="h-6" />
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-foreground">

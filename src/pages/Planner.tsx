@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import chrysalLogo from "@/assets/chrysal-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { loadTrials, buildCapacityTable, validateTrialSchedule, type Trial, type CapacityRow, type CapacityTrialInfo, type ScheduleViolation } from "@/lib/trialsParser";
 import { Button } from "@/components/ui/button";
@@ -170,8 +171,8 @@ export default function Planner() {
         <header className="sticky top-0 z-10 backdrop-blur-sm py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="chrysal-gradient rounded-xl px-4 py-2">
-                <span className="text-lg font-bold tracking-wide text-primary-foreground">CHRYSAL</span>
+              <div className="chrysal-gradient rounded-xl px-4 py-2 flex items-center">
+                <img src={chrysalLogo} alt="Chrysal" className="h-6" />
               </div>
               <div>
                 <h1 className="text-xl font-semibold tracking-tight text-foreground">Trial Planning</h1>
