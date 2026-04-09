@@ -157,8 +157,8 @@ export default function Planner() {
         <div className="chrysal-gradient h-1.5" />
         <div className="max-w-[1400px] mx-auto px-6 pt-8 space-y-6">
           <div className="flex items-center gap-4">
-            <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm">
-              <img src={chrysalLogo} alt="Chrysal" className="h-6 w-auto block" />
+            <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0">
+              <img src={chrysalLogo} alt="Chrysal" className="h-6 w-auto max-w-none block shrink-0" />
             </div>
             <div className="space-y-2">
               <Skeleton className="h-6 w-40" />
@@ -179,8 +179,8 @@ export default function Planner() {
         <header className="sticky top-0 z-10 backdrop-blur-sm py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm">
-                <img src={chrysalLogo} alt="Chrysal" className="h-6 w-auto block" />
+              <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0">
+                <img src={chrysalLogo} alt="Chrysal" className="h-6 w-auto max-w-none block shrink-0" />
               </div>
               <div>
                 <h1 className="text-xl font-semibold tracking-tight text-foreground">Trial Planning</h1>
