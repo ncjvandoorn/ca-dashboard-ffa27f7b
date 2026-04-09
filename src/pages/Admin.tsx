@@ -64,9 +64,7 @@ const Admin = () => {
   const [newCustAccountId, setNewCustAccountId] = useState("");
   const [newCustTrials, setNewCustTrials] = useState(false);
   const [creatingCustomer, setCreatingCustomer] = useState(false);
-  const [crmSelectedUserIds, setCrmSelectedUserIds] = useState<Set<string>>(
-    () => new Set(getCrmVisibleUserIds() || [])
-  );
+  const [crmSelectedUserIds, setCrmSelectedUserIds] = useState<Set<string>>(new Set());
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -289,6 +287,9 @@ const Admin = () => {
     fetchQuestions();
     fetchAiInstructions();
     fetchCustomerAccounts();
+    getCrmVisibleUserIds().then((ids) => {
+      if (ids) setCrmSelectedUserIds(new Set(ids));
+    });
   }, []);
 
   const handleChangePassword = async (e: React.FormEvent) => {

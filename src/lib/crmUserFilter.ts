@@ -1,20 +1,39 @@
-const CRM_USERS_KEY = "crm-visible-users";
+import { supabase } from "@/integrations/supabase/client";
 
-export function getCrmVisibleUserIds(): string[] | null {
+/** Fetch the CRM visible user IDs from the database. Returns null = show all. */
+export async function getCrmVisibleUserIds(): Promise<string[] | null> {
   try {
-    const raw = localStorage.getItem(CRM_USERS_KEY);
-    if (!raw) return null; // null = show all
-    const ids = JSON.parse(raw);
-    return Array.isArray(ids) && ids.length > 0 ? ids : null;
+    const { data } = await supabase
+      .from("crm_settings")
+      .select("visible_user_ids")
+      .limit(1)
+      .single();
+    if (data?.visible_user_ids && Array.isArray(data.visible_user_ids) && data.visible_user_ids.length > 0) {
+      return data.visible_user_ids;
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
-export function setCrmVisibleUserIds(ids: string[]): void {
-  if (ids.length === 0) {
-    localStorage.removeItem(CRM_USERS_KEY);
+/** Save CRM visible user IDs to the database (admin only). */
+export async function setCrmVisibleUserIds(ids: string[]): Promise<void> {
+  // Get the existing row id
+  const { data: existing } = await supabase
+    .from("crm_settings")
+    .select("id")
+    .limit(1)
+    .single();
+
+  if (existing) {
+    await supabase
+      .from("crm_settings")
+      .update({ visible_user_ids: ids, updated_at: new Date().toISOString() })
+      .eq("id", existing.id);
   } else {
-    localStorage.setItem(CRM_USERS_KEY, JSON.stringify(ids));
+    await supabase
+      .from("crm_settings")
+      .insert({ visible_user_ids: ids });
   }
 }
