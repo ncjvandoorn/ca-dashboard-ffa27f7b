@@ -200,11 +200,12 @@ export function ControlBar({
   }, []);
 
   return (
-    <header className="sticky top-0 z-10 backdrop-blur-sm py-5">
+    <header className="sticky top-0 z-10 backdrop-blur-sm py-5 space-y-4">
+      {/* Row 1: Logo + title (left) — nav buttons (right) */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0">
-            <img src={chrysalLogo} alt="Chrysal" className="h-6 w-auto max-w-none block shrink-0" />
+            <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto max-w-none block shrink-0" />
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-foreground">
@@ -215,110 +216,111 @@ export function ControlBar({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          {/* Year filter */}
-          <div className="flex items-center gap-2">
-            <span className="label-text">Year</span>
-            <Select value={selectedYear} onValueChange={onYearChange}>
-              <SelectTrigger className="w-[110px] shadow-card border-0 rounded-lg bg-card">
-                <SelectValue placeholder="All years" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All years</SelectItem>
-                {years.map((y) => (
-                  <SelectItem key={y} value={String(y)}>
-                    20{y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Customer filter — hidden for customer users */}
+        <div className="flex items-center gap-1 border-l border-border pl-3">
           {!isCustomer && (
-            <SearchableDropdown
-              label="Customer"
-              placeholder="All customers"
-              items={[{ id: "", name: "All customers" }, ...customerItems]}
-              value={selectedCustomerId}
-              onChange={onCustomerChange}
-              width="w-[240px]"
-            />
-          )}
-
-          {/* Farm filter */}
-          <SearchableDropdown
-            label="Farm"
-            placeholder="Select a farm"
-            items={farmItems}
-            value={selectedFarmId}
-            onChange={onFarmChange}
-            width="w-[280px]"
-          />
-
-          {/* Search field — hidden for customers */}
-          {!isCustomer && (
-            <div className="relative" ref={searchRef}>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search all farms…"
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setShowResults(true);
-                  }}
-                  onFocus={() => search.length >= 2 && setShowResults(true)}
-                  className="w-[200px] pl-8 h-9 text-sm shadow-card border-0 rounded-lg bg-card"
-                />
-              </div>
-              {showResults && searchResults.length > 0 && (
-                <div className="absolute top-full mt-1 w-[300px] right-0 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-[280px] overflow-y-auto">
-                  {searchResults.map((a) => {
-                    const hasData = accounts.some((acc) => acc.id === a.id);
-                    return (
-                      <button
-                        key={a.id}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent/10 flex items-center justify-between gap-2"
-                        onClick={() => {
-                          onFarmChange(a.id);
-                          setSearch("");
-                          setShowResults(false);
-                        }}
-                      >
-                        <span className="truncate">{a.name}</span>
-                        {!hasData && (
-                          <span className="text-xs text-muted-foreground shrink-0">No reports</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex items-center gap-1 ml-2 border-l border-border pl-3">
-            {!isCustomer && (
-              <Button variant="ghost" size="icon" onClick={() => navigate("/planner")} title="Trial Planner">
-                <CalendarRange className="h-4 w-4" />
-              </Button>
-            )}
-            {(!isCustomer || customerAccount?.canSeeTrials) && (
-              <Button variant="ghost" size="icon" onClick={() => navigate("/trials")} title="Trials Dashboard">
-                <FlaskConical className="h-4 w-4" />
-              </Button>
-            )}
-            {isAdmin && (
-              <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin Settings">
-                <Settings className="h-4 w-4" />
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" onClick={() => signOut()} title="Sign Out">
-              <LogOut className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={() => navigate("/planner")} title="Trial Planner">
+              <CalendarRange className="h-4 w-4" />
             </Button>
-          </div>
+          )}
+          {(!isCustomer || customerAccount?.canSeeTrials) && (
+            <Button variant="ghost" size="icon" onClick={() => navigate("/trials")} title="Trials Dashboard">
+              <FlaskConical className="h-4 w-4" />
+            </Button>
+          )}
+          {isAdmin && (
+            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin Settings">
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => signOut()} title="Sign Out">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
+      </div>
+
+      {/* Row 2: Filters */}
+      <div className="flex items-center gap-4 flex-wrap">
+        {/* Year filter */}
+        <div className="flex items-center gap-2">
+          <span className="label-text">Year</span>
+          <Select value={selectedYear} onValueChange={onYearChange}>
+            <SelectTrigger className="w-[110px] shadow-card border-0 rounded-lg bg-card">
+              <SelectValue placeholder="All years" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All years</SelectItem>
+              {years.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  20{y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Customer filter — hidden for customer users */}
+        {!isCustomer && (
+          <SearchableDropdown
+            label="Customer"
+            placeholder="All customers"
+            items={[{ id: "", name: "All customers" }, ...customerItems]}
+            value={selectedCustomerId}
+            onChange={onCustomerChange}
+            width="w-[240px]"
+          />
+        )}
+
+        {/* Farm filter */}
+        <SearchableDropdown
+          label="Farm"
+          placeholder="Select a farm"
+          items={farmItems}
+          value={selectedFarmId}
+          onChange={onFarmChange}
+          width="w-[280px]"
+        />
+
+        {/* Search field — hidden for customers */}
+        {!isCustomer && (
+          <div className="relative" ref={searchRef}>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search all farms…"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setShowResults(true);
+                }}
+                onFocus={() => search.length >= 2 && setShowResults(true)}
+                className="w-[200px] pl-8 h-9 text-sm shadow-card border-0 rounded-lg bg-card"
+              />
+            </div>
+            {showResults && searchResults.length > 0 && (
+              <div className="absolute top-full mt-1 w-[300px] right-0 bg-popover border border-border rounded-lg shadow-lg z-50 max-h-[280px] overflow-y-auto">
+                {searchResults.map((a) => {
+                  const hasData = accounts.some((acc) => acc.id === a.id);
+                  return (
+                    <button
+                      key={a.id}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-accent/10 flex items-center justify-between gap-2"
+                      onClick={() => {
+                        onFarmChange(a.id);
+                        setSearch("");
+                        setShowResults(false);
+                      }}
+                    >
+                      <span className="truncate">{a.name}</span>
+                      {!hasData && (
+                        <span className="text-xs text-muted-foreground shrink-0">No reports</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );
