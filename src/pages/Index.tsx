@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import chrysalLogo from "@/assets/chrysal-logo.png";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
   const valid = values.filter((v): v is number => v !== null);
@@ -248,7 +249,15 @@ const Index = () => {
       <div className="max-w-[1400px] mx-auto px-6">
         {isLoading ? (
           <div className="pt-8 space-y-6">
-            <Skeleton className="h-16 w-full rounded-xl" />
+            <div className="flex items-center gap-4">
+              <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm">
+                <img src={chrysalLogo} alt="Chrysal" className="h-6 w-auto block" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-44" />
+                <Skeleton className="h-4 w-56" />
+              </div>
+            </div>
             <div className="grid grid-cols-4 gap-6">
               {[1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} className="h-40 rounded-xl" />
