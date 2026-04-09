@@ -98,13 +98,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }, [allActivities]);
 
-  // Build a stable filter key from activeUsers so cache is per-filter
-  const filterKey = useMemo(() => {
-    const ids = activeUsers.map((u) => u.id).sort();
-    return ids.join(",");
-  }, [activeUsers]);
-
-  // Load cached plan on mount
+  // Load cached plan on mount — shared across all users
   const loadCached = useCallback(async () => {
     const currentWeek = getCurrentWeekNr();
     const { data } = await supabase
@@ -115,14 +109,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .limit(1)
       .single();
     if (data?.analysis) {
-      const cached = data.analysis as any;
-      // Only use cache if it was generated with the same user filter
-      if (cached._filterKey === filterKey) {
-        setPlan(cached as unknown as WeeklyPlan);
-        setCachedAt(data.created_at);
-      }
+      setPlan(data.analysis as unknown as WeeklyPlan);
+      setCachedAt(data.created_at);
     }
-  }, [filterKey]);
+  }, []);
 
   // Load on first render
   useState(() => { loadCached(); });
