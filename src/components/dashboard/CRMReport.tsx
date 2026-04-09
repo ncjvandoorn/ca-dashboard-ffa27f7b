@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ClipboardList, Phone, MapPin, Users, BarChart3,
@@ -65,8 +65,15 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
 
-  const crmVisibleIds = useMemo(() => getCrmVisibleUserIds(), []);
+  const [crmVisibleIds, setCrmVisibleIds] = useState<string[] | null>(null);
+  const [crmLoaded, setCrmLoaded] = useState(false);
 
+  useEffect(() => {
+    getCrmVisibleUserIds().then((ids) => {
+      setCrmVisibleIds(ids);
+      setCrmLoaded(true);
+    });
+  }, []);
   const activeUsers = useMemo(() => {
     const ids = new Set<string>();
     for (const a of activities) {
