@@ -278,10 +278,17 @@ const Admin = () => {
     });
   };
 
-  const selectAllCrmUsers = () => {
+  const clearCrmSelection = () => {
     setCrmSelectedUserIds(new Set());
     setCrmVisibleUserIds([]);
-    toast({ title: "CRM filter cleared", description: "All users will be shown in CRM Report." });
+    toast({ title: "Selection cleared", description: "No users selected — all users will be shown in CRM Report." });
+  };
+
+  const selectAllCrmUsers = () => {
+    const allIds = crmActiveUsers.map((u) => u.id);
+    setCrmSelectedUserIds(new Set(allIds));
+    setCrmVisibleUserIds(allIds);
+    toast({ title: "All users selected", description: `${allIds.length} users selected for CRM Report.` });
   };
 
   useEffect(() => {
@@ -475,23 +482,22 @@ const Admin = () => {
                           onSelect={selectAllCrmUsers}
                           className="font-medium"
                         >
+                          <Check className={`mr-2 h-3.5 w-3.5 ${crmSelectedUserIds.size === crmActiveUsers.length ? "opacity-100" : "opacity-0"}`} />
+                          Select All
+                        </CommandItem>
+                        <CommandItem
+                          onSelect={clearCrmSelection}
+                          className="font-medium"
+                        >
                           <Check className={`mr-2 h-3.5 w-3.5 ${crmSelectedUserIds.size === 0 ? "opacity-100" : "opacity-0"}`} />
-                          Clear Selection (Show All)
+                          Clear Selection
                         </CommandItem>
                         {crmActiveUsers.map((u) => {
-                          const isChecked = crmSelectedUserIds.size === 0 || crmSelectedUserIds.has(u.id);
+                          const isChecked = crmSelectedUserIds.has(u.id);
                           return (
                             <CommandItem
                               key={u.id}
-                              onSelect={() => {
-                                if (crmSelectedUserIds.size === 0) {
-                                  const allIds = crmActiveUsers.map((x) => x.id).filter((id) => id !== u.id);
-                                  setCrmSelectedUserIds(new Set(allIds));
-                                  setCrmVisibleUserIds(allIds);
-                                } else {
-                                  toggleCrmUser(u.id);
-                                }
-                              }}
+                              onSelect={() => toggleCrmUser(u.id)}
                             >
                               <Check className={`mr-2 h-3.5 w-3.5 ${isChecked ? "opacity-100" : "opacity-0"}`} />
                               <span className="truncate">{u.name}</span>
