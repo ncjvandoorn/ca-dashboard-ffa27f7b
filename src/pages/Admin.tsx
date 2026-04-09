@@ -278,10 +278,17 @@ const Admin = () => {
     });
   };
 
-  const selectAllCrmUsers = () => {
+  const clearCrmSelection = () => {
     setCrmSelectedUserIds(new Set());
     setCrmVisibleUserIds([]);
-    toast({ title: "CRM filter cleared", description: "All users will be shown in CRM Report." });
+    toast({ title: "Selection cleared", description: "No users selected — all users will be shown in CRM Report." });
+  };
+
+  const selectAllCrmUsers = () => {
+    const allIds = crmActiveUsers.map((u) => u.id);
+    setCrmSelectedUserIds(new Set(allIds));
+    setCrmVisibleUserIds(allIds);
+    toast({ title: "All users selected", description: `${allIds.length} users selected for CRM Report.` });
   };
 
   useEffect(() => {
