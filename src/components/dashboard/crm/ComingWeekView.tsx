@@ -304,9 +304,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         )}
       </div>
 
-      <div ref={pdfRef} className="space-y-6">
+      <div className="space-y-6">
       {/* Open tasks overview */}
-      <div data-pdf-section>
+      <div>
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
           <CalendarCheck className="h-4 w-4" />
           Open Tasks ({openTasks.length})
@@ -344,8 +344,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         </div>
       </div>
 
-      {/* AI Plan */}
+      {/* AI Plan — this is what gets exported to PDF */}
       {plan && (
+        <div ref={pdfRef} className="space-y-6">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           {/* Executive Summary */}
           <div data-pdf-section className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
