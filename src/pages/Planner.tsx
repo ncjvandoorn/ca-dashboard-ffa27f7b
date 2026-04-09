@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import chrysalLogo from "@/assets/chrysal-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { loadTrials, buildCapacityTable, validateTrialSchedule, type Trial, type CapacityRow, type CapacityTrialInfo, type ScheduleViolation } from "@/lib/trialsParser";
 import { Button } from "@/components/ui/button";
