@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Settings, LogOut, FlaskConical, CalendarRange, Search, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Account, CustomerFarm } from "@/lib/csvParser";
+import chrysalLogo from "@/assets/chrysal-logo.png";
 
 interface ControlBarProps {
   accounts: Account[];
