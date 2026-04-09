@@ -287,6 +287,9 @@ const Admin = () => {
     fetchQuestions();
     fetchAiInstructions();
     fetchCustomerAccounts();
+    getCrmVisibleUserIds().then((ids) => {
+      if (ids) setCrmSelectedUserIds(new Set(ids));
+    });
   }, []);
 
   const handleChangePassword = async (e: React.FormEvent) => {
