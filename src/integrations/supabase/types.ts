@@ -32,6 +32,24 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_settings: {
+        Row: {
+          id: string
+          updated_at: string
+          visible_user_ids: string[]
+        }
+        Insert: {
+          id?: string
+          updated_at?: string
+          visible_user_ids?: string[]
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          visible_user_ids?: string[]
+        }
+        Relationships: []
+      }
       customer_accounts: {
         Row: {
           can_see_trials: boolean
