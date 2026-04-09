@@ -171,7 +171,7 @@ export default function Planner() {
         <header className="sticky top-0 z-10 backdrop-blur-sm py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="chrysal-gradient rounded-xl px-4 py-2 flex items-center">
+              <div className="rounded-xl px-3 py-2 flex items-center bg-white border border-border/50">
                 <img src={chrysalLogo} alt="Chrysal" className="h-6" />
               </div>
               <div>
