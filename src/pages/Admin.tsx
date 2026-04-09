@@ -476,7 +476,7 @@ const Admin = () => {
                           className="font-medium"
                         >
                           <Check className={`mr-2 h-3.5 w-3.5 ${crmSelectedUserIds.size === 0 ? "opacity-100" : "opacity-0"}`} />
-                          Show All
+                          Clear Selection (Show All)
                         </CommandItem>
                         {crmActiveUsers.map((u) => {
                           const isChecked = crmSelectedUserIds.size === 0 || crmSelectedUserIds.has(u.id);
