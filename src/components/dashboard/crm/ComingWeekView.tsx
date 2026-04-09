@@ -513,6 +513,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
             </div>
           )}
         </motion.div>
+        </div>
       )}
 
       {!plan && !loading && (
