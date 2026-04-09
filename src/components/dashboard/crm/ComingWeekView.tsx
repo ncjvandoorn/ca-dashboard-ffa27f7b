@@ -259,11 +259,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       const analysis = data.analysis as WeeklyPlan;
       setPlan(analysis);
 
-      // Cache it with filter key embedded
+      // Cache it — shared across all users
       const currentWeek = getCurrentWeekNr();
-      const analysisWithKey = { ...analysis, _filterKey: filterKey };
       await supabase.from("weekly_plan_cache").delete().eq("week_nr", currentWeek);
-      await supabase.from("weekly_plan_cache").insert({ week_nr: currentWeek, analysis: analysisWithKey as any });
+      await supabase.from("weekly_plan_cache").insert({ week_nr: currentWeek, analysis: analysis as any });
       setCachedAt(new Date().toISOString());
       toast({ title: "Weekly plan generated", description: `Analyzed ${activeUsers.length} team members` });
     } catch (e: any) {
