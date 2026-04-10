@@ -357,11 +357,15 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const analysis = data.analysis as WeeklyPlan;
-      setPlan(analysis);
+      const normalizedPlan = {
+        ...analysis,
+        weekLabel: getPlannerWeekLabel(selectedWeek, currentWeek),
+      };
+      setPlan(normalizedPlan);
 
       // Cache it by selected week
       await supabase.from("weekly_plan_cache").delete().eq("week_nr", selectedWeek);
-      await supabase.from("weekly_plan_cache").insert({ week_nr: selectedWeek, analysis: analysis as any });
+      await supabase.from("weekly_plan_cache").insert({ week_nr: selectedWeek, analysis: normalizedPlan as any });
       setCachedAt(new Date().toISOString());
       toast({ title: "Weekly plan generated", description: `Week ${selectedWeek} — ${activeUsers.length} team members` });
     } catch (e: any) {
@@ -463,7 +467,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           <div data-pdf-section className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
             <h3 className="text-sm font-bold text-primary mb-1 flex items-center gap-2">
               <Target className="h-4 w-4" />
-              {plan.weekLabel || "Coming Week"}
+              {displayWeekLabel}
             </h3>
             <p className="text-sm text-foreground leading-relaxed">{plan.executiveSummary}</p>
           </div>
