@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, farmData, staffSummary, exceptionAnalysis, seasonalityAnalysis } = await req.json();
+    const { messages, farmData, staffSummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -63,7 +63,8 @@ When answering:
    - CRM activity data (meetings, visits, interactions)
    - Exception Report analysis (farms needing attention, top performers, critical issues)
    - Seasonality Report analysis (pest & disease trends, weather patterns, weekly quality impact scores)
-   Cross-reference these sources to give comprehensive, multi-dimensional answers. For example, when discussing a farm, combine its quality data with any exception report findings and seasonality context.`;
+   - Weekly Planner data (AI-generated action plans with urgent visits, suggested activities, workload assessments per week)
+   Cross-reference these sources to give comprehensive, multi-dimensional answers. For example, when asked about team follow-up on weekly plans, compare the suggested activities from a past week's plan with actual CRM activities completed since then.`;
 
     let userContextMessage = farmData
       ? `Farm quality data (compressed):\n${JSON.stringify(farmData)}`
