@@ -86,22 +86,48 @@ When answering:
    - Weekly Planner data (AI-generated action plans with urgent visits, suggested activities)
    Cross-reference these sources for comprehensive answers. When asked about team follow-up on weekly plans, compare suggested activities from a past week's plan with actual CRM activities — but ONLY if both data sources contain real data.`;
 
-    let userContextMessage = farmData
-      ? `Farm quality data (compressed):\n${JSON.stringify(farmData)}`
-      : "No farm data available.";
+    // Build context with PRIORITY ORDER: weekly plans & activities first (most asked about),
+    // then staff/exception/seasonality, then bulk farm data last (largest payload).
+    const contextParts: string[] = [];
+
+    if (weeklyPlans?.length) {
+      contextParts.push(`**WEEKLY PLANNER DATA** (AI-generated action plans — use these to answer "were actions taken" questions):\n${JSON.stringify(weeklyPlans)}`);
+    }
+
+    // Extract all activities from farmData into a dedicated top-level section
+    if (farmData) {
+      const allActivities: any[] = [];
+      for (const farm of farmData) {
+        if (farm.activities?.length) {
+          for (const act of farm.activities) {
+            allActivities.push({ farm: farm.farm, farmId: farm.farmId, ...act });
+          }
+        }
+      }
+      if (allActivities.length) {
+        contextParts.push(`**CRM ACTIVITIES** (${allActivities.length} total — actual visits, calls, tasks completed by the team. Use these to verify if weekly plan recommendations were followed up on):\n${JSON.stringify(allActivities)}`);
+      } else {
+        contextParts.push(`**CRM ACTIVITIES**: No CRM activity data available in the dataset.`);
+      }
+    }
 
     if (staffSummary) {
-      userContextMessage += `\n\nStaff report attribution summary:\n${JSON.stringify(staffSummary)}`;
+      contextParts.push(`Staff report attribution summary:\n${JSON.stringify(staffSummary)}`);
     }
     if (exceptionAnalysis) {
-      userContextMessage += `\n\nException Report:\n${JSON.stringify(exceptionAnalysis)}`;
+      contextParts.push(`Exception Report:\n${JSON.stringify(exceptionAnalysis)}`);
     }
     if (seasonalityAnalysis) {
-      userContextMessage += `\n\nSeasonality Report:\n${JSON.stringify(seasonalityAnalysis)}`;
+      contextParts.push(`Seasonality Report:\n${JSON.stringify(seasonalityAnalysis)}`);
     }
-    if (weeklyPlans) {
-      userContextMessage += `\n\nWeekly Planner Data (recent AI-generated action plans by week number):\n${JSON.stringify(weeklyPlans)}`;
+
+    if (farmData) {
+      contextParts.push(`Farm quality data (compressed):\n${JSON.stringify(farmData)}`);
+    } else {
+      contextParts.push("No farm data available.");
     }
+
+    const userContextMessage = contextParts.join("\n\n---\n\n");
 
     const allMessages = [
       { role: "system", content: systemPrompt },
