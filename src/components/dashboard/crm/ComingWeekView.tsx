@@ -162,13 +162,17 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .limit(1)
       .single();
     if (data?.analysis) {
-      setPlan(data.analysis as unknown as WeeklyPlan);
+      const normalizedPlan = {
+        ...(data.analysis as unknown as WeeklyPlan),
+        weekLabel: getPlannerWeekLabel(weekNr, currentWeek),
+      };
+      setPlan(normalizedPlan);
       setCachedAt(data.created_at);
     } else {
       setPlan(null);
       setCachedAt(null);
     }
-  }, []);
+  }, [currentWeek]);
 
   useEffect(() => {
     const previousCurrentWeek = lastCurrentWeekRef.current;
