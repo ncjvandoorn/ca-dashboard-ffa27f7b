@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
@@ -81,11 +82,36 @@ const assessmentStyle: Record<string, string> = {
   "Falling behind": "text-warning",
 };
 
+function getWeekOptions(): { value: number; label: string }[] {
+  const current = getCurrentWeekNr();
+  const options: { value: number; label: string }[] = [];
+  for (let i = 0; i <= 12; i++) {
+    let wn = current;
+    // Subtract i weeks: handle year boundary
+    let year = Math.floor(wn / 100);
+    let week = wn % 100;
+    week -= i;
+    while (week < 1) {
+      year -= 1;
+      // Approximate: most years have ~52 weeks in this system
+      week += 52;
+    }
+    wn = year * 100 + week;
+    const label = i === 0 ? `Week ${wn} (current)` : `Week ${wn} (${i}w ago)`;
+    options.push({ value: wn, label });
+  }
+  return options;
+}
+
 export function ComingWeekView({ allActivities, users, accounts, reports, activeUsers, onBack }: Props) {
+  const [selectedWeek, setSelectedWeek] = useState<number>(getCurrentWeekNr());
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
+
+  const weekOptions = useMemo(() => getWeekOptions(), []);
+  const isCurrentWeek = selectedWeek === getCurrentWeekNr();
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
@@ -98,24 +124,35 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }, [allActivities]);
 
-  // Load cached plan on mount — shared across all users
-  const loadCached = useCallback(async () => {
-    const currentWeek = getCurrentWeekNr();
+  // Load cached plan for selected week
+  const loadCached = useCallback(async (weekNr: number) => {
     const { data } = await supabase
       .from("weekly_plan_cache")
       .select("*")
-      .eq("week_nr", currentWeek)
+      .eq("week_nr", weekNr)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
     if (data?.analysis) {
       setPlan(data.analysis as unknown as WeeklyPlan);
       setCachedAt(data.created_at);
+    } else {
+      setPlan(null);
+      setCachedAt(null);
     }
   }, []);
 
   // Load on first render
-  useState(() => { loadCached(); });
+  useState(() => { loadCached(selectedWeek); });
+
+  // When week changes, load cached plan
+  const handleWeekChange = useCallback((val: string) => {
+    const wn = parseInt(val, 10);
+    setSelectedWeek(wn);
+    setPlan(null);
+    setCachedAt(null);
+    loadCached(wn);
+  }, [loadCached]);
 
   const buildPayload = useCallback(() => {
     const now = Date.now();
@@ -253,25 +290,42 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     setLoading(true);
     try {
       const payload = buildPayload();
+      // Override the week number for the target week
+      payload.currentWeekNr = selectedWeek;
+      
+      // For past weeks, adjust the date context
+      if (!isCurrentWeek) {
+        const currentWk = getCurrentWeekNr();
+        const weekDiff = (Math.floor(currentWk / 100) * 52 + (currentWk % 100)) - (Math.floor(selectedWeek / 100) * 52 + (selectedWeek % 100));
+        const targetMonday = new Date();
+        const dayOfWeek = targetMonday.getDay();
+        targetMonday.setDate(targetMonday.getDate() - ((dayOfWeek + 6) % 7) - (weekDiff * 7));
+        const targetFriday = new Date(targetMonday);
+        targetFriday.setDate(targetMonday.getDate() + 4);
+        const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        payload.weekDates = `Monday ${fmt(targetMonday)} – Friday ${fmt(targetFriday)}`;
+        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        payload.todayDate = `${days[targetMonday.getDay()]} ${fmt(targetMonday)} (generated retrospectively)`;
+      }
+
       const { data, error } = await supabase.functions.invoke("analyze-weekly-plan", { body: payload });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const analysis = data.analysis as WeeklyPlan;
       setPlan(analysis);
 
-      // Cache it — shared across all users
-      const currentWeek = getCurrentWeekNr();
-      await supabase.from("weekly_plan_cache").delete().eq("week_nr", currentWeek);
-      await supabase.from("weekly_plan_cache").insert({ week_nr: currentWeek, analysis: analysis as any });
+      // Cache it by selected week
+      await supabase.from("weekly_plan_cache").delete().eq("week_nr", selectedWeek);
+      await supabase.from("weekly_plan_cache").insert({ week_nr: selectedWeek, analysis: analysis as any });
       setCachedAt(new Date().toISOString());
-      toast({ title: "Weekly plan generated", description: `Analyzed ${activeUsers.length} team members` });
+      toast({ title: "Weekly plan generated", description: `Week ${selectedWeek} — ${activeUsers.length} team members` });
     } catch (e: any) {
       console.error("Weekly plan error:", e);
       toast({ title: "Analysis failed", description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [buildPayload]);
+  }, [buildPayload, selectedWeek, isCurrentWeek]);
 
   return (
     <div className="space-y-6">
@@ -280,6 +334,18 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           <ArrowLeft className="h-4 w-4" />
           Back to Board
         </Button>
+        <Select value={String(selectedWeek)} onValueChange={handleWeekChange}>
+          <SelectTrigger className="w-[200px] h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {weekOptions.map((opt) => (
+              <SelectItem key={opt.value} value={String(opt.value)} className="text-xs">
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button
           variant="default"
           size="sm"

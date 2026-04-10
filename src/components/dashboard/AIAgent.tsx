@@ -33,6 +33,7 @@ const SAMPLE_QUESTIONS = [
   "Which farms show consistently high temperatures at export cold storage?",
   "Please create a table showing all farms and their average stem lengths",
   "Which farms have the highest variations in quality rating?",
+  "Were actions taken by the team based on the week planner of two weeks ago?",
 ];
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-agent`;
@@ -144,6 +145,19 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
 
   const staffSummary = useMemo(() => buildStaffSummary(reports, users || []), [reports, users]);
 
+  // Fetch recent weekly plans for AI context
+  const [weeklyPlans, setWeeklyPlans] = useState<any[]>([]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("weekly_plan_cache")
+        .select("week_nr, analysis, created_at")
+        .order("week_nr", { ascending: false })
+        .limit(6);
+      if (data) setWeeklyPlans(data);
+    })();
+  }, []);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -194,6 +208,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             staffSummary,
             exceptionAnalysis: exceptionAnalysis || null,
             seasonalityAnalysis: seasonalityAnalysis || null,
+            weeklyPlans: weeklyPlans.length > 0 ? weeklyPlans : null,
           }),
         });
 
