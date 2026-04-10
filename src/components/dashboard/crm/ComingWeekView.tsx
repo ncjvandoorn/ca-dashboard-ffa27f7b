@@ -290,25 +290,42 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     setLoading(true);
     try {
       const payload = buildPayload();
+      // Override the week number for the target week
+      payload.currentWeekNr = selectedWeek;
+      
+      // For past weeks, adjust the date context
+      if (!isCurrentWeek) {
+        const currentWk = getCurrentWeekNr();
+        const weekDiff = (Math.floor(currentWk / 100) * 52 + (currentWk % 100)) - (Math.floor(selectedWeek / 100) * 52 + (selectedWeek % 100));
+        const targetMonday = new Date();
+        const dayOfWeek = targetMonday.getDay();
+        targetMonday.setDate(targetMonday.getDate() - ((dayOfWeek + 6) % 7) - (weekDiff * 7));
+        const targetFriday = new Date(targetMonday);
+        targetFriday.setDate(targetMonday.getDate() + 4);
+        const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        payload.weekDates = `Monday ${fmt(targetMonday)} – Friday ${fmt(targetFriday)}`;
+        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        payload.todayDate = `${days[targetMonday.getDay()]} ${fmt(targetMonday)} (generated retrospectively)`;
+      }
+
       const { data, error } = await supabase.functions.invoke("analyze-weekly-plan", { body: payload });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const analysis = data.analysis as WeeklyPlan;
       setPlan(analysis);
 
-      // Cache it — shared across all users
-      const currentWeek = getCurrentWeekNr();
-      await supabase.from("weekly_plan_cache").delete().eq("week_nr", currentWeek);
-      await supabase.from("weekly_plan_cache").insert({ week_nr: currentWeek, analysis: analysis as any });
+      // Cache it by selected week
+      await supabase.from("weekly_plan_cache").delete().eq("week_nr", selectedWeek);
+      await supabase.from("weekly_plan_cache").insert({ week_nr: selectedWeek, analysis: analysis as any });
       setCachedAt(new Date().toISOString());
-      toast({ title: "Weekly plan generated", description: `Analyzed ${activeUsers.length} team members` });
+      toast({ title: "Weekly plan generated", description: `Week ${selectedWeek} — ${activeUsers.length} team members` });
     } catch (e: any) {
       console.error("Weekly plan error:", e);
       toast({ title: "Analysis failed", description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [buildPayload]);
+  }, [buildPayload, selectedWeek, isCurrentWeek]);
 
   return (
     <div className="space-y-6">
