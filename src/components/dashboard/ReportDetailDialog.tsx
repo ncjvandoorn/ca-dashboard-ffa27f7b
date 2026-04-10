@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CalendarDays, FileDown, Home, Leaf, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { exportSectionsPdf } from "@/lib/exportPdfSections";
+import { exportElementToPdf } from "@/lib/exportPdf";
 import type { QualityReport } from "@/lib/csvParser";
 
 interface ReportDetailDialogProps {
