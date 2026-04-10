@@ -31,11 +31,10 @@ function trimNote(note?: string | null, maxLen = 120): string | undefined {
   return cleaned ? (cleaned.length <= maxLen ? cleaned : `${cleaned.slice(0, maxLen - 1)}…`) : undefined;
 }
 
-function getCurrentWeekNr(): number {
-  const now = new Date();
-  const daysSinceSat = (now.getDay() + 1) % 7;
-  const currentSat = new Date(now);
-  currentSat.setDate(now.getDate() - daysSinceSat);
+function getWeekNrForDate(date: Date): number {
+  const daysSinceSat = (date.getDay() + 1) % 7;
+  const currentSat = new Date(date);
+  currentSat.setDate(date.getDate() - daysSinceSat);
   currentSat.setHours(0, 0, 0, 0);
   const jan1 = new Date(currentSat.getFullYear(), 0, 1);
   const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
@@ -45,6 +44,10 @@ function getCurrentWeekNr(): number {
   const weekNum = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
   const year = currentSat.getFullYear() % 100;
   return year * 100 + weekNum;
+}
+
+function getCurrentWeekNr(): number {
+  return getWeekNrForDate(new Date());
 }
 
 function formatDate(ts: number | null): string {
@@ -96,12 +99,17 @@ function weekNrToSaturday(wn: number): Date {
   return targetSat;
 }
 
-function getPlannerWeekLabel(weekNr: number, currentWeek: number): string {
+function getWeekBusinessDates(weekNr: number) {
   const saturday = weekNrToSaturday(weekNr);
   const monday = new Date(saturday);
   monday.setDate(saturday.getDate() + 2);
   const friday = new Date(saturday);
   friday.setDate(saturday.getDate() + 6);
+  return { saturday, monday, friday };
+}
+
+function getPlannerWeekLabel(weekNr: number, currentWeek: number): string {
+  const { monday, friday } = getWeekBusinessDates(weekNr);
   const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
   const year = friday.getFullYear();
   return `Week ${weekNr}${weekNr === currentWeek ? " (current)" : ""} (${fmt(monday)} – ${fmt(friday)} ${year})`;
@@ -118,10 +126,8 @@ function getWeekOptions(currentWeek: number): { value: number; label: string }[]
       week += 52;
     }
     const wn = year * 100 + week;
-    const sat = weekNrToSaturday(wn);
-    const fri = new Date(sat);
-    fri.setDate(sat.getDate() + 6);
-    const range = `${fmt(sat)} – ${fmt(fri)}`;
+    const { saturday, friday } = getWeekBusinessDates(wn);
+    const range = `${fmt(saturday)} – ${fmt(friday)}`;
     const label = i === 0 ? `Week ${wn} (current) ${range}` : `Week ${wn} (${i}w ago) ${range}`;
     options.push({ value: wn, label });
   }
@@ -129,8 +135,9 @@ function getWeekOptions(currentWeek: number): { value: number; label: string }[]
 }
 
 export function ComingWeekView({ allActivities, users, accounts, reports, activeUsers, onBack }: Props) {
-  const currentWeek = getCurrentWeekNr();
-  const [selectedWeek, setSelectedWeek] = useState<number>(() => currentWeek);
+  const [currentWeek, setCurrentWeek] = useState<number>(() => getCurrentWeekNr());
+  const [selectedWeek, setSelectedWeek] = useState<number>(() => getCurrentWeekNr());
+  const [referenceNow, setReferenceNow] = useState<Date | null>(null);
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
@@ -143,6 +150,35 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
+
+  useEffect(() => {
+    let active = true;
+
+    const resolveCurrentWeekFromServer = async () => {
+      const [latestLogin, latestPlan] = await Promise.all([
+        supabase.from("login_logs").select("logged_in_at").order("logged_in_at", { ascending: false }).limit(1).maybeSingle(),
+        supabase.from("weekly_plan_cache").select("created_at").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      ]);
+
+      if (!active) return;
+
+      const latestServerDate = [latestLogin.data?.logged_in_at ?? null, latestPlan.data?.created_at ?? null]
+        .map((value) => (value ? new Date(value) : null))
+        .filter((value): value is Date => Boolean(value) && !Number.isNaN(value.getTime()))
+        .sort((a, b) => b.getTime() - a.getTime())[0];
+
+      if (!latestServerDate) return;
+
+      setReferenceNow(latestServerDate);
+      setCurrentWeek(getWeekNrForDate(latestServerDate));
+    };
+
+    void resolveCurrentWeekFromServer();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Open tasks (To Do + In Progress)
   const openTasks = useMemo(() => {
@@ -162,6 +198,15 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .limit(1)
       .single();
     if (data?.analysis) {
+      if (data.created_at) {
+        const cachedCreatedAt = new Date(data.created_at);
+        if (!Number.isNaN(cachedCreatedAt.getTime())) {
+          setReferenceNow((prev) => (!prev || cachedCreatedAt.getTime() > prev.getTime() ? cachedCreatedAt : prev));
+          const inferredWeek = getWeekNrForDate(cachedCreatedAt);
+          setCurrentWeek((prev) => (inferredWeek > prev ? inferredWeek : prev));
+        }
+      }
+
       const normalizedPlan = {
         ...(data.analysis as unknown as WeeklyPlan),
         weekLabel: getPlannerWeekLabel(weekNr, currentWeek),
