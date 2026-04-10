@@ -334,6 +334,18 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           <ArrowLeft className="h-4 w-4" />
           Back to Board
         </Button>
+        <Select value={String(selectedWeek)} onValueChange={handleWeekChange}>
+          <SelectTrigger className="w-[200px] h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {weekOptions.map((opt) => (
+              <SelectItem key={opt.value} value={String(opt.value)} className="text-xs">
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button
           variant="default"
           size="sm"
