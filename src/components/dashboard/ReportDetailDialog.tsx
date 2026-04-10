@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CalendarDays, FileDown, Home, Leaf, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { exportSectionsPdf } from "@/lib/exportPdfSections";
+import { exportElementToPdf } from "@/lib/exportPdf";
 import type { QualityReport } from "@/lib/csvParser";
 
 interface ReportDetailDialogProps {
@@ -91,7 +91,7 @@ export function ReportDetailDialog({ report, farmName, createdByName, open, onOp
     const el = contentRef.current;
     if (!el || !report) return;
     try {
-      await exportSectionsPdf(el, `report-${farmName.replace(/\s+/g, "-")}-wk${report.weekNr}`);
+      await exportElementToPdf(el, `report-${farmName.replace(/\s+/g, "-")}-wk${report.weekNr}`);
       toast({ title: "PDF exported", description: `report-${farmName.replace(/\s+/g, "-")}-wk${report.weekNr}.pdf downloaded` });
     } catch (e: any) {
       console.error("PDF export failed:", e);
