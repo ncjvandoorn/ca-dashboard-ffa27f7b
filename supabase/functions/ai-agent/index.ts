@@ -120,6 +120,7 @@ When answering:
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: allMessages,
+          temperature: 0,
           stream: true,
         }),
       }
