@@ -315,18 +315,17 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       max: allWeeks.length > 0 ? allWeeks[0] : undefined,
     };
 
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0=Sun
-    // Find Monday of this week
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7)); // Mon=0 offset
-    const friday = new Date(monday);
-    friday.setDate(monday.getDate() + 4);
-    const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const todayDate = `${days[dayOfWeek]} ${fmt(today)}`;
-    const weekDates = `Monday ${fmt(monday)} – Friday ${fmt(friday)}`;
     const currentWeekNr = getCurrentWeekNr();
+    const sat = weekNrToSaturday(currentWeekNr);
+    const monday = new Date(sat);
+    monday.setDate(sat.getDate() + 2); // Saturday + 2 = Monday
+    const friday = new Date(sat);
+    friday.setDate(sat.getDate() + 6); // Saturday + 6 = Friday
+    const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const today = new Date();
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const todayDate = `${days[today.getDay()]} ${fmt(today)}`;
+    const weekDates = `Monday ${fmt(monday)} – Friday ${fmt(friday)}`;
 
     return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr, weekDates };
   }, [allActivities, reports, activeUsers, userMap, accountMap, users]);
