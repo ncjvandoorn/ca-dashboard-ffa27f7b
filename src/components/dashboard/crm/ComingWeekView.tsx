@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Sparkles, Loader2, RefreshCw,
@@ -96,13 +96,23 @@ function weekNrToSaturday(wn: number): Date {
   return targetSat;
 }
 
-function getWeekOptions(): { value: number; label: string }[] {
-  const current = getCurrentWeekNr();
+function getPlannerWeekLabel(weekNr: number, currentWeek: number): string {
+  const saturday = weekNrToSaturday(weekNr);
+  const monday = new Date(saturday);
+  monday.setDate(saturday.getDate() + 2);
+  const friday = new Date(saturday);
+  friday.setDate(saturday.getDate() + 6);
+  const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+  const year = friday.getFullYear();
+  return `Week ${weekNr}${weekNr === currentWeek ? " (current)" : ""} (${fmt(monday)} – ${fmt(friday)} ${year})`;
+}
+
+function getWeekOptions(currentWeek: number): { value: number; label: string }[] {
   const options: { value: number; label: string }[] = [];
   const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   for (let i = 0; i <= 12; i++) {
-    let year = Math.floor(current / 100);
-    let week = (current % 100) - i;
+    let year = Math.floor(currentWeek / 100);
+    let week = (currentWeek % 100) - i;
     while (week < 1) {
       year -= 1;
       week += 52;
@@ -119,14 +129,17 @@ function getWeekOptions(): { value: number; label: string }[] {
 }
 
 export function ComingWeekView({ allActivities, users, accounts, reports, activeUsers, onBack }: Props) {
-  const [selectedWeek, setSelectedWeek] = useState<number>(getCurrentWeekNr());
+  const currentWeek = getCurrentWeekNr();
+  const [selectedWeek, setSelectedWeek] = useState<number>(() => currentWeek);
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
+  const lastCurrentWeekRef = useRef(currentWeek);
 
-  const weekOptions = useMemo(() => getWeekOptions(), []);
-  const isCurrentWeek = selectedWeek === getCurrentWeekNr();
+  const weekOptions = useMemo(() => getWeekOptions(currentWeek), [currentWeek]);
+  const isCurrentWeek = selectedWeek === currentWeek;
+  const displayWeekLabel = useMemo(() => getPlannerWeekLabel(selectedWeek, currentWeek), [selectedWeek, currentWeek]);
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
@@ -149,16 +162,33 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .limit(1)
       .single();
     if (data?.analysis) {
-      setPlan(data.analysis as unknown as WeeklyPlan);
+      const normalizedPlan = {
+        ...(data.analysis as unknown as WeeklyPlan),
+        weekLabel: getPlannerWeekLabel(weekNr, currentWeek),
+      };
+      setPlan(normalizedPlan);
       setCachedAt(data.created_at);
     } else {
       setPlan(null);
       setCachedAt(null);
     }
-  }, []);
+  }, [currentWeek]);
 
-  // Load on first render
-  useState(() => { loadCached(selectedWeek); });
+  useEffect(() => {
+    const previousCurrentWeek = lastCurrentWeekRef.current;
+    if (currentWeek !== previousCurrentWeek) {
+      if (selectedWeek === previousCurrentWeek) {
+        setPlan(null);
+        setCachedAt(null);
+        setSelectedWeek(currentWeek);
+      }
+      lastCurrentWeekRef.current = currentWeek;
+    }
+  }, [currentWeek, selectedWeek]);
+
+  useEffect(() => {
+    void loadCached(selectedWeek);
+  }, [loadCached, selectedWeek]);
 
   // When week changes, load cached plan
   const handleWeekChange = useCallback((val: string) => {
@@ -166,8 +196,8 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     setSelectedWeek(wn);
     setPlan(null);
     setCachedAt(null);
-    loadCached(wn);
-  }, [loadCached]);
+  }, []);
+
 
   const buildPayload = useCallback(() => {
     const now = Date.now();
@@ -327,11 +357,15 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const analysis = data.analysis as WeeklyPlan;
-      setPlan(analysis);
+      const normalizedPlan = {
+        ...analysis,
+        weekLabel: getPlannerWeekLabel(selectedWeek, currentWeek),
+      };
+      setPlan(normalizedPlan);
 
       // Cache it by selected week
       await supabase.from("weekly_plan_cache").delete().eq("week_nr", selectedWeek);
-      await supabase.from("weekly_plan_cache").insert({ week_nr: selectedWeek, analysis: analysis as any });
+      await supabase.from("weekly_plan_cache").insert({ week_nr: selectedWeek, analysis: normalizedPlan as any });
       setCachedAt(new Date().toISOString());
       toast({ title: "Weekly plan generated", description: `Week ${selectedWeek} — ${activeUsers.length} team members` });
     } catch (e: any) {
@@ -433,7 +467,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           <div data-pdf-section className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
             <h3 className="text-sm font-bold text-primary mb-1 flex items-center gap-2">
               <Target className="h-4 w-4" />
-              {plan.weekLabel || "Coming Week"}
+              {displayWeekLabel}
             </h3>
             <p className="text-sm text-foreground leading-relaxed">{plan.executiveSummary}</p>
           </div>
