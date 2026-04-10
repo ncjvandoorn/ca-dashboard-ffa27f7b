@@ -114,7 +114,7 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
     "Completed": { icon: CheckCircle, dotColor: "bg-accent" },
   };
 
-  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : "Coming Week Planner";
+  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : "Current Week Planner";
 
   return (
     <>
@@ -144,7 +144,7 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => setView("coming-week")} className="gap-1.5">
                       <CalendarClock className="h-4 w-4" />
-                      Coming Week
+                      Current Week
                     </Button>
 
                     <div className="flex items-center gap-2">
