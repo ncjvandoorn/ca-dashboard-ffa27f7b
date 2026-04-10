@@ -208,6 +208,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             staffSummary,
             exceptionAnalysis: exceptionAnalysis || null,
             seasonalityAnalysis: seasonalityAnalysis || null,
+            weeklyPlans: weeklyPlans.length > 0 ? weeklyPlans : null,
           }),
         });
 
