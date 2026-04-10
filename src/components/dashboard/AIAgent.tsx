@@ -33,6 +33,7 @@ const SAMPLE_QUESTIONS = [
   "Which farms show consistently high temperatures at export cold storage?",
   "Please create a table showing all farms and their average stem lengths",
   "Which farms have the highest variations in quality rating?",
+  "Were actions taken by the team based on the week planner of two weeks ago?",
 ];
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-agent`;
