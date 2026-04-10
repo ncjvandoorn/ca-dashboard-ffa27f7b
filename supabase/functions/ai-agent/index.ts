@@ -79,6 +79,9 @@ When answering:
     if (seasonalityAnalysis) {
       userContextMessage += `\n\nSeasonality Report:\n${JSON.stringify(seasonalityAnalysis)}`;
     }
+    if (weeklyPlans) {
+      userContextMessage += `\n\nWeekly Planner Data (recent AI-generated action plans by week number):\n${JSON.stringify(weeklyPlans)}`;
+    }
 
     const allMessages = [
       { role: "system", content: systemPrompt },
