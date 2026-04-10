@@ -82,11 +82,36 @@ const assessmentStyle: Record<string, string> = {
   "Falling behind": "text-warning",
 };
 
+function getWeekOptions(): { value: number; label: string }[] {
+  const current = getCurrentWeekNr();
+  const options: { value: number; label: string }[] = [];
+  for (let i = 0; i <= 12; i++) {
+    let wn = current;
+    // Subtract i weeks: handle year boundary
+    let year = Math.floor(wn / 100);
+    let week = wn % 100;
+    week -= i;
+    while (week < 1) {
+      year -= 1;
+      // Approximate: most years have ~52 weeks in this system
+      week += 52;
+    }
+    wn = year * 100 + week;
+    const label = i === 0 ? `Week ${wn} (current)` : `Week ${wn} (${i}w ago)`;
+    options.push({ value: wn, label });
+  }
+  return options;
+}
+
 export function ComingWeekView({ allActivities, users, accounts, reports, activeUsers, onBack }: Props) {
+  const [selectedWeek, setSelectedWeek] = useState<number>(getCurrentWeekNr());
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
+
+  const weekOptions = useMemo(() => getWeekOptions(), []);
+  const isCurrentWeek = selectedWeek === getCurrentWeekNr();
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
@@ -99,24 +124,35 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }, [allActivities]);
 
-  // Load cached plan on mount — shared across all users
-  const loadCached = useCallback(async () => {
-    const currentWeek = getCurrentWeekNr();
+  // Load cached plan for selected week
+  const loadCached = useCallback(async (weekNr: number) => {
     const { data } = await supabase
       .from("weekly_plan_cache")
       .select("*")
-      .eq("week_nr", currentWeek)
+      .eq("week_nr", weekNr)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
     if (data?.analysis) {
       setPlan(data.analysis as unknown as WeeklyPlan);
       setCachedAt(data.created_at);
+    } else {
+      setPlan(null);
+      setCachedAt(null);
     }
   }, []);
 
   // Load on first render
-  useState(() => { loadCached(); });
+  useState(() => { loadCached(selectedWeek); });
+
+  // When week changes, load cached plan
+  const handleWeekChange = useCallback((val: string) => {
+    const wn = parseInt(val, 10);
+    setSelectedWeek(wn);
+    setPlan(null);
+    setCachedAt(null);
+    loadCached(wn);
+  }, [loadCached]);
 
   const buildPayload = useCallback(() => {
     const now = Date.now();
