@@ -31,23 +31,82 @@ function trimNote(note?: string | null, maxLen = 120): string | undefined {
   return cleaned ? (cleaned.length <= maxLen ? cleaned : `${cleaned.slice(0, maxLen - 1)}…`) : undefined;
 }
 
-function getWeekNrForDate(date: Date): number {
-  const daysSinceSat = (date.getDay() + 1) % 7;
+function getWeekNrForDate(date: Date, mode: "local" | "utc" = "local"): number {
+  const getDay = (value: Date) => (mode === "utc" ? value.getUTCDay() : value.getDay());
+  const getDateValue = (value: Date) => (mode === "utc" ? value.getUTCDate() : value.getDate());
+  const getFullYear = (value: Date) => (mode === "utc" ? value.getUTCFullYear() : value.getFullYear());
+  const setDateValue = (value: Date, nextDate: number) => {
+    if (mode === "utc") value.setUTCDate(nextDate);
+    else value.setDate(nextDate);
+  };
+  const setStartOfDay = (value: Date) => {
+    if (mode === "utc") value.setUTCHours(0, 0, 0, 0);
+    else value.setHours(0, 0, 0, 0);
+  };
+
+  const daysSinceSat = (getDay(date) + 1) % 7;
   const currentSat = new Date(date);
-  currentSat.setDate(date.getDate() - daysSinceSat);
-  currentSat.setHours(0, 0, 0, 0);
-  const jan1 = new Date(currentSat.getFullYear(), 0, 1);
-  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
+  setDateValue(currentSat, getDateValue(date) - daysSinceSat);
+  setStartOfDay(currentSat);
+
+  const jan1 = mode === "utc"
+    ? new Date(Date.UTC(getFullYear(currentSat), 0, 1))
+    : new Date(getFullYear(currentSat), 0, 1);
+  const jan1DaysSinceSat = (getDay(jan1) + 1) % 7;
   const week1Sat = new Date(jan1);
-  week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
-  week1Sat.setHours(0, 0, 0, 0);
+  setDateValue(week1Sat, getDateValue(jan1) - jan1DaysSinceSat);
+  setStartOfDay(week1Sat);
+
   const weekNum = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
-  const year = currentSat.getFullYear() % 100;
+  const year = getFullYear(currentSat) % 100;
   return year * 100 + weekNum;
 }
 
 function getCurrentWeekNr(): number {
   return getWeekNrForDate(new Date());
+}
+
+function parseBackendTimestamp(value: string | null | undefined): Date | null {
+  if (!value) return null;
+
+  const normalized = value.trim().replace(" ", "T");
+  const dateTimeMatch = normalized.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,6}))?)?(Z|[+-]\d{2}(?::?\d{2})?)?$/,
+  );
+
+  if (dateTimeMatch) {
+    const [, yearRaw, monthRaw, dayRaw, hourRaw, minuteRaw, secondRaw = "00", fractionRaw = "", tzRaw = "Z"] = dateTimeMatch;
+    const milliseconds = Number(fractionRaw.padEnd(3, "0").slice(0, 3) || "0");
+    let utcMs = Date.UTC(
+      Number(yearRaw),
+      Number(monthRaw) - 1,
+      Number(dayRaw),
+      Number(hourRaw),
+      Number(minuteRaw),
+      Number(secondRaw),
+      milliseconds,
+    );
+
+    if (tzRaw !== "Z") {
+      const tzMatch = tzRaw.match(/^([+-])(\d{2})(?::?(\d{2}))?$/);
+      if (!tzMatch) return null;
+      const [, sign, hoursRaw, minutesRaw = "00"] = tzMatch;
+      const offsetMinutes = Number(hoursRaw) * 60 + Number(minutesRaw);
+      utcMs += (sign === "+" ? -1 : 1) * offsetMinutes * 60000;
+    }
+
+    const result = new Date(utcMs);
+    return Number.isNaN(result.getTime()) ? null : result;
+  }
+
+  const dateOnlyMatch = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) {
+    const [, yearRaw, monthRaw, dayRaw] = dateOnlyMatch;
+    const result = new Date(Date.UTC(Number(yearRaw), Number(monthRaw) - 1, Number(dayRaw)));
+    return Number.isNaN(result.getTime()) ? null : result;
+  }
+
+  return null;
 }
 
 function firstRow<T>(data: T | T[] | null | undefined): T | null {
@@ -148,10 +207,17 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
   const lastCurrentWeekRef = useRef(currentWeek);
+  const resolvedCurrentWeek = useMemo(
+    () => (referenceNow ? getWeekNrForDate(referenceNow, "utc") : currentWeek),
+    [referenceNow, currentWeek],
+  );
 
-  const weekOptions = useMemo(() => getWeekOptions(currentWeek), [currentWeek]);
-  const isCurrentWeek = selectedWeek === currentWeek;
-  const displayWeekLabel = useMemo(() => getPlannerWeekLabel(selectedWeek, currentWeek), [selectedWeek, currentWeek]);
+  const weekOptions = useMemo(() => getWeekOptions(resolvedCurrentWeek), [resolvedCurrentWeek]);
+  const isCurrentWeek = selectedWeek === resolvedCurrentWeek;
+  const displayWeekLabel = useMemo(
+    () => getPlannerWeekLabel(selectedWeek, resolvedCurrentWeek),
+    [selectedWeek, resolvedCurrentWeek],
+  );
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
@@ -171,14 +237,14 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       const latestPlan = firstRow(latestPlanResult.data);
 
       const latestServerDate = [latestLogin?.logged_in_at ?? null, latestPlan?.created_at ?? null]
-        .map((value) => (value ? new Date(value) : null))
+        .map(parseBackendTimestamp)
         .filter((value): value is Date => Boolean(value) && !Number.isNaN(value.getTime()))
         .sort((a, b) => b.getTime() - a.getTime())[0];
 
       if (!latestServerDate) return;
 
       setReferenceNow(latestServerDate);
-      setCurrentWeek(getWeekNrForDate(latestServerDate));
+      setCurrentWeek(getWeekNrForDate(latestServerDate, "utc"));
     };
 
     void resolveCurrentWeekFromServer();
@@ -206,18 +272,21 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .limit(1)
       .single();
     if (data?.analysis) {
+      let effectiveCurrentWeek = resolvedCurrentWeek;
+
       if (data.created_at) {
-        const cachedCreatedAt = new Date(data.created_at);
-        if (!Number.isNaN(cachedCreatedAt.getTime())) {
+        const cachedCreatedAt = parseBackendTimestamp(data.created_at);
+        if (cachedCreatedAt) {
           setReferenceNow((prev) => (!prev || cachedCreatedAt.getTime() > prev.getTime() ? cachedCreatedAt : prev));
-          const inferredWeek = getWeekNrForDate(cachedCreatedAt);
+          const inferredWeek = getWeekNrForDate(cachedCreatedAt, "utc");
           setCurrentWeek((prev) => (inferredWeek > prev ? inferredWeek : prev));
+          effectiveCurrentWeek = Math.max(effectiveCurrentWeek, inferredWeek);
         }
       }
 
       const normalizedPlan = {
         ...(data.analysis as unknown as WeeklyPlan),
-        weekLabel: getPlannerWeekLabel(weekNr, currentWeek),
+        weekLabel: getPlannerWeekLabel(weekNr, effectiveCurrentWeek),
       };
       setPlan(normalizedPlan);
       setCachedAt(data.created_at);
@@ -225,19 +294,19 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       setPlan(null);
       setCachedAt(null);
     }
-  }, [currentWeek]);
+  }, [resolvedCurrentWeek]);
 
   useEffect(() => {
     const previousCurrentWeek = lastCurrentWeekRef.current;
-    if (currentWeek !== previousCurrentWeek) {
+    if (resolvedCurrentWeek !== previousCurrentWeek) {
       if (selectedWeek === previousCurrentWeek) {
         setPlan(null);
         setCachedAt(null);
-        setSelectedWeek(currentWeek);
+        setSelectedWeek(resolvedCurrentWeek);
       }
-      lastCurrentWeekRef.current = currentWeek;
+      lastCurrentWeekRef.current = resolvedCurrentWeek;
     }
-  }, [currentWeek, selectedWeek]);
+  }, [resolvedCurrentWeek, selectedWeek]);
 
   useEffect(() => {
     void loadCached(selectedWeek);
@@ -368,7 +437,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       max: allWeeks.length > 0 ? allWeeks[0] : undefined,
     };
 
-    const plannerWeekNr = referenceNow ? getWeekNrForDate(referenceNow) : currentWeek;
+    const plannerWeekNr = referenceNow ? getWeekNrForDate(referenceNow, "utc") : resolvedCurrentWeek;
     const sat = weekNrToSaturday(plannerWeekNr);
     const monday = new Date(sat);
     monday.setDate(sat.getDate() + 2); // Saturday + 2 = Monday
@@ -381,7 +450,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     const weekDates = `Monday ${fmt(monday)} – Friday ${fmt(friday)}`;
 
     return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr: plannerWeekNr, weekDates };
-  }, [allActivities, reports, activeUsers, userMap, accountMap, users, referenceNow, currentWeek]);
+  }, [allActivities, reports, activeUsers, userMap, accountMap, users, referenceNow, resolvedCurrentWeek]);
 
   const runAnalysis = useCallback(async () => {
     setLoading(true);
@@ -408,7 +477,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       const analysis = data.analysis as WeeklyPlan;
       const normalizedPlan = {
         ...analysis,
-        weekLabel: getPlannerWeekLabel(selectedWeek, currentWeek),
+        weekLabel: getPlannerWeekLabel(selectedWeek, resolvedCurrentWeek),
       };
       setPlan(normalizedPlan);
 
@@ -423,7 +492,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     } finally {
       setLoading(false);
     }
-  }, [buildPayload, selectedWeek, isCurrentWeek]);
+  }, [activeUsers.length, buildPayload, selectedWeek, isCurrentWeek, resolvedCurrentWeek]);
 
   return (
     <div className="space-y-6">
