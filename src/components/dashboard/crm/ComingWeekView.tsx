@@ -50,6 +50,11 @@ function getCurrentWeekNr(): number {
   return getWeekNrForDate(new Date());
 }
 
+function firstRow<T>(data: T | T[] | null | undefined): T | null {
+  if (Array.isArray(data)) return data[0] ?? null;
+  return data ?? null;
+}
+
 function formatDate(ts: number | null): string {
   if (!ts) return "—";
   return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -155,14 +160,17 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     let active = true;
 
     const resolveCurrentWeekFromServer = async () => {
-      const [latestLogin, latestPlan] = await Promise.all([
-        supabase.from("login_logs").select("logged_in_at").order("logged_in_at", { ascending: false }).limit(1).maybeSingle(),
-        supabase.from("weekly_plan_cache").select("created_at").order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      const [latestLoginResult, latestPlanResult] = await Promise.all([
+        supabase.from("login_logs").select("logged_in_at").order("logged_in_at", { ascending: false }).limit(1),
+        supabase.from("weekly_plan_cache").select("created_at").order("created_at", { ascending: false }).limit(1),
       ]);
 
       if (!active) return;
 
-      const latestServerDate = [latestLogin.data?.logged_in_at ?? null, latestPlan.data?.created_at ?? null]
+      const latestLogin = firstRow(latestLoginResult.data);
+      const latestPlan = firstRow(latestPlanResult.data);
+
+      const latestServerDate = [latestLogin?.logged_in_at ?? null, latestPlan?.created_at ?? null]
         .map((value) => (value ? new Date(value) : null))
         .filter((value): value is Date => Boolean(value) && !Number.isNaN(value.getTime()))
         .sort((a, b) => b.getTime() - a.getTime())[0];
@@ -360,20 +368,20 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       max: allWeeks.length > 0 ? allWeeks[0] : undefined,
     };
 
-    const currentWeekNr = getCurrentWeekNr();
-    const sat = weekNrToSaturday(currentWeekNr);
+    const plannerWeekNr = referenceNow ? getWeekNrForDate(referenceNow) : currentWeek;
+    const sat = weekNrToSaturday(plannerWeekNr);
     const monday = new Date(sat);
     monday.setDate(sat.getDate() + 2); // Saturday + 2 = Monday
     const friday = new Date(sat);
     friday.setDate(sat.getDate() + 6); // Saturday + 6 = Friday
     const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    const today = new Date();
+    const today = referenceNow ?? new Date();
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const todayDate = `${days[today.getDay()]} ${fmt(today)}`;
     const weekDates = `Monday ${fmt(monday)} – Friday ${fmt(friday)}`;
 
-    return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr, weekDates };
-  }, [allActivities, reports, activeUsers, userMap, accountMap, users]);
+    return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr: plannerWeekNr, weekDates };
+  }, [allActivities, reports, activeUsers, userMap, accountMap, users, referenceNow, currentWeek]);
 
   const runAnalysis = useCallback(async () => {
     setLoading(true);
