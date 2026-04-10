@@ -250,12 +250,45 @@ Create the full Mon–Fri plan. Focus on what matters MOST.`;
       );
     }
 
-    const result = await response.json();
+    const rawText = await response.text();
+    let result: any;
+    try {
+      result = JSON.parse(rawText);
+    } catch {
+      console.error("AI gateway returned non-JSON:", rawText.slice(0, 500));
+      return new Response(
+        JSON.stringify({ error: "AI returned an invalid response. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     let analysis: unknown;
 
     const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall) {
-      analysis = JSON.parse(toolCall.function.arguments);
+      try {
+        analysis = JSON.parse(toolCall.function.arguments);
+      } catch {
+        // Tool call arguments may be truncated — try robust extraction
+        let args = toolCall.function.arguments || "";
+        args = args.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+        // Try to close unclosed braces
+        const openB = (args.match(/{/g) || []).length;
+        const closeB = (args.match(/}/g) || []).length;
+        for (let i = 0; i < openB - closeB; i++) args += "}";
+        const openA = (args.match(/\[/g) || []).length;
+        const closeA = (args.match(/]/g) || []).length;
+        for (let i = 0; i < openA - closeA; i++) args += "]";
+        try {
+          analysis = JSON.parse(args);
+        } catch (e2) {
+          console.error("Failed to parse tool call arguments:", (args).slice(0, 500));
+          return new Response(
+            JSON.stringify({ error: "AI response was truncated. Please try again." }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
     } else {
       const content = result.choices?.[0]?.message?.content ?? "";
       console.warn("No tool call in response, content:", content.slice(0, 300));
