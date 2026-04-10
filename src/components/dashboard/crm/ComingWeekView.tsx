@@ -82,22 +82,37 @@ const assessmentStyle: Record<string, string> = {
   "Falling behind": "text-warning",
 };
 
+/** Get the Saturday that starts a given YYWW week */
+function weekNrToSaturday(wn: number): Date {
+  const year = 2000 + Math.floor(wn / 100);
+  const week = wn % 100;
+  const jan1 = new Date(year, 0, 1);
+  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
+  const week1Sat = new Date(jan1);
+  week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
+  week1Sat.setHours(0, 0, 0, 0);
+  const targetSat = new Date(week1Sat);
+  targetSat.setDate(week1Sat.getDate() + (week - 1) * 7);
+  return targetSat;
+}
+
 function getWeekOptions(): { value: number; label: string }[] {
   const current = getCurrentWeekNr();
   const options: { value: number; label: string }[] = [];
+  const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   for (let i = 0; i <= 12; i++) {
-    let wn = current;
-    // Subtract i weeks: handle year boundary
-    let year = Math.floor(wn / 100);
-    let week = wn % 100;
-    week -= i;
+    let year = Math.floor(current / 100);
+    let week = (current % 100) - i;
     while (week < 1) {
       year -= 1;
-      // Approximate: most years have ~52 weeks in this system
       week += 52;
     }
-    wn = year * 100 + week;
-    const label = i === 0 ? `Week ${wn} (current)` : `Week ${wn} (${i}w ago)`;
+    const wn = year * 100 + week;
+    const sat = weekNrToSaturday(wn);
+    const fri = new Date(sat);
+    fri.setDate(sat.getDate() + 6);
+    const range = `${fmt(sat)} – ${fmt(fri)}`;
+    const label = i === 0 ? `Week ${wn} (current) ${range}` : `Week ${wn} (${i}w ago) ${range}`;
     options.push({ value: wn, label });
   }
   return options;
