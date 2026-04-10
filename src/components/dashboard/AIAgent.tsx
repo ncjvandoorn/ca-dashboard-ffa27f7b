@@ -145,6 +145,19 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
 
   const staffSummary = useMemo(() => buildStaffSummary(reports, users || []), [reports, users]);
 
+  // Fetch recent weekly plans for AI context
+  const [weeklyPlans, setWeeklyPlans] = useState<any[]>([]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("weekly_plan_cache")
+        .select("week_nr, analysis, created_at")
+        .order("week_nr", { ascending: false })
+        .limit(6);
+      if (data) setWeeklyPlans(data);
+    })();
+  }, []);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
