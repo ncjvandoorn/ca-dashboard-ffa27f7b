@@ -331,7 +331,7 @@ const Index = () => {
               <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                 All Reports
               </Button>
-              <ContainersDialog />
+              {!isCustomer && <ContainersDialog />}
               {!isCustomer && (
                 <SeasonalityInsights
                   reports={yearFilteredReports}
