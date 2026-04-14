@@ -1,18 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, ArrowUp, ArrowDown, Search } from "lucide-react";
+import { Package, ArrowUp, ArrowDown, Search, FileDown } from "lucide-react";
 import { useContainers } from "@/hooks/useQualityData";
+import { exportElementToPdf } from "@/lib/exportPdf";
+import { toast } from "@/hooks/use-toast";
 
 /** Compute YYWW week number (Sat–Fri cycle, week 1 contains Jan 1) */
 function getWeekNr(ts: number | null): string {
   if (!ts) return "—";
   const d = new Date(ts);
-  // Shift so Saturday=day0: (day+1)%7
   const shifted = new Date(d);
   shifted.setDate(shifted.getDate() - ((shifted.getDay() + 1) % 7));
   const year = shifted.getFullYear();
@@ -29,7 +30,7 @@ function formatDate(ts: number | null): string {
   return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-type SortField = "dropoffDate" | "shippingDate";
+type SortField = "dropoffDate" | "shippingDate" | "weekNr";
 type SortDir = "asc" | "desc";
 
 export function ContainersDialog() {
@@ -39,8 +40,9 @@ export function ContainersDialog() {
   const [selectedWeek, setSelectedWeek] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("shippingDate");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [exporting, setExporting] = useState(false);
+  const tableRef = useRef<HTMLDivElement>(null);
 
-  // Build week options with counts
   const weekOptions = useMemo(() => {
     if (!containers) return [];
     const counts = new Map<string, number>();
@@ -85,11 +87,30 @@ export function ContainersDialog() {
       );
     }
     return [...list].sort((a, b) => {
+      if (sortField === "weekNr") {
+        const aw = getWeekNr(a.shippingDate);
+        const bw = getWeekNr(b.shippingDate);
+        return sortDir === "asc" ? aw.localeCompare(bw) : bw.localeCompare(aw);
+      }
       const av = a[sortField] ?? 0;
       const bv = b[sortField] ?? 0;
       return sortDir === "asc" ? av - bv : bv - av;
     });
   }, [containers, search, selectedWeek, sortField, sortDir]);
+
+  const handleExport = async () => {
+    if (!tableRef.current) return;
+    setExporting(true);
+    try {
+      const label = selectedWeek !== "all" ? `wk${selectedWeek}` : "all";
+      await exportElementToPdf(tableRef.current, `containers-${label}`);
+      toast({ title: "PDF exported" });
+    } catch {
+      toast({ title: "Export failed", variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -126,41 +147,49 @@ export function ContainersDialog() {
               ))}
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting} className="gap-1">
+            <FileDown className="h-4 w-4" />
+            PDF
+          </Button>
         </div>
-        <ScrollArea className="h-[55vh]">
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground p-4">Loading…</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Week</TableHead>
-                  <TableHead>Booking Code</TableHead>
-                  <TableHead>Container #</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dropoffDate")}>
-                    Drop-off Date <SortIcon field="dropoffDate" />
-                  </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("shippingDate")}>
-                    Shipping Date <SortIcon field="shippingDate" />
-                  </TableHead>
-                  <TableHead>Shipping Line ID</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-mono text-xs">{getWeekNr(c.shippingDate)}</TableCell>
-                    <TableCell>{c.bookingCode}</TableCell>
-                    <TableCell className="font-mono">{c.containerNumber}</TableCell>
-                    <TableCell>{formatDate(c.dropoffDate)}</TableCell>
-                    <TableCell>{formatDate(c.shippingDate)}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{c.shippingLineId}</TableCell>
+        <div ref={tableRef}>
+          <ScrollArea className="h-[55vh]">
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground p-4">Loading…</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("weekNr")}>
+                      Week <SortIcon field="weekNr" />
+                    </TableHead>
+                    <TableHead>Booking Code</TableHead>
+                    <TableHead>Container #</TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dropoffDate")}>
+                      Drop-off Date <SortIcon field="dropoffDate" />
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("shippingDate")}>
+                      Shipping Date <SortIcon field="shippingDate" />
+                    </TableHead>
+                    <TableHead>Shipping Line ID</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </ScrollArea>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((c) => (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-mono text-xs">{getWeekNr(c.shippingDate)}</TableCell>
+                      <TableCell>{c.bookingCode}</TableCell>
+                      <TableCell className="font-mono">{c.containerNumber}</TableCell>
+                      <TableCell>{formatDate(c.dropoffDate)}</TableCell>
+                      <TableCell>{formatDate(c.shippingDate)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{c.shippingLineId}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
