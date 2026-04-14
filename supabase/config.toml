@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.ai-agent]
 verify_jwt = false
+
+[functions.generate-learnings]
+verify_jwt = false

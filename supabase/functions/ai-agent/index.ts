@@ -16,11 +16,12 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Fetch admin AI instructions
+    // Fetch admin AI instructions and learnings
     let adminInstructions = "";
+    let aiLearnings = "";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     try {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const res = await fetch(`${supabaseUrl}/rest/v1/ai_instructions?select=instructions&limit=1`, {
         headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
       });
@@ -29,9 +30,19 @@ serve(async (req) => {
         if (rows?.[0]?.instructions) adminInstructions = rows[0].instructions;
       }
     } catch (_) { /* ignore */ }
+    try {
+      const res = await fetch(`${supabaseUrl}/rest/v1/ai_learnings?select=learnings&limit=1`, {
+        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        if (rows?.[0]?.learnings) aiLearnings = rows[0].learnings;
+      }
+    } catch (_) { /* ignore */ }
 
     const systemPrompt = `You are a strict, factual data analyst for Chrysal's cut flower post-harvest quality monitoring system. You have access to the COMPLETE farm quality report dataset across ALL years, staff attribution data, CRM activities, and AI-generated insights.
 ${adminInstructions ? `\n**ADMIN INSTRUCTIONS (follow these closely):**\n${adminInstructions}\n` : ""}
+${aiLearnings ? `\n**LEARNINGS FROM PAST CONVERSATIONS (apply these insights):**\n${aiLearnings}\n` : ""}
 
 YOUR CORE IDENTITY: You are methodical, precise, and repetitive BY DESIGN. You always point out the same issues if the data shows them, regardless of how many times you've been asked. You never vary your analysis for the sake of variety. Consistency IS your value.
 

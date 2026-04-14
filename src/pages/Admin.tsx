@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot, Users, Plus, Trash2, ClipboardList, ChevronsUpDown } from "lucide-react";
+import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot, Users, Plus, Trash2, ClipboardList, ChevronsUpDown, Brain } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -59,6 +59,10 @@ const Admin = () => {
   const [aiInstructions, setAiInstructions] = useState("");
   const [aiInstructionsLoading, setAiInstructionsLoading] = useState(true);
   const [aiInstructionsSaving, setAiInstructionsSaving] = useState(false);
+  const [aiLearnings, setAiLearnings] = useState("");
+  const [aiLearningsLoading, setAiLearningsLoading] = useState(true);
+  const [aiLearningsSaving, setAiLearningsSaving] = useState(false);
+  const [aiLearningsGenerating, setAiLearningsGenerating] = useState(false);
   const [customerAccounts, setCustomerAccounts] = useState<any[]>([]);
   const [customersLoading, setCustomersLoading] = useState(true);
   const [newCustUsername, setNewCustUsername] = useState("");
@@ -125,6 +129,66 @@ const Admin = () => {
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
     } finally {
       setAiInstructionsSaving(false);
+    }
+  };
+
+  const fetchAiLearnings = async () => {
+    setAiLearningsLoading(true);
+    const { data } = await supabase
+      .from("ai_learnings" as any)
+      .select("learnings")
+      .limit(1)
+      .maybeSingle();
+    setAiLearnings((data as any)?.learnings || "");
+    setAiLearningsLoading(false);
+  };
+
+  const saveAiLearnings = async () => {
+    setAiLearningsSaving(true);
+    try {
+      const { data: existing } = await supabase
+        .from("ai_learnings" as any)
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("ai_learnings" as any)
+          .update({ learnings: aiLearnings, updated_at: new Date().toISOString() } as any)
+          .eq("id", (existing as any).id);
+      } else {
+        await supabase
+          .from("ai_learnings" as any)
+          .insert({ learnings: aiLearnings } as any);
+      }
+      toast({ title: "Saved", description: "AI learnings updated successfully." });
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiLearningsSaving(false);
+    }
+  };
+
+  const generateLearnings = async () => {
+    setAiLearningsGenerating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-learnings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setAiLearnings(data.learnings || "");
+      toast({ title: "Learnings Generated", description: "AI learnings have been generated from past conversations. Review and save." });
+    } catch (err: any) {
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiLearningsGenerating(false);
     }
   };
 
@@ -295,6 +359,7 @@ const Admin = () => {
     fetchLogs();
     fetchQuestions();
     fetchAiInstructions();
+    fetchAiLearnings();
     fetchCustomerAccounts();
     getCrmVisibleUserIds().then((ids) => {
       if (ids) setCrmSelectedUserIds(new Set(ids));
@@ -430,6 +495,59 @@ const Admin = () => {
                     {aiInstructionsSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                     Save Instructions
                   </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* AI Learnings */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Brain className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">AI Learnings</CardTitle>
+                <CardDescription>
+                  Auto-generated insights from past AI Agent conversations. These are fed into the AI Agent to improve future responses. You can edit them manually or regenerate from recent conversations.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {aiLearningsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Textarea
+                  value={aiLearnings}
+                  onChange={(e) => setAiLearnings(e.target.value)}
+                  placeholder="No learnings generated yet. Click 'Generate from Conversations' to analyze past AI Agent interactions and extract actionable insights..."
+                  className="min-h-[200px] text-sm"
+                  maxLength={6000}
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">{aiLearnings.length} / 6000 characters</p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={generateLearnings}
+                      disabled={aiLearningsGenerating}
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      {aiLearningsGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Brain className="h-3.5 w-3.5" />}
+                      {aiLearningsGenerating ? "Analyzing…" : "Generate from Conversations"}
+                    </Button>
+                    <Button onClick={saveAiLearnings} disabled={aiLearningsSaving} size="sm" className="gap-2">
+                      {aiLearningsSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                      Save Learnings
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
