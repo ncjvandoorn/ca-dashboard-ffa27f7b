@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversation_logs: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          question: string
+          user_email: string | null
+          username: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          question: string
+          user_email?: string | null
+          username?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          question?: string
+          user_email?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       ai_instructions: {
         Row: {
           id: string
@@ -28,6 +55,24 @@ export type Database = {
         Update: {
           id?: string
           instructions?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_learnings: {
+        Row: {
+          id: string
+          learnings: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          learnings?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          learnings?: string
           updated_at?: string
         }
         Relationships: []
