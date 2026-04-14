@@ -359,6 +359,7 @@ const Admin = () => {
     fetchLogs();
     fetchQuestions();
     fetchAiInstructions();
+    fetchAiLearnings();
     fetchCustomerAccounts();
     getCrmVisibleUserIds().then((ids) => {
       if (ids) setCrmSelectedUserIds(new Set(ids));
