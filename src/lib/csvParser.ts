@@ -147,6 +147,27 @@ export async function loadCustomerFarms(): Promise<CustomerFarm[]> {
   }));
 }
 
+export interface Container {
+  id: string;
+  bookingCode: string;
+  containerNumber: string;
+  dropoffDate: number | null;
+  shippingDate: number | null;
+  shippingLineId: string;
+}
+
+export async function loadContainers(): Promise<Container[]> {
+  const url = await getDataFileUrl("container.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    bookingCode: row.bookingCode || "",
+    containerNumber: row.containerNumber || "",
+    dropoffDate: parseNum(row.dropoffDate),
+    shippingDate: parseNum(row.shippingDate),
+    shippingLineId: row.shippingLineId || "",
+  }));
+}
+
 export async function loadQualityReports(): Promise<QualityReport[]> {
   const url = await getDataFileUrl("qualityReport.csv");
   return fetchCsv(url, (row) => ({

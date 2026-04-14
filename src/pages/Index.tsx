@@ -12,6 +12,7 @@ import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights"
 import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
 import { AIAgent } from "@/components/dashboard/AIAgent";
+import { ContainersDialog } from "@/components/dashboard/ContainersDialog";
 import { CRMReport } from "@/components/dashboard/CRMReport";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileDown } from "lucide-react";
@@ -330,6 +331,7 @@ const Index = () => {
               <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                 All Reports
               </Button>
+              <ContainersDialog />
               {!isCustomer && (
                 <SeasonalityInsights
                   reports={yearFilteredReports}
