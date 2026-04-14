@@ -62,7 +62,8 @@ export function ContainersDialog() {
         c.containerNumber.toLowerCase().includes(q) ||
         c.shippingLineId.toLowerCase().includes(q) ||
         formatDate(c.dropoffDate).toLowerCase().includes(q) ||
-        formatDate(c.shippingDate).toLowerCase().includes(q)
+        formatDate(c.shippingDate).toLowerCase().includes(q) ||
+        getWeekNr(c.shippingDate).includes(q)
       );
     }
     return [...list].sort((a, b) => {
@@ -100,6 +101,7 @@ export function ContainersDialog() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Week</TableHead>
                   <TableHead>Booking Code</TableHead>
                   <TableHead>Container #</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dropoffDate")}>
@@ -114,6 +116,7 @@ export function ContainersDialog() {
               <TableBody>
                 {filtered.map((c) => (
                   <TableRow key={c.id}>
+                    <TableCell className="font-mono text-xs">{getWeekNr(c.shippingDate)}</TableCell>
                     <TableCell>{c.bookingCode}</TableCell>
                     <TableCell className="font-mono">{c.containerNumber}</TableCell>
                     <TableCell>{formatDate(c.dropoffDate)}</TableCell>
