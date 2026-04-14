@@ -40,3 +40,11 @@ export function useCustomerFarms() {
     staleTime: Infinity,
   });
 }
+
+export function useContainers() {
+  return useQuery({
+    queryKey: ["containers"],
+    queryFn: loadContainers,
+    staleTime: Infinity,
+  });
+}

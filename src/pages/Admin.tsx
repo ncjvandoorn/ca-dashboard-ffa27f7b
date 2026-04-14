@@ -45,6 +45,7 @@ const DATA_FILES = [
   { key: "activity.csv", label: "Activity Data", accept: ".csv", icon: FileText },
   { key: "user.csv", label: "ALL Users", accept: ".csv", icon: FileText },
   { key: "customerFarm.csv", label: "Customer-Farm Links", accept: ".csv", icon: FileText },
+  { key: "container.csv", label: "Containers", accept: ".csv", icon: FileText },
 ] as const;
 
 const Admin = () => {
