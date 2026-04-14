@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Package, ArrowUp, ArrowDown, Search } from "lucide-react";
 import { useContainers } from "@/hooks/useQualityData";
 
@@ -35,8 +36,22 @@ export function ContainersDialog() {
   const [open, setOpen] = useState(false);
   const { data: containers, isLoading } = useContainers();
   const [search, setSearch] = useState("");
+  const [selectedWeek, setSelectedWeek] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("shippingDate");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  // Build week options with counts
+  const weekOptions = useMemo(() => {
+    if (!containers) return [];
+    const counts = new Map<string, number>();
+    for (const c of containers) {
+      const wk = getWeekNr(c.shippingDate);
+      counts.set(wk, (counts.get(wk) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([wk, count]) => ({ wk, count }));
+  }, [containers]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -56,6 +71,9 @@ export function ContainersDialog() {
     if (!containers) return [];
     const q = search.toLowerCase().trim();
     let list = containers;
+    if (selectedWeek !== "all") {
+      list = list.filter((c) => getWeekNr(c.shippingDate) === selectedWeek);
+    }
     if (q) {
       list = list.filter((c) =>
         c.bookingCode.toLowerCase().includes(q) ||
@@ -71,7 +89,7 @@ export function ContainersDialog() {
       const bv = b[sortField] ?? 0;
       return sortDir === "asc" ? av - bv : bv - av;
     });
-  }, [containers, search, sortField, sortDir]);
+  }, [containers, search, selectedWeek, sortField, sortDir]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -85,14 +103,29 @@ export function ContainersDialog() {
         <DialogHeader>
           <DialogTitle>Containers ({filtered.length})</DialogTitle>
         </DialogHeader>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search booking code, container, shipping line…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search booking code, container, shipping line…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="All weeks" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All weeks</SelectItem>
+              {weekOptions.map(({ wk, count }) => (
+                <SelectItem key={wk} value={wk}>
+                  Week {wk} ({count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <ScrollArea className="h-[55vh]">
           {isLoading ? (
