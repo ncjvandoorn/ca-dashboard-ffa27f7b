@@ -295,6 +295,19 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             }
           }
         }
+
+        // Save the completed conversation exchange to the database
+        if (assistantSoFar) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            await supabase.from("ai_conversation_logs" as any).insert({
+              question: text.trim(),
+              answer: assistantSoFar,
+              user_email: session?.user?.email || null,
+              username: session?.user?.user_metadata?.username || session?.user?.email || null,
+            } as any);
+          } catch {}
+        }
       } catch (e: any) {
         setMessages((prev) => [
           ...prev,
