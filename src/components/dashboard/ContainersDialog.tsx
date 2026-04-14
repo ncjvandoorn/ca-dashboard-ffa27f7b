@@ -127,7 +127,6 @@ export function ContainersDialog() {
             </SelectContent>
           </Select>
         </div>
-        </div>
         <ScrollArea className="h-[55vh]">
           {isLoading ? (
             <p className="text-sm text-muted-foreground p-4">Loading…</p>
