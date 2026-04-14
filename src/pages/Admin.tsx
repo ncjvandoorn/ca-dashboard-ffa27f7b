@@ -132,6 +132,66 @@ const Admin = () => {
     }
   };
 
+  const fetchAiLearnings = async () => {
+    setAiLearningsLoading(true);
+    const { data } = await supabase
+      .from("ai_learnings" as any)
+      .select("learnings")
+      .limit(1)
+      .maybeSingle();
+    setAiLearnings((data as any)?.learnings || "");
+    setAiLearningsLoading(false);
+  };
+
+  const saveAiLearnings = async () => {
+    setAiLearningsSaving(true);
+    try {
+      const { data: existing } = await supabase
+        .from("ai_learnings" as any)
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("ai_learnings" as any)
+          .update({ learnings: aiLearnings, updated_at: new Date().toISOString() } as any)
+          .eq("id", (existing as any).id);
+      } else {
+        await supabase
+          .from("ai_learnings" as any)
+          .insert({ learnings: aiLearnings } as any);
+      }
+      toast({ title: "Saved", description: "AI learnings updated successfully." });
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiLearningsSaving(false);
+    }
+  };
+
+  const generateLearnings = async () => {
+    setAiLearningsGenerating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-learnings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setAiLearnings(data.learnings || "");
+      toast({ title: "Learnings Generated", description: "AI learnings have been generated from past conversations. Review and save." });
+    } catch (err: any) {
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiLearningsGenerating(false);
+    }
+  };
+
   const fetchLogs = async () => {
     setLogsLoading(true);
     const { data } = await (supabase as any)
