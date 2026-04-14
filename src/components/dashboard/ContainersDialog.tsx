@@ -7,6 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Package, ArrowUp, ArrowDown, Search } from "lucide-react";
 import { useContainers } from "@/hooks/useQualityData";
 
+/** Compute YYWW week number (Sat–Fri cycle, week 1 contains Jan 1) */
+function getWeekNr(ts: number | null): string {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  // Shift so Saturday=day0: (day+1)%7
+  const shifted = new Date(d);
+  shifted.setDate(shifted.getDate() - ((shifted.getDay() + 1) % 7));
+  const year = shifted.getFullYear();
+  const jan1 = new Date(year, 0, 1);
+  const jan1Sat = new Date(jan1);
+  jan1Sat.setDate(jan1.getDate() - ((jan1.getDay() + 1) % 7));
+  const weekNum = Math.floor((shifted.getTime() - jan1Sat.getTime()) / (7 * 864e5)) + 1;
+  const yy = String(year).slice(-2);
+  return `${yy}${String(weekNum).padStart(2, "0")}`;
+}
+
 function formatDate(ts: number | null): string {
   if (!ts) return "—";
   return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -46,7 +62,8 @@ export function ContainersDialog() {
         c.containerNumber.toLowerCase().includes(q) ||
         c.shippingLineId.toLowerCase().includes(q) ||
         formatDate(c.dropoffDate).toLowerCase().includes(q) ||
-        formatDate(c.shippingDate).toLowerCase().includes(q)
+        formatDate(c.shippingDate).toLowerCase().includes(q) ||
+        getWeekNr(c.shippingDate).includes(q)
       );
     }
     return [...list].sort((a, b) => {
@@ -84,6 +101,7 @@ export function ContainersDialog() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Week</TableHead>
                   <TableHead>Booking Code</TableHead>
                   <TableHead>Container #</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dropoffDate")}>
@@ -98,6 +116,7 @@ export function ContainersDialog() {
               <TableBody>
                 {filtered.map((c) => (
                   <TableRow key={c.id}>
+                    <TableCell className="font-mono text-xs">{getWeekNr(c.shippingDate)}</TableCell>
                     <TableCell>{c.bookingCode}</TableCell>
                     <TableCell className="font-mono">{c.containerNumber}</TableCell>
                     <TableCell>{formatDate(c.dropoffDate)}</TableCell>
