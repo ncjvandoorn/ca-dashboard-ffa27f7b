@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Package } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Package, ArrowUp, ArrowDown, Search } from "lucide-react";
 import { useContainers } from "@/hooks/useQualityData";
 
 function formatDate(ts: number | null): string {
@@ -11,9 +12,49 @@ function formatDate(ts: number | null): string {
   return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+type SortField = "dropoffDate" | "shippingDate";
+type SortDir = "asc" | "desc";
+
 export function ContainersDialog() {
   const [open, setOpen] = useState(false);
   const { data: containers, isLoading } = useContainers();
+  const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<SortField>("shippingDate");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return null;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3 inline ml-1" /> : <ArrowDown className="h-3 w-3 inline ml-1" />;
+  };
+
+  const filtered = useMemo(() => {
+    if (!containers) return [];
+    const q = search.toLowerCase().trim();
+    let list = containers;
+    if (q) {
+      list = list.filter((c) =>
+        c.bookingCode.toLowerCase().includes(q) ||
+        c.containerNumber.toLowerCase().includes(q) ||
+        c.shippingLineId.toLowerCase().includes(q) ||
+        formatDate(c.dropoffDate).toLowerCase().includes(q) ||
+        formatDate(c.shippingDate).toLowerCase().includes(q)
+      );
+    }
+    return [...list].sort((a, b) => {
+      const av = a[sortField] ?? 0;
+      const bv = b[sortField] ?? 0;
+      return sortDir === "asc" ? av - bv : bv - av;
+    });
+  }, [containers, search, sortField, sortDir]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -25,9 +66,18 @@ export function ContainersDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Containers</DialogTitle>
+          <DialogTitle>Containers ({filtered.length})</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[60vh]">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search booking code, container, shipping line…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <ScrollArea className="h-[55vh]">
           {isLoading ? (
             <p className="text-sm text-muted-foreground p-4">Loading…</p>
           ) : (
@@ -36,13 +86,17 @@ export function ContainersDialog() {
                 <TableRow>
                   <TableHead>Booking Code</TableHead>
                   <TableHead>Container #</TableHead>
-                  <TableHead>Drop-off Date</TableHead>
-                  <TableHead>Shipping Date</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dropoffDate")}>
+                    Drop-off Date <SortIcon field="dropoffDate" />
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("shippingDate")}>
+                    Shipping Date <SortIcon field="shippingDate" />
+                  </TableHead>
                   <TableHead>Shipping Line ID</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(containers || []).map((c) => (
+                {filtered.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>{c.bookingCode}</TableCell>
                     <TableCell className="font-mono">{c.containerNumber}</TableCell>
