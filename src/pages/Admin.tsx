@@ -501,6 +501,59 @@ const Admin = () => {
           </CardContent>
         </Card>
 
+        {/* AI Learnings */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Brain className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">AI Learnings</CardTitle>
+                <CardDescription>
+                  Auto-generated insights from past AI Agent conversations. These are fed into the AI Agent to improve future responses. You can edit them manually or regenerate from recent conversations.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {aiLearningsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Textarea
+                  value={aiLearnings}
+                  onChange={(e) => setAiLearnings(e.target.value)}
+                  placeholder="No learnings generated yet. Click 'Generate from Conversations' to analyze past AI Agent interactions and extract actionable insights..."
+                  className="min-h-[200px] text-sm"
+                  maxLength={6000}
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">{aiLearnings.length} / 6000 characters</p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={generateLearnings}
+                      disabled={aiLearningsGenerating}
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      {aiLearningsGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Brain className="h-3.5 w-3.5" />}
+                      {aiLearningsGenerating ? "Analyzing…" : "Generate from Conversations"}
+                    </Button>
+                    <Button onClick={saveAiLearnings} disabled={aiLearningsSaving} size="sm" className="gap-2">
+                      {aiLearningsSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                      Save Learnings
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* CRM User Filter */}
         <Card className="mb-8">
           <CardHeader>
