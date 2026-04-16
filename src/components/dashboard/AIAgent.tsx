@@ -47,31 +47,63 @@ function compact(obj: Record<string, any>): Record<string, any> {
   return result;
 }
 
-/** Pre-aggregated CRM activity counts by user × type × status */
+/** Pre-aggregated CRM activity counts by user × type × status, with yearly breakdown */
 function buildActivitySummary(activities: Activity[], users: User[]) {
   const userMap = new Map(users.map((u) => [u.id, u.name]));
-  // keyed by userName -> { visits, calls, tasks, completed, open, byType: {Visit, Call, Task}, byStatus: {...} }
-  const byUser = new Map<string, { name: string; visits: number; calls: number; tasks: number; completed: number; open: number; total: number }>();
+
+  interface UserStats { name: string; visits: number; calls: number; tasks: number; completed: number; open: number; total: number }
+  const newStats = (): UserStats => ({ name: "", visits: 0, calls: 0, tasks: 0, completed: 0, open: 0, total: 0 });
+
+  const addActivity = (s: UserStats, a: Activity) => {
+    s.total++;
+    const typeLower = (a.type || "").toLowerCase();
+    if (typeLower === "visit") s.visits++;
+    else if (typeLower === "call") s.calls++;
+    else if (typeLower === "task") s.tasks++;
+    const statusLower = (a.status || "").toLowerCase();
+    if (statusLower === "completed") s.completed++;
+    else s.open++;
+  };
+
+  // Overall totals by user
+  const byUser = new Map<string, UserStats>();
+  // Per-year totals by user (key: "userId|year")
+  const byUserYear = new Map<string, UserStats>();
 
   for (const a of activities) {
     const uid = a.assignedUserId || a.ownerUserId;
     if (!uid) continue;
     const name = userMap.get(uid) || uid.slice(0, 8);
-    if (!byUser.has(uid)) byUser.set(uid, { name, visits: 0, calls: 0, tasks: 0, completed: 0, open: 0, total: 0 });
-    const u = byUser.get(uid)!;
-    u.total++;
-    const typeLower = (a.type || "").toLowerCase();
-    if (typeLower === "visit") u.visits++;
-    else if (typeLower === "call") u.calls++;
-    else if (typeLower === "task") u.tasks++;
-    const statusLower = (a.status || "").toLowerCase();
-    if (statusLower === "completed") u.completed++;
-    else u.open++;
+
+    // Overall
+    if (!byUser.has(uid)) { const s = newStats(); s.name = name; byUser.set(uid, s); }
+    addActivity(byUser.get(uid)!, a);
+
+    // By year (use startsAt or createdAt to determine year)
+    const ts = a.startsAt || a.createdAt;
+    if (ts) {
+      const year = new Date(ts).getFullYear();
+      const key = `${uid}|${year}`;
+      if (!byUserYear.has(key)) { const s = newStats(); s.name = name; byUserYear.set(key, s); }
+      addActivity(byUserYear.get(key)!, a);
+    }
+  }
+
+  // Build yearly breakdown grouped by year
+  const yearlyByUser: Record<number, UserStats[]> = {};
+  for (const [key, stats] of byUserYear) {
+    const year = parseInt(key.split("|")[1]);
+    if (!yearlyByUser[year]) yearlyByUser[year] = [];
+    yearlyByUser[year].push(stats);
+  }
+  for (const year of Object.keys(yearlyByUser)) {
+    yearlyByUser[parseInt(year)].sort((a, b) => b.total - a.total);
   }
 
   return {
     totalActivities: activities.length,
     byUser: Array.from(byUser.values()).sort((a, b) => b.total - a.total),
+    byYear: yearlyByUser,
   };
 }
 
