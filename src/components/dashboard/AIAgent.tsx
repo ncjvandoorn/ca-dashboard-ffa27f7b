@@ -47,6 +47,34 @@ function compact(obj: Record<string, any>): Record<string, any> {
   return result;
 }
 
+/** Pre-aggregated CRM activity counts by user × type × status */
+function buildActivitySummary(activities: Activity[], users: User[]) {
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
+  // keyed by userName -> { visits, calls, tasks, completed, open, byType: {Visit, Call, Task}, byStatus: {...} }
+  const byUser = new Map<string, { name: string; visits: number; calls: number; tasks: number; completed: number; open: number; total: number }>();
+
+  for (const a of activities) {
+    const uid = a.assignedUserId || a.ownerUserId;
+    if (!uid) continue;
+    const name = userMap.get(uid) || uid.slice(0, 8);
+    if (!byUser.has(uid)) byUser.set(uid, { name, visits: 0, calls: 0, tasks: 0, completed: 0, open: 0, total: 0 });
+    const u = byUser.get(uid)!;
+    u.total++;
+    const typeLower = (a.type || "").toLowerCase();
+    if (typeLower === "visit") u.visits++;
+    else if (typeLower === "call") u.calls++;
+    else if (typeLower === "task") u.tasks++;
+    const statusLower = (a.status || "").toLowerCase();
+    if (statusLower === "completed") u.completed++;
+    else u.open++;
+  }
+
+  return {
+    totalActivities: activities.length,
+    byUser: Array.from(byUser.values()).sort((a, b) => b.total - a.total),
+  };
+}
+
 /** Pre-aggregated staff report counts for attribution questions */
 function buildStaffSummary(reports: QualityReport[], users: User[]) {
   const userMap = new Map(users.map((u) => [u.id, u.name]));
@@ -144,6 +172,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
   }, [reports, accounts, activities, users]);
 
   const staffSummary = useMemo(() => buildStaffSummary(reports, users || []), [reports, users]);
+  const activitySummary = useMemo(() => buildActivitySummary(activities || [], users || []), [activities, users]);
 
   // Fetch recent weekly plans for AI context
   const [weeklyPlans, setWeeklyPlans] = useState<any[]>([]);
