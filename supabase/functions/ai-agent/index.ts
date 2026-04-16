@@ -115,7 +115,16 @@ When answering:
 
     // PRIORITY: Pre-aggregated activity counts FIRST — AI must use these, not count raw data
     if (activitySummary) {
-      contextParts.push(`**CRM ACTIVITY SUMMARY (AUTHORITATIVE — use these numbers for ALL counting questions, do NOT count raw activities yourself):**\nTotal activities: ${activitySummary.totalActivities}\nPer-user breakdown:\n${JSON.stringify(activitySummary.byUser, null, 2)}\n\nEach entry has: name, visits, calls, tasks, completed, open, total. These numbers are computed by code and are EXACT. Always cite these when asked about activity counts.`);
+      let summaryText = `**CRM ACTIVITY SUMMARY (AUTHORITATIVE — use these numbers for ALL counting questions, do NOT count raw activities yourself):**\nTotal activities across all years: ${activitySummary.totalActivities}\n\n**Overall per-user breakdown (all years combined):**\n${JSON.stringify(activitySummary.byUser, null, 2)}`;
+      
+      if (activitySummary.byYear) {
+        for (const [year, users] of Object.entries(activitySummary.byYear)) {
+          summaryText += `\n\n**Year ${year} per-user breakdown:**\n${JSON.stringify(users, null, 2)}`;
+        }
+      }
+      
+      summaryText += `\n\nEach entry has: name, visits, calls, tasks, completed, open, total. These numbers are computed by code and are EXACT. Always cite these when asked about activity counts. For YTD questions, use the year-specific breakdown.`;
+      contextParts.push(summaryText);
     }
 
     // Extract all activities from farmData for detail lookups (NOT for counting)
