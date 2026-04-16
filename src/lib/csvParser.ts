@@ -145,9 +145,9 @@ export async function loadActivities(): Promise<Activity[]> {
     status: row.status || "",
     subject: parseStr(row.subject) || "",
     description: parseStr(row.description) || "",
-    startsAt: parseNum(row.startsAt),
-    completedAt: parseNum(row.completedAt),
-    createdAt: parseNum(row.createdAt),
+    startsAt: parseDate(row.startsAt),
+    completedAt: parseDate(row.completedAt),
+    createdAt: parseDate(row.createdAt),
   }));
 }
 
@@ -167,8 +167,8 @@ export async function loadCustomerFarms(): Promise<CustomerFarm[]> {
     customerAccountId: row.customerAccountId || "",
     farmAccountId: row.farmAccountId || "",
     farmAccountConsent: row.farmAccountConsent || "",
-    createdAt: parseNum(row.createdAt),
-    deletedAt: parseNum(row.deletedAt),
+    createdAt: parseDate(row.createdAt),
+    deletedAt: parseDate(row.deletedAt),
   }));
 }
 
@@ -187,8 +187,8 @@ export async function loadContainers(): Promise<Container[]> {
     id: row.id,
     bookingCode: row.bookingCode || "",
     containerNumber: row.containerNumber || "",
-    dropoffDate: parseNum(row.dropoffDate),
-    shippingDate: parseNum(row.shippingDate),
+    dropoffDate: parseDate(row.dropoffDate),
+    shippingDate: parseDate(row.shippingDate),
     shippingLineId: row.shippingLineId || "",
   }));
 }
