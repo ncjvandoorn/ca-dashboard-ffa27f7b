@@ -2,27 +2,38 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { SFTrip } from "@/pages/ActiveSF";
 
-// Map raw SensiWatch API data to our SFTrip type
-// The exact field mapping will adapt once we see real API responses
-function mapApiTrip(raw: any): SFTrip {
+// Map a row from the sensiwatch_trip_latest view to our SFTrip type.
+function mapRow(row: any): SFTrip {
+  // Derive a status from recency of the last reading
+  let status = "Unknown";
+  if (row.last_device_time) {
+    const ageH = (Date.now() - new Date(row.last_device_time).getTime()) / 3600000;
+    if (ageH < 6) status = "In Transit";
+    else if (ageH < 72) status = "Idle";
+    else status = "Stale";
+  }
+  // Origin = first destination if present
+  const dests = Array.isArray(row.destinations) ? row.destinations : [];
+  const origin = dests[0] ?? {};
+
   return {
-    tripId: String(raw.TripId ?? raw.tripId ?? raw.Id ?? raw.id ?? ""),
-    tripStatus: raw.TripStatus ?? raw.tripStatus ?? raw.Status ?? raw.status ?? "Unknown",
-    internalTripId: raw.InternalTripId ?? raw.internalTripId ?? raw.OrderNumber ?? raw.orderNumber ?? "",
-    originName: raw.OriginName ?? raw.originName ?? raw.Origin ?? raw.origin ?? "",
-    originAddress: raw.OriginAddress ?? raw.originAddress ?? raw.Address ?? raw.address ?? "",
-    carrier: raw.Carrier ?? raw.carrier ?? "",
-    stops: raw.Stops ?? raw.stops ?? raw.NumberOfStops ?? 0,
-    plannedDepartureTime: raw.PlannedDepartureTime ?? raw.plannedDepartureTime ?? null,
-    actualDepartureTime: raw.ActualDepartureTime ?? raw.actualDepartureTime ?? null,
-    latitude: raw.Latitude ?? raw.latitude ?? raw.LastLatitude ?? raw.lastLatitude ?? null,
-    longitude: raw.Longitude ?? raw.longitude ?? raw.LastLongitude ?? raw.lastLongitude ?? null,
-    serialNumber: raw.SerialNumber ?? raw.serialNumber ?? raw.MonitorSerialNumber ?? null,
-    lastTemp: raw.LastTemp ?? raw.lastTemp ?? raw.Temperature ?? raw.temperature ?? null,
-    lastLight: raw.LastLight ?? raw.lastLight ?? raw.Light ?? raw.light ?? null,
-    lastHumidity: raw.LastHumidity ?? raw.lastHumidity ?? raw.Humidity ?? raw.humidity ?? null,
-    lastReadingTime: raw.LastReadingTime ?? raw.lastReadingTime ?? raw.LastUpdate ?? raw.lastUpdate ?? null,
-    lastLocation: raw.LastLocation ?? raw.lastLocation ?? raw.LocationAddress ?? raw.locationAddress ?? null,
+    tripId: String(row.trip_id ?? ""),
+    tripStatus: status,
+    internalTripId: row.internal_trip_id ?? "",
+    originName: origin.name ?? "",
+    originAddress: row.last_address ?? "",
+    carrier: row.mode_of_transport ?? "",
+    stops: dests.length,
+    plannedDepartureTime: null,
+    actualDepartureTime: row.last_device_time ?? null,
+    latitude: row.last_latitude,
+    longitude: row.last_longitude,
+    serialNumber: row.serial_number ?? null,
+    lastTemp: row.last_temp,
+    lastLight: row.last_light,
+    lastHumidity: row.last_humidity,
+    lastReadingTime: row.last_device_time ?? null,
+    lastLocation: row.last_address ?? null,
   };
 }
 
@@ -35,30 +46,15 @@ export function useSensiwatchTrips() {
     setIsLoading(true);
     setError(null);
     try {
-      const { data: result, error: fnError } = await supabase.functions.invoke("sensiwatch-data", {
-        body: { action: "search" },
-      });
+      const { data: rows, error: qErr } = await supabase
+        .from("sensiwatch_trip_latest" as any)
+        .select("*")
+        .order("last_device_time", { ascending: false, nullsFirst: false })
+        .limit(1000);
 
-      if (fnError) {
-        throw new Error(fnError.message || "Failed to fetch trips");
-      }
-
-      if (result?.error) {
-        throw new Error(result.error);
-      }
-
-      const trips = result?.trips ?? result ?? [];
-      const mapped = Array.isArray(trips) ? trips.map(mapApiTrip).filter((t: SFTrip) => t.tripId) : [];
-
-      // Deduplicate by tripId (keep first occurrence)
-      const seen = new Set<string>();
-      const unique = mapped.filter((t: SFTrip) => {
-        if (seen.has(t.tripId)) return false;
-        seen.add(t.tripId);
-        return true;
-      });
-
-      setData(unique);
+      if (qErr) throw new Error(qErr.message);
+      const mapped = (rows ?? []).map(mapRow).filter((t) => t.tripId);
+      setData(mapped);
     } catch (err: any) {
       console.error("SensiWatch fetch error:", err);
       setError(err?.message || "Unknown error");
@@ -68,48 +64,38 @@ export function useSensiwatchTrips() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchTrips();
-  }, [fetchTrips]);
+  useEffect(() => { fetchTrips(); }, [fetchTrips]);
 
   return { data, isLoading, error, refetch: fetchTrips };
 }
 
-// Fetch monitor readings for a specific trip (by serial number and date range)
-export function useSensiwatchReadings(serialNumber: string | null, departureTime: string | null) {
+// Fetch the time series of readings for a serial number from sensiwatch_reports.
+export function useSensiwatchReadings(serialNumber: string | null, _departureTime: string | null) {
   const [readings, setReadings] = useState<{ time: string; temp: number; light: number; humidity: number }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!serialNumber) {
-      setReadings([]);
-      return;
-    }
-
+    if (!serialNumber) { setReadings([]); return; }
     let cancelled = false;
-    const fetchReadings = async () => {
+    (async () => {
       setIsLoading(true);
       try {
-        // Try fetching by serial number
-        const { data: result, error: fnError } = await supabase.functions.invoke("sensiwatch-data", {
-          body: { serialNumber },
-        });
-
+        const { data: rows, error } = await supabase
+          .from("sensiwatch_reports" as any)
+          .select("last_device_time, last_temp, last_light, last_humidity")
+          .eq("serial_number", serialNumber)
+          .order("last_device_time", { ascending: true, nullsFirst: false })
+          .limit(1000);
         if (cancelled) return;
-
-        if (fnError || result?.error) {
-          console.warn("Could not fetch readings:", fnError?.message || result?.error);
-          setReadings([]);
-          return;
+        if (error) {
+          console.warn("Could not fetch readings:", error.message);
+          setReadings([]); return;
         }
-
-        // Parse readings from response - adapt to actual format
-        const raw = Array.isArray(result) ? result : (result?.readings ?? result?.data ?? []);
-        const mapped = raw.map((r: any) => ({
-          time: r.DateTime ?? r.dateTime ?? r.Time ?? r.time ?? "",
-          temp: r.Temperature ?? r.temperature ?? r.Temp ?? r.temp ?? 0,
-          light: r.Light ?? r.light ?? 0,
-          humidity: r.Humidity ?? r.humidity ?? 0,
+        const mapped = (rows ?? []).map((r: any) => ({
+          time: r.last_device_time ?? "",
+          temp: r.last_temp ?? 0,
+          light: r.last_light ?? 0,
+          humidity: r.last_humidity ?? 0,
         }));
         setReadings(mapped);
       } catch (err) {
@@ -118,9 +104,7 @@ export function useSensiwatchReadings(serialNumber: string | null, departureTime
       } finally {
         if (!cancelled) setIsLoading(false);
       }
-    };
-
-    fetchReadings();
+    })();
     return () => { cancelled = true; };
   }, [serialNumber]);
 

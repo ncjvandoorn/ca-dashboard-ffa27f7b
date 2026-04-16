@@ -1,0 +1,1 @@
+ALTER VIEW public.sensiwatch_trip_latest SET (security_invoker = true);
