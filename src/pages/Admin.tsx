@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import Papa from "papaparse";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -92,19 +93,61 @@ const Admin = () => {
     "container.csv": "containers",
   };
 
+  // Map CSV filenames to the columns that contain Unix-ms timestamps
+  const timestampColumns: Record<string, string[]> = {
+    "activity.csv": ["startsAt", "completedAt", "createdAt"],
+    "qualityReport.csv": ["createdAt", "submittedAt"],
+    "customerFarm.csv": ["createdAt", "deletedAt"],
+    "container.csv": ["dropoffDate", "shippingDate"],
+  };
+
+  /** Convert Unix-ms timestamp columns in a CSV file to ISO date strings before uploading */
+  const convertTimestampsInCsv = async (filename: string, file: File): Promise<File> => {
+    const cols = timestampColumns[filename];
+    if (!cols) return file; // no timestamp columns to convert (e.g. account.csv, user.csv)
+
+    const text = await file.text();
+    const parsed = Papa.parse(text, {
+      header: true,
+      skipEmptyLines: "greedy",
+      transformHeader: (h: string) => h.trim(),
+    });
+
+    const rows = parsed.data as Record<string, string>[];
+    for (const row of rows) {
+      for (const col of cols) {
+        const val = row[col];
+        if (!val || val.trim() === "") continue;
+        // Only convert if value looks like a Unix timestamp (all digits, > year 2000 in ms)
+        const num = Number(val);
+        if (!isNaN(num) && num > 946684800000) {
+          row[col] = new Date(num).toISOString();
+        }
+      }
+    }
+
+    const csv = Papa.unparse(rows);
+    return new File([csv], filename, { type: "text/csv" });
+  };
+
   const handleFileUpload = async (filename: string, file: File) => {
     setUploading(filename);
     try {
+      // Convert Unix timestamps to ISO dates for CSV files before storing
+      const processedFile = filename.endsWith(".csv")
+        ? await convertTimestampsInCsv(filename, file)
+        : file;
+
       const { error } = await supabase.storage
         .from("data-files")
-        .upload(filename, file, { upsert: true, cacheControl: "0" });
+        .upload(filename, processedFile, { upsert: true, cacheControl: "0" });
       if (error) throw error;
       // Invalidate the relevant react-query cache so the dashboard refreshes automatically
       const queryKey = fileQueryKeyMap[filename];
       if (queryKey) {
         await queryClient.invalidateQueries({ queryKey: [queryKey] });
       }
-      toast({ title: "Uploaded", description: `${filename} updated successfully. Dashboard data will refresh automatically.` });
+      toast({ title: "Uploaded", description: `${filename} updated successfully. Timestamps converted to readable dates.` });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
