@@ -82,18 +82,21 @@ const AllReports = () => {
       data = data.filter((r) => customerAllowedFarmIds.has(r.farmAccountId));
     }
 
-    if (selectedYear !== "all") {
+    // When searching, ignore year/farm/rating filters so all matching reports surface
+    const isSearching = search.trim().length > 0;
+
+    if (!isSearching && selectedYear !== "all") {
       const y = parseInt(selectedYear);
       data = data.filter((r) => weekYear(r.weekNr) === y);
     }
-    if (selectedFarm !== "all") {
+    if (!isSearching && selectedFarm !== "all") {
       data = data.filter((r) => r.farmAccountId === selectedFarm);
     }
-    if (selectedRating !== "all") {
+    if (!isSearching && selectedRating !== "all") {
       const rating = parseInt(selectedRating);
       data = data.filter((r) => r.qrGenQualityRating === rating);
     }
-    if (search.trim()) {
+    if (isSearching) {
       const q = search.toLowerCase();
       data = data.filter((r) => {
         const farmName = accountMap.get(r.farmAccountId) || "";
