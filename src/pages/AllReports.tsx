@@ -11,6 +11,7 @@ import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
 import { ReportDetailDialog } from "@/components/dashboard/ReportDetailDialog";
 import type { QualityReport } from "@/lib/csvParser";
+import { isVisibleFarmReport } from "@/lib/reportVisibility";
 
 function weekYear(weekNr: number): number {
   return Math.floor(weekNr / 100);
@@ -68,46 +69,51 @@ const AllReports = () => {
     return new Map(users.map((u) => [u.id, u.name]));
   }, [users]);
 
-  const availableYears = useMemo(() => {
+  const visibleReports = useMemo(() => {
     if (!reports) return [];
+    let data = reports.filter(isVisibleFarmReport);
+    if (customerAllowedFarmIds) {
+      data = data.filter((report) => customerAllowedFarmIds.has(report.farmAccountId));
+    }
+    return data;
+  }, [reports, customerAllowedFarmIds]);
+
+  const availableYears = useMemo(() => {
+    if (!visibleReports.length) return [];
     const years = new Set<number>();
-    for (const r of reports) if (r.weekNr > 0) years.add(weekYear(r.weekNr));
+    for (const report of visibleReports) years.add(weekYear(report.weekNr));
     return [...years].sort((a, b) => b - a);
-  }, [reports]);
+  }, [visibleReports]);
 
   const filtered = useMemo(() => {
-    if (!reports) return [];
-    let data = [...reports].filter((r) => r.weekNr > 0 && r.submittedAt);
-    if (customerAllowedFarmIds) {
-      data = data.filter((r) => customerAllowedFarmIds.has(r.farmAccountId));
-    }
+    let data = [...visibleReports];
 
     // When searching, ignore year/farm/rating filters so all matching reports surface
     const isSearching = search.trim().length > 0;
 
     if (!isSearching && selectedYear !== "all") {
       const y = parseInt(selectedYear);
-      data = data.filter((r) => weekYear(r.weekNr) === y);
+      data = data.filter((report) => weekYear(report.weekNr) === y);
     }
     if (!isSearching && selectedFarm !== "all") {
-      data = data.filter((r) => r.farmAccountId === selectedFarm);
+      data = data.filter((report) => report.farmAccountId === selectedFarm);
     }
     if (!isSearching && selectedRating !== "all") {
       const rating = parseInt(selectedRating);
-      data = data.filter((r) => r.qrGenQualityRating === rating);
+      data = data.filter((report) => report.qrGenQualityRating === rating);
     }
     if (isSearching) {
       const q = search.toLowerCase();
-      data = data.filter((r) => {
-        const farmName = accountMap.get(r.farmAccountId) || "";
-        const createdBy = userMap.get(r.createdByUserId || "") || "";
+      data = data.filter((report) => {
+        const farmName = accountMap.get(report.farmAccountId) || "";
+        const createdBy = userMap.get(report.createdByUserId || "") || "";
         return (
           farmName.toLowerCase().includes(q) ||
           createdBy.toLowerCase().includes(q) ||
-          String(r.weekNr).includes(q) ||
-          (r.qrGenQualityFlowers || "").toLowerCase().includes(q) ||
-          (r.qrGenProtocolChanges || "").toLowerCase().includes(q) ||
-          (r.generalComment || "").toLowerCase().includes(q)
+          String(report.weekNr).includes(q) ||
+          (report.qrGenQualityFlowers || "").toLowerCase().includes(q) ||
+          (report.qrGenProtocolChanges || "").toLowerCase().includes(q) ||
+          (report.generalComment || "").toLowerCase().includes(q)
         );
       });
     }
@@ -123,16 +129,13 @@ const AllReports = () => {
     });
 
     return data;
-  }, [reports, selectedYear, selectedFarm, selectedRating, search, accountMap, userMap]);
+  }, [visibleReports, selectedYear, selectedFarm, selectedRating, search, accountMap, userMap]);
 
   const farmsInData = useMemo(() => {
-    if (!reports || !accounts) return [];
-    const scopedReports = customerAllowedFarmIds
-      ? reports.filter((r) => customerAllowedFarmIds.has(r.farmAccountId))
-      : reports;
-    const ids = new Set(scopedReports.map((r) => r.farmAccountId));
-    return accounts.filter((a) => ids.has(a.id)).sort((a, b) => a.name.localeCompare(b.name));
-  }, [reports, accounts, customerAllowedFarmIds]);
+    if (!accounts) return [];
+    const ids = new Set(visibleReports.map((report) => report.farmAccountId));
+    return accounts.filter((account) => ids.has(account.id)).sort((a, b) => a.name.localeCompare(b.name));
+  }, [visibleReports, accounts]);
 
   const handleExport = useCallback(async () => {
     if (!tableRef.current) return;
