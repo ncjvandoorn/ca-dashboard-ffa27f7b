@@ -217,6 +217,14 @@ export function FarmAIInsights({ farmId, farmName, activities, reports, users, h
         activities={activities}
         analysis={analysis}
       />
+      <FarmReportsDialog
+        open={reportsOpen}
+        onOpenChange={setReportsOpen}
+        farmId={farmId}
+        farmName={farmName}
+        reports={reports}
+        users={users}
+      />
     </motion.div>
   );
 }
