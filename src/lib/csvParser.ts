@@ -73,6 +73,23 @@ function parseNum(val: string): number | null {
   return isNaN(n) ? null : n;
 }
 
+/** Parse a date field that may be a Unix-ms timestamp OR an ISO date string. Returns ms since epoch. */
+function parseDate(val: string): number | null {
+  if (!val || val.trim() === "") return null;
+  const trimmed = val.trim();
+  // If it looks like a number (Unix ms timestamp), parse as float
+  const num = Number(trimmed);
+  if (!isNaN(num) && trimmed.match(/^\d+(\.\d+)?$/)) {
+    return num;
+  }
+  // Otherwise try parsing as a date string (ISO 8601, etc.)
+  const d = new Date(trimmed);
+  if (!isNaN(d.getTime())) {
+    return d.getTime();
+  }
+  return null;
+}
+
 function parseStr(val: string): string | null {
   if (!val || val.trim() === "") return null;
   return val.trim();
