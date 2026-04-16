@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.sensiwatch-data]
 verify_jwt = false
+
+[functions.sensiwatch-push]
+verify_jwt = false
