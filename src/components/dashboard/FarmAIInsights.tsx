@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield, ClipboardList } from "lucide-react";
+import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield, ClipboardList, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
-import type { Activity } from "@/lib/csvParser";
+import { FarmReportsDialog } from "@/components/dashboard/FarmReportsDialog";
+import type { Activity, QualityReport, User } from "@/lib/csvParser";
 
 interface FarmInsight {
   farmId: string;
@@ -28,6 +29,8 @@ interface FarmAIInsightsProps {
   farmId: string;
   farmName: string;
   activities: Activity[];
+  reports: QualityReport[];
+  users: User[];
   hideActivity?: boolean;
 }
 
@@ -79,10 +82,11 @@ const statusConfig = {
   },
 };
 
-export function FarmAIInsights({ farmId, farmName, activities, hideActivity }: FarmAIInsightsProps) {
+export function FarmAIInsights({ farmId, farmName, activities, reports, users, hideActivity }: FarmAIInsightsProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
 
   useEffect(() => {
     async function loadCache() {
