@@ -113,7 +113,12 @@ When answering:
       contextParts.push(`**WEEKLY PLANNER DATA** (AI-generated action plans — use these to answer "were actions taken" questions):\n${JSON.stringify(weeklyPlans)}`);
     }
 
-    // Extract all activities from farmData into a dedicated top-level section
+    // PRIORITY: Pre-aggregated activity counts FIRST — AI must use these, not count raw data
+    if (activitySummary) {
+      contextParts.push(`**CRM ACTIVITY SUMMARY (AUTHORITATIVE — use these numbers for ALL counting questions, do NOT count raw activities yourself):**\nTotal activities: ${activitySummary.totalActivities}\nPer-user breakdown:\n${JSON.stringify(activitySummary.byUser, null, 2)}\n\nEach entry has: name, visits, calls, tasks, completed, open, total. These numbers are computed by code and are EXACT. Always cite these when asked about activity counts.`);
+    }
+
+    // Extract all activities from farmData for detail lookups (NOT for counting)
     if (farmData) {
       const allActivities: any[] = [];
       for (const farm of farmData) {
@@ -124,7 +129,7 @@ When answering:
         }
       }
       if (allActivities.length) {
-        contextParts.push(`**CRM ACTIVITIES** (${allActivities.length} total — actual visits, calls, tasks completed by the team. Use these to verify if weekly plan recommendations were followed up on):\n${JSON.stringify(allActivities)}`);
+        contextParts.push(`**CRM ACTIVITIES RAW DATA** (${allActivities.length} total — use for looking up specific activity details like subjects, dates, farms. DO NOT use for counting — use the ACTIVITY SUMMARY above instead):\n${JSON.stringify(allActivities)}`);
       } else {
         contextParts.push(`**CRM ACTIVITIES**: No CRM activity data available in the dataset.`);
       }
