@@ -79,10 +79,18 @@ function parseStr(val: string): string | null {
 }
 
 async function fetchCsv<T>(url: string, transform: (row: Record<string, string>) => T): Promise<T[]> {
-  const response = await fetch(url);
+  const response = await fetch(url, { cache: "no-store" });
   const text = await response.text();
-  const result = Papa.parse(text, { header: true, skipEmptyLines: true });
-  return (result.data as Record<string, string>[]).map(transform);
+  const result = Papa.parse(text, {
+    header: true,
+    skipEmptyLines: "greedy",      // skip lines that are empty or only whitespace
+    transformHeader: (h) => h.trim(), // trim whitespace from header names
+    quoteChar: '"',
+  });
+  // Filter out rows that have no id (likely parse artifacts from multiline fields)
+  return (result.data as Record<string, string>[])
+    .filter((row) => row.id && row.id.trim() !== "")
+    .map(transform);
 }
 
 export async function loadAccounts(): Promise<Account[]> {
