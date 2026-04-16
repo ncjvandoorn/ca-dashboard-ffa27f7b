@@ -1,12 +1,13 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ReportDetailDialog } from "@/components/dashboard/ReportDetailDialog";
-import type { QualityReport, Account, User } from "@/lib/csvParser";
+import type { QualityReport, User } from "@/lib/csvParser";
 
 interface FarmReportsDialogProps {
   open: boolean;
@@ -32,6 +33,42 @@ function ratingColor(v: number | null): string {
   return "text-muted-foreground";
 }
 
+function reportTimestamp(report: QualityReport): number | null {
+  return report.submittedAt ?? report.createdAt;
+}
+
+function hasVisibleReportData(report: QualityReport): boolean {
+  return [
+    report.qrGenQualityRating,
+    report.qrIntakePh,
+    report.qrIntakeEc,
+    report.qrIntakeHeadSize,
+    report.qrIntakeHumidityColdstore,
+    report.qrIntakeStemLength,
+    report.qrIntakeTempColdstore,
+    report.qrIntakeWaterQuality,
+    report.qrExportPh,
+    report.qrExportEc,
+    report.qrExportHumidityColdstore,
+    report.qrExportTempColdstore,
+    report.qrExportWaterQuality,
+    report.qrDispatchPackingQuality,
+    report.qrDispatchPackrate,
+    report.qrPackProcessingSpeed,
+    report.qrGenQualityFlowers,
+    report.qrGenDippingLocation,
+    report.qrGenProtocolChanges,
+    report.qrIntakeTreatment,
+    report.qrIntakeDippingStand,
+    report.qrIntakeUsingNets,
+    report.qrExportTreatment,
+    report.qrDispatchTruckType,
+    report.qrDispatchUsedLiner,
+    report.generalComment,
+    report.signoffName,
+  ].some((value) => value !== null && value !== "");
+}
+
 export function FarmReportsDialog({ open, onOpenChange, farmId, farmName, reports, users }: FarmReportsDialogProps) {
   const [selectedReport, setSelectedReport] = useState<QualityReport | null>(null);
 
@@ -39,8 +76,8 @@ export function FarmReportsDialog({ open, onOpenChange, farmId, farmName, report
 
   const farmReports = useMemo(() => {
     return reports
-      .filter((r) => r.farmAccountId === farmId && r.submittedAt && r.weekNr > 0)
-      .sort((a, b) => b.weekNr - a.weekNr);
+      .filter((report) => report.farmAccountId === farmId && report.weekNr > 0 && hasVisibleReportData(report))
+      .sort((a, b) => (b.weekNr - a.weekNr) || ((reportTimestamp(b) ?? 0) - (reportTimestamp(a) ?? 0)));
   }, [reports, farmId]);
 
   return (
@@ -48,41 +85,42 @@ export function FarmReportsDialog({ open, onOpenChange, farmId, farmName, report
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">
-              Reports — {farmName}
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {farmReports.length} submitted report{farmReports.length !== 1 ? "s" : ""}
-            </p>
+            <DialogTitle className="text-lg font-bold">Reports — {farmName}</DialogTitle>
+            <DialogDescription>
+              {farmReports.length} report{farmReports.length !== 1 ? "s" : ""} with recorded data
+            </DialogDescription>
           </DialogHeader>
           {farmReports.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
-              No submitted reports for this farm.
-            </p>
+            <p className="py-6 text-center text-sm text-muted-foreground">No reports with recorded data for this farm.</p>
           ) : (
             <div className="space-y-1">
-              {farmReports.map((r) => {
-                const createdBy = userMap.get(r.createdByUserId || "") || "—";
-                const date = r.submittedAt
-                  ? new Date(r.submittedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+              {farmReports.map((report) => {
+                const createdBy =
+                  userMap.get(report.submittedByUserId || "") ||
+                  userMap.get(report.createdByUserId || "") ||
+                  userMap.get(report.updatedByUserId || "") ||
+                  report.signoffName ||
+                  "—";
+                const timestamp = reportTimestamp(report);
+                const date = timestamp
+                  ? new Date(timestamp).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
                   : "—";
+
                 return (
                   <button
-                    key={r.id}
-                    onClick={() => setSelectedReport(r)}
-                    className="w-full text-left px-4 py-3 rounded-lg hover:bg-muted/50 transition-colors flex items-center justify-between gap-3 border border-transparent hover:border-border/50"
+                    key={report.id}
+                    onClick={() => setSelectedReport(report)}
+                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-transparent px-4 py-3 text-left transition-colors hover:border-border/50 hover:bg-muted/50"
                   >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <span className="font-mono text-sm font-semibold tabular-nums text-foreground w-12">
-                        {r.weekNr}
-                      </span>
+                    <div className="flex min-w-0 items-center gap-4">
+                      <span className="w-12 font-mono text-sm font-semibold tabular-nums text-foreground">{report.weekNr}</span>
                       <div className="min-w-0">
-                        <p className="text-sm text-foreground truncate">{createdBy}</p>
+                        <p className="truncate text-sm text-foreground">{createdBy}</p>
                         <p className="text-xs text-muted-foreground">{date}</p>
                       </div>
                     </div>
-                    <span className={`text-sm font-medium ${ratingColor(r.qrGenQualityRating)}`}>
-                      {ratingLabel(r.qrGenQualityRating)}
+                    <span className={`text-sm font-medium ${ratingColor(report.qrGenQualityRating)}`}>
+                      {ratingLabel(report.qrGenQualityRating)}
                     </span>
                   </button>
                 );
@@ -96,7 +134,9 @@ export function FarmReportsDialog({ open, onOpenChange, farmId, farmName, report
         farmName={farmName}
         createdByName={selectedReport ? userMap.get(selectedReport.createdByUserId || "") : undefined}
         open={!!selectedReport}
-        onOpenChange={(o) => { if (!o) setSelectedReport(null); }}
+        onOpenChange={(open) => {
+          if (!open) setSelectedReport(null);
+        }}
       />
     </>
   );
