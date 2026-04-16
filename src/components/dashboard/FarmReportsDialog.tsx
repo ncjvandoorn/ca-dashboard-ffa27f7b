@@ -3,11 +3,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ReportDetailDialog } from "@/components/dashboard/ReportDetailDialog";
 import type { QualityReport, User } from "@/lib/csvParser";
+import { getReportTimestamp, isVisibleFarmReport } from "@/lib/reportVisibility";
 
 interface FarmReportsDialogProps {
   open: boolean;
@@ -33,42 +33,6 @@ function ratingColor(v: number | null): string {
   return "text-muted-foreground";
 }
 
-function reportTimestamp(report: QualityReport): number | null {
-  return report.submittedAt ?? report.createdAt;
-}
-
-function hasVisibleReportData(report: QualityReport): boolean {
-  return [
-    report.qrGenQualityRating,
-    report.qrIntakePh,
-    report.qrIntakeEc,
-    report.qrIntakeHeadSize,
-    report.qrIntakeHumidityColdstore,
-    report.qrIntakeStemLength,
-    report.qrIntakeTempColdstore,
-    report.qrIntakeWaterQuality,
-    report.qrExportPh,
-    report.qrExportEc,
-    report.qrExportHumidityColdstore,
-    report.qrExportTempColdstore,
-    report.qrExportWaterQuality,
-    report.qrDispatchPackingQuality,
-    report.qrDispatchPackrate,
-    report.qrPackProcessingSpeed,
-    report.qrGenQualityFlowers,
-    report.qrGenDippingLocation,
-    report.qrGenProtocolChanges,
-    report.qrIntakeTreatment,
-    report.qrIntakeDippingStand,
-    report.qrIntakeUsingNets,
-    report.qrExportTreatment,
-    report.qrDispatchTruckType,
-    report.qrDispatchUsedLiner,
-    report.generalComment,
-    report.signoffName,
-  ].some((value) => value !== null && value !== "");
-}
-
 export function FarmReportsDialog({ open, onOpenChange, farmId, farmName, reports, users }: FarmReportsDialogProps) {
   const [selectedReport, setSelectedReport] = useState<QualityReport | null>(null);
 
@@ -76,20 +40,28 @@ export function FarmReportsDialog({ open, onOpenChange, farmId, farmName, report
 
   const farmReports = useMemo(() => {
     return reports
-      .filter((report) => report.farmAccountId === farmId && report.weekNr > 0 && hasVisibleReportData(report))
-      .sort((a, b) => (b.weekNr - a.weekNr) || ((reportTimestamp(b) ?? 0) - (reportTimestamp(a) ?? 0)));
+      .filter((report) => report.farmAccountId === farmId && isVisibleFarmReport(report))
+      .sort((a, b) => (b.weekNr - a.weekNr) || ((getReportTimestamp(b) ?? 0) - (getReportTimestamp(a) ?? 0)));
   }, [reports, farmId]);
+
+  const selectedReportAuthor = selectedReport
+    ? userMap.get(selectedReport.submittedByUserId || "") ||
+      userMap.get(selectedReport.createdByUserId || "") ||
+      userMap.get(selectedReport.updatedByUserId || "") ||
+      selectedReport.signoffName ||
+      undefined
+    : undefined;
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto" aria-describedby="farm-reports-description">
-          <DialogHeader>
+          <div className="flex flex-col space-y-1.5 text-center sm:text-left">
             <DialogTitle className="text-lg font-bold">Reports — {farmName}</DialogTitle>
-          </DialogHeader>
-          <DialogDescription id="farm-reports-description" className="mb-2">
-            {farmReports.length} report{farmReports.length !== 1 ? "s" : ""} with recorded data
-          </DialogDescription>
+            <DialogDescription id="farm-reports-description">
+              {farmReports.length} report{farmReports.length !== 1 ? "s" : ""} with recorded data
+            </DialogDescription>
+          </div>
           {farmReports.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">No reports with recorded data for this farm.</p>
           ) : (
@@ -101,7 +73,7 @@ export function FarmReportsDialog({ open, onOpenChange, farmId, farmName, report
                   userMap.get(report.updatedByUserId || "") ||
                   report.signoffName ||
                   "—";
-                const timestamp = reportTimestamp(report);
+                const timestamp = getReportTimestamp(report);
                 const date = timestamp
                   ? new Date(timestamp).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
                   : "—";
@@ -132,7 +104,7 @@ export function FarmReportsDialog({ open, onOpenChange, farmId, farmName, report
       <ReportDetailDialog
         report={selectedReport}
         farmName={farmName}
-        createdByName={selectedReport ? userMap.get(selectedReport.createdByUserId || "") : undefined}
+        createdByName={selectedReportAuthor}
         open={!!selectedReport}
         onOpenChange={(open) => {
           if (!open) setSelectedReport(null);

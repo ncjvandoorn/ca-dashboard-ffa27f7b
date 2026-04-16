@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { isVisibleFarmReport } from "@/lib/reportVisibility";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 
 function computeDelta(values: (number | null)[]): { text: string; type: "positive" | "negative" | "neutral" } {
@@ -145,40 +146,44 @@ const Index = () => {
     return activities.filter((a) => visibleFarmIds.has(a.accountId));
   }, [activities, visibleFarmIds]);
 
+  const visibleReports = useMemo(() => {
+    return scopedReports.filter(isVisibleFarmReport);
+  }, [scopedReports]);
+
   // Extract available years from scoped data
   const availableYears = useMemo(() => {
-    if (!scopedReports.length) return [];
+    if (!visibleReports.length) return [];
     const years = new Set<number>();
-    for (const r of scopedReports) {
-      if (r.weekNr > 0) years.add(weekYear(r.weekNr));
+    for (const report of visibleReports) {
+      years.add(weekYear(report.weekNr));
     }
     return [...years].sort((a, b) => b - a);
-  }, [scopedReports]);
+  }, [visibleReports]);
 
   // Filter reports by selected year inside the scoped visibility window
   const yearFilteredReports = useMemo(() => {
-    if (!scopedReports.length) return [];
+    if (!visibleReports.length) return [];
     return selectedYear === "all"
-      ? scopedReports
-      : scopedReports.filter((r) => weekYear(r.weekNr) === parseInt(selectedYear));
-  }, [scopedReports, selectedYear]);
+      ? visibleReports
+      : visibleReports.filter((report) => weekYear(report.weekNr) === parseInt(selectedYear));
+  }, [visibleReports, selectedYear]);
 
   // Farms that have data in the selected year, sorted alphabetically
   const farmsWithData = useMemo(() => {
     if (!scopedAccounts.length) return [];
-    const farmIds = new Set(yearFilteredReports.map((r) => r.farmAccountId));
-    return scopedAccounts.filter((a) => farmIds.has(a.id)).sort((a, b) => a.name.localeCompare(b.name));
+    const farmIds = new Set(yearFilteredReports.map((report) => report.farmAccountId));
+    return scopedAccounts.filter((account) => farmIds.has(account.id)).sort((a, b) => a.name.localeCompare(b.name));
   }, [scopedAccounts, yearFilteredReports]);
 
   // Auto-select first farm alphabetically when no valid selection exists
   const activeFarmId = useMemo(() => {
-    if (selectedFarmId && farmsWithData.some((f) => f.id === selectedFarmId)) return selectedFarmId;
+    if (selectedFarmId && farmsWithData.some((farm) => farm.id === selectedFarmId)) return selectedFarmId;
     return farmsWithData[0]?.id || "";
   }, [selectedFarmId, farmsWithData]);
 
   const farmReports = useMemo(() => {
     return yearFilteredReports
-      .filter((r) => r.farmAccountId === activeFarmId && r.weekNr > 0)
+      .filter((report) => report.farmAccountId === activeFarmId)
       .sort((a, b) => a.weekNr - b.weekNr);
   }, [yearFilteredReports, activeFarmId]);
 
