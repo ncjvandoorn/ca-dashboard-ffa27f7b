@@ -76,10 +76,21 @@ const Admin = () => {
   const { changePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: allAccounts } = useAccounts();
   const { data: allUsers } = useUsers();
   const { data: allActivities } = useActivities();
   const { data: customerFarms } = useCustomerFarms();
+
+  // Map filenames to react-query cache keys so we can invalidate after upload
+  const fileQueryKeyMap: Record<string, string> = {
+    "qualityReport.csv": "qualityReports",
+    "account.csv": "accounts",
+    "activity.csv": "activities",
+    "user.csv": "users",
+    "customerFarm.csv": "customerFarms",
+    "container.csv": "containers",
+  };
 
   const handleFileUpload = async (filename: string, file: File) => {
     setUploading(filename);
@@ -88,7 +99,12 @@ const Admin = () => {
         .from("data-files")
         .upload(filename, file, { upsert: true, cacheControl: "0" });
       if (error) throw error;
-      toast({ title: "Uploaded", description: `${filename} updated successfully. Refresh the dashboard to see changes.` });
+      // Invalidate the relevant react-query cache so the dashboard refreshes automatically
+      const queryKey = fileQueryKeyMap[filename];
+      if (queryKey) {
+        await queryClient.invalidateQueries({ queryKey: [queryKey] });
+      }
+      toast({ title: "Uploaded", description: `${filename} updated successfully. Dashboard data will refresh automatically.` });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
