@@ -233,6 +233,105 @@ export type Database = {
         }
         Relationships: []
       }
+      sensiwatch_activations: {
+        Row: {
+          activation_time: string | null
+          device_name: string | null
+          id: string
+          org_unit: string | null
+          raw: Json
+          received_at: string
+          serial_number: string | null
+        }
+        Insert: {
+          activation_time?: string | null
+          device_name?: string | null
+          id?: string
+          org_unit?: string | null
+          raw: Json
+          received_at?: string
+          serial_number?: string | null
+        }
+        Update: {
+          activation_time?: string | null
+          device_name?: string | null
+          id?: string
+          org_unit?: string | null
+          raw?: Json
+          received_at?: string
+          serial_number?: string | null
+        }
+        Relationships: []
+      }
+      sensiwatch_reports: {
+        Row: {
+          container_number: string | null
+          destinations: Json | null
+          device_name: string | null
+          id: string
+          internal_trip_id: string | null
+          last_address: string | null
+          last_device_time: string | null
+          last_humidity: number | null
+          last_latitude: number | null
+          last_light: number | null
+          last_longitude: number | null
+          last_receive_time: string | null
+          last_temp: number | null
+          mode_of_transport: string | null
+          raw: Json
+          received_at: string
+          serial_number: string | null
+          trailer_id: string | null
+          trip_guid: string | null
+          trip_id: string | null
+        }
+        Insert: {
+          container_number?: string | null
+          destinations?: Json | null
+          device_name?: string | null
+          id?: string
+          internal_trip_id?: string | null
+          last_address?: string | null
+          last_device_time?: string | null
+          last_humidity?: number | null
+          last_latitude?: number | null
+          last_light?: number | null
+          last_longitude?: number | null
+          last_receive_time?: string | null
+          last_temp?: number | null
+          mode_of_transport?: string | null
+          raw: Json
+          received_at?: string
+          serial_number?: string | null
+          trailer_id?: string | null
+          trip_guid?: string | null
+          trip_id?: string | null
+        }
+        Update: {
+          container_number?: string | null
+          destinations?: Json | null
+          device_name?: string | null
+          id?: string
+          internal_trip_id?: string | null
+          last_address?: string | null
+          last_device_time?: string | null
+          last_humidity?: number | null
+          last_latitude?: number | null
+          last_light?: number | null
+          last_longitude?: number | null
+          last_receive_time?: string | null
+          last_temp?: number | null
+          mode_of_transport?: string | null
+          raw?: Json
+          received_at?: string
+          serial_number?: string | null
+          trailer_id?: string | null
+          trip_guid?: string | null
+          trip_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -274,7 +373,29 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sensiwatch_trip_latest: {
+        Row: {
+          container_number: string | null
+          destinations: Json | null
+          device_name: string | null
+          internal_trip_id: string | null
+          last_address: string | null
+          last_device_time: string | null
+          last_humidity: number | null
+          last_latitude: number | null
+          last_light: number | null
+          last_longitude: number | null
+          last_receive_time: string | null
+          last_temp: number | null
+          mode_of_transport: string | null
+          received_at: string | null
+          serial_number: string | null
+          trailer_id: string | null
+          trip_guid: string | null
+          trip_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_role: {
