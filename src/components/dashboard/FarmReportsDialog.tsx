@@ -83,13 +83,13 @@ export function FarmReportsDialog({ open, onOpenChange, farmId, farmName, report
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto" aria-describedby="farm-reports-description">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">Reports — {farmName}</DialogTitle>
-            <DialogDescription>
-              {farmReports.length} report{farmReports.length !== 1 ? "s" : ""} with recorded data
-            </DialogDescription>
           </DialogHeader>
+          <DialogDescription id="farm-reports-description" className="mb-2">
+            {farmReports.length} report{farmReports.length !== 1 ? "s" : ""} with recorded data
+          </DialogDescription>
           {farmReports.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">No reports with recorded data for this farm.</p>
           ) : (
