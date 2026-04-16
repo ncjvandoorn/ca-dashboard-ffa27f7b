@@ -228,7 +228,7 @@ export async function loadQualityReports(): Promise<QualityReport[]> {
     qrDispatchUsedLiner: parseStr(row.qrDispatchUsedLiner),
     qrPackProcessingSpeed: parseNum(row.qrPackProcessingSpeed),
     signoffName: parseStr(row.signoffName),
-    submittedAt: parseNum(row.submittedAt),
+    submittedAt: parseDate(row.submittedAt),
     submittedByUserId: parseStr(row.submittedByUserId),
     createdByUserId: parseStr(row.createdById),
     updatedByUserId: parseStr(row.updatedById),
