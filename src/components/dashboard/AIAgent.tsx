@@ -235,6 +235,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
             farmData,
             staffSummary,
+            activitySummary,
             exceptionAnalysis: exceptionAnalysis || null,
             seasonalityAnalysis: seasonalityAnalysis || null,
             weeklyPlans: weeklyPlans.length > 0 ? weeklyPlans : null,
