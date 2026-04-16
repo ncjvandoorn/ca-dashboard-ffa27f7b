@@ -420,7 +420,7 @@ const Index = () => {
             </div>
 
             {/* AI Insights for selected farm */}
-            <FarmAIInsights farmId={activeFarmId} farmName={farmName} activities={activities || []} hideActivity={isCustomer} />
+            <FarmAIInsights farmId={activeFarmId} farmName={farmName} activities={activities || []} reports={reports || []} users={users || []} hideActivity={isCustomer} />
 
             {/* Quality Tables */}
             <QualityTables reports={farmReports} />

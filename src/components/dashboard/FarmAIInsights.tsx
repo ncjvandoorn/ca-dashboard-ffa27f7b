@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield, ClipboardList } from "lucide-react";
+import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield, ClipboardList, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
-import type { Activity } from "@/lib/csvParser";
+import { FarmReportsDialog } from "@/components/dashboard/FarmReportsDialog";
+import type { Activity, QualityReport, User } from "@/lib/csvParser";
 
 interface FarmInsight {
   farmId: string;
@@ -28,6 +29,8 @@ interface FarmAIInsightsProps {
   farmId: string;
   farmName: string;
   activities: Activity[];
+  reports: QualityReport[];
+  users: User[];
   hideActivity?: boolean;
 }
 
@@ -79,10 +82,11 @@ const statusConfig = {
   },
 };
 
-export function FarmAIInsights({ farmId, farmName, activities, hideActivity }: FarmAIInsightsProps) {
+export function FarmAIInsights({ farmId, farmName, activities, reports, users, hideActivity }: FarmAIInsightsProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(false);
 
   useEffect(() => {
     async function loadCache() {
@@ -123,15 +127,26 @@ export function FarmAIInsights({ farmId, farmName, activities, hideActivity }: F
       {farmInsight && config ? (
         <div className={`rounded-xl border p-5 ${config.border} ${config.bg} relative`}>
           {!hideActivity && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="absolute top-3 right-3 gap-1.5 text-xs"
-              onClick={() => setActivityOpen(true)}
-            >
-              <ClipboardList className="h-3.5 w-3.5" />
-              Activity
-            </Button>
+            <div className="absolute top-3 right-3 flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => setReportsOpen(true)}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Reports
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => setActivityOpen(true)}
+              >
+                <ClipboardList className="h-3.5 w-3.5" />
+                Activity
+              </Button>
+            </div>
           )}
           <div className="flex items-start gap-3 pr-24">
             <div className={`mt-0.5 p-1.5 rounded-full ${config.iconBg}`}>
@@ -167,15 +182,26 @@ export function FarmAIInsights({ farmId, farmName, activities, hideActivity }: F
       ) : (
         <div className="rounded-xl border border-border bg-muted/20 p-5 relative">
           {!hideActivity && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="absolute top-3 right-3 gap-1.5 text-xs"
-              onClick={() => setActivityOpen(true)}
-            >
-              <ClipboardList className="h-3.5 w-3.5" />
-              Activity
-            </Button>
+            <div className="absolute top-3 right-3 flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => setReportsOpen(true)}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Reports
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => setActivityOpen(true)}
+              >
+                <ClipboardList className="h-3.5 w-3.5" />
+                Activity
+              </Button>
+            </div>
           )}
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <Info className="w-4 h-4" />
@@ -190,6 +216,14 @@ export function FarmAIInsights({ farmId, farmName, activities, hideActivity }: F
         farmName={farmName}
         activities={activities}
         analysis={analysis}
+      />
+      <FarmReportsDialog
+        open={reportsOpen}
+        onOpenChange={setReportsOpen}
+        farmId={farmId}
+        farmName={farmName}
+        reports={reports}
+        users={users}
       />
     </motion.div>
   );
