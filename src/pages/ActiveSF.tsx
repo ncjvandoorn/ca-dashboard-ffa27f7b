@@ -64,7 +64,7 @@ const ActiveSF = () => {
     const containerMap = new Map(
       (containers || []).map((c) => [c.id, { bookingCode: c.bookingCode, containerNumber: c.containerNumber }] as const)
     );
-    const m = new Map<string, { customer: string; farm: string; dippingWeek: string; bookingCode: string; containerNumber: string }>();
+    const m = new Map<string, { customer: string; farm: string; dippingWeek: string; bookingCode: string; containerNumber: string; statusName: string }>();
     for (const o of servicesOrders || []) {
       if (!o.orderNumber) continue;
       const farmId = farmAccountId.get(o.farmAccountId) || o.farmAccountId;
@@ -75,6 +75,7 @@ const ActiveSF = () => {
         dippingWeek: o.dippingWeek || "",
         bookingCode: c?.bookingCode || "",
         containerNumber: c?.containerNumber || "",
+        statusName: o.statusName || "",
       });
     }
     return m;
@@ -87,7 +88,11 @@ const ActiveSF = () => {
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    let list = trips;
+    // Only show trips whose linked order has statusName "Sea Freight"
+    let list = trips.filter((t) => {
+      const info = lookupOrder(t.internalTripId);
+      return info?.statusName === "Sea Freight";
+    });
     if (q) {
       list = list.filter((t) =>
         t.tripId.toLowerCase().includes(q) ||
@@ -116,7 +121,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [trips, query, sortField, sortDir]);
+  }, [trips, query, sortField, sortDir, lookupOrder]);
 
   const tripsWithLocation = useMemo(
     () => filtered.filter((t) => t.latitude !== null && t.longitude !== null),
