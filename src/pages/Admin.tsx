@@ -51,6 +51,7 @@ const DATA_FILES = [
   { key: "servicesOrder.csv", label: "Services Orders", accept: ".csv", icon: FileText },
   { key: "shipperArrival.csv", label: "Shipper Arrivals", accept: ".csv", icon: FileText },
   { key: "shipperReport.csv", label: "Shipper Reports", accept: ".csv", icon: FileText },
+  { key: "shippingLine.csv", label: "Shipping Lines", accept: ".csv", icon: FileText },
 ] as const;
 
 const ALLOWED_FILENAMES = new Set(DATA_FILES.map((f) => f.key));
@@ -101,6 +102,7 @@ const Admin = () => {
     "servicesOrder.csv": "servicesOrders",
     "shipperArrival.csv": "shipperArrivals",
     "shipperReport.csv": "shipperReports",
+    "shippingLine.csv": "shippingLines",
   };
 
   // Map CSV filenames to the columns that contain Unix-ms timestamps
@@ -756,7 +758,7 @@ const Admin = () => {
               </div>
               <div>
                 <CardTitle className="text-lg">Data Files</CardTitle>
-                <CardDescription>Drop multiple files at once below — each is auto-routed by filename. Or use a single slot.</CardDescription>
+                <CardDescription>Drop multiple files at once — each is auto-routed by filename. Recognized: {DATA_FILES.map(f => f.key).join(", ")}.</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -804,46 +806,6 @@ const Admin = () => {
               </label>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-              {DATA_FILES.map(({ key, label, accept, icon: Icon }) => (
-                <div key={key} className="border border-border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{label}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground font-mono">{key}</p>
-                  <label className="block">
-                    <input
-                      type="file"
-                      accept={accept}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileUpload(key, file);
-                        e.target.value = "";
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full gap-2"
-                      disabled={uploading === key}
-                      asChild
-                    >
-                      <span>
-                        {uploading === key ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Upload className="h-3.5 w-3.5" />
-                        )}
-                        {uploading === key ? "Uploading…" : "Upload"}
-                      </span>
-                    </Button>
-                  </label>
-                </div>
-              ))}
-            </div>
           </CardContent>
         </Card>
 

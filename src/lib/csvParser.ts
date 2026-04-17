@@ -275,6 +275,19 @@ export interface ShipperReport {
   approvedMtAt: number | null;
 }
 
+export interface ShippingLine {
+  id: string;
+  name: string;
+}
+
+export async function loadShippingLines(): Promise<ShippingLine[]> {
+  const url = await getDataFileUrl("shippingLine.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    name: row.name || "Unknown",
+  }));
+}
+
 export async function loadShipperReports(): Promise<ShipperReport[]> {
   const url = await getDataFileUrl("shipperReport.csv");
   return fetchCsv(url, (row) => ({
