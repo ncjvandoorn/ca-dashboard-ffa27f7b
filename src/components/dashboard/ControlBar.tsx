@@ -3,7 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings, LogOut, FlaskConical, CalendarRange, Search, X } from "lucide-react";
+import { Settings, LogOut, FlaskConical, CalendarRange, Search, X, Menu, Package, Ship } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import type { Account, CustomerFarm } from "@/lib/csvParser";
 import chrysalLogo from "@/assets/chrysal-logo.png";
@@ -20,6 +27,7 @@ interface ControlBarProps {
   customerFarms: CustomerFarm[];
   selectedCustomerId: string;
   onCustomerChange: (id: string) => void;
+  onOpenContainers?: () => void;
 }
 
 function SearchableDropdown({
@@ -120,6 +128,7 @@ export function ControlBar({
   accounts, allAccounts, selectedFarmId, onFarmChange,
   years, selectedYear, onYearChange, farmCount,
   customerFarms, selectedCustomerId, onCustomerChange,
+  onOpenContainers,
 }: ControlBarProps) {
   const navigate = useNavigate();
   const { signOut, isAdmin, isCustomer, customerAccount } = useAuth();
@@ -217,24 +226,53 @@ export function ControlBar({
           </div>
         </div>
         <div className="flex items-center gap-1 border-l border-border pl-3">
-          {!isCustomer && (
-            <Button variant="ghost" size="icon" onClick={() => navigate("/planner")} title="Trial Planner">
-              <CalendarRange className="h-4 w-4" />
-            </Button>
-          )}
-          {(!isCustomer || customerAccount?.canSeeTrials) && (
-            <Button variant="ghost" size="icon" onClick={() => navigate("/trials")} title="Trials Dashboard">
-              <FlaskConical className="h-4 w-4" />
-            </Button>
-          )}
-          {isAdmin && (
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin Settings">
-              <Settings className="h-4 w-4" />
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" onClick={() => signOut()} title="Sign Out">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" title="Menu" aria-label="Open menu">
+                <Menu className="h-5 w-5 text-primary" strokeWidth={2.5} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-popover">
+              {!isCustomer && onOpenContainers && (
+                <DropdownMenuItem onClick={onOpenContainers}>
+                  <Package className="h-4 w-4 mr-2" />
+                  Containers
+                </DropdownMenuItem>
+              )}
+              {!isCustomer && (
+                <DropdownMenuItem onClick={() => navigate("/active-sf")}>
+                  <Ship className="h-4 w-4 mr-2" />
+                  Active SF
+                </DropdownMenuItem>
+              )}
+              {!isCustomer && (
+                <DropdownMenuItem onClick={() => navigate("/planner")}>
+                  <CalendarRange className="h-4 w-4 mr-2" />
+                  Trial Planner
+                </DropdownMenuItem>
+              )}
+              {(!isCustomer || customerAccount?.canSeeTrials) && (
+                <DropdownMenuItem onClick={() => navigate("/trials")}>
+                  <FlaskConical className="h-4 w-4 mr-2" />
+                  Trials Dashboard
+                </DropdownMenuItem>
+              )}
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/admin")}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => signOut()}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

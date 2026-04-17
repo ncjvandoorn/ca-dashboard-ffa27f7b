@@ -33,8 +33,16 @@ function formatDate(ts: number | null): string {
 type SortField = "dropoffDate" | "shippingDate" | "weekNr";
 type SortDir = "asc" | "desc";
 
-export function ContainersDialog() {
-  const [open, setOpen] = useState(false);
+interface ContainersDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}
+
+export function ContainersDialog({ open: controlledOpen, onOpenChange, hideTrigger }: ContainersDialogProps = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const { data: containers, isLoading } = useContainers();
   const [search, setSearch] = useState("");
   const [selectedWeek, setSelectedWeek] = useState<string>("all");
@@ -114,12 +122,14 @@ export function ContainersDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Package className="h-4 w-4" />
-          Containers
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Package className="h-4 w-4" />
+            Containers
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-3xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>Containers ({filtered.length})</DialogTitle>
