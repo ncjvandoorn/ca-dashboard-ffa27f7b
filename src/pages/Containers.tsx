@@ -255,8 +255,6 @@ export default function Containers() {
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("weekNr")}>
                     Week <SortIcon field="weekNr" />
                   </TableHead>
-                  <TableHead>Order #</TableHead>
-                  <TableHead>Farm</TableHead>
                   <TableHead>Booking Code</TableHead>
                   <TableHead>Container #</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dropoffDate")}>
@@ -269,25 +267,20 @@ export default function Containers() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((r) => {
-                  const farmName = r.order ? accountNameMap.get(r.order.farmAccountId) : null;
-                  return (
-                    <TableRow
-                      key={r.rowKey}
-                      className="cursor-pointer"
-                      onClick={() => setDetailContainerId(r.container.id)}
-                    >
-                      <TableCell className="font-mono text-xs">{getWeekNr(r.container.shippingDate)}</TableCell>
-                      <TableCell className="font-mono text-xs">{r.order?.orderNumber || "—"}</TableCell>
-                      <TableCell className="text-xs">{farmName || (r.order ? r.order.farmAccountId.slice(0, 8) : "—")}</TableCell>
-                      <TableCell>{r.container.bookingCode}</TableCell>
-                      <TableCell className="font-mono">{r.container.containerNumber}</TableCell>
-                      <TableCell>{formatDate(r.container.dropoffDate)}</TableCell>
-                      <TableCell>{formatDate(r.container.shippingDate)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{r.container.shippingLineId}</TableCell>
-                    </TableRow>
-                  );
-                })}
+                {filtered.map((r) => (
+                  <TableRow
+                    key={r.rowKey}
+                    className="cursor-pointer"
+                    onClick={() => setDetailContainerId(r.container.id)}
+                  >
+                    <TableCell className="font-mono text-xs">{getWeekNr(r.container.shippingDate)}</TableCell>
+                    <TableCell>{r.container.bookingCode}</TableCell>
+                    <TableCell className="font-mono">{r.container.containerNumber}</TableCell>
+                    <TableCell>{formatDate(r.container.dropoffDate)}</TableCell>
+                    <TableCell>{formatDate(r.container.shippingDate)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{r.container.shippingLineId}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           )}
