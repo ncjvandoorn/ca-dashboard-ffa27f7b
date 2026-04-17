@@ -11,16 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
 import chrysalLogo from "@/assets/chrysal-logo.png";
+import { stripLoggerSuffix, formatShortDate } from "@/lib/sfFormat";
 
-// Strip "-1", "-2" datalogger suffix from internal trip ID to get the order number
-export function stripLoggerSuffix(internalId: string): string {
-  return (internalId || "").replace(/-\d+$/, "");
-}
-
-export function formatShortDate(ts: number | null): string {
-  if (!ts) return "—";
-  return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-}
+export { stripLoggerSuffix, formatShortDate };
 
 export type SFTrip = {
   tripId: string;
