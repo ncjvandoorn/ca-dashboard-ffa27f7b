@@ -97,22 +97,15 @@ export default function Containers() {
   type Row = {
     rowKey: string;
     container: NonNullable<typeof containers>[number];
-    order: NonNullable<typeof servicesOrders>[number] | null;
+    orders: NonNullable<typeof servicesOrders>;
   };
   const rows = useMemo<Row[]>(() => {
     if (!containers) return [];
-    const out: Row[] = [];
-    for (const c of containers) {
-      const orders = ordersByContainer.get(c.id) || [];
-      if (orders.length === 0) {
-        out.push({ rowKey: c.id, container: c, order: null });
-      } else {
-        for (const o of orders) {
-          out.push({ rowKey: `${c.id}::${o.id}`, container: c, order: o });
-        }
-      }
-    }
-    return out;
+    return containers.map((c) => ({
+      rowKey: c.id,
+      container: c,
+      orders: ordersByContainer.get(c.id) || [],
+    }));
   }, [containers, ordersByContainer]);
 
   const weekOptions = useMemo(() => {
