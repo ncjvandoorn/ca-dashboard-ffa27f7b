@@ -192,12 +192,8 @@ const ActiveSF = () => {
                   </TableHead>
                   <TableHead>Internal Trip ID</TableHead>
                   <TableHead>Origin</TableHead>
-                  <TableHead>Destination</TableHead>
-                  <TableHead>Carrier</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("plannedDepartureTime")}>
-                    Planned Departure <SortIcon field="plannedDepartureTime" />
-                  </TableHead>
+                  <TableHead>Destination</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -214,12 +210,10 @@ const ActiveSF = () => {
                       <div className="font-medium text-sm">{trip.originName}</div>
                       <div className="text-xs text-muted-foreground">{trip.originAddress}</div>
                     </TableCell>
+                    <TableCell className="text-center">{trip.stops}</TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
                     </TableCell>
-                    <TableCell>{trip.carrier || "—"}</TableCell>
-                    <TableCell className="text-center">{trip.stops}</TableCell>
-                    <TableCell className="text-sm">{trip.plannedDepartureTime || "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
