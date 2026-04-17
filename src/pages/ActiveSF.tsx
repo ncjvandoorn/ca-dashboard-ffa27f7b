@@ -12,6 +12,7 @@ import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 import { stripLoggerSuffix, formatShortDate } from "@/lib/sfFormat";
+import { PageHeaderActions } from "@/components/PageHeaderActions";
 
 export { stripLoggerSuffix, formatShortDate };
 
