@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { ReportDetailDialog } from "@/components/dashboard/ReportDetailDialog";
 import type { QualityReport } from "@/lib/csvParser";
 import { isVisibleFarmReport } from "@/lib/reportVisibility";
+import { PageHeaderActions } from "@/components/PageHeaderActions";
 
 function weekYear(weekNr: number): number {
   return Math.floor(weekNr / 100);
