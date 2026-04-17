@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { SFTrip } from "@/pages/ActiveSF";
 import { lookupDestination } from "@/lib/destinationGeocodes";
+import { normalizeTempC } from "@/lib/sensorUnits";
 
 export type TripPathPoint = { lat: number; lon: number; time: string | null; address: string | null };
 export type TripPath = {
@@ -39,7 +40,7 @@ function mapRow(row: any): SFTrip {
     latitude: row.last_latitude,
     longitude: row.last_longitude,
     serialNumber: row.serial_number ?? null,
-    lastTemp: row.last_temp,
+    lastTemp: normalizeTempC(row.last_temp),
     lastLight: row.last_light,
     lastHumidity: row.last_humidity,
     lastReadingTime: row.last_device_time ?? null,
@@ -103,7 +104,7 @@ export function useSensiwatchReadings(serialNumber: string | null, _departureTim
         }
         const mapped = (rows ?? []).map((r: any) => ({
           time: r.last_device_time ?? "",
-          temp: r.last_temp ?? 0,
+          temp: normalizeTempC(r.last_temp) ?? 0,
           light: r.last_light ?? 0,
           humidity: r.last_humidity ?? 0,
         }));
