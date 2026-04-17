@@ -241,8 +241,8 @@ const ActiveSF = () => {
                   <TableHead>Drop-off</TableHead>
                   <TableHead>Shipping</TableHead>
                   <TableHead>Origin &amp; Current Location</TableHead>
-                  <TableHead className="text-center">Stops</TableHead>
                   <TableHead>Destination</TableHead>
+                  <TableHead className="text-center">Stops</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -270,10 +270,10 @@ const ActiveSF = () => {
                       <div className="font-medium text-sm">{trip.originName}</div>
                       <div className="text-xs text-muted-foreground">{trip.originAddress}</div>
                     </TableCell>
-                    <TableCell className="text-center">{trip.stops}</TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
                     </TableCell>
+                    <TableCell className="text-center">{trip.stops}</TableCell>
                   </TableRow>
                   );
                 })}
