@@ -189,14 +189,6 @@ export default function Containers() {
   const detailContainer = detailContainerId ? containers?.find((c) => c.id === detailContainerId) : null;
   const detailOrders = detailContainerId ? ordersByContainer.get(detailContainerId) || [] : [];
   const detailReports = detailContainerId ? reportsByContainer.get(detailContainerId) || [] : [];
-  const detailArrivals = useMemo(() => {
-    const out: { order: any; arrival: any }[] = [];
-    for (const o of detailOrders) {
-      const arrs = arrivalsByOrder.get(o.id) || [];
-      arrs.forEach((a) => out.push({ order: o, arrival: a }));
-    }
-    return out;
-  }, [detailOrders, arrivalsByOrder]);
 
   return (
     <div className="min-h-screen bg-background">
