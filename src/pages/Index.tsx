@@ -15,7 +15,7 @@ import { AIAgent } from "@/components/dashboard/AIAgent";
 import { ContainersDialog } from "@/components/dashboard/ContainersDialog";
 import { CRMReport } from "@/components/dashboard/CRMReport";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileDown, Ship } from "lucide-react";
+import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
@@ -345,13 +345,6 @@ const Index = () => {
               <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                 All Reports
               </Button>
-              {!isCustomer && <ContainersDialog />}
-              {!isCustomer && (
-                <Button variant="outline" size="sm" onClick={() => navigate("/active-sf")} className="gap-2">
-                  <Ship className="h-4 w-4" />
-                  Active SF
-                </Button>
-              )}
               {!isCustomer && (
                 <SeasonalityInsights
                   reports={yearFilteredReports}
