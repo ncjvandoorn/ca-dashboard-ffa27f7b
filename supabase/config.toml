@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.sensiwatch-push]
 verify_jwt = false
+
+[functions.sensiwatch-backfill]
+verify_jwt = false
