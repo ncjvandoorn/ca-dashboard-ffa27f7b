@@ -188,22 +188,7 @@ export default function Planner() {
                 <p className="text-sm text-muted-foreground mt-0.5">Capacity planner & trial overview</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Dashboard
-              </Button>
-              <div className="flex items-center gap-1 ml-2 border-l border-border pl-3">
-                {isAdmin && (
-                  <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} title="Admin Settings">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                )}
-                <Button variant="ghost" size="icon" onClick={() => signOut()} title="Sign Out">
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <PageHeaderActions />
           </div>
         </header>
 
