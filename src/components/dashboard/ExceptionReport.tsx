@@ -593,13 +593,13 @@ export function ExceptionReport({
             <div className="mt-4 flex flex-col items-center gap-2">
               {fromCache && (
                 <p className="text-xs text-muted-foreground">
-                  Loaded from cache · Generated this week
+                  Loaded from cache{cacheWeekNr ? ` · Week ${cacheWeekNr}` : ""}
                 </p>
               )}
-              {!hideRefresh && (
+              {isAdmin && !hideRefresh && (
                 <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
                   <RefreshCw className="h-3 w-3" />
-                  {fromCache ? "Refresh Analysis" : "Re-analyze"}
+                  {fromCache ? "Refresh Analysis (admin)" : "Re-analyze (admin)"}
                 </Button>
               )}
             </div>
