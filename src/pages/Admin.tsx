@@ -48,7 +48,12 @@ const DATA_FILES = [
   { key: "user.csv", label: "ALL Users", accept: ".csv", icon: FileText },
   { key: "customerFarm.csv", label: "Customer-Farm Links", accept: ".csv", icon: FileText },
   { key: "container.csv", label: "Containers", accept: ".csv", icon: FileText },
+  { key: "servicesOrder.csv", label: "Services Orders", accept: ".csv", icon: FileText },
+  { key: "shipperArrival.csv", label: "Shipper Arrivals", accept: ".csv", icon: FileText },
+  { key: "shipperReport.csv", label: "Shipper Reports", accept: ".csv", icon: FileText },
 ] as const;
+
+const ALLOWED_FILENAMES = new Set(DATA_FILES.map((f) => f.key));
 
 const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -59,6 +64,8 @@ const Admin = () => {
   const [questions, setQuestions] = useState<QuestionLog[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [aiInstructions, setAiInstructions] = useState("");
   const [aiInstructionsLoading, setAiInstructionsLoading] = useState(true);
   const [aiInstructionsSaving, setAiInstructionsSaving] = useState(false);
@@ -91,6 +98,9 @@ const Admin = () => {
     "user.csv": "users",
     "customerFarm.csv": "customerFarms",
     "container.csv": "containers",
+    "servicesOrder.csv": "servicesOrders",
+    "shipperArrival.csv": "shipperArrivals",
+    "shipperReport.csv": "shipperReports",
   };
 
   // Map CSV filenames to the columns that contain Unix-ms timestamps
@@ -99,6 +109,9 @@ const Admin = () => {
     "qualityReport.csv": ["createdAt", "submittedAt"],
     "customerFarm.csv": ["createdAt", "deletedAt"],
     "container.csv": ["dropoffDate", "shippingDate"],
+    "servicesOrder.csv": ["dippingDate", "openedAt", "closedAt", "approvedCsAt", "approvedMtAt", "cancelledAt", "createdAt", "updatedAt", "deletedAt"],
+    "shipperArrival.csv": ["arrivalDate", "createdAt", "updatedAt", "deletedAt"],
+    "shipperReport.csv": ["stuffingDate", "approvedMtAt", "createdAt", "updatedAt", "deletedAt", "closedAt"],
   };
 
   /** Convert Unix-ms timestamp columns in a CSV file to ISO date strings before uploading */
