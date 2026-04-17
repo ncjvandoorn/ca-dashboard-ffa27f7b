@@ -218,7 +218,7 @@ export function ControlBar({
           </div>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-foreground">
-              Quality & Trials
+              Chrysal Intelligence
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Quality & trial insights at a glance
