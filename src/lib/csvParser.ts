@@ -193,6 +193,101 @@ export async function loadContainers(): Promise<Container[]> {
   }));
 }
 
+export interface ServicesOrder {
+  id: string;
+  orderNumber: string;
+  containerId: string;
+  customerAccountId: string;
+  farmAccountId: string;
+  dippingDate: number | null;
+  dippingWeek: string;
+  pallets: number | null;
+  forecast: number | null;
+  statusName: string;
+  purposeName: string;
+  shipperReportId: string;
+  qualityReportId: string;
+}
+
+export async function loadServicesOrders(): Promise<ServicesOrder[]> {
+  const url = await getDataFileUrl("servicesOrder.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    orderNumber: row.orderNumber || "",
+    containerId: row.containerId || "",
+    customerAccountId: row.customerAccountId || "",
+    farmAccountId: row.farmAccountId || "",
+    dippingDate: parseDate(row.dippingDate),
+    dippingWeek: row.dippingWeek || "",
+    pallets: parseNum(row.pallets),
+    forecast: parseNum(row.forecast),
+    statusName: row.statusName || "",
+    purposeName: row.purposeName || "",
+    shipperReportId: row.shipperReportId || "",
+    qualityReportId: row.qualityReportId || "",
+  }));
+}
+
+export interface ShipperArrival {
+  id: string;
+  servicesOrderId: string;
+  arrivalDate: number | null;
+  dischargeWaitingMin: number | null;
+  gensetOffMoment: string | null;
+  arrivalTemp1: number | null;
+  arrivalTemp2: number | null;
+  arrivalTemp3: number | null;
+  afterVc1Temp: number | null;
+  afterVc2Temp: number | null;
+  afterVc3Temp: number | null;
+  specificComments: string | null;
+  vcCycles: number | null;
+  vcDurationMin: number | null;
+}
+
+export async function loadShipperArrivals(): Promise<ShipperArrival[]> {
+  const url = await getDataFileUrl("shipperArrival.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    servicesOrderId: row.servicesOrderId || "",
+    arrivalDate: parseDate(row.arrivalDate),
+    dischargeWaitingMin: parseNum(row.dischargeWaitingMin),
+    gensetOffMoment: parseStr(row.gensetOffMoment),
+    arrivalTemp1: parseNum(row.arrivalTemp1),
+    arrivalTemp2: parseNum(row.arrivalTemp2),
+    arrivalTemp3: parseNum(row.arrivalTemp3),
+    afterVc1Temp: parseNum(row.afterVc1Temp),
+    afterVc2Temp: parseNum(row.afterVc2Temp),
+    afterVc3Temp: parseNum(row.afterVc3Temp),
+    specificComments: parseStr(row.specificComments),
+    vcCycles: parseNum(row.vcCycles),
+    vcDurationMin: parseNum(row.vcDurationMin),
+  }));
+}
+
+export interface ShipperReport {
+  id: string;
+  weekNr: string;
+  containerId: string;
+  stuffingDate: number | null;
+  loadingMin: number | null;
+  generalComments: string | null;
+  approvedMtAt: number | null;
+}
+
+export async function loadShipperReports(): Promise<ShipperReport[]> {
+  const url = await getDataFileUrl("shipperReport.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    weekNr: row.weekNr || "",
+    containerId: row.containerId || "",
+    stuffingDate: parseDate(row.stuffingDate),
+    loadingMin: parseNum(row.loadingMin),
+    generalComments: parseStr(row.generalComments),
+    approvedMtAt: parseDate(row.approvedMtAt),
+  }));
+}
+
 export async function loadQualityReports(): Promise<QualityReport[]> {
   const url = await getDataFileUrl("qualityReport.csv");
   return fetchCsv(url, (row) => ({
