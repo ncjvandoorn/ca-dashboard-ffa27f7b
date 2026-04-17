@@ -222,12 +222,6 @@ const ActiveSF = () => {
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead>Week</TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("tripId")}>
-                    Trip ID <SortIcon field="tripId" />
-                  </TableHead>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("tripStatus")}>
-                    Trip Status <SortIcon field="tripStatus" />
-                  </TableHead>
                   <TableHead>Internal Trip ID</TableHead>
                   <TableHead>Order / Farm</TableHead>
                   <TableHead>Booking</TableHead>
@@ -249,8 +243,6 @@ const ActiveSF = () => {
                     <TableCell className="font-semibold text-sm">
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                     </TableCell>
-                    <TableCell className="font-semibold text-primary">{trip.tripId}</TableCell>
-                    <TableCell>{statusBadge(trip.tripStatus)}</TableCell>
                     <TableCell className="font-mono text-xs">{trip.internalTripId}</TableCell>
                     <TableCell>
                       {!info ? <span className="text-xs text-muted-foreground">—</span> : (
