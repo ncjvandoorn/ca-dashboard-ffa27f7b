@@ -221,7 +221,7 @@ export function ControlBar({
               Chrysal Intelligence
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Quality & trial insights at a glance
+              Quality, Sea Freight & trial insights
             </p>
           </div>
         </div>
