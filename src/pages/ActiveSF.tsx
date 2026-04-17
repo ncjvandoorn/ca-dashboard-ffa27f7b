@@ -12,6 +12,7 @@ import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 import { stripLoggerSuffix, formatShortDate } from "@/lib/sfFormat";
+import { PageHeaderActions } from "@/components/PageHeaderActions";
 
 export { stripLoggerSuffix, formatShortDate };
 
@@ -169,13 +170,10 @@ const ActiveSF = () => {
       <div className="max-w-[1400px] mx-auto px-6 py-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-2">
-            <ArrowLeft className="h-4 w-4" /> Dashboard
-          </Button>
           <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0">
             <img src={chrysalLogo} alt="Chrysal" className="h-6 w-auto max-w-none block shrink-0" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
               <Ship className="h-5 w-5 text-primary" />
               Active Sea Freight
@@ -184,6 +182,7 @@ const ActiveSF = () => {
               Live datalogger tracking for sea freight containers
             </p>
           </div>
+          <PageHeaderActions />
         </div>
 
         {/* Error banner */}

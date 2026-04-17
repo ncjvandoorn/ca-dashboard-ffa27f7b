@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowUp, ArrowDown, Search, FileDown, ArrowLeft } from "lucide-react";
+import { PageHeaderActions } from "@/components/PageHeaderActions";
 import {
   useContainers,
   useServicesOrders,
@@ -212,10 +213,7 @@ export default function Containers() {
             <h1 className="text-2xl font-bold">Containers ({filtered.length})</h1>
             <p className="text-sm text-muted-foreground">Container shipments, linked orders, and arrivals.</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to dashboard
-          </Button>
+          <PageHeaderActions />
         </div>
 
         <div className="flex gap-2 mb-4">

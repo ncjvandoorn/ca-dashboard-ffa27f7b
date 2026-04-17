@@ -1,24 +1,15 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, FlaskConical } from "lucide-react";
+import { FlaskConical } from "lucide-react";
+import { PageHeaderActions } from "@/components/PageHeaderActions";
 
 export default function TrialsDashboard() {
-  const navigate = useNavigate();
-  const { signOut } = useAuth();
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-lg font-semibold flex items-center gap-2">
-            <FlaskConical className="h-5 w-5 text-primary" />
-            Trials Dashboard
-          </h1>
-        </div>
+        <h1 className="text-lg font-semibold flex items-center gap-2">
+          <FlaskConical className="h-5 w-5 text-primary" />
+          Trials Dashboard
+        </h1>
+        <PageHeaderActions />
       </header>
 
       <main className="flex flex-col items-center justify-center py-32 px-6 text-center">
