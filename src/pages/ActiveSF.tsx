@@ -55,26 +55,36 @@ const ActiveSF = () => {
   const { data: customerFarms } = useCustomerFarms();
   const { data: containers } = useContainers();
 
-  // Map orderNumber -> { customerName, farmName, dippingWeek, bookingCode, containerNumber }
+  // Map orderNumber -> { customerName, farmName, dippingWeek, bookingCode, containerNumber, containerId, dropoffDate, shippingDate, purposeName, orderId }
   const orderInfo = useMemo(() => {
     const accountMap = new Map((accounts || []).map((a) => [a.id, a.name] as const));
     const farmAccountId = new Map(
       (customerFarms || []).map((f) => [f.id, f.farmAccountId] as const)
     );
     const containerMap = new Map(
-      (containers || []).map((c) => [c.id, { bookingCode: c.bookingCode, containerNumber: c.containerNumber }] as const)
+      (containers || []).map((c) => [c.id, c] as const)
     );
-    const m = new Map<string, { customer: string; farm: string; dippingWeek: string; bookingCode: string; containerNumber: string; purposeName: string }>();
+    const m = new Map<string, {
+      orderId: string;
+      customer: string; farm: string; dippingWeek: string;
+      bookingCode: string; containerNumber: string; containerId: string;
+      dropoffDate: number | null; shippingDate: number | null;
+      purposeName: string;
+    }>();
     for (const o of servicesOrders || []) {
       if (!o.orderNumber) continue;
       const farmId = farmAccountId.get(o.farmAccountId) || o.farmAccountId;
       const c = containerMap.get(o.containerId);
       m.set(o.orderNumber, {
+        orderId: o.id,
         customer: accountMap.get(o.customerAccountId) || "",
         farm: accountMap.get(farmId) || "",
         dippingWeek: o.dippingWeek || "",
         bookingCode: c?.bookingCode || "",
         containerNumber: c?.containerNumber || "",
+        containerId: o.containerId || "",
+        dropoffDate: c?.dropoffDate ?? null,
+        shippingDate: c?.shippingDate ?? null,
         purposeName: o.purposeName || "",
       });
     }
@@ -232,6 +242,8 @@ const ActiveSF = () => {
                   <TableHead>Booking</TableHead>
                   <TableHead>Container #</TableHead>
                   <TableHead>Origin</TableHead>
+                  <TableHead>Drop-off</TableHead>
+                  <TableHead>Shipping</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
                   <TableHead>Destination</TableHead>
                 </TableRow>
@@ -267,6 +279,8 @@ const ActiveSF = () => {
                       <div className="font-medium text-sm">{trip.originName}</div>
                       <div className="text-xs text-muted-foreground">{trip.originAddress}</div>
                     </TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.dropoffDate ?? null)}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.shippingDate ?? null)}</TableCell>
                     <TableCell className="text-center">{trip.stops}</TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
