@@ -162,7 +162,7 @@ export default function Containers() {
         return (
           r.container.bookingCode.toLowerCase().includes(q) ||
           r.container.containerNumber.toLowerCase().includes(q) ||
-          r.container.shippingLineId.toLowerCase().includes(q) ||
+          shippingLineName(r.container.shippingLineId).toLowerCase().includes(q) ||
           formatDate(r.container.dropoffDate).toLowerCase().includes(q) ||
           formatDate(r.container.shippingDate).toLowerCase().includes(q) ||
           getWeekNr(r.container.shippingDate).includes(q) ||
@@ -280,7 +280,7 @@ export default function Containers() {
                     <TableCell className="font-mono">{r.container.containerNumber}</TableCell>
                     <TableCell>{formatDate(r.container.dropoffDate)}</TableCell>
                     <TableCell>{formatDate(r.container.shippingDate)}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{r.container.shippingLineId}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{shippingLineName(r.container.shippingLineId)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -303,7 +303,7 @@ export default function Containers() {
                   <div className="text-muted-foreground">Week</div><div className="font-mono">{getWeekNr(detailContainer.shippingDate)}</div>
                   <div className="text-muted-foreground">Drop-off</div><div>{formatDate(detailContainer.dropoffDate)}</div>
                   <div className="text-muted-foreground">Shipping</div><div>{formatDate(detailContainer.shippingDate)}</div>
-                  <div className="text-muted-foreground">Shipping Line</div><div className="font-mono text-[10px]">{detailContainer.shippingLineId || "—"}</div>
+                  <div className="text-muted-foreground">Shipping Line</div><div>{detailContainer.shippingLineId ? shippingLineName(detailContainer.shippingLineId) : "—"}</div>
                 </div>
               </section>
 
