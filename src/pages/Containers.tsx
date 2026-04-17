@@ -213,10 +213,7 @@ export default function Containers() {
             <h1 className="text-2xl font-bold">Containers ({filtered.length})</h1>
             <p className="text-sm text-muted-foreground">Container shipments, linked orders, and arrivals.</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to dashboard
-          </Button>
+          <PageHeaderActions />
         </div>
 
         <div className="flex gap-2 mb-4">
