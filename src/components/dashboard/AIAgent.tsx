@@ -346,6 +346,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             exceptionAnalysis: exceptionAnalysis || null,
             seasonalityAnalysis: seasonalityAnalysis || null,
             weeklyPlans: weeklyPlans.length > 0 ? weeklyPlans : null,
+            logisticsData: logisticsData || null,
           }),
         });
 
