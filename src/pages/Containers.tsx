@@ -142,7 +142,13 @@ export default function Containers() {
     }
     if (q) {
       list = list.filter((r) => {
-        const farmName = r.order ? accountNameMap.get(r.order.farmAccountId) || "" : "";
+        const orderHit = r.orders.some((o) => {
+          const farmName = accountNameMap.get(o.farmAccountId) || "";
+          return (
+            (o.orderNumber || "").toLowerCase().includes(q) ||
+            farmName.toLowerCase().includes(q)
+          );
+        });
         return (
           r.container.bookingCode.toLowerCase().includes(q) ||
           r.container.containerNumber.toLowerCase().includes(q) ||
@@ -150,8 +156,7 @@ export default function Containers() {
           formatDate(r.container.dropoffDate).toLowerCase().includes(q) ||
           formatDate(r.container.shippingDate).toLowerCase().includes(q) ||
           getWeekNr(r.container.shippingDate).includes(q) ||
-          (r.order?.orderNumber || "").toLowerCase().includes(q) ||
-          farmName.toLowerCase().includes(q)
+          orderHit
         );
       });
     }
