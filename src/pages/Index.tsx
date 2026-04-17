@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAccounts, useQualityReports, useActivities, useUsers, useCustomerFarms } from "@/hooks/useQualityData";
+import { useAccounts, useQualityReports, useActivities, useUsers, useCustomerFarms, useContainers, useServicesOrders, useShipperArrivals, useShipperReports } from "@/hooks/useQualityData";
 import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -55,6 +55,10 @@ const Index = () => {
   const { data: activities } = useActivities();
   const { data: users } = useUsers();
   const { data: customerFarms } = useCustomerFarms();
+  const { data: containers } = useContainers();
+  const { data: servicesOrders } = useServicesOrders();
+  const { data: shipperArrivals } = useShipperArrivals();
+  const { data: shipperReports } = useShipperReports();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
@@ -326,6 +330,10 @@ const Index = () => {
                 users={isCustomer ? [] : (users || [])}
                 exceptionAnalysis={visibleFarmIds ? null : exceptionAnalysis}
                 seasonalityAnalysis={visibleFarmIds ? null : seasonalityAnalysis}
+                containers={isCustomer ? [] : (containers || [])}
+                servicesOrders={isCustomer ? [] : (servicesOrders || [])}
+                shipperArrivals={isCustomer ? [] : (shipperArrivals || [])}
+                shipperReports={isCustomer ? [] : (shipperReports || [])}
               />
               {!isCustomer && (
                 <CRMReport

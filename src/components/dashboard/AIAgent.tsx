@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { QualityReport, Account, Activity, User } from "@/lib/csvParser";
+import type { QualityReport, Account, Activity, User, Container, ServicesOrder, ShipperArrival, ShipperReport } from "@/lib/csvParser";
 
 interface AIAgentProps {
   reports: QualityReport[];
@@ -24,6 +24,10 @@ interface AIAgentProps {
   users?: User[];
   exceptionAnalysis?: any;
   seasonalityAnalysis?: any;
+  containers?: Container[];
+  servicesOrders?: ServicesOrder[];
+  shipperArrivals?: ShipperArrival[];
+  shipperReports?: ShipperReport[];
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -165,7 +169,7 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[], use
   return summaries;
 }
 
-export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis }: AIAgentProps) {
+export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis, containers, servicesOrders, shipperArrivals, shipperReports }: AIAgentProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
