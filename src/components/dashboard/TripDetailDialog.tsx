@@ -193,7 +193,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                         </div>
                         <div className="text-xs text-muted-foreground grid grid-cols-3 gap-1 pt-1">
                           <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
-                          <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
+                          <span>Forecast: <span className="text-foreground">{typeof o.forecast === "number" ? o.forecast.toLocaleString("de-DE") : (o.forecast ?? "—")}</span></span>
                           <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
                         </div>
                         {arrival && (
