@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
+import { useServicesOrders, useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +11,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
 import chrysalLogo from "@/assets/chrysal-logo.png";
+
+// Strip "-1", "-2" datalogger suffix from internal trip ID to get the order number
+export function stripLoggerSuffix(internalId: string): string {
+  return (internalId || "").replace(/-\d+$/, "");
+}
 
 export type SFTrip = {
   tripId: string;
@@ -44,6 +50,33 @@ const ActiveSF = () => {
   const [selectedTrip, setSelectedTrip] = useState<SFTrip | null>(null);
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
+  const { data: servicesOrders } = useServicesOrders();
+  const { data: accounts } = useAccounts();
+  const { data: customerFarms } = useCustomerFarms();
+
+  // Map orderNumber -> { customerName, farmName, dippingWeek }
+  const orderInfo = useMemo(() => {
+    const accountMap = new Map((accounts || []).map((a) => [a.id, a.name] as const));
+    const farmAccountId = new Map(
+      (customerFarms || []).map((f) => [f.id, f.farmAccountId] as const)
+    );
+    const m = new Map<string, { customer: string; farm: string; dippingWeek: string }>();
+    for (const o of servicesOrders || []) {
+      if (!o.orderNumber) continue;
+      const farmId = farmAccountId.get(o.farmAccountId) || o.farmAccountId;
+      m.set(o.orderNumber, {
+        customer: accountMap.get(o.customerAccountId) || "",
+        farm: accountMap.get(farmId) || "",
+        dippingWeek: o.dippingWeek || "",
+      });
+    }
+    return m;
+  }, [servicesOrders, accounts, customerFarms]);
+
+  const lookupOrder = useCallback(
+    (internalId: string) => orderInfo.get(stripLoggerSuffix(internalId)) || null,
+    [orderInfo]
+  );
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -188,6 +221,7 @@ const ActiveSF = () => {
                     Trip Status <SortIcon field="tripStatus" />
                   </TableHead>
                   <TableHead>Internal Trip ID</TableHead>
+                  <TableHead>Order / Farm</TableHead>
                   <TableHead>Origin</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
                   <TableHead>Destination</TableHead>
@@ -203,6 +237,20 @@ const ActiveSF = () => {
                     <TableCell className="font-semibold text-primary">{trip.tripId}</TableCell>
                     <TableCell>{statusBadge(trip.tripStatus)}</TableCell>
                     <TableCell className="font-mono text-xs">{trip.internalTripId}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const info = lookupOrder(trip.internalTripId);
+                        if (!info) return <span className="text-xs text-muted-foreground">—</span>;
+                        return (
+                          <>
+                            <div className="font-medium text-sm">{info.farm || "—"}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {info.customer}{info.dippingWeek ? ` · Wk ${info.dippingWeek}` : ""}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{trip.originName}</div>
                       <div className="text-xs text-muted-foreground">{trip.originAddress}</div>
