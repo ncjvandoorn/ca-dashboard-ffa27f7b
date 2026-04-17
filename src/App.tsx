@@ -11,6 +11,7 @@ import Planner from "./pages/Planner.tsx";
 import TrialsDashboard from "./pages/TrialsDashboard.tsx";
 import AllReports from "./pages/AllReports.tsx";
 import ActiveSF from "./pages/ActiveSF.tsx";
+import Containers from "./pages/Containers.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { Loader2 } from "lucide-react";
 
