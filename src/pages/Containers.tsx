@@ -375,6 +375,9 @@ export default function Containers() {
                           <span className="font-mono">{order.orderNumber}</span>
                           <span className="text-muted-foreground">{formatDate(arrival.arrivalDate)}</span>
                         </div>
+                        <div className="text-muted-foreground">
+                          Farm: <span className="text-foreground">{accountNameMap.get(order.farmAccountId) || order.farmAccountId.slice(0, 8)}</span>
+                        </div>
                         {(arrival.arrivalTemp1 !== null || arrival.arrivalTemp2 !== null || arrival.arrivalTemp3 !== null) && (
                           <div className="text-muted-foreground">
                             Arrival temps: {[arrival.arrivalTemp1, arrival.arrivalTemp2, arrival.arrivalTemp3].filter((v) => v !== null).join(" / ")} °C
