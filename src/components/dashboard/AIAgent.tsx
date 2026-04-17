@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { QualityReport, Account, Activity, User } from "@/lib/csvParser";
+import type { QualityReport, Account, Activity, User, Container, ServicesOrder, ShipperArrival, ShipperReport } from "@/lib/csvParser";
 
 interface AIAgentProps {
   reports: QualityReport[];
@@ -24,6 +24,10 @@ interface AIAgentProps {
   users?: User[];
   exceptionAnalysis?: any;
   seasonalityAnalysis?: any;
+  containers?: Container[];
+  servicesOrders?: ServicesOrder[];
+  shipperArrivals?: ShipperArrival[];
+  shipperReports?: ShipperReport[];
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -165,7 +169,7 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[], use
   return summaries;
 }
 
-export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis }: AIAgentProps) {
+export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis, containers, servicesOrders, shipperArrivals, shipperReports }: AIAgentProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -205,6 +209,77 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
 
   const staffSummary = useMemo(() => buildStaffSummary(reports, users || []), [reports, users]);
   const activitySummary = useMemo(() => buildActivitySummary(activities || [], users || []), [activities, users]);
+
+  // Build compressed logistics dataset linking containers ↔ services orders ↔ shipper arrivals/reports
+  const logisticsData = useMemo(() => {
+    if (!containers?.length) return null;
+    const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
+    const ordersByContainer = new Map<string, ServicesOrder[]>();
+    for (const o of servicesOrders || []) {
+      if (!o.containerId) continue;
+      const arr = ordersByContainer.get(o.containerId) || [];
+      arr.push(o);
+      ordersByContainer.set(o.containerId, arr);
+    }
+    const arrivalsByOrder = new Map<string, ShipperArrival[]>();
+    for (const a of shipperArrivals || []) {
+      if (!a.servicesOrderId) continue;
+      const arr = arrivalsByOrder.get(a.servicesOrderId) || [];
+      arr.push(a);
+      arrivalsByOrder.set(a.servicesOrderId, arr);
+    }
+    const reportsByContainer = new Map<string, ShipperReport[]>();
+    for (const r of shipperReports || []) {
+      if (!r.containerId) continue;
+      const arr = reportsByContainer.get(r.containerId) || [];
+      arr.push(r);
+      reportsByContainer.set(r.containerId, arr);
+    }
+
+    const dateStr = (ts: number | null) => (ts ? new Date(ts).toISOString().slice(0, 10) : null);
+
+    return containers.map((c) => {
+      const orders = ordersByContainer.get(c.id) || [];
+      const reports = reportsByContainer.get(c.id) || [];
+      return compact({
+        cn: c.containerNumber,
+        bk: c.bookingCode,
+        sl: c.shippingLineId,
+        drop: dateStr(c.dropoffDate),
+        ship: dateStr(c.shippingDate),
+        orders: orders.length
+          ? orders.map((o) => compact({
+              on: o.orderNumber,
+              farm: accountMap.get(o.farmAccountId) || null,
+              cust: accountMap.get(o.customerAccountId) || null,
+              pal: o.pallets,
+              fc: o.forecast,
+              dWk: o.dippingWeek,
+              status: o.statusName,
+              purpose: o.purposeName,
+              arrivals: (arrivalsByOrder.get(o.id) || []).map((a) => compact({
+                date: dateStr(a.arrivalDate),
+                t1: a.arrivalTemp1, t2: a.arrivalTemp2, t3: a.arrivalTemp3,
+                vc1: a.afterVc1Temp, vc2: a.afterVc2Temp, vc3: a.afterVc3Temp,
+                dwm: a.dischargeWaitingMin,
+                gOff: a.gensetOffMoment,
+                vcCy: a.vcCycles,
+                vcDur: a.vcDurationMin,
+                cmt: a.specificComments,
+              })),
+            }))
+          : null,
+        reports: reports.length
+          ? reports.map((r) => compact({
+              wk: r.weekNr,
+              stuff: dateStr(r.stuffingDate),
+              loadMin: r.loadingMin,
+              cmt: r.generalComments,
+            }))
+          : null,
+      });
+    });
+  }, [containers, servicesOrders, shipperArrivals, shipperReports, accounts]);
 
   // Fetch recent weekly plans for AI context
   const [weeklyPlans, setWeeklyPlans] = useState<any[]>([]);
@@ -271,6 +346,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             exceptionAnalysis: exceptionAnalysis || null,
             seasonalityAnalysis: seasonalityAnalysis || null,
             weeklyPlans: weeklyPlans.length > 0 ? weeklyPlans : null,
+            logisticsData: logisticsData || null,
           }),
         });
 
@@ -379,7 +455,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
         setIsLoading(false);
       }
     },
-    [messages, isLoading, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis]
+    [messages, isLoading, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, logisticsData]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
