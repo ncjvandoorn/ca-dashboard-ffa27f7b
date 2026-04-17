@@ -756,12 +756,56 @@ const Admin = () => {
               </div>
               <div>
                 <CardTitle className="text-lg">Data Files</CardTitle>
-                <CardDescription>Upload updated data files. Keep the same filename format.</CardDescription>
+                <CardDescription>Drop multiple files at once below — each is auto-routed by filename. Or use a single slot.</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
+            {/* Multi-file drop zone */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const files = Array.from(e.dataTransfer.files);
+                if (files.length) handleBulkUpload(files);
+              }}
+              className={`mb-6 rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/30"
+              }`}
+            >
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-medium mb-1">
+                {bulkUploading ? "Uploading…" : "Drop multiple files here"}
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Files are matched by exact filename (e.g. <span className="font-mono">container.csv</span>, <span className="font-mono">servicesOrder.csv</span>). Unrecognized files are skipped.
+              </p>
+              <label>
+                <input
+                  type="file"
+                  multiple
+                  accept=".csv,.xlsx"
+                  className="hidden"
+                  disabled={bulkUploading}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length) handleBulkUpload(files);
+                    e.target.value = "";
+                  }}
+                />
+                <Button variant="outline" size="sm" disabled={bulkUploading} asChild>
+                  <span className="cursor-pointer gap-2 inline-flex items-center">
+                    {bulkUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                    Select Files
+                  </span>
+                </Button>
+              </label>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
               {DATA_FILES.map(({ key, label, accept, icon: Icon }) => (
                 <div key={key} className="border border-border rounded-lg p-4 space-y-3">
                   <div className="flex items-center gap-2">
