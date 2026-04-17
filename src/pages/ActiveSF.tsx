@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
-import { useServicesOrders, useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
+import { useServicesOrders, useAccounts, useCustomerFarms, useContainers } from "@/hooks/useQualityData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,25 +53,32 @@ const ActiveSF = () => {
   const { data: servicesOrders } = useServicesOrders();
   const { data: accounts } = useAccounts();
   const { data: customerFarms } = useCustomerFarms();
+  const { data: containers } = useContainers();
 
-  // Map orderNumber -> { customerName, farmName, dippingWeek }
+  // Map orderNumber -> { customerName, farmName, dippingWeek, bookingCode, containerNumber }
   const orderInfo = useMemo(() => {
     const accountMap = new Map((accounts || []).map((a) => [a.id, a.name] as const));
     const farmAccountId = new Map(
       (customerFarms || []).map((f) => [f.id, f.farmAccountId] as const)
     );
-    const m = new Map<string, { customer: string; farm: string; dippingWeek: string }>();
+    const containerMap = new Map(
+      (containers || []).map((c) => [c.id, { bookingCode: c.bookingCode, containerNumber: c.containerNumber }] as const)
+    );
+    const m = new Map<string, { customer: string; farm: string; dippingWeek: string; bookingCode: string; containerNumber: string }>();
     for (const o of servicesOrders || []) {
       if (!o.orderNumber) continue;
       const farmId = farmAccountId.get(o.farmAccountId) || o.farmAccountId;
+      const c = containerMap.get(o.containerId);
       m.set(o.orderNumber, {
         customer: accountMap.get(o.customerAccountId) || "",
         farm: accountMap.get(farmId) || "",
         dippingWeek: o.dippingWeek || "",
+        bookingCode: c?.bookingCode || "",
+        containerNumber: c?.containerNumber || "",
       });
     }
     return m;
-  }, [servicesOrders, accounts, customerFarms]);
+  }, [servicesOrders, accounts, customerFarms, containers]);
 
   const lookupOrder = useCallback(
     (internalId: string) => orderInfo.get(stripLoggerSuffix(internalId)) || null,
@@ -214,6 +221,7 @@ const ActiveSF = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
+                  <TableHead>Week</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("tripId")}>
                     Trip ID <SortIcon field="tripId" />
                   </TableHead>
@@ -222,34 +230,41 @@ const ActiveSF = () => {
                   </TableHead>
                   <TableHead>Internal Trip ID</TableHead>
                   <TableHead>Order / Farm</TableHead>
+                  <TableHead>Booking</TableHead>
+                  <TableHead>Container #</TableHead>
                   <TableHead>Origin</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
                   <TableHead>Destination</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((trip) => (
+                {filtered.map((trip) => {
+                  const info = lookupOrder(trip.internalTripId);
+                  return (
                   <TableRow
                     key={trip.tripId}
                     className="cursor-pointer hover:bg-primary/5 transition-colors"
                     onClick={() => setSelectedTrip(trip)}
                   >
+                    <TableCell className="font-semibold text-sm">
+                      {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
                     <TableCell className="font-semibold text-primary">{trip.tripId}</TableCell>
                     <TableCell>{statusBadge(trip.tripStatus)}</TableCell>
                     <TableCell className="font-mono text-xs">{trip.internalTripId}</TableCell>
                     <TableCell>
-                      {(() => {
-                        const info = lookupOrder(trip.internalTripId);
-                        if (!info) return <span className="text-xs text-muted-foreground">—</span>;
-                        return (
-                          <>
-                            <div className="font-medium text-sm">{info.farm || "—"}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {info.customer}{info.dippingWeek ? ` · Wk ${info.dippingWeek}` : ""}
-                            </div>
-                          </>
-                        );
-                      })()}
+                      {!info ? <span className="text-xs text-muted-foreground">—</span> : (
+                        <>
+                          <div className="font-medium text-sm">{info.farm || "—"}</div>
+                          <div className="text-xs text-muted-foreground">{info.customer}</div>
+                        </>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {info?.bookingCode || <span className="text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {info?.containerNumber || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{trip.originName}</div>
@@ -260,7 +275,8 @@ const ActiveSF = () => {
                       <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
