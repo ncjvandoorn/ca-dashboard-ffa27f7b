@@ -125,8 +125,11 @@ export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <ClipboardCheck className="h-4 w-4" />
+        <Button
+          variant="outline"
+          className="gap-2 border-0 shadow-card bg-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+        >
+          <ClipboardCheck className="h-4 w-4 text-primary" />
           Reporting Check
         </Button>
       </DialogTrigger>
