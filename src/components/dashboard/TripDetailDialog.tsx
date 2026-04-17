@@ -1,21 +1,64 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { SFTrip } from "@/pages/ActiveSF";
+import { Badge } from "@/components/ui/badge";
+import type { SFTrip, SFOrderInfo } from "@/pages/ActiveSF";
 import { useSensiwatchReadings } from "@/hooks/useSensiwatchData";
+import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts } from "@/hooks/useQualityData";
 import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { TripPathMap } from "./TripPathMap";
+import { useMemo } from "react";
 
 interface Props {
   trip: SFTrip | null;
+  orderInfo?: SFOrderInfo;
   onClose: () => void;
 }
 
-export function TripDetailDialog({ trip, onClose }: Props) {
+function formatDate(ts: number | null): string {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
   const { readings, isLoading: readingsLoading } = useSensiwatchReadings(
     trip?.serialNumber ?? null,
     trip?.actualDepartureTime ?? null
   );
+
+  const { data: shipperReports } = useShipperReports();
+  const { data: shipperArrivals } = useShipperArrivals();
+  const { data: servicesOrders } = useServicesOrders();
+  const { data: accounts } = useAccounts();
+
+  const containerId = orderInfo?.containerId || "";
+
+  const detailReports = useMemo(
+    () => (shipperReports || []).filter((r) => r.containerId === containerId),
+    [shipperReports, containerId]
+  );
+
+  const detailOrders = useMemo(
+    () => (servicesOrders || []).filter((o) => o.containerId === containerId),
+    [servicesOrders, containerId]
+  );
+
+  const accountNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (accounts || []).forEach((a) => m.set(a.id, a.name));
+    return m;
+  }, [accounts]);
+
+  const detailArrivals = useMemo(() => {
+    const orderIds = new Set(detailOrders.map((o) => o.id));
+    const out: { order: typeof detailOrders[number]; arrival: NonNullable<typeof shipperArrivals>[number] }[] = [];
+    for (const a of shipperArrivals || []) {
+      if (!orderIds.has(a.servicesOrderId)) continue;
+      const order = detailOrders.find((o) => o.id === a.servicesOrderId);
+      if (order) out.push({ order, arrival: a });
+    }
+    return out;
+  }, [shipperArrivals, detailOrders]);
 
   if (!trip) return null;
 
