@@ -168,6 +168,49 @@ const Admin = () => {
     }
   };
 
+  /** Upload many files in one go, auto-routing each by filename to the correct slot. */
+  const handleBulkUpload = async (files: File[]) => {
+    const recognized: File[] = [];
+    const unknown: string[] = [];
+    for (const f of files) {
+      if (ALLOWED_FILENAMES.has(f.name)) recognized.push(f);
+      else unknown.push(f.name);
+    }
+    if (unknown.length > 0) {
+      toast({
+        title: `${unknown.length} file(s) skipped`,
+        description: `Unrecognized: ${unknown.join(", ")}. Filename must match exactly (e.g. container.csv).`,
+        variant: "destructive",
+      });
+    }
+    if (recognized.length === 0) return;
+    setBulkUploading(true);
+    let success = 0;
+    const failed: string[] = [];
+    for (const file of recognized) {
+      try {
+        const processed = file.name.endsWith(".csv")
+          ? await convertTimestampsInCsv(file.name, file)
+          : file;
+        const { error } = await supabase.storage
+          .from("data-files")
+          .upload(file.name, processed, { upsert: true, cacheControl: "0" });
+        if (error) throw error;
+        const queryKey = fileQueryKeyMap[file.name];
+        if (queryKey) await queryClient.invalidateQueries({ queryKey: [queryKey] });
+        success++;
+      } catch (err: any) {
+        failed.push(`${file.name} (${err.message})`);
+      }
+    }
+    setBulkUploading(false);
+    if (success > 0) {
+      toast({ title: `${success} file(s) uploaded`, description: failed.length ? `Failed: ${failed.join(", ")}` : "All recognized files updated." });
+    } else if (failed.length > 0) {
+      toast({ title: "All uploads failed", description: failed.join(", "), variant: "destructive" });
+    }
+  };
+
   const fetchAiInstructions = async () => {
     setAiInstructionsLoading(true);
     const { data } = await supabase
