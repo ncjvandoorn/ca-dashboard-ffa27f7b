@@ -51,6 +51,7 @@ const DATA_FILES = [
   { key: "servicesOrder.csv", label: "Services Orders", accept: ".csv", icon: FileText },
   { key: "shipperArrival.csv", label: "Shipper Arrivals", accept: ".csv", icon: FileText },
   { key: "shipperReport.csv", label: "Shipper Reports", accept: ".csv", icon: FileText },
+  { key: "shippingLine.csv", label: "Shipping Lines", accept: ".csv", icon: FileText },
 ] as const;
 
 const ALLOWED_FILENAMES = new Set(DATA_FILES.map((f) => f.key));
@@ -101,6 +102,7 @@ const Admin = () => {
     "servicesOrder.csv": "servicesOrders",
     "shipperArrival.csv": "shipperArrivals",
     "shipperReport.csv": "shipperReports",
+    "shippingLine.csv": "shippingLines",
   };
 
   // Map CSV filenames to the columns that contain Unix-ms timestamps
@@ -756,7 +758,7 @@ const Admin = () => {
               </div>
               <div>
                 <CardTitle className="text-lg">Data Files</CardTitle>
-                <CardDescription>Drop multiple files at once below — each is auto-routed by filename. Or use a single slot.</CardDescription>
+                <CardDescription>Drop multiple files at once — each is auto-routed by filename. Recognized: {DATA_FILES.map(f => f.key).join(", ")}.</CardDescription>
               </div>
             </div>
           </CardHeader>
