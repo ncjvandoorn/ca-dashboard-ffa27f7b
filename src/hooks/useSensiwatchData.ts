@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { SFTrip } from "@/pages/ActiveSF";
+import { lookupDestination } from "@/lib/destinationGeocodes";
+
+export type TripPathPoint = { lat: number; lon: number; time: string | null; address: string | null };
+export type TripPath = {
+  tripId: string;
+  points: TripPathPoint[];        // ordered visited locations
+  destination: { lat: number; lon: number; name: string } | null;
+};
 
 // Map a row from the sensiwatch_trip_latest view to our SFTrip type.
 function mapRow(row: any): SFTrip {
@@ -109,4 +117,65 @@ export function useSensiwatchReadings(serialNumber: string | null, _departureTim
   }, [serialNumber]);
 
   return { readings, isLoading };
+}
+
+// Fetch ordered location paths for all trips (one path per trip_id) so the map
+// can draw passed-locations + a dotted line to the destination.
+export function useSensiwatchTripPaths() {
+  const [paths, setPaths] = useState<TripPath[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      try {
+        const { data: rows, error } = await supabase
+          .from("sensiwatch_reports" as any)
+          .select("trip_id, last_device_time, last_latitude, last_longitude, last_address, destinations")
+          .not("trip_id", "is", null)
+          .not("last_latitude", "is", null)
+          .not("last_longitude", "is", null)
+          .order("last_device_time", { ascending: true, nullsFirst: false })
+          .limit(5000);
+        if (cancelled) return;
+        if (error) throw error;
+
+        const byTrip = new Map<string, TripPath>();
+        for (const r of (rows ?? []) as any[]) {
+          const tripId = String(r.trip_id);
+          if (!byTrip.has(tripId)) {
+            const dests = Array.isArray(r.destinations) ? r.destinations : [];
+            const finalDest = dests[dests.length - 1];
+            const coords = lookupDestination(finalDest?.name);
+            byTrip.set(tripId, {
+              tripId,
+              points: [],
+              destination: coords ? { ...coords, name: finalDest.name } : null,
+            });
+          }
+          const path = byTrip.get(tripId)!;
+          const lastPoint = path.points[path.points.length - 1];
+          if (lastPoint && Math.abs(lastPoint.lat - r.last_latitude) < 1e-5 && Math.abs(lastPoint.lon - r.last_longitude) < 1e-5) {
+            continue;
+          }
+          path.points.push({
+            lat: r.last_latitude,
+            lon: r.last_longitude,
+            time: r.last_device_time ?? null,
+            address: r.last_address ?? null,
+          });
+        }
+        setPaths(Array.from(byTrip.values()));
+      } catch (err) {
+        console.error("Trip paths fetch error:", err);
+        if (!cancelled) setPaths([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  return { paths, isLoading };
 }
