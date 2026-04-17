@@ -5,7 +5,7 @@ import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, RefreshCw, AlertCircle } from "lucide-react";
+import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
@@ -131,9 +131,6 @@ const ActiveSF = () => {
               Live datalogger tracking for sea freight containers
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={refetch} className="ml-auto gap-2" disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} /> Refresh
-          </Button>
         </div>
 
         {/* Error banner */}
