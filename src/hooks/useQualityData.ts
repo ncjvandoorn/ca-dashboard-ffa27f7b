@@ -9,6 +9,7 @@ import {
   loadServicesOrders,
   loadShipperArrivals,
   loadShipperReports,
+  loadShippingLines,
 } from "@/lib/csvParser";
 
 export function useAccounts() {
@@ -45,4 +46,8 @@ export function useShipperArrivals() {
 
 export function useShipperReports() {
   return useQuery({ queryKey: ["shipperReports"], queryFn: loadShipperReports, staleTime: Infinity });
+}
+
+export function useShippingLines() {
+  return useQuery({ queryKey: ["shippingLines"], queryFn: loadShippingLines, staleTime: Infinity });
 }
