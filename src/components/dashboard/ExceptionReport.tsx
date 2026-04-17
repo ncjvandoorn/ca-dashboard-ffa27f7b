@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { AlertTriangle, TrendingUp, TrendingDown, ArrowRight, Sparkles, Loader2, AlertCircle, Info, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -218,15 +219,39 @@ export function ExceptionReport({
   hideRefresh,
   useSharedCache = true,
 }: ExceptionReportProps) {
+  const { isAdmin } = useAuth();
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
+  const [cacheWeekNr, setCacheWeekNr] = useState<number | null>(null);
   const weekWindow = useMemo(() => getWeekWindow(reports), [reports]);
   const allowedFarmIds = useMemo(() => new Set(accounts.map((a) => a.id)), [accounts]);
   const isCustomerScope = !!hideRefresh; // only customers have hideRefresh=true
   const contentRef = useRef<HTMLDivElement>(null);
 
+  /** Read the latest cached report (any week). Never generates. */
+  const loadFromCache = useCallback(async (): Promise<boolean> => {
+    if (!useSharedCache) return false;
+    const { data: cached } = await supabase
+      .from("exception_report_cache")
+      .select("analysis, week_nr")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const cachedAnalysis = cached?.analysis as Record<string, unknown> | undefined;
+    if (cachedAnalysis) {
+      const scopedCached = isCustomerScope ? scopeAnalysisToFarms(cachedAnalysis, allowedFarmIds) : cachedAnalysis;
+      setAnalysis(scopedCached as AIAnalysis);
+      setCacheWeekNr(cached?.week_nr ?? null);
+      setFromCache(true);
+      return true;
+    }
+    return false;
+  }, [useSharedCache, isCustomerScope, allowedFarmIds]);
+
+  /** Generate a fresh report. Admin-only — gated in the UI. */
   const runAnalysis = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
@@ -241,30 +266,35 @@ export function ExceptionReport({
         return;
       }
 
-      // Check shared cache first (unless forcing refresh)
-      if (shouldUseSharedCache && !forceRefresh) {
-        const { data: cached } = await supabase
-          .from("exception_report_cache")
-          .select("analysis")
-          .eq("week_nr", cacheWeek)
-          .maybeSingle();
-
-        const cachedAnalysis = cached?.analysis as { __v?: number } | undefined;
-        if (cachedAnalysis && cachedAnalysis.__v === ANALYSIS_VERSION) {
-          const scopedCached = isCustomerScope ? scopeAnalysisToFarms(cachedAnalysis, allowedFarmIds) : cachedAnalysis;
-          setAnalysis(scopedCached as AIAnalysis);
-          setFromCache(true);
-          return;
-        }
-      }
-
-      // If refresh is hidden (customer), never generate a new analysis — cache-only
-      if (hideRefresh) {
-        setError("No cached analysis available yet. Please check back later.");
+      // Non-admin (or customer) must never generate — load latest cache instead.
+      if (!isAdmin || hideRefresh) {
+        const hit = await loadFromCache();
+        if (!hit) setError("No cached analysis available yet. Please check back later.");
         return;
       }
 
-      // No valid cache — run AI analysis for current scope
+      // Admin path: prefer this week's cache unless explicit refresh.
+      if (shouldUseSharedCache && !forceRefresh) {
+        const { data: cached } = await supabase
+          .from("exception_report_cache")
+          .select("analysis, week_nr")
+          .eq("week_nr", cacheWeek)
+          .maybeSingle();
+
+        const cachedAnalysis = cached?.analysis as Record<string, unknown> | undefined;
+        if (cachedAnalysis) {
+          const scopedCached = isCustomerScope ? scopeAnalysisToFarms(cachedAnalysis, allowedFarmIds) : cachedAnalysis;
+          setAnalysis(scopedCached as AIAnalysis);
+          setCacheWeekNr(cached?.week_nr ?? cacheWeek);
+          setFromCache(true);
+          return;
+        }
+        // Fall through to: try latest cache from any prior week before generating.
+        const latestHit = await loadFromCache();
+        if (latestHit) return;
+      }
+
+      // No valid cache — run AI analysis for current scope (admin only)
       const farmSummaries = buildFarmSummaries(reports, accounts, recentWeeks, priorWeeks);
 
       if (farmSummaries.length === 0) {
@@ -310,22 +340,12 @@ export function ExceptionReport({
       const msg = e?.message || "Analysis failed";
 
       if (shouldUseSharedCache) {
-        const { data: latestCached } = await supabase
-          .from("exception_report_cache")
-          .select("analysis")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const latestAnalysis = latestCached?.analysis as { __v?: number } | undefined;
-        if (latestAnalysis && latestAnalysis.__v === ANALYSIS_VERSION) {
-          const scopedLatest = isCustomerScope ? scopeAnalysisToFarms(latestAnalysis, allowedFarmIds) : latestAnalysis;
-          setAnalysis(scopedLatest as AIAnalysis);
-          setFromCache(true);
+        const hit = await loadFromCache();
+        if (hit) {
           setError(null);
           toast({
             title: "Using cached report",
-            description: "Live analysis timed out, so the latest cached report was loaded.",
+            description: "Live analysis failed, so the latest cached report was loaded.",
           });
           return;
         }
@@ -340,10 +360,12 @@ export function ExceptionReport({
     } finally {
       setLoading(false);
     }
-  }, [reports, accounts, weekWindow, allowedFarmIds, useSharedCache]);
+  }, [reports, accounts, weekWindow, allowedFarmIds, useSharedCache, isAdmin, hideRefresh, isCustomerScope, loadFromCache]);
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
+    // Only auto-load on open if we don't already have an analysis loaded.
+    // Non-admins: read latest cache (no generation). Admins: prefer cache, fall back to generation.
     if (isOpen && !analysis && !loading) {
       runAnalysis();
     }
@@ -571,13 +593,13 @@ export function ExceptionReport({
             <div className="mt-4 flex flex-col items-center gap-2">
               {fromCache && (
                 <p className="text-xs text-muted-foreground">
-                  Loaded from cache · Generated this week
+                  Loaded from cache{cacheWeekNr ? ` · Week ${cacheWeekNr}` : ""}
                 </p>
               )}
-              {!hideRefresh && (
+              {isAdmin && !hideRefresh && (
                 <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
                   <RefreshCw className="h-3 w-3" />
-                  {fromCache ? "Refresh Analysis" : "Re-analyze"}
+                  {fromCache ? "Refresh Analysis (admin)" : "Re-analyze (admin)"}
                 </Button>
               )}
             </div>
