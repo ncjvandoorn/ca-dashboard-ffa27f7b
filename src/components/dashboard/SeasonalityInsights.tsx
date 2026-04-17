@@ -526,13 +526,15 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
             <div className="mt-4 flex flex-col items-center gap-2">
               {fromCache && (
                 <p className="text-xs text-muted-foreground">
-                  Loaded from cache · Generated this week
+                  Loaded from cache{cacheWeekNr ? ` · Week ${cacheWeekNr}` : ""}
                 </p>
               )}
-              <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
-                <RefreshCw className="h-3 w-3" />
-                {fromCache ? "Refresh Analysis" : "Re-analyze"}
-              </Button>
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={() => runAnalysis(true)} className="gap-2 text-xs">
+                  <RefreshCw className="h-3 w-3" />
+                  {fromCache ? "Refresh Analysis (admin)" : "Re-analyze (admin)"}
+                </Button>
+              )}
             </div>
           </>
         )}
