@@ -236,12 +236,11 @@ const ActiveSF = () => {
                 <TableRow className="bg-muted/30">
                   <TableHead>Week</TableHead>
                   <TableHead>Internal Trip ID</TableHead>
-                  <TableHead>Order / Farm</TableHead>
                   <TableHead>Booking</TableHead>
                   <TableHead>Container #</TableHead>
-                  <TableHead>Origin</TableHead>
                   <TableHead>Drop-off</TableHead>
                   <TableHead>Shipping</TableHead>
+                  <TableHead>Origin</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
                   <TableHead>Destination</TableHead>
                 </TableRow>
