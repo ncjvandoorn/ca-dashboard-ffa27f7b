@@ -173,7 +173,7 @@ const Admin = () => {
     const recognized: File[] = [];
     const unknown: string[] = [];
     for (const f of files) {
-      if (ALLOWED_FILENAMES.has(f.name)) recognized.push(f);
+      if (ALLOWED_FILENAMES.has(f.name as any)) recognized.push(f);
       else unknown.push(f.name);
     }
     if (unknown.length > 0) {
