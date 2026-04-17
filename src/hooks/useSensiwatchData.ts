@@ -20,9 +20,10 @@ function mapRow(row: any): SFTrip {
     else if (ageH < 72) status = "Idle";
     else status = "Stale";
   }
-  // Origin = first destination if present
+  // Origin = first destination, Destination = last destination
   const dests = Array.isArray(row.destinations) ? row.destinations : [];
   const origin = dests[0] ?? {};
+  const destination = dests.length > 1 ? dests[dests.length - 1] : {};
 
   return {
     tripId: String(row.trip_id ?? ""),
@@ -30,6 +31,7 @@ function mapRow(row: any): SFTrip {
     internalTripId: row.internal_trip_id ?? "",
     originName: origin.name ?? "",
     originAddress: row.last_address ?? "",
+    destinationName: destination.name ?? "",
     carrier: row.mode_of_transport ?? "",
     stops: dests.length,
     plannedDepartureTime: null,

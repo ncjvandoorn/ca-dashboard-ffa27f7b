@@ -17,6 +17,7 @@ export type SFTrip = {
   internalTripId: string;
   originName: string;
   originAddress: string;
+  destinationName: string;
   carrier: string;
   stops: number;
   plannedDepartureTime: string | null;
@@ -191,6 +192,7 @@ const ActiveSF = () => {
                   </TableHead>
                   <TableHead>Internal Trip ID</TableHead>
                   <TableHead>Origin</TableHead>
+                  <TableHead>Destination</TableHead>
                   <TableHead>Carrier</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("plannedDepartureTime")}>
@@ -211,6 +213,9 @@ const ActiveSF = () => {
                     <TableCell>
                       <div className="font-medium text-sm">{trip.originName}</div>
                       <div className="text-xs text-muted-foreground">{trip.originAddress}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
                     </TableCell>
                     <TableCell>{trip.carrier || "—"}</TableCell>
                     <TableCell className="text-center">{trip.stops}</TableCell>
