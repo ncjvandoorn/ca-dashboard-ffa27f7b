@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Loader2, KeyRound, Check, BookOpen, MapPin, Globe, RefreshCw, MessageCircleQuestion, Upload, FileSpreadsheet, FileText, Bot, Users, Plus, Trash2, ClipboardList, ChevronsUpDown, Brain } from "lucide-react";
+import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
