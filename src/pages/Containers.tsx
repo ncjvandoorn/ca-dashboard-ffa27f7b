@@ -306,35 +306,6 @@ export default function Containers() {
               </section>
 
               <section>
-                <h3 className="font-semibold mb-2">Services Orders ({detailOrders.length})</h3>
-                {detailOrders.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No linked orders.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {detailOrders.map((o) => (
-                      <div key={o.id} className="border border-border rounded-md p-3 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-medium">{o.orderNumber}</span>
-                          {o.statusName && <Badge variant="secondary" className="text-[10px]">{o.statusName}</Badge>}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Farm: <span className="text-foreground">{accountNameMap.get(o.farmAccountId) || o.farmAccountId.slice(0, 8)}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Customer: <span className="text-foreground">{accountNameMap.get(o.customerAccountId) || o.customerAccountId.slice(0, 8)}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground grid grid-cols-3 gap-1 pt-1">
-                          <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
-                          <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
-                          <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              <section>
                 <h3 className="font-semibold mb-2">Shipper Reports ({detailReports.length})</h3>
                 {detailReports.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No shipper reports.</p>
@@ -355,31 +326,57 @@ export default function Containers() {
               </section>
 
               <section>
-                <h3 className="font-semibold mb-2">Shipper Arrivals ({detailArrivals.length})</h3>
-                {detailArrivals.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No arrival records.</p>
+                <h3 className="font-semibold mb-2">Orders &amp; Arrivals ({detailOrders.length})</h3>
+                {detailOrders.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No linked orders.</p>
                 ) : (
                   <div className="space-y-2">
-                    {detailArrivals.map(({ order, arrival }) => (
-                      <div key={arrival.id} className="border border-border rounded-md p-3 text-xs space-y-1">
-                        <div className="flex justify-between">
-                          <span className="font-mono">{order.orderNumber}</span>
-                          <span className="text-muted-foreground">{formatDate(arrival.arrivalDate)}</span>
-                        </div>
-                        <div className="text-muted-foreground">
-                          Farm: <span className="text-foreground">{accountNameMap.get(order.farmAccountId) || order.farmAccountId.slice(0, 8)}</span>
-                        </div>
-                        {(arrival.arrivalTemp1 !== null || arrival.arrivalTemp2 !== null || arrival.arrivalTemp3 !== null) && (
-                          <div className="text-muted-foreground">
-                            Arrival temps: {[arrival.arrivalTemp1, arrival.arrivalTemp2, arrival.arrivalTemp3].filter((v) => v !== null).join(" / ")} °C
+                    {detailOrders.map((o) => {
+                      const arrivals = arrivalsByOrder.get(o.id) || [];
+                      return (
+                        <div key={o.id} className="border border-border rounded-md p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono font-medium">{o.orderNumber}</span>
+                            {o.statusName && <Badge variant="secondary" className="text-[10px]">{o.statusName}</Badge>}
                           </div>
-                        )}
-                        {arrival.dischargeWaitingMin !== null && (
-                          <div className="text-muted-foreground">Discharge wait: {arrival.dischargeWaitingMin} min</div>
-                        )}
-                        {arrival.specificComments && <p className="text-foreground/80 italic">"{arrival.specificComments}"</p>}
-                      </div>
-                    ))}
+                          <div className="text-xs text-muted-foreground">
+                            Farm: <span className="text-foreground">{accountNameMap.get(o.farmAccountId) || o.farmAccountId.slice(0, 8)}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Customer: <span className="text-foreground">{accountNameMap.get(o.customerAccountId) || o.customerAccountId.slice(0, 8)}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground grid grid-cols-3 gap-1">
+                            <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
+                            <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
+                            <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
+                          </div>
+
+                          {arrivals.length > 0 && (
+                            <div className="pt-2 border-t border-border space-y-2">
+                              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                                Arrival{arrivals.length > 1 ? `s (${arrivals.length})` : ""}
+                              </div>
+                              {arrivals.map((a) => (
+                                <div key={a.id} className="text-xs space-y-1">
+                                  <div className="text-muted-foreground">
+                                    Date: <span className="text-foreground">{formatDate(a.arrivalDate)}</span>
+                                  </div>
+                                  {(a.arrivalTemp1 !== null || a.arrivalTemp2 !== null || a.arrivalTemp3 !== null) && (
+                                    <div className="text-muted-foreground">
+                                      Arrival temps: <span className="text-foreground">{[a.arrivalTemp1, a.arrivalTemp2, a.arrivalTemp3].filter((v) => v !== null).join(" / ")} °C</span>
+                                    </div>
+                                  )}
+                                  {a.dischargeWaitingMin !== null && (
+                                    <div className="text-muted-foreground">Discharge wait: <span className="text-foreground">{a.dischargeWaitingMin} min</span></div>
+                                  )}
+                                  {a.specificComments && <p className="text-foreground/80 italic">"{a.specificComments}"</p>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </section>
