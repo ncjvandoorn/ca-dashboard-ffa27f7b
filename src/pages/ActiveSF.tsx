@@ -121,7 +121,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [trips, query, sortField, sortDir]);
+  }, [trips, query, sortField, sortDir, lookupOrder]);
 
   const tripsWithLocation = useMemo(
     () => filtered.filter((t) => t.latitude !== null && t.longitude !== null),
