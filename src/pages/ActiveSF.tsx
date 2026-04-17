@@ -240,7 +240,7 @@ const ActiveSF = () => {
                   <TableHead>Container #</TableHead>
                   <TableHead>Drop-off</TableHead>
                   <TableHead>Shipping</TableHead>
-                  <TableHead>Origin</TableHead>
+                  <TableHead>Origin &amp; Current Location</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
                   <TableHead>Destination</TableHead>
                 </TableRow>
