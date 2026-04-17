@@ -64,7 +64,7 @@ const Index = () => {
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
-  const [containersOpen, setContainersOpen] = useState(false);
+  
   const [exceptionAnalysis, setExceptionAnalysis] = useState<any>(null);
   const [seasonalityAnalysis, setSeasonalityAnalysis] = useState<any>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
@@ -311,15 +311,8 @@ const Index = () => {
                   setSelectedFarmId("");
                 }
               }}
-              onOpenContainers={!isCustomer ? () => setContainersOpen(true) : undefined}
+              onOpenContainers={!isCustomer ? () => navigate("/containers") : undefined}
             />
-            {!isCustomer && (
-              <ContainersDialog
-                open={containersOpen}
-                onOpenChange={setContainersOpen}
-                hideTrigger
-              />
-            )}
 
             {/* Action buttons row */}
             <div className="flex items-center gap-2 flex-wrap mb-3">
