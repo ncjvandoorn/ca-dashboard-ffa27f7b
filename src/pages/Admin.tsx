@@ -528,12 +528,10 @@ const Admin = () => {
     <div className="min-h-screen bg-background">
       <div className="chrysal-gradient h-1.5" />
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <Button variant="ghost" onClick={() => navigate("/")} className="mb-6 gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Button>
-
-        <h1 className="text-2xl font-bold text-foreground mb-6">Admin Settings</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Admin Settings</h1>
+          <PageHeaderActions />
+        </div>
 
         {/* Change Password */}
         <Card className="mb-8">
