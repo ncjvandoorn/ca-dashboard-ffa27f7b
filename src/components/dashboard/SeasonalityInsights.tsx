@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { CloudSun, Loader2, AlertCircle, Info, RefreshCw, Bug, Eye, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -144,13 +145,31 @@ function impactBg(score: number) {
 }
 
 export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: SeasonalityInsightsProps) {
+  const { isAdmin } = useAuth();
   const [analysis, setAnalysis] = useState<SeasonalityAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fromCache, setFromCache] = useState(false);
+  const [cacheWeekNr, setCacheWeekNr] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const weekWindow = useMemo(() => getSeasonalityWeekWindow(reports), [reports]);
 
+  /** Read the latest cached seasonality report (any week). Never generates. */
+  const loadFromCache = useCallback(async (): Promise<boolean> => {
+    const { data: cached } = await (supabase as any)
+      .from("seasonality_report_cache")
+      .select("analysis, week_nr")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (cached?.analysis) {
+      setAnalysis(cached.analysis as unknown as SeasonalityAnalysis);
+      setCacheWeekNr(cached?.week_nr ?? null);
+      setFromCache(true);
+      return true;
+    }
+    return false;
+  }, []);
 
   const runAnalysis = useCallback(async (forceRefresh = false) => {
     setLoading(true);
@@ -160,23 +179,38 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
     const currentWeek = weekWindow.max || getCurrentWeekNr();
 
     try {
-      // Check cache first (unless forcing refresh)
+      // Non-admins: load latest cache only, never generate.
+      if (!isAdmin) {
+        const hit = await loadFromCache();
+        if (!hit) setError("No cached analysis available yet. Please check back later.");
+        return;
+      }
+
+      // Admin: prefer current-week cache unless explicit refresh.
       if (!forceRefresh) {
         const { data: cached } = await (supabase as any)
           .from("seasonality_report_cache")
-          .select("analysis")
+          .select("analysis, week_nr")
           .eq("week_nr", currentWeek)
           .maybeSingle();
 
         if (cached?.analysis) {
           setAnalysis(cached.analysis as unknown as SeasonalityAnalysis);
+          setCacheWeekNr(cached?.week_nr ?? currentWeek);
           setFromCache(true);
+          setLoading(false);
+          return;
+        }
+
+        // Fall back to latest cache before generating.
+        const latestHit = await loadFromCache();
+        if (latestHit) {
           setLoading(false);
           return;
         }
       }
 
-      // No cache — run AI analysis
+      // No cache — run AI analysis (admin only)
       const farmSummaries = buildAllFarmSummaries(reports, accounts, weekWindow.weeks);
       if (farmSummaries.length === 0) {
         setError("No farms with data in the last 12 weeks.");
@@ -208,15 +242,22 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
         .upsert({ week_nr: currentWeek, analysis: data }, { onConflict: "week_nr" });
 
       setAnalysis(data as SeasonalityAnalysis);
+      setCacheWeekNr(currentWeek);
     } catch (e: any) {
       console.error("Seasonality analysis error:", e);
       const msg = e?.message || "Analysis failed";
+      // Try to fall back to any cached report so the UI isn't blank.
+      const hit = await loadFromCache();
+      if (hit) {
+        toast({ title: "Using cached report", description: "Live analysis failed, showing the latest cached report." });
+        return;
+      }
       setError(msg);
       toast({ title: "Analysis Error", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  }, [reports, accounts, weekWindow]);
+  }, [reports, accounts, weekWindow, isAdmin, loadFromCache]);
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
