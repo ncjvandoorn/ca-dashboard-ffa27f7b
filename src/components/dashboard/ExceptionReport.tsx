@@ -340,22 +340,12 @@ export function ExceptionReport({
       const msg = e?.message || "Analysis failed";
 
       if (shouldUseSharedCache) {
-        const { data: latestCached } = await supabase
-          .from("exception_report_cache")
-          .select("analysis")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const latestAnalysis = latestCached?.analysis as { __v?: number } | undefined;
-        if (latestAnalysis && latestAnalysis.__v === ANALYSIS_VERSION) {
-          const scopedLatest = isCustomerScope ? scopeAnalysisToFarms(latestAnalysis, allowedFarmIds) : latestAnalysis;
-          setAnalysis(scopedLatest as AIAnalysis);
-          setFromCache(true);
+        const hit = await loadFromCache();
+        if (hit) {
           setError(null);
           toast({
             title: "Using cached report",
-            description: "Live analysis timed out, so the latest cached report was loaded.",
+            description: "Live analysis failed, so the latest cached report was loaded.",
           });
           return;
         }
@@ -370,10 +360,12 @@ export function ExceptionReport({
     } finally {
       setLoading(false);
     }
-  }, [reports, accounts, weekWindow, allowedFarmIds, useSharedCache]);
+  }, [reports, accounts, weekWindow, allowedFarmIds, useSharedCache, isAdmin, hideRefresh, isCustomerScope, loadFromCache]);
 
   const handleOpen = (isOpen: boolean) => {
     onOpenChange(isOpen);
+    // Only auto-load on open if we don't already have an analysis loaded.
+    // Non-admins: read latest cache (no generation). Admins: prefer cache, fall back to generation.
     if (isOpen && !analysis && !loading) {
       runAnalysis();
     }
