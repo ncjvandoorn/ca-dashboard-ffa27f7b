@@ -318,6 +318,7 @@ Identify which farms need attention (worst performing, worsening trends, dangero
         }),
       }
     );
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       if (response.status === 429) {
