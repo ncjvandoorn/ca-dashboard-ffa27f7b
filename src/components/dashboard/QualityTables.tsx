@@ -81,13 +81,13 @@ export function QualityTables({ reports }: QualityTablesProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
-              {sorted.filter((r) => r.qrGenQualityFlowers || r.qrGenProtocolChanges).length === 0 ? (
+              {sorted.filter((r) => r.qrGenQualityFlowers || r.qrGenProtocolChanges || r.generalComment).length === 0 ? (
                 <tr>
                   <td colSpan={2} className="px-5 py-6 text-center text-muted-foreground text-xs">No notes recorded</td>
                 </tr>
               ) : (
                 sorted
-                  .filter((r) => r.qrGenQualityFlowers || r.qrGenProtocolChanges)
+                  .filter((r) => r.qrGenQualityFlowers || r.qrGenProtocolChanges || r.generalComment)
                   .map((r) => (
                     <tr key={r.id} className="hover:bg-muted/30 transition-colors align-top">
                       <td className="px-5 py-2 text-xs font-mono text-foreground">{r.weekNr}</td>
@@ -102,6 +102,12 @@ export function QualityTables({ reports }: QualityTablesProps) {
                           <p className="text-xs text-foreground">
                             <span className="text-muted-foreground font-medium">Protocol: </span>
                             {r.qrGenProtocolChanges}
+                          </p>
+                        )}
+                        {r.generalComment && (
+                          <p className="text-xs text-foreground">
+                            <span className="text-muted-foreground font-medium">General: </span>
+                            {r.generalComment}
                           </p>
                         )}
                       </td>
