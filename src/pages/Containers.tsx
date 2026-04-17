@@ -13,6 +13,7 @@ import {
   useShipperArrivals,
   useShipperReports,
   useAccounts,
+  useShippingLines,
 } from "@/hooks/useQualityData";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
@@ -47,6 +48,7 @@ export default function Containers() {
   const { data: shipperArrivals } = useShipperArrivals();
   const { data: shipperReports } = useShipperReports();
   const { data: accounts } = useAccounts();
+  const { data: shippingLines } = useShippingLines();
   const [search, setSearch] = useState("");
   const [selectedWeek, setSelectedWeek] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("shippingDate");
@@ -60,6 +62,14 @@ export default function Containers() {
     (accounts || []).forEach((a) => m.set(a.id, a.name));
     return m;
   }, [accounts]);
+
+  const shippingLineNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (shippingLines || []).forEach((s) => m.set(s.id, s.name));
+    return m;
+  }, [shippingLines]);
+
+  const shippingLineName = (id: string) => shippingLineNameMap.get(id) || id;
 
   const ordersByContainer = useMemo(() => {
     const m = new Map<string, typeof servicesOrders>();
