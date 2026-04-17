@@ -1,21 +1,64 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { SFTrip } from "@/pages/ActiveSF";
+import { Badge } from "@/components/ui/badge";
+import type { SFTrip, SFOrderInfo } from "@/pages/ActiveSF";
 import { useSensiwatchReadings } from "@/hooks/useSensiwatchData";
+import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts } from "@/hooks/useQualityData";
 import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { TripPathMap } from "./TripPathMap";
+import { useMemo } from "react";
 
 interface Props {
   trip: SFTrip | null;
+  orderInfo?: SFOrderInfo;
   onClose: () => void;
 }
 
-export function TripDetailDialog({ trip, onClose }: Props) {
+function formatDate(ts: number | null): string {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
   const { readings, isLoading: readingsLoading } = useSensiwatchReadings(
     trip?.serialNumber ?? null,
     trip?.actualDepartureTime ?? null
   );
+
+  const { data: shipperReports } = useShipperReports();
+  const { data: shipperArrivals } = useShipperArrivals();
+  const { data: servicesOrders } = useServicesOrders();
+  const { data: accounts } = useAccounts();
+
+  const containerId = orderInfo?.containerId || "";
+
+  const detailReports = useMemo(
+    () => (shipperReports || []).filter((r) => r.containerId === containerId),
+    [shipperReports, containerId]
+  );
+
+  const detailOrders = useMemo(
+    () => (servicesOrders || []).filter((o) => o.containerId === containerId),
+    [servicesOrders, containerId]
+  );
+
+  const accountNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (accounts || []).forEach((a) => m.set(a.id, a.name));
+    return m;
+  }, [accounts]);
+
+  const detailArrivals = useMemo(() => {
+    const orderIds = new Set(detailOrders.map((o) => o.id));
+    const out: { order: typeof detailOrders[number]; arrival: NonNullable<typeof shipperArrivals>[number] }[] = [];
+    for (const a of shipperArrivals || []) {
+      if (!orderIds.has(a.servicesOrderId)) continue;
+      const order = detailOrders.find((o) => o.id === a.servicesOrderId);
+      if (order) out.push({ order, arrival: a });
+    }
+    return out;
+  }, [shipperArrivals, detailOrders]);
 
   if (!trip) return null;
 
@@ -105,6 +148,79 @@ export function TripDetailDialog({ trip, onClose }: Props) {
             </div>
           </TabsContent>
         </Tabs>
+
+        {containerId && (
+          <div className="mt-6 space-y-6 text-sm">
+            <section>
+              <h3 className="font-semibold mb-2">Shipper Reports ({detailReports.length})</h3>
+              {detailReports.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No shipper reports.</p>
+              ) : (
+                <div className="space-y-2">
+                  {detailReports.map((r) => (
+                    <div key={r.id} className="border border-border rounded-md p-3 text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <span>Week <span className="font-mono">{r.weekNr}</span></span>
+                        <span className="text-muted-foreground">Stuffed: {formatDate(r.stuffingDate)}</span>
+                      </div>
+                      {r.loadingMin !== null && <div className="text-muted-foreground">Loading: {r.loadingMin} min</div>}
+                      {r.generalComments && <p className="text-foreground/80 italic">"{r.generalComments}"</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section>
+              <h3 className="font-semibold mb-2">Orders &amp; Arrivals ({detailOrders.length})</h3>
+              {detailOrders.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No linked orders.</p>
+              ) : (
+                <div className="space-y-2">
+                  {detailOrders.map((o) => {
+                    const arrival = detailArrivals.find((x) => x.order.id === o.id)?.arrival;
+                    return (
+                      <div key={o.id} className="border border-border rounded-md p-3 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono font-medium">{o.orderNumber}</span>
+                          {o.statusName && <Badge variant="secondary" className="text-[10px]">{o.statusName}</Badge>}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Farm: <span className="text-foreground">{accountNameMap.get(o.farmAccountId) || o.farmAccountId.slice(0, 8)}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Customer: <span className="text-foreground">{accountNameMap.get(o.customerAccountId) || o.customerAccountId.slice(0, 8)}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground grid grid-cols-3 gap-1 pt-1">
+                          <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
+                          <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
+                          <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
+                        </div>
+                        {arrival && (
+                          <div className="mt-2 pt-2 border-t border-border text-xs space-y-1">
+                            <div className="flex justify-between">
+                              <span className="font-medium">Arrival</span>
+                              <span className="text-muted-foreground">{formatDate(arrival.arrivalDate)}</span>
+                            </div>
+                            {(arrival.arrivalTemp1 !== null || arrival.arrivalTemp2 !== null || arrival.arrivalTemp3 !== null) && (
+                              <div className="text-muted-foreground">
+                                Temps: {[arrival.arrivalTemp1, arrival.arrivalTemp2, arrival.arrivalTemp3].filter((v) => v !== null).join(" / ")} °C
+                              </div>
+                            )}
+                            {arrival.dischargeWaitingMin !== null && (
+                              <div className="text-muted-foreground">Discharge wait: {arrival.dischargeWaitingMin} min</div>
+                            )}
+                            {arrival.specificComments && <p className="text-foreground/80 italic">"{arrival.specificComments}"</p>}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
