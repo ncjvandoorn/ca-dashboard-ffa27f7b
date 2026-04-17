@@ -86,6 +86,7 @@ const App = () => (
             <Route path="/trials" element={<TrialsRoute><TrialsDashboard /></TrialsRoute>} />
             <Route path="/report" element={<ProtectedRoute><AllReports /></ProtectedRoute>} />
             <Route path="/active-sf" element={<InternalRoute><ActiveSF /></InternalRoute>} />
+            <Route path="/containers" element={<InternalRoute><Containers /></InternalRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
