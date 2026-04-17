@@ -48,7 +48,12 @@ const DATA_FILES = [
   { key: "user.csv", label: "ALL Users", accept: ".csv", icon: FileText },
   { key: "customerFarm.csv", label: "Customer-Farm Links", accept: ".csv", icon: FileText },
   { key: "container.csv", label: "Containers", accept: ".csv", icon: FileText },
+  { key: "servicesOrder.csv", label: "Services Orders", accept: ".csv", icon: FileText },
+  { key: "shipperArrival.csv", label: "Shipper Arrivals", accept: ".csv", icon: FileText },
+  { key: "shipperReport.csv", label: "Shipper Reports", accept: ".csv", icon: FileText },
 ] as const;
+
+const ALLOWED_FILENAMES = new Set(DATA_FILES.map((f) => f.key));
 
 const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
@@ -59,6 +64,8 @@ const Admin = () => {
   const [questions, setQuestions] = useState<QuestionLog[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [aiInstructions, setAiInstructions] = useState("");
   const [aiInstructionsLoading, setAiInstructionsLoading] = useState(true);
   const [aiInstructionsSaving, setAiInstructionsSaving] = useState(false);
@@ -91,6 +98,9 @@ const Admin = () => {
     "user.csv": "users",
     "customerFarm.csv": "customerFarms",
     "container.csv": "containers",
+    "servicesOrder.csv": "servicesOrders",
+    "shipperArrival.csv": "shipperArrivals",
+    "shipperReport.csv": "shipperReports",
   };
 
   // Map CSV filenames to the columns that contain Unix-ms timestamps
@@ -99,6 +109,9 @@ const Admin = () => {
     "qualityReport.csv": ["createdAt", "submittedAt"],
     "customerFarm.csv": ["createdAt", "deletedAt"],
     "container.csv": ["dropoffDate", "shippingDate"],
+    "servicesOrder.csv": ["dippingDate", "openedAt", "closedAt", "approvedCsAt", "approvedMtAt", "cancelledAt", "createdAt", "updatedAt", "deletedAt"],
+    "shipperArrival.csv": ["arrivalDate", "createdAt", "updatedAt", "deletedAt"],
+    "shipperReport.csv": ["stuffingDate", "approvedMtAt", "createdAt", "updatedAt", "deletedAt", "closedAt"],
   };
 
   /** Convert Unix-ms timestamp columns in a CSV file to ISO date strings before uploading */
@@ -152,6 +165,49 @@ const Admin = () => {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
       setUploading(null);
+    }
+  };
+
+  /** Upload many files in one go, auto-routing each by filename to the correct slot. */
+  const handleBulkUpload = async (files: File[]) => {
+    const recognized: File[] = [];
+    const unknown: string[] = [];
+    for (const f of files) {
+      if (ALLOWED_FILENAMES.has(f.name as any)) recognized.push(f);
+      else unknown.push(f.name);
+    }
+    if (unknown.length > 0) {
+      toast({
+        title: `${unknown.length} file(s) skipped`,
+        description: `Unrecognized: ${unknown.join(", ")}. Filename must match exactly (e.g. container.csv).`,
+        variant: "destructive",
+      });
+    }
+    if (recognized.length === 0) return;
+    setBulkUploading(true);
+    let success = 0;
+    const failed: string[] = [];
+    for (const file of recognized) {
+      try {
+        const processed = file.name.endsWith(".csv")
+          ? await convertTimestampsInCsv(file.name, file)
+          : file;
+        const { error } = await supabase.storage
+          .from("data-files")
+          .upload(file.name, processed, { upsert: true, cacheControl: "0" });
+        if (error) throw error;
+        const queryKey = fileQueryKeyMap[file.name];
+        if (queryKey) await queryClient.invalidateQueries({ queryKey: [queryKey] });
+        success++;
+      } catch (err: any) {
+        failed.push(`${file.name} (${err.message})`);
+      }
+    }
+    setBulkUploading(false);
+    if (success > 0) {
+      toast({ title: `${success} file(s) uploaded`, description: failed.length ? `Failed: ${failed.join(", ")}` : "All recognized files updated." });
+    } else if (failed.length > 0) {
+      toast({ title: "All uploads failed", description: failed.join(", "), variant: "destructive" });
     }
   };
 
@@ -700,12 +756,56 @@ const Admin = () => {
               </div>
               <div>
                 <CardTitle className="text-lg">Data Files</CardTitle>
-                <CardDescription>Upload updated data files. Keep the same filename format.</CardDescription>
+                <CardDescription>Drop multiple files at once below — each is auto-routed by filename. Or use a single slot.</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
+            {/* Multi-file drop zone */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const files = Array.from(e.dataTransfer.files);
+                if (files.length) handleBulkUpload(files);
+              }}
+              className={`mb-6 rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/30"
+              }`}
+            >
+              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-medium mb-1">
+                {bulkUploading ? "Uploading…" : "Drop multiple files here"}
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Files are matched by exact filename (e.g. <span className="font-mono">container.csv</span>, <span className="font-mono">servicesOrder.csv</span>). Unrecognized files are skipped.
+              </p>
+              <label>
+                <input
+                  type="file"
+                  multiple
+                  accept=".csv,.xlsx"
+                  className="hidden"
+                  disabled={bulkUploading}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length) handleBulkUpload(files);
+                    e.target.value = "";
+                  }}
+                />
+                <Button variant="outline" size="sm" disabled={bulkUploading} asChild>
+                  <span className="cursor-pointer gap-2 inline-flex items-center">
+                    {bulkUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                    Select Files
+                  </span>
+                </Button>
+              </label>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
               {DATA_FILES.map(({ key, label, accept, icon: Icon }) => (
                 <div key={key} className="border border-border rounded-lg p-4 space-y-3">
                   <div className="flex items-center gap-2">
