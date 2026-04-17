@@ -151,16 +151,20 @@ ${JSON.stringify(farmSummaries)}
 
 Identify which farms need attention (worst performing, worsening trends, dangerous parameter combinations, staff-flagged issues) and which have shown the most improvement. Consider the full post-harvest context — don't just flag outliers mechanically, think about what combinations of metrics signal real risk to flower quality and vase life. Quote or paraphrase staff notes when they support your findings.`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 140_000);
+
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
+        signal: controller.signal,
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-flash-lite",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -314,6 +318,7 @@ Identify which farms need attention (worst performing, worsening trends, dangero
         }),
       }
     );
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -368,11 +373,14 @@ Identify which farms need attention (worst performing, worsening trends, dangero
     });
   } catch (e) {
     console.error("analyze-exceptions error:", e);
+    const isAbort = e instanceof Error && e.name === "AbortError";
     return new Response(
       JSON.stringify({
-        error: e instanceof Error ? e.message : "Unknown error",
+        error: isAbort
+          ? "AI analysis timed out. Try again — the dataset may be too large for a single pass."
+          : e instanceof Error ? e.message : "Unknown error",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: isAbort ? 504 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
