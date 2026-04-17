@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans } = await req.json();
+    const { messages, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, logisticsData } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -103,6 +103,7 @@ When answering:
    - Exception Report analysis (farms needing attention, top performers, critical issues)
    - Seasonality Report analysis (pest & disease trends, weather patterns, weekly quality impact scores)
    - Weekly Planner data (AI-generated action plans with urgent visits, suggested activities)
+   - **LOGISTICS DATA**: containers linked to services orders, shipper arrivals, and shipper reports. Use for questions about shipments, container temperatures, arrival temps vs after-VC temps, discharge waiting times, loading times, booking codes, shipping lines, pallet counts, forecasts, and per-farm/per-customer order volumes. Each container has: cn=containerNumber, bk=bookingCode, sl=shippingLineId, drop=dropoffDate, ship=shippingDate, orders[] with on=orderNumber, farm, cust=customer, pal=pallets, fc=forecast, dWk=dippingWeek, status, purpose, arrivals[] with t1/t2/t3=arrivalTemps, vc1/vc2/vc3=afterVCtemps, dwm=dischargeWaitingMin, vcCy=vcCycles, vcDur=vcDurationMin, cmt=comments. reports[] has wk=weekNr, stuff=stuffingDate, loadMin=loadingMinutes, cmt=generalComments.
    Cross-reference these sources for comprehensive answers. When asked about team follow-up on weekly plans, compare suggested activities from a past week's plan with actual CRM activities — but ONLY if both data sources contain real data.`;
 
     // Build context with PRIORITY ORDER: weekly plans & activities first (most asked about),
@@ -152,6 +153,10 @@ When answering:
     }
     if (seasonalityAnalysis) {
       contextParts.push(`Seasonality Report:\n${JSON.stringify(seasonalityAnalysis)}`);
+    }
+
+    if (logisticsData?.length) {
+      contextParts.push(`**LOGISTICS DATA** (${logisticsData.length} containers, with linked services orders, shipper arrivals, and shipper reports — use for shipment, temperature chain, and order-volume questions):\n${JSON.stringify(logisticsData)}`);
     }
 
     if (farmData) {
