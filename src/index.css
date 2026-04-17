@@ -125,3 +125,13 @@
     background: linear-gradient(135deg, hsl(207, 40%, 96%) 0%, hsl(205, 50%, 92%) 100%);
   }
 }
+
+/* Keep Leaflet map panes & controls below Radix dialogs/popovers (z-50). */
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom,
+.leaflet-control { z-index: 1 !important; }
+.leaflet-pane.leaflet-overlay-pane { z-index: 2 !important; }
+.leaflet-pane.leaflet-marker-pane { z-index: 3 !important; }
+.leaflet-pane.leaflet-tooltip-pane { z-index: 4 !important; }
+.leaflet-pane.leaflet-popup-pane { z-index: 5 !important; }
