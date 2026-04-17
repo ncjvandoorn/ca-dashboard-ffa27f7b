@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { SFTrip } from "@/pages/ActiveSF";
+import { lookupDestination } from "@/lib/destinationGeocodes";
+
+export type TripPathPoint = { lat: number; lon: number; time: string | null; address: string | null };
+export type TripPath = {
+  tripId: string;
+  points: TripPathPoint[];        // ordered visited locations
+  destination: { lat: number; lon: number; name: string } | null;
+};
 
 // Map a row from the sensiwatch_trip_latest view to our SFTrip type.
 function mapRow(row: any): SFTrip {
