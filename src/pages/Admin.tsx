@@ -806,46 +806,6 @@ const Admin = () => {
               </label>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-              {DATA_FILES.map(({ key, label, accept, icon: Icon }) => (
-                <div key={key} className="border border-border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{label}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground font-mono">{key}</p>
-                  <label className="block">
-                    <input
-                      type="file"
-                      accept={accept}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleFileUpload(key, file);
-                        e.target.value = "";
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full gap-2"
-                      disabled={uploading === key}
-                      asChild
-                    >
-                      <span>
-                        {uploading === key ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Upload className="h-3.5 w-3.5" />
-                        )}
-                        {uploading === key ? "Uploading…" : "Upload"}
-                      </span>
-                    </Button>
-                  </label>
-                </div>
-              ))}
-            </div>
           </CardContent>
         </Card>
 
