@@ -300,9 +300,26 @@ const ActiveSF = () => {
       </div>
 
       {/* Detail dialog */}
-      <TripDetailDialog trip={selectedTrip} onClose={() => setSelectedTrip(null)} />
+      <TripDetailDialog
+        trip={selectedTrip}
+        orderInfo={selectedTrip ? lookupOrder(selectedTrip.internalTripId) : null}
+        onClose={() => setSelectedTrip(null)}
+      />
     </div>
   );
 };
+
+export type SFOrderInfo = {
+  orderId: string;
+  customer: string;
+  farm: string;
+  dippingWeek: string;
+  bookingCode: string;
+  containerNumber: string;
+  containerId: string;
+  dropoffDate: number | null;
+  shippingDate: number | null;
+  purposeName: string;
+} | null;
 
 export default ActiveSF;
