@@ -187,21 +187,19 @@ const AllReports = () => {
       <div className="max-w-[1800px] mx-auto px-6 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">All Quality Reports</h1>
-              <p className="text-sm text-muted-foreground">
-                {filtered.length} report{filtered.length !== 1 ? "s" : ""} found
-              </p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">All Quality Reports</h1>
+            <p className="text-sm text-muted-foreground">
+              {filtered.length} report{filtered.length !== 1 ? "s" : ""} found
+            </p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
-            <FileDown className="h-4 w-4" />
-            Export PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
+              <FileDown className="h-4 w-4" />
+              Export PDF
+            </Button>
+            <PageHeaderActions />
+          </div>
         </div>
 
         {/* Filters */}
