@@ -4,6 +4,7 @@ import type { SFTrip } from "@/pages/ActiveSF";
 import { useSensiwatchReadings } from "@/hooks/useSensiwatchData";
 import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { TripPathMap } from "./TripPathMap";
 
 interface Props {
   trip: SFTrip | null;
@@ -37,6 +38,11 @@ export function TripDetailDialog({ trip, onClose }: Props) {
             </span>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Trip route map */}
+        <div className="mb-4 rounded-xl border border-border overflow-hidden">
+          <TripPathMap trip={trip} height={280} />
+        </div>
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
