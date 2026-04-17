@@ -221,6 +221,7 @@ const ActiveSF = () => {
                     Trip Status <SortIcon field="tripStatus" />
                   </TableHead>
                   <TableHead>Internal Trip ID</TableHead>
+                  <TableHead>Order / Farm</TableHead>
                   <TableHead>Origin</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
                   <TableHead>Destination</TableHead>
@@ -236,6 +237,20 @@ const ActiveSF = () => {
                     <TableCell className="font-semibold text-primary">{trip.tripId}</TableCell>
                     <TableCell>{statusBadge(trip.tripStatus)}</TableCell>
                     <TableCell className="font-mono text-xs">{trip.internalTripId}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const info = lookupOrder(trip.internalTripId);
+                        if (!info) return <span className="text-xs text-muted-foreground">—</span>;
+                        return (
+                          <>
+                            <div className="font-medium text-sm">{info.farm || "—"}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {info.customer}{info.dippingWeek ? ` · Wk ${info.dippingWeek}` : ""}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{trip.originName}</div>
                       <div className="text-xs text-muted-foreground">{trip.originAddress}</div>
