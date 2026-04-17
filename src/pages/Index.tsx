@@ -335,6 +335,9 @@ const Index = () => {
                   reports={reports || []}
                 />
               )}
+              <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
+                All Reports
+              </Button>
               {isAdmin && (
                 <ReportingCheck
                   reports={yearFilteredReports}
@@ -342,9 +345,6 @@ const Index = () => {
                   users={users || []}
                 />
               )}
-              <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
-                All Reports
-              </Button>
               {!isCustomer && (
                 <SeasonalityInsights
                   reports={yearFilteredReports}
