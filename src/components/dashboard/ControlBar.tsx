@@ -3,7 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings, LogOut, FlaskConical, CalendarRange, Search, X } from "lucide-react";
+import { Settings, LogOut, FlaskConical, CalendarRange, Search, X, Menu, Package, Ship } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import type { Account, CustomerFarm } from "@/lib/csvParser";
 import chrysalLogo from "@/assets/chrysal-logo.png";
@@ -20,6 +27,7 @@ interface ControlBarProps {
   customerFarms: CustomerFarm[];
   selectedCustomerId: string;
   onCustomerChange: (id: string) => void;
+  onOpenContainers?: () => void;
 }
 
 function SearchableDropdown({
