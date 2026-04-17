@@ -238,7 +238,12 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
 
     const dateStr = (ts: number | null) => (ts ? new Date(ts).toISOString().slice(0, 10) : null);
 
-    return containers.map((c) => {
+    // Cap to most recent 150 containers (by shipping date desc) to stay within LLM token limits
+    const sortedContainers = [...containers]
+      .sort((a, b) => (b.shippingDate ?? 0) - (a.shippingDate ?? 0))
+      .slice(0, 150);
+
+    return sortedContainers.map((c) => {
       const orders = ordersByContainer.get(c.id) || [];
       const reports = reportsByContainer.get(c.id) || [];
       return compact({
