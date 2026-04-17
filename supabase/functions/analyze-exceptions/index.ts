@@ -373,11 +373,14 @@ Identify which farms need attention (worst performing, worsening trends, dangero
     });
   } catch (e) {
     console.error("analyze-exceptions error:", e);
+    const isAbort = e instanceof Error && e.name === "AbortError";
     return new Response(
       JSON.stringify({
-        error: e instanceof Error ? e.message : "Unknown error",
+        error: isAbort
+          ? "AI analysis timed out. Try again — the dataset may be too large for a single pass."
+          : e instanceof Error ? e.message : "Unknown error",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: isAbort ? 504 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
