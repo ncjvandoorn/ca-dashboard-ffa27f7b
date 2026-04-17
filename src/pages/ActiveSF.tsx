@@ -236,12 +236,11 @@ const ActiveSF = () => {
                 <TableRow className="bg-muted/30">
                   <TableHead>Week</TableHead>
                   <TableHead>Internal Trip ID</TableHead>
-                  <TableHead>Order / Farm</TableHead>
                   <TableHead>Booking</TableHead>
                   <TableHead>Container #</TableHead>
-                  <TableHead>Origin</TableHead>
                   <TableHead>Drop-off</TableHead>
                   <TableHead>Shipping</TableHead>
+                  <TableHead>Origin</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
                   <TableHead>Destination</TableHead>
                 </TableRow>
@@ -259,26 +258,18 @@ const ActiveSF = () => {
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="font-mono text-xs">{trip.internalTripId}</TableCell>
-                    <TableCell>
-                      {!info ? <span className="text-xs text-muted-foreground">—</span> : (
-                        <>
-                          <div className="font-medium text-sm">{info.farm || "—"}</div>
-                          <div className="text-xs text-muted-foreground">{info.customer}</div>
-                        </>
-                      )}
-                    </TableCell>
                     <TableCell className="font-mono text-xs">
                       {info?.bookingCode || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="font-mono text-xs">
                       {info?.containerNumber || <span className="text-muted-foreground">—</span>}
                     </TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.dropoffDate ?? null)}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.shippingDate ?? null)}</TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{trip.originName}</div>
                       <div className="text-xs text-muted-foreground">{trip.originAddress}</div>
                     </TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.dropoffDate ?? null)}</TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.shippingDate ?? null)}</TableCell>
                     <TableCell className="text-center">{trip.stops}</TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
