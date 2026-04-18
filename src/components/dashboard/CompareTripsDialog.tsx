@@ -227,6 +227,7 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
             No sensor readings available for the selected trips
           </p>
         )}
+        </div>{/* /legend+multigraph PDF section */}
 
         {/* Per-container details */}
         {containerGroups.length > 0 && (
@@ -239,7 +240,7 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
                 g.tripLabels.length ? `Trip${g.tripLabels.length > 1 ? "s" : ""} ${g.tripLabels.join(", ")}` : null,
               ].filter(Boolean).join(" · ");
               return (
-                <div key={g.containerId} className="rounded-xl border border-border bg-card/50 p-4 space-y-4">
+                <div key={g.containerId} data-pdf-section className="rounded-xl border border-border bg-card/50 p-4 space-y-4">
                   <div className="flex items-baseline justify-between gap-2 flex-wrap border-b border-border pb-2">
                     <h3 className="font-semibold text-base font-mono">{headerLabel}</h3>
                     {subLabel && <span className="text-xs text-muted-foreground">{subLabel}</span>}
@@ -318,6 +319,8 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
             })}
           </div>
         )}
+
+        </div>{/* /exportRef wrapper */}
 
         {/* Silence unused-var lint for perSerial (kept for future per-trip stats) */}
         <span className="hidden">{Object.keys(perSerial).length}</span>
