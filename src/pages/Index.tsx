@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
 import { isVisibleFarmReport } from "@/lib/reportVisibility";
 import chrysalLogo from "@/assets/chrysal-logo.png";
@@ -51,7 +52,7 @@ function weekYear(weekNr: number): number {
 const Index = () => {
   const navigate = useNavigate();
   const { isAdmin, isCustomer, customerAccount } = useAuth();
-  const { can } = (require("@/hooks/usePermissions") as typeof import("@/hooks/usePermissions")).usePermissions();
+  const { can } = usePermissions();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const { data: activities } = useActivities();
