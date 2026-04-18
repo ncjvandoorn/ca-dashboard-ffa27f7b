@@ -231,9 +231,9 @@ const ActiveSF = () => {
           </div>
         )}
 
-        {/* Search */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative flex-1 max-w-sm">
+        {/* Search + compare actions */}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search week, booking, container, customer, farm, serial, location, temp…"
@@ -245,6 +245,33 @@ const ActiveSF = () => {
           <span className="text-sm text-muted-foreground">
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
+          <div className="ml-auto flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedIds(new Set())}
+                className="text-muted-foreground"
+              >
+                <X className="h-4 w-4" />
+                Clear ({selectedIds.size})
+              </Button>
+            )}
+            <Button
+              variant="default"
+              size="sm"
+              disabled={selectedIds.size < 2}
+              onClick={() => setCompareOpen(true)}
+            >
+              <Layers className="h-4 w-4" />
+              View together
+              {selectedIds.size >= 2 && (
+                <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px]">
+                  {selectedIds.size}
+                </span>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Trip Table */}
