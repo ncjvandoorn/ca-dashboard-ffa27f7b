@@ -7,6 +7,7 @@ import {
   loadCustomerFarms,
   loadContainers,
   loadServicesOrders,
+  loadServicesOrderDatalogdevices,
   loadShipperArrivals,
   loadShipperReports,
   loadShippingLines,
@@ -38,6 +39,10 @@ export function useContainers() {
 
 export function useServicesOrders() {
   return useQuery({ queryKey: ["servicesOrders"], queryFn: loadServicesOrders, staleTime: Infinity });
+}
+
+export function useServicesOrderDatalogdevices() {
+  return useQuery({ queryKey: ["servicesOrderDatalogdevices"], queryFn: loadServicesOrderDatalogdevices, staleTime: Infinity });
 }
 
 export function useShipperArrivals() {
