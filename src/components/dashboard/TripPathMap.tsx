@@ -172,11 +172,11 @@ export function TripPathMap({ trip, height = 280, vfTracking }: Props) {
       if (vfGen.destination) routePts.push([vfGen.destination.latitude, vfGen.destination.longitude]);
 
       if (routePts.length >= 2) {
-        const vesselLine = L.polyline(routePts, {
+        const seaPts = buildSeaRouteLatLngs(routePts);
+        const vesselLine = L.polyline(seaPts, {
           color: COLOR_VESSEL,
-          weight: 3,
-          opacity: 0.85,
-          dashArray: "4, 6",
+          weight: 3.5,
+          opacity: 0.9,
         });
         vesselLine.bindTooltip(`<strong>VesselFinder route</strong><br/>${vfGen.carrier || ""} · ${vfGen.containerNumber || ""}`, {
           sticky: true,
