@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, logisticsData } = await req.json();
+    const { messages, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, logisticsData, sfTracking } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -157,6 +157,10 @@ When answering:
 
     if (logisticsData?.length) {
       contextParts.push(`**LOGISTICS DATA** (${logisticsData.length} containers, with linked services orders, shipper arrivals, and shipper reports — use for shipment, temperature chain, and order-volume questions):\n${JSON.stringify(logisticsData)}`);
+    }
+
+    if (sfTracking?.length) {
+      contextParts.push(`**LIVE SEA FREIGHT TRACKING** (${sfTracking.length} active SensiWatch trips — real-time datalogger readings for sea-freight containers in transit. Use for questions about current vessel/container location, latest temperature/humidity readings, in-transit status, ETA estimates, and trip progress. Each trip has: tripId, status (In Transit/Idle/Stale/Unknown — derived from recency of last reading), internalTripId (links to services order), origin, destination, carrier (mode of transport), stops (number of waypoints), serial (datalogger serial number), lastTempC (latest temperature in °C), lastHumidity (%), lastLight, lastReadingTime (ISO timestamp), lastLocation (address), lat/lon (current GPS coordinates). When asked about a specific container or trip's current state, ALWAYS use this dataset over the historical LOGISTICS DATA above.):\n${JSON.stringify(sfTracking)}`);
     }
 
     if (farmData) {
