@@ -23,6 +23,8 @@ interface CRMReportProps {
   users: User[];
   accounts: Account[];
   reports: QualityReport[];
+  /** When true, render inline (no Dialog/trigger) — used by the dedicated CRM page */
+  inline?: boolean;
 }
 
 const STATUS_COLUMNS = ["To Do", "In Progress", "Completed"] as const;
@@ -56,7 +58,7 @@ function timeAgo(timestamp: number | null): string {
   return months === 1 ? "1 month ago" : `${months} months ago`;
 }
 
-export function CRMReport({ activities, users, accounts, reports }: CRMReportProps) {
+export function CRMReport({ activities, users, accounts, reports, inline = false }: CRMReportProps) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"board" | "analysis" | "coming-week">("board");
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
