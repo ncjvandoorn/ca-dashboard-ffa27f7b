@@ -254,7 +254,6 @@ export const CustomerAccountsCard = () => {
                   <TableHead>Username</TableHead>
                   <TableHead>Linked Customer</TableHead>
                   <TableHead>Tier</TableHead>
-                  <TableHead>Trials Access</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -281,12 +280,6 @@ export const CustomerAccountsCard = () => {
                         <option value="pro_plus">Pro+</option>
                         <option value="heavy">Heavy</option>
                       </select>
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={ca.can_see_trials}
-                        onCheckedChange={(checked) => updateCustomerAccount(ca.id, { canSeeTrials: checked })}
-                      />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
