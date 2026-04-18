@@ -331,14 +331,7 @@ const Index = () => {
                 shipperReports={isCustomer ? [] : (shipperReports || [])}
                 sfTrips={isCustomer ? [] : (sfTrips || [])}
               />
-              {!isCustomer && (
-                <CRMReport
-                  activities={activities || []}
-                  users={users || []}
-                  accounts={accounts || []}
-                  reports={reports || []}
-                />
-              )}
+              {/* CRM moved to dedicated /crm page (menu: CRM Activities) */}
               <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                 All Reports
               </Button>
