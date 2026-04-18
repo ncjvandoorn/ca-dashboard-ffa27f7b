@@ -51,6 +51,7 @@ function weekYear(weekNr: number): number {
 const Index = () => {
   const navigate = useNavigate();
   const { isAdmin, isCustomer, customerAccount } = useAuth();
+  const { can } = (require("@/hooks/usePermissions") as typeof import("@/hooks/usePermissions")).usePermissions();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
   const { data: activities } = useActivities();
