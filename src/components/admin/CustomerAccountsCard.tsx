@@ -18,6 +18,7 @@ export const CustomerAccountsCard = () => {
   const [newCustPassword, setNewCustPassword] = useState("CA@2026");
   const [newCustAccountId, setNewCustAccountId] = useState("");
   const [newCustTrials, setNewCustTrials] = useState(false);
+  const [newCustTier, setNewCustTier] = useState<"basic" | "pro">("basic");
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
   const { data: allAccounts } = useAccounts();
@@ -84,6 +85,7 @@ export const CustomerAccountsCard = () => {
           password: newCustPassword,
           customerAccountId: newCustAccountId,
           canSeeTrials: newCustTrials,
+          tier: newCustTier,
         }),
       });
       const data = await res.json();
@@ -93,6 +95,7 @@ export const CustomerAccountsCard = () => {
       setNewCustPassword("CA@2026");
       setNewCustAccountId("");
       setNewCustTrials(false);
+      setNewCustTier("basic");
       fetchCustomerAccounts();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -193,10 +196,23 @@ export const CustomerAccountsCard = () => {
               ))}
             </select>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Switch checked={newCustTrials} onCheckedChange={setNewCustTrials} />
-              <Label className="text-sm">Can see Trials Dashboard</Label>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Switch checked={newCustTrials} onCheckedChange={setNewCustTrials} />
+                <Label className="text-sm">Can see Trials Dashboard</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-sm">Tier:</Label>
+                <select
+                  value={newCustTier}
+                  onChange={(e) => setNewCustTier(e.target.value as "basic" | "pro")}
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  <option value="basic">Basic</option>
+                  <option value="pro">Pro / Pro+ / Heavy</option>
+                </select>
+              </div>
             </div>
             <Button onClick={createCustomerAccount} disabled={creating} size="sm" className="gap-2">
               {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
@@ -218,6 +234,7 @@ export const CustomerAccountsCard = () => {
                 <TableRow>
                   <TableHead>Username</TableHead>
                   <TableHead>Linked Customer</TableHead>
+                  <TableHead>Tier</TableHead>
                   <TableHead>Trials Access</TableHead>
                   <TableHead className="w-[80px]">Actions</TableHead>
                 </TableRow>
@@ -233,6 +250,16 @@ export const CustomerAccountsCard = () => {
                     </TableCell>
                     <TableCell className="text-sm">
                       {customerNameMap.get(ca.customer_account_id) || ca.customer_account_id}
+                    </TableCell>
+                    <TableCell>
+                      <select
+                        value={ca.tier || "basic"}
+                        onChange={(e) => updateCustomerAccount(ca.id, { tier: e.target.value })}
+                        className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                      >
+                        <option value="basic">Basic</option>
+                        <option value="pro">Pro / Pro+ / Heavy</option>
+                      </select>
                     </TableCell>
                     <TableCell>
                       <Switch
