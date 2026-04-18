@@ -1,0 +1,207 @@
+import { useEffect, useState } from "react";
+import { Ship, Loader2, RefreshCw, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useVesselFinderTracking, type VFTracking } from "@/hooks/useVesselFinder";
+
+interface Props {
+  containerId: string | null;
+  defaultContainerNumber: string | null;
+  isAdmin: boolean;
+  onTrackingChange?: (t: VFTracking | null) => void;
+}
+
+function fmtDate(ts?: number | null) {
+  if (!ts) return "—";
+  return new Date(ts * 1000).toLocaleString("en-GB", {
+    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmin, onTrackingChange }: Props) {
+  const { tracking, loading, error, enable, disable } = useVesselFinderTracking(containerId, isAdmin);
+  const [override, setOverride] = useState("");
+  const [sealine, setSealine] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (tracking) {
+      setOverride(tracking.container_number_override || defaultContainerNumber || "");
+      setSealine(tracking.sealine || "");
+    } else {
+      setOverride(defaultContainerNumber || "");
+      setSealine("");
+    }
+  }, [tracking, defaultContainerNumber]);
+
+  useEffect(() => {
+    onTrackingChange?.(tracking);
+  }, [tracking, onTrackingChange]);
+
+  if (!isAdmin) return null;
+  if (!containerId) {
+    return (
+      <div className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground">
+        No linked container — tracking unavailable.
+      </div>
+    );
+  }
+
+  const isActive = !!tracking?.enabled && tracking.status !== "error";
+  const handleSubmit = async (force = false) => {
+    if (!override.trim()) {
+      setActionError("Container number required");
+      return;
+    }
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await enable(override.trim(), sealine.trim() || null, force);
+    } catch (e: any) {
+      setActionError(e?.message || "Failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleToggle = async (next: boolean) => {
+    if (!next) await disable();
+    else await handleSubmit(false);
+  };
+
+  const StatusBadge = () => {
+    if (!tracking) return null;
+    const map: Record<string, { label: string; cls: string; Icon: typeof Clock }> = {
+      success: { label: "Live", cls: "bg-accent/10 text-accent", Icon: CheckCircle2 },
+      queued: { label: "Queued", cls: "bg-muted text-muted-foreground", Icon: Clock },
+      processing: { label: "Processing", cls: "bg-primary/10 text-primary", Icon: Loader2 },
+      error: { label: "Error", cls: "bg-destructive/10 text-destructive", Icon: AlertCircle },
+    };
+    const cfg = map[tracking.status] || map.error;
+    return (
+      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${cfg.cls}`}>
+        <cfg.Icon className={`h-3 w-3 ${tracking.status === "processing" ? "animate-spin" : ""}`} />
+        {cfg.label}
+      </span>
+    );
+  };
+
+  const general = tracking?.response?.general;
+
+  return (
+    <div className="rounded-xl border border-border p-4 bg-card">
+      <div className="flex items-center gap-2 mb-3">
+        <Ship className="h-4 w-4 text-primary" />
+        <span className="font-semibold text-sm">Active Tracking</span>
+        <StatusBadge />
+        <div className="ml-auto flex items-center gap-2">
+          <Label htmlFor="vf-toggle" className="text-xs text-muted-foreground">Enable</Label>
+          <Switch
+            id="vf-toggle"
+            checked={isActive}
+            onCheckedChange={handleToggle}
+            disabled={submitting || loading}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div>
+          <Label className="text-[10px] uppercase text-muted-foreground">Container # (override)</Label>
+          <Input
+            value={override}
+            onChange={(e) => setOverride(e.target.value.toUpperCase())}
+            placeholder="e.g. MMAU1432549"
+            className="h-8 text-xs font-mono mt-1"
+          />
+        </div>
+        <div>
+          <Label className="text-[10px] uppercase text-muted-foreground">Carrier SCAC (optional)</Label>
+          <Input
+            value={sealine}
+            onChange={(e) => setSealine(e.target.value.toUpperCase())}
+            placeholder="auto-detect"
+            className="h-8 text-xs font-mono mt-1"
+          />
+        </div>
+        <div className="flex items-center gap-2 pt-1">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => handleSubmit(false)}
+            disabled={submitting || loading || !override.trim()}
+            className="h-7 text-xs"
+          >
+            {submitting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+            {tracking ? "Refresh" : "Track"}
+          </Button>
+          {tracking && (
+            <Button size="sm" variant="outline" onClick={() => handleSubmit(true)} disabled={submitting} className="h-7 text-xs">
+              Force
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {(actionError || error) && (
+        <div className="mt-2 text-[11px] text-destructive flex items-start gap-1">
+          <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+          <span>{actionError || error}</span>
+        </div>
+      )}
+
+      {tracking?.status === "error" && tracking.error_message && (
+        <div className="mt-2 text-[11px] text-destructive">
+          {tracking.error_code}: {tracking.error_message}
+        </div>
+      )}
+
+      {tracking?.status === "success" && general && (
+        <div className="mt-3 pt-3 border-t border-border space-y-1.5 text-xs">
+          {typeof general.progress === "number" && (
+            <div>
+              <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                <span>Progress</span>
+                <span>{general.progress}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <div className="h-full bg-primary" style={{ width: `${general.progress}%` }} />
+              </div>
+            </div>
+          )}
+          {general.carrier && (
+            <div className="text-muted-foreground">Carrier: <span className="text-foreground">{general.carrier}</span></div>
+          )}
+          {general.currentLocation?.vessel?.name && (
+            <div className="text-muted-foreground">
+              Vessel: <span className="text-foreground">{general.currentLocation.vessel.name}</span>
+              {general.currentLocation.vessel.speed != null && (
+                <span className="text-muted-foreground"> · {general.currentLocation.vessel.speed} kn</span>
+              )}
+            </div>
+          )}
+          {general.currentLocation?.port?.name && (
+            <div className="text-muted-foreground">At port: <span className="text-foreground">{general.currentLocation.port.name}</span></div>
+          )}
+          {general.destination && (
+            <div className="text-muted-foreground">
+              ETA {general.destination.name}: <span className="text-foreground">{fmtDate(general.destination.date)}</span>
+            </div>
+          )}
+          {general.updatedAt && (
+            <div className="text-[10px] text-muted-foreground pt-1">Updated {fmtDate(general.updatedAt)}</div>
+          )}
+        </div>
+      )}
+
+      {(tracking?.status === "queued" || tracking?.status === "processing") && (
+        <div className="mt-3 pt-3 border-t border-border text-[11px] text-muted-foreground">
+          Data is being prepared by VesselFinder. This typically takes under 60 seconds, sometimes up to 15–20 minutes. Click <strong>Refresh</strong> to check again.
+        </div>
+      )}
+    </div>
+  );
+}

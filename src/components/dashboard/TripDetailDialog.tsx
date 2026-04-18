@@ -7,7 +7,10 @@ import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts }
 import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { TripPathMap } from "./TripPathMap";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { VesselTrackingCard } from "./VesselTrackingCard";
+import { useAuth } from "@/hooks/useAuth";
+import type { VFTracking } from "@/hooks/useVesselFinder";
 
 interface Props {
   trip: SFTrip | null;
@@ -21,6 +24,8 @@ function formatDate(ts: number | null): string {
 }
 
 export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
+  const { isAdmin } = useAuth();
+  const [vfTracking, setVfTracking] = useState<VFTracking | null>(null);
   const { readings, isLoading: readingsLoading } = useSensiwatchReadings(
     trip?.serialNumber ?? null,
     trip?.actualDepartureTime ?? null
@@ -84,13 +89,25 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
 
         {/* Trip route map */}
         <div className="mb-4 rounded-xl border border-border overflow-hidden">
-          <TripPathMap trip={trip} height={280} />
+          <TripPathMap trip={trip} height={280} vfTracking={vfTracking} />
         </div>
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* Summary cards: Most Recent | Origin | Active Tracking (admin) */}
+        <div
+          className={`grid grid-cols-1 gap-4 mb-4 ${
+            isAdmin ? "md:grid-cols-[1fr_1fr_0.85fr]" : "md:grid-cols-2"
+          }`}
+        >
           <MostRecentCard trip={trip} />
           <OriginCard trip={trip} />
+          {isAdmin && (
+            <VesselTrackingCard
+              containerId={containerId || null}
+              defaultContainerNumber={orderInfo?.containerNumber || null}
+              isAdmin={isAdmin}
+              onTrackingChange={setVfTracking}
+            />
+          )}
         </div>
 
         {/* Multigraph tabs */}

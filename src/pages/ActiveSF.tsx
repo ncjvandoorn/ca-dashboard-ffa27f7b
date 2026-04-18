@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
 import { useServicesOrders, useAccounts, useCustomerFarms, useContainers } from "@/hooks/useQualityData";
+import { useVesselFinderActiveSet } from "@/hooks/useVesselFinder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,7 +43,7 @@ type SortDir = "asc" | "desc";
 
 const ActiveSF = () => {
   const navigate = useNavigate();
-  const { isCustomer } = useAuth();
+  const { isCustomer, isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("tripId");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -53,6 +54,7 @@ const ActiveSF = () => {
   const { data: accounts } = useAccounts();
   const { data: customerFarms } = useCustomerFarms();
   const { data: containers } = useContainers();
+  const vfActiveSet = useVesselFinderActiveSet(isAdmin);
 
   // Map orderNumber -> { customerName, farmName, dippingWeek, bookingCode, containerNumber, containerId, dropoffDate, shippingDate, purposeName, orderId }
   const orderInfo = useMemo(() => {
@@ -266,6 +268,7 @@ const ActiveSF = () => {
                   <TableHead>Origin &amp; Current Location</TableHead>
                   <TableHead>Destination</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
+                  {isAdmin && <TableHead className="text-center">Tracking</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -297,6 +300,26 @@ const ActiveSF = () => {
                       <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
                     </TableCell>
                     <TableCell className="text-center">{trip.stops}</TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-center">
+                        {(() => {
+                          const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
+                          if (!vf || !vf.enabled) {
+                            return <span className="text-muted-foreground/50 text-xs">—</span>;
+                          }
+                          const cls =
+                            vf.status === "success" ? "bg-accent" :
+                            vf.status === "error" ? "bg-destructive" :
+                            "bg-primary animate-pulse";
+                          return (
+                            <span className="inline-flex items-center gap-1.5 text-[10px]">
+                              <span className={`h-2 w-2 rounded-full ${cls}`} />
+                              <span className="text-muted-foreground capitalize">{vf.status}</span>
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
+                    )}
                   </TableRow>
                   );
                 })}
