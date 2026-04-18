@@ -18,6 +18,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { QualityReport, Account, Activity, User, Container, ServicesOrder, ShipperArrival, ShipperReport } from "@/lib/csvParser";
 import type { SFTrip } from "@/pages/ActiveSF";
 
+interface CustomerScope {
+  isCustomer: boolean;
+  allowedFarmIds: string[];
+  allowedOrderIds: string[];
+  customerAccountId?: string;
+}
+
 interface AIAgentProps {
   reports: QualityReport[];
   accounts: Account[];
@@ -30,6 +37,7 @@ interface AIAgentProps {
   shipperArrivals?: ShipperArrival[];
   shipperReports?: ShipperReport[];
   sfTrips?: SFTrip[];
+  customerScope?: CustomerScope;
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
