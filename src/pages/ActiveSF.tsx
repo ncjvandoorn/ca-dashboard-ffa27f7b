@@ -268,6 +268,7 @@ const ActiveSF = () => {
                   <TableHead>Origin &amp; Current Location</TableHead>
                   <TableHead>Destination</TableHead>
                   <TableHead className="text-center">Stops</TableHead>
+                  {isAdmin && <TableHead className="text-center">Tracking</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -299,6 +300,26 @@ const ActiveSF = () => {
                       <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
                     </TableCell>
                     <TableCell className="text-center">{trip.stops}</TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-center">
+                        {(() => {
+                          const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
+                          if (!vf || !vf.enabled) {
+                            return <span className="text-muted-foreground/50 text-xs">—</span>;
+                          }
+                          const cls =
+                            vf.status === "success" ? "bg-accent" :
+                            vf.status === "error" ? "bg-destructive" :
+                            "bg-primary animate-pulse";
+                          return (
+                            <span className="inline-flex items-center gap-1.5 text-[10px]">
+                              <span className={`h-2 w-2 rounded-full ${cls}`} />
+                              <span className="text-muted-foreground capitalize">{vf.status}</span>
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
+                    )}
                   </TableRow>
                   );
                 })}
