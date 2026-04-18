@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     if (action === "list") {
       const { data, error } = await admin
         .from("vesselfinder_tracking")
-        .select("container_id, status, enabled, last_polled_at, container_number_override");
+        .select("container_id, status, enabled, last_polled_at, container_number_override, response");
       if (error) return json({ error: error.message }, 500);
       return json({ items: data ?? [] });
     }

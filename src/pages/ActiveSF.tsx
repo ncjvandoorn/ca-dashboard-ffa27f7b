@@ -371,6 +371,20 @@ const ActiveSF = () => {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
+                      {(() => {
+                        const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
+                        if (!vf || !vf.enabled || (!vf.destinationName && !vf.destinationDate)) return null;
+                        return (
+                          <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                            {vf.destinationDate && (
+                              <span>ETA {formatShortDate(vf.destinationDate)}</span>
+                            )}
+                            {vf.destinationName && (
+                              <span>{vf.destinationDate ? " · " : ""}{vf.destinationName}</span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     {isAdmin && (
                       <TableCell className="text-center">

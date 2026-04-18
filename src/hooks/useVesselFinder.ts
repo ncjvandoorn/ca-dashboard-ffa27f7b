@@ -130,9 +130,16 @@ export function useVesselFinderTracking(containerId: string | null, isAdmin: boo
   return { tracking, loading, error, enable, disable, refresh };
 }
 
+export type VFActiveInfo = {
+  status: string;
+  enabled: boolean;
+  destinationName?: string | null;
+  destinationDate?: number | null;
+};
+
 /** Lists which container_ids have active tracking — for table indicator. */
 export function useVesselFinderActiveSet(isAdmin: boolean) {
-  const [active, setActive] = useState<Map<string, { status: string; enabled: boolean }>>(new Map());
+  const [active, setActive] = useState<Map<string, VFActiveInfo>>(new Map());
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -141,9 +148,15 @@ export function useVesselFinderActiveSet(isAdmin: boolean) {
       try {
         const res = await invoke({ action: "list" });
         if (cancelled) return;
-        const m = new Map<string, { status: string; enabled: boolean }>();
+        const m = new Map<string, VFActiveInfo>();
         for (const item of res.items || []) {
-          m.set(item.container_id, { status: item.status, enabled: item.enabled });
+          const resp = (item as any).response as VFResponse | null | undefined;
+          m.set(item.container_id, {
+            status: item.status,
+            enabled: item.enabled,
+            destinationName: resp?.general?.destination?.name ?? null,
+            destinationDate: resp?.general?.destination?.date ?? null,
+          });
         }
         setActive(m);
       } catch (e) {
