@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { QualityReport, Account, Activity, User, Container, ServicesOrder, ShipperArrival, ShipperReport } from "@/lib/csvParser";
+import type { SFTrip } from "@/pages/ActiveSF";
 
 interface AIAgentProps {
   reports: QualityReport[];
@@ -28,6 +29,7 @@ interface AIAgentProps {
   servicesOrders?: ServicesOrder[];
   shipperArrivals?: ShipperArrival[];
   shipperReports?: ShipperReport[];
+  sfTrips?: SFTrip[];
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -169,7 +171,7 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[], use
   return summaries;
 }
 
-export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis, containers, servicesOrders, shipperArrivals, shipperReports }: AIAgentProps) {
+export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis, containers, servicesOrders, shipperArrivals, shipperReports, sfTrips }: AIAgentProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -286,6 +288,29 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
     });
   }, [containers, servicesOrders, shipperArrivals, shipperReports, accounts]);
 
+  // Live SensiWatch tracker data — all active SF trips with current temp/humidity/location/ETA
+  const sfTracking = useMemo(() => {
+    if (!sfTrips?.length) return null;
+    return sfTrips.map((t) => compact({
+      tripId: t.tripId,
+      status: t.tripStatus,
+      internalTripId: t.internalTripId,
+      origin: t.originName,
+      originAddr: t.originAddress,
+      destination: t.destinationName,
+      carrier: t.carrier,
+      stops: t.stops,
+      serial: t.serialNumber,
+      lastTempC: t.lastTemp,
+      lastHumidity: t.lastHumidity,
+      lastLight: t.lastLight,
+      lastReadingTime: t.lastReadingTime,
+      lastLocation: t.lastLocation,
+      lat: t.latitude,
+      lon: t.longitude,
+    }));
+  }, [sfTrips]);
+
   // Fetch recent weekly plans for AI context
   const [weeklyPlans, setWeeklyPlans] = useState<any[]>([]);
   useEffect(() => {
@@ -352,6 +377,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             seasonalityAnalysis: seasonalityAnalysis || null,
             weeklyPlans: weeklyPlans.length > 0 ? weeklyPlans : null,
             logisticsData: logisticsData || null,
+            sfTracking: sfTracking || null,
           }),
         });
 
@@ -460,7 +486,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
         setIsLoading(false);
       }
     },
-    [messages, isLoading, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, logisticsData]
+    [messages, isLoading, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, logisticsData, sfTracking]
   );
 
   const handleSubmit = (e: React.FormEvent) => {

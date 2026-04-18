@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
 import { isVisibleFarmReport } from "@/lib/reportVisibility";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 
@@ -59,6 +60,7 @@ const Index = () => {
   const { data: servicesOrders } = useServicesOrders();
   const { data: shipperArrivals } = useShipperArrivals();
   const { data: shipperReports } = useShipperReports();
+  const { data: sfTrips } = useSensiwatchTrips();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
@@ -327,6 +329,7 @@ const Index = () => {
                 servicesOrders={isCustomer ? [] : (servicesOrders || [])}
                 shipperArrivals={isCustomer ? [] : (shipperArrivals || [])}
                 shipperReports={isCustomer ? [] : (shipperReports || [])}
+                sfTrips={isCustomer ? [] : (sfTrips || [])}
               />
               {!isCustomer && (
                 <CRMReport
