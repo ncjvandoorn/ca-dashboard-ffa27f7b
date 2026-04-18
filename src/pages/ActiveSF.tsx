@@ -43,7 +43,7 @@ type SortDir = "asc" | "desc";
 
 const ActiveSF = () => {
   const navigate = useNavigate();
-  const { isCustomer } = useAuth();
+  const { isCustomer, isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("tripId");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
