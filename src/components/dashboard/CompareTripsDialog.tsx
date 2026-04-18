@@ -111,17 +111,25 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
       });
   }, [trips, lookupOrder]);
 
+  const exportRef = useRef<HTMLDivElement>(null);
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg">
-            Comparing {trips.length} trip{trips.length !== 1 ? "s" : ""}
+          <DialogTitle className="text-lg flex items-center justify-between gap-3 pr-8">
+            <span>Comparing {trips.length} trip{trips.length !== 1 ? "s" : ""}</span>
+            <ExportPdfButton
+              targetRef={exportRef}
+              filename={`active-sf-compare-${trips.length}-trips`}
+              label="Export PDF"
+            />
           </DialogTitle>
         </DialogHeader>
 
+        <div ref={exportRef} className="space-y-4">
         {/* Combined map */}
-        <div className="mb-4 rounded-xl border border-border overflow-hidden">
+        <div className="rounded-xl border border-border overflow-hidden" data-pdf-section>
           <SFWorldMap trips={trips} onSelectTrip={() => {}} />
         </div>
 
