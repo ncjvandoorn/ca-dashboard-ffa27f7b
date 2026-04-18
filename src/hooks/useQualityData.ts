@@ -7,6 +7,7 @@ import {
   loadCustomerFarms,
   loadContainers,
   loadServicesOrders,
+  loadServicesOrderDatalogdevices,
   loadShipperArrivals,
   loadShipperReports,
   loadShippingLines,
