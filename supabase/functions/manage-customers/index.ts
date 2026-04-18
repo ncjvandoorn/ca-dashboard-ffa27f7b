@@ -154,6 +154,44 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "reset_password_by_email") {
+      const { email, password } = body;
+      if (!email || !password || typeof password !== "string" || password.length < 6) {
+        return new Response(JSON.stringify({ error: "Password must be at least 6 characters" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Find the user by email by listing users (small admin user base)
+      const { data: usersList, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      if (listErr) {
+        return new Response(JSON.stringify({ error: listErr.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const target = usersList.users.find((u) => u.email?.toLowerCase() === String(email).toLowerCase());
+      if (!target) {
+        return new Response(JSON.stringify({ error: `User ${email} not found` }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(target.id, { password });
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "reset_password") {
       const { userId, password } = body;
       if (!userId || !password || typeof password !== "string" || password.length < 6) {
