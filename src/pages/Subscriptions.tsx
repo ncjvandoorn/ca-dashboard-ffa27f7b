@@ -70,8 +70,8 @@ export default function Subscriptions() {
               Chrysal Intelligence subscriptions
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-tight">
-              Intelligent insights.<br />
-              Easy &amp; insightful sea freight tracking.
+              Valuable insights.<br />
+              Easy &amp; intelligent Sea Freight tracking.
             </h2>
             <p className="mt-3 text-base text-muted-foreground max-w-2xl">
               Pick the plan that matches how deep you want to go — from essential
