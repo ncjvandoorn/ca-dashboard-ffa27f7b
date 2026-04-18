@@ -315,6 +315,13 @@ const ActiveSF = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allFilteredSelected ? true : someFilteredSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all trips"
+                    />
+                  </TableHead>
                   <TableHead>Week</TableHead>
                   <TableHead>Internal Trip ID</TableHead>
                   <TableHead>Booking</TableHead>
@@ -332,9 +339,20 @@ const ActiveSF = () => {
                   return (
                   <TableRow
                     key={trip.tripId}
+                    data-state={selectedIds.has(trip.tripId) ? "selected" : undefined}
                     className="cursor-pointer hover:bg-primary/5 transition-colors"
                     onClick={() => setSelectedTrip(trip)}
                   >
+                    <TableCell
+                      className="w-10"
+                      onClick={(e) => { e.stopPropagation(); toggleSelected(trip.tripId); }}
+                    >
+                      <Checkbox
+                        checked={selectedIds.has(trip.tripId)}
+                        onCheckedChange={() => toggleSelected(trip.tripId)}
+                        aria-label={`Select trip ${trip.tripId}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-semibold text-sm">
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                     </TableCell>
@@ -390,6 +408,14 @@ const ActiveSF = () => {
         trip={selectedTrip}
         orderInfo={selectedTrip ? lookupOrder(selectedTrip.internalTripId) : null}
         onClose={() => setSelectedTrip(null)}
+      />
+
+      {/* Compare-trips dialog */}
+      <CompareTripsDialog
+        open={compareOpen && selectedTrips.length >= 2}
+        trips={selectedTrips}
+        lookupOrder={lookupOrder}
+        onClose={() => setCompareOpen(false)}
       />
     </div>
   );
