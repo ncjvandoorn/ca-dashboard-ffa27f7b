@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, Sparkles, BarChart3, Ship, Brain, Leaf } from "lucide-react";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 
@@ -59,41 +59,44 @@ export default function Subscriptions() {
       </header>
 
       <main className="container mx-auto px-6 py-8 space-y-8">
-        {/* Plan cards */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {PLANS.map((plan) => (
-            <Card
-              key={plan.key}
-              className={`p-6 flex flex-col gap-3 ${
-                plan.highlight ? "border-primary border-2 shadow-lg" : ""
-              }`}
-            >
-              {plan.highlight && (
-                <span className="text-xs font-medium uppercase tracking-wide text-primary">
-                  Most popular
-                </span>
-              )}
-              <div>
-                <h2 className="text-2xl font-semibold text-foreground">{plan.name}</h2>
-                <p className="text-sm text-muted-foreground mt-1">{plan.tagline}</p>
-              </div>
-              <div className="space-y-1 mt-2">
-                <div>
-                  <span className="text-3xl font-bold text-foreground">{plan.monthly}</span>
-                  {plan.monthly.startsWith("€") && (
-                    <span className="text-sm text-muted-foreground"> /month</span>
-                  )}
+        {/* Hero */}
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-background to-accent/10 px-8 py-10">
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
+
+          <div className="relative max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary mb-4">
+              <Sparkles className="h-3.5 w-3.5" />
+              Chrysal Intelligence subscriptions
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-tight">
+              Smarter quality.<br />
+              Sharper sea freight.
+            </h2>
+            <p className="mt-3 text-base text-muted-foreground max-w-2xl">
+              Pick the plan that matches how deep you want to go — from essential
+              quality insights to full live container tracking and unlimited scale.
+            </p>
+
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl">
+              {[
+                { icon: Leaf, label: "Quality insights" },
+                { icon: BarChart3, label: "Seasonality trends" },
+                { icon: Brain, label: "AI insights" },
+                { icon: Ship, label: "Sea freight tracking" },
+              ].map(({ icon: Icon, label }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 backdrop-blur-sm px-3 py-2"
+                >
+                  <Icon className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-xs font-medium text-foreground leading-tight">
+                    {label}
+                  </span>
                 </div>
-                {plan.yearly.startsWith("€") ? (
-                  <p className="text-xs text-muted-foreground">
-                    {plan.yearly}/month billed yearly
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">Custom yearly pricing</p>
-                )}
-              </div>
-            </Card>
-          ))}
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* Comparison table */}
