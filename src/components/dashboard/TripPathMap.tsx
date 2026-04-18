@@ -42,7 +42,7 @@ interface Props {
 const COLOR_PASSED = "hsl(142, 71%, 38%)";
 const COLOR_CURRENT = "hsl(207, 100%, 35%)";
 const COLOR_DESTINATION = "hsl(340, 75%, 45%)";
-const COLOR_VESSEL = "hsl(28, 90%, 50%)";
+const COLOR_VESSEL = "hsl(210, 80%, 35%)";
 
 export function TripPathMap({ trip, height = 280, vfTracking }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
