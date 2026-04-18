@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { QualityReport, Account, Activity, User, Container, ServicesOrder, ShipperArrival, ShipperReport } from "@/lib/csvParser";
+import type { SFTrip } from "@/pages/ActiveSF";
 
 interface AIAgentProps {
   reports: QualityReport[];
@@ -28,6 +29,7 @@ interface AIAgentProps {
   servicesOrders?: ServicesOrder[];
   shipperArrivals?: ShipperArrival[];
   shipperReports?: ShipperReport[];
+  sfTrips?: SFTrip[];
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
