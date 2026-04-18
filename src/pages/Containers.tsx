@@ -11,6 +11,7 @@ import { PageHeaderActions } from "@/components/PageHeaderActions";
 import {
   useContainers,
   useServicesOrders,
+  useServicesOrderDatalogdevices,
   useShipperArrivals,
   useShipperReports,
   useAccounts,
@@ -46,10 +47,23 @@ export default function Containers() {
   const navigate = useNavigate();
   const { data: containers, isLoading } = useContainers();
   const { data: servicesOrders } = useServicesOrders();
+  const { data: orderDatalogdevices } = useServicesOrderDatalogdevices();
   const { data: shipperArrivals } = useShipperArrivals();
   const { data: shipperReports } = useShipperReports();
   const { data: accounts } = useAccounts();
   const { data: shippingLines } = useShippingLines();
+
+  // Build a map: servicesOrderId -> datalogdeviceId[]
+  const devicesByOrder = useMemo(() => {
+    const m = new Map<string, string[]>();
+    (orderDatalogdevices || []).forEach((d) => {
+      if (!d.servicesOrderId || !d.datalogdeviceId) return;
+      const arr = m.get(d.servicesOrderId) || [];
+      arr.push(d.datalogdeviceId);
+      m.set(d.servicesOrderId, arr);
+    });
+    return m;
+  }, [orderDatalogdevices]);
   const [search, setSearch] = useState("");
   const [selectedWeek, setSelectedWeek] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("shippingDate");
@@ -278,7 +292,7 @@ export default function Containers() {
                     <TableCell>{r.container.bookingCode}</TableCell>
                     <TableCell className="font-mono">{r.container.containerNumber}</TableCell>
                     <TableCell className="text-center font-mono text-xs">
-                      {r.orders.filter((o) => o.datalogdeviceId).length}
+                      {r.orders.reduce((sum, o) => sum + (devicesByOrder.get(o.id)?.length || 0), 0)}
                     </TableCell>
                     <TableCell>{formatDate(r.container.dropoffDate)}</TableCell>
                     <TableCell>{formatDate(r.container.shippingDate)}</TableCell>
@@ -355,7 +369,7 @@ export default function Containers() {
                             <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Datalogger Device ID: <span className="text-foreground font-mono">{o.datalogdeviceId || "—"}</span>
+                            Datalogger Device ID: <span className="text-foreground font-mono">{(devicesByOrder.get(o.id) || []).join(", ") || "—"}</span>
                           </div>
 
                           {arrivals.length > 0 && (
