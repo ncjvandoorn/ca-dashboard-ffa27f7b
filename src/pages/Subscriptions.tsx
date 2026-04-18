@@ -28,9 +28,9 @@ const FEATURES: { label: string; included: Record<PlanKey, boolean> }[] = [
 ];
 
 const LIMITS: { label: string; values: Record<PlanKey, string> }[] = [
-  { label: "Clients", values: { basic: "—", pro: "—", proPlus: "1", heavy: "Unlimited" } },
-  { label: "Farms", values: { basic: "—", pro: "—", proPlus: "10", heavy: "Unlimited" } },
-  { label: "Containers / month", values: { basic: "—", pro: "—", proPlus: "4", heavy: "TBD" } },
+  { label: "Clients", values: { basic: "—", pro: "1", proPlus: "1", heavy: "Unlimited" } },
+  { label: "Farms", values: { basic: "—", pro: "10", proPlus: "25", heavy: "Unlimited" } },
+  { label: "Containers / month", values: { basic: "—", pro: "4", proPlus: "10", heavy: "TBD" } },
 ];
 
 export default function Subscriptions() {
