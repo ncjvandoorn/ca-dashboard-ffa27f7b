@@ -19,12 +19,36 @@ const PLANS: {
   { key: "heavy", name: "Heavy", tagline: "Enterprise scale", monthly: "Upon request", yearly: "Upon request" },
 ];
 
-const FEATURES: { label: string; included: Record<PlanKey, boolean> }[] = [
-  { label: "Quality insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
-  { label: "Seasonality insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
-  { label: "AI insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
-  { label: "Sea freight insights", included: { basic: false, pro: true, proPlus: true, heavy: true } },
-  { label: "Sea freight tracking", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+type FeatureGroup = {
+  group: string;
+  rows: { label: string; included: Record<PlanKey, boolean> }[];
+};
+
+const FEATURE_GROUPS: FeatureGroup[] = [
+  {
+    group: "Quality & AI",
+    rows: [
+      { label: "Quality insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "Seasonality insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "AI insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "AI chat agent", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+    ],
+  },
+  {
+    group: "Sea freight",
+    rows: [
+      { label: "Sea freight overview", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "Sea freight insights", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+      { label: "Sea freight tracking", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+    ],
+  },
+  {
+    group: "Trials",
+    rows: [
+      { label: "Trials overview", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "Trials insights", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+    ],
+  },
 ];
 
 const LIMITS: { label: string; values: Record<PlanKey, string> }[] = [
