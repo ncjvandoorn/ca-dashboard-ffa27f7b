@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAccounts, useQualityReports, useActivities, useUsers, useCustomerFarms, useContainers, useServicesOrders, useShipperArrivals, useShipperReports } from "@/hooks/useQualityData";
 import { useAuth } from "@/hooks/useAuth";
 import { ControlBar } from "@/components/dashboard/ControlBar";
@@ -68,7 +68,8 @@ const Index = () => {
   const [selectedYear, setSelectedYear] = useState<string>("26");
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
-  
+  const [reportingCheckOpen, setReportingCheckOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [exceptionAnalysis, setExceptionAnalysis] = useState<any>(null);
   const [seasonalityAnalysis, setSeasonalityAnalysis] = useState<any>(null);
   const dashboardRef = useRef<HTMLDivElement>(null);
@@ -345,6 +346,15 @@ const Index = () => {
                   reports={yearFilteredReports}
                   accounts={scopedAccounts}
                   users={users || []}
+                  open={reportingCheckOpen}
+                  onOpenChange={(o) => {
+                    setReportingCheckOpen(o);
+                    if (!o && searchParams.get("check") === "reporting") {
+                      searchParams.delete("check");
+                      setSearchParams(searchParams, { replace: true });
+                    }
+                  }}
+                  hideTrigger
                 />
               )}
               {can("seasonality_insights") && (
