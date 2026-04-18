@@ -44,34 +44,54 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
     return m;
   }, [accounts]);
 
-  // Build a list of containerIds covered by the selected trips
-  const containerIds = useMemo(() => {
-    const ids = new Set<string>();
+  // Build per-container groups from the selected trips. Each container gets
+  // its own section in the dialog with its shipper reports and orders/arrivals.
+  const containerGroups = useMemo(() => {
+    type Group = {
+      containerId: string;
+      bookingCode: string;
+      containerNumber: string;
+      tripLabels: string[];
+      reports: NonNullable<typeof shipperReports>;
+      orders: NonNullable<typeof servicesOrders>;
+    };
+    const groups = new Map<string, Group>();
     for (const t of trips) {
       const info = lookupOrder(t.internalTripId);
-      if (info?.containerId) ids.add(info.containerId);
+      const cid = info?.containerId;
+      if (!cid) continue;
+      if (!groups.has(cid)) {
+        groups.set(cid, {
+          containerId: cid,
+          bookingCode: info?.bookingCode || "",
+          containerNumber: info?.containerNumber || "",
+          tripLabels: [],
+          reports: [],
+          orders: [],
+        });
+      }
+      groups.get(cid)!.tripLabels.push(t.tripId);
     }
-    return ids;
-  }, [trips, lookupOrder]);
-
-  const allReports = useMemo(
-    () => (shipperReports || []).filter((r) => containerIds.has(r.containerId)),
-    [shipperReports, containerIds]
-  );
-
-  const allOrders = useMemo(
-    () => (servicesOrders || []).filter((o) => containerIds.has(o.containerId)),
-    [servicesOrders, containerIds]
-  );
+    for (const r of shipperReports || []) {
+      const g = groups.get(r.containerId);
+      if (g) g.reports.push(r);
+    }
+    for (const o of servicesOrders || []) {
+      const g = groups.get(o.containerId);
+      if (g) g.orders.push(o);
+    }
+    return Array.from(groups.values());
+  }, [trips, lookupOrder, shipperReports, servicesOrders]);
 
   const arrivalByOrderId = useMemo(() => {
     const m = new Map<string, NonNullable<typeof shipperArrivals>[number]>();
-    const orderIds = new Set(allOrders.map((o) => o.id));
+    const orderIds = new Set<string>();
+    for (const g of containerGroups) for (const o of g.orders) orderIds.add(o.id);
     for (const a of shipperArrivals || []) {
       if (orderIds.has(a.servicesOrderId)) m.set(a.servicesOrderId, a);
     }
     return m;
-  }, [shipperArrivals, allOrders]);
+  }, [shipperArrivals, containerGroups]);
 
   // Build per-trip metadata used for the legend / chart series labels
   const tripMeta = useMemo(() => {
