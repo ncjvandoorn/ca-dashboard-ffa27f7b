@@ -103,14 +103,38 @@ const ActiveSF = () => {
       return info?.purposeName === "Sea Freight";
     });
     if (q) {
-      list = list.filter((t) =>
-        t.tripId.toLowerCase().includes(q) ||
-        t.tripStatus.toLowerCase().includes(q) ||
-        t.internalTripId.toLowerCase().includes(q) ||
-        t.originName.toLowerCase().includes(q) ||
-        t.carrier.toLowerCase().includes(q) ||
-        (t.plannedDepartureTime || "").toLowerCase().includes(q)
-      );
+      list = list.filter((t) => {
+        const info = lookupOrder(t.internalTripId);
+        const haystack = [
+          t.tripId,
+          t.tripStatus,
+          t.internalTripId,
+          t.originName,
+          t.originAddress,
+          t.destinationName,
+          t.carrier,
+          t.serialNumber,
+          t.lastLocation,
+          t.lastTemp != null ? String(t.lastTemp) : "",
+          t.lastHumidity != null ? String(t.lastHumidity) : "",
+          t.lastReadingTime,
+          t.plannedDepartureTime,
+          t.actualDepartureTime,
+          String(t.stops ?? ""),
+          info?.dippingWeek,
+          info?.bookingCode,
+          info?.containerNumber,
+          info?.customer,
+          info?.farm,
+          info?.purposeName,
+          formatShortDate(info?.dropoffDate ?? null),
+          formatShortDate(info?.shippingDate ?? null),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(q);
+      });
     }
     return [...list].sort((a, b) => {
       if (sortField === "tripId") {
@@ -206,7 +230,7 @@ const ActiveSF = () => {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search trips…"
+              placeholder="Search week, booking, container, customer, farm, serial, location, temp…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9"
