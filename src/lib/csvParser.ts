@@ -207,6 +207,7 @@ export interface ServicesOrder {
   purposeName: string;
   shipperReportId: string;
   qualityReportId: string;
+  datalogdeviceId: string;
 }
 
 export async function loadServicesOrders(): Promise<ServicesOrder[]> {
@@ -225,6 +226,7 @@ export async function loadServicesOrders(): Promise<ServicesOrder[]> {
     purposeName: row.purposeName || "",
     shipperReportId: row.shipperReportId || "",
     qualityReportId: row.qualityReportId || "",
+    datalogdeviceId: row.datalogdeviceId || "",
   }));
 }
 
