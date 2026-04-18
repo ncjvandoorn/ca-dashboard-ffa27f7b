@@ -207,7 +207,6 @@ export interface ServicesOrder {
   purposeName: string;
   shipperReportId: string;
   qualityReportId: string;
-  datalogdeviceId: string;
 }
 
 export async function loadServicesOrders(): Promise<ServicesOrder[]> {
@@ -226,7 +225,23 @@ export async function loadServicesOrders(): Promise<ServicesOrder[]> {
     purposeName: row.purposeName || "",
     shipperReportId: row.shipperReportId || "",
     qualityReportId: row.qualityReportId || "",
+  }));
+}
+
+export interface ServicesOrderDatalogdevice {
+  id: string;
+  servicesOrderId: string;
+  datalogdeviceId: string;
+  sequenceNumber: number | null;
+}
+
+export async function loadServicesOrderDatalogdevices(): Promise<ServicesOrderDatalogdevice[]> {
+  const url = await getDataFileUrl("servicesOrderDatalogdevice.csv");
+  return fetchCsv(url, (row) => ({
+    id: row.id,
+    servicesOrderId: row.servicesOrderId || "",
     datalogdeviceId: row.datalogdeviceId || "",
+    sequenceNumber: parseNum(row.sequenceNumber),
   }));
 }
 
