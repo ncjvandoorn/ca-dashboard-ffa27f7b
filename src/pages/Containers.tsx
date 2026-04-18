@@ -257,6 +257,7 @@ export default function Containers() {
                   </TableHead>
                   <TableHead>Booking Code</TableHead>
                   <TableHead>Container #</TableHead>
+                  <TableHead>Datalogger Device ID</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dropoffDate")}>
                     Drop-off <SortIcon field="dropoffDate" />
                   </TableHead>
