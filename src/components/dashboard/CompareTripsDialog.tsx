@@ -6,7 +6,8 @@ import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts }
 import { Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { SFWorldMap } from "./SFWorldMap";
-import { useMemo } from "react";
+import { ExportPdfButton } from "./ExportPdfButton";
+import { useMemo, useRef } from "react";
 
 interface Props {
   open: boolean;
