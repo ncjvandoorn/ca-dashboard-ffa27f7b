@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,7 +29,8 @@ interface PageHeaderActionsProps {
 
 export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderActionsProps) {
   const navigate = useNavigate();
-  const { signOut, isAdmin, isCustomer, customerAccount } = useAuth();
+  const { signOut } = useAuth();
+  const { can } = usePermissions();
 
   return (
     <div className="flex items-center gap-2">
@@ -45,41 +47,43 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
-          {!isCustomer && (
+          {can("containers") && (
             <DropdownMenuItem onClick={() => navigate("/containers")}>
               <Package className="h-4 w-4 mr-2" />
               Containers
             </DropdownMenuItem>
           )}
-          {!isCustomer && (
+          {can("active_sf") && (
             <DropdownMenuItem onClick={() => navigate("/active-sf")}>
               <Ship className="h-4 w-4 mr-2" />
               Active SF
             </DropdownMenuItem>
           )}
-          {!isCustomer && (
+          {can("trial_planner") && (
             <DropdownMenuItem onClick={() => navigate("/planner")}>
               <CalendarRange className="h-4 w-4 mr-2" />
               Trial Planner
             </DropdownMenuItem>
           )}
-          {!isCustomer && (
+          {can("crm_activities") && (
             <DropdownMenuItem onClick={() => navigate("/crm")}>
               <Users className="h-4 w-4 mr-2" />
               CRM Activities
             </DropdownMenuItem>
           )}
-          {(!isCustomer || customerAccount?.canSeeTrials) && (
+          {can("trials_dashboard") && (
             <DropdownMenuItem onClick={() => navigate("/trials")}>
               <FlaskConical className="h-4 w-4 mr-2" />
               Trials Dashboard
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
-            <CreditCard className="h-4 w-4 mr-2" />
-            Subscription Plans
-          </DropdownMenuItem>
-          {isAdmin && (
+          {can("subscription_plans") && (
+            <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
+              <CreditCard className="h-4 w-4 mr-2" />
+              Subscription Plans
+            </DropdownMenuItem>
+          )}
+          {can("settings") && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/admin")}>
