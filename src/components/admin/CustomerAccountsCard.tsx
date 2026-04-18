@@ -15,7 +15,7 @@ export const CustomerAccountsCard = () => {
   const [customerAccounts, setCustomerAccounts] = useState<CustomerAccountRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCustUsername, setNewCustUsername] = useState("");
-  const [newCustPassword, setNewCustPassword] = useState("CA@2026");
+  const [newCustPassword, setNewCustPassword] = useState("");
   const [newCustAccountId, setNewCustAccountId] = useState("");
   const [newCustTrials, setNewCustTrials] = useState(false);
   const [newCustTier, setNewCustTier] = useState<"basic" | "pro">("basic");
@@ -92,7 +92,7 @@ export const CustomerAccountsCard = () => {
       if (data.error) throw new Error(data.error);
       toast({ title: "Created", description: `Customer account ${newCustUsername} created successfully.` });
       setNewCustUsername("");
-      setNewCustPassword("CA@2026");
+      setNewCustPassword("");
       setNewCustAccountId("");
       setNewCustTrials(false);
       setNewCustTier("basic");

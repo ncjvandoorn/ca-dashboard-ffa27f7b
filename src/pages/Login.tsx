@@ -80,7 +80,7 @@ const Login = () => {
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
+                placeholder="username"
                 required
                 autoFocus
               />
