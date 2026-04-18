@@ -129,15 +129,17 @@ export function ReportingCheck({ reports, accounts, users, open: openProp, onOpe
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="gap-2 border-0 shadow-card bg-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
-        >
-          <ClipboardCheck className="h-4 w-4 text-primary" />
-          Reporting Check
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            className="gap-2 border-0 shadow-card bg-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+          >
+            <ClipboardCheck className="h-4 w-4 text-primary" />
+            Reporting Check
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <div ref={contentRef} className="p-2">
         <DialogHeader>
