@@ -12,6 +12,7 @@ import TrialsDashboard from "./pages/TrialsDashboard.tsx";
 import AllReports from "./pages/AllReports.tsx";
 import ActiveSF from "./pages/ActiveSF.tsx";
 import Containers from "./pages/Containers.tsx";
+import Subscriptions from "./pages/Subscriptions.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { Loader2 } from "lucide-react";
 
@@ -87,6 +88,7 @@ const App = () => (
             <Route path="/report" element={<ProtectedRoute><AllReports /></ProtectedRoute>} />
             <Route path="/active-sf" element={<InternalRoute><ActiveSF /></InternalRoute>} />
             <Route path="/containers" element={<InternalRoute><Containers /></InternalRoute>} />
+            <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
