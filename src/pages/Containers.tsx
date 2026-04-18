@@ -277,8 +277,8 @@ export default function Containers() {
                     <TableCell className="font-mono text-xs">{getWeekNr(r.container.shippingDate)}</TableCell>
                     <TableCell>{r.container.bookingCode}</TableCell>
                     <TableCell className="font-mono">{r.container.containerNumber}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {Array.from(new Set(r.orders.map((o) => o.datalogdeviceId).filter(Boolean))).join(", ") || "—"}
+                    <TableCell className="text-center font-mono text-xs">
+                      {r.orders.filter((o) => o.datalogdeviceId).length}
                     </TableCell>
                     <TableCell>{formatDate(r.container.dropoffDate)}</TableCell>
                     <TableCell>{formatDate(r.container.shippingDate)}</TableCell>
