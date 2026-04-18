@@ -431,14 +431,19 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
           },
           body: JSON.stringify({
             messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
-            farmData,
             staffSummary,
             activitySummary,
             exceptionAnalysis: exceptionAnalysis || null,
             seasonalityAnalysis: seasonalityAnalysis || null,
             weeklyPlans: weeklyPlans.length > 0 ? weeklyPlans : null,
-            logisticsData: logisticsData || null,
-            sfTracking: sfTracking || null,
+            farmIndex,
+            containerIndex,
+            tripIndex,
+            farmData,
+            rawActivities: rawActivitiesForAI,
+            logisticsData,
+            sfTracking,
+            customerScope: customerScope || null,
           }),
         });
 
