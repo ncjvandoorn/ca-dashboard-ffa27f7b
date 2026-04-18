@@ -4,6 +4,34 @@ import { useSensiwatchTripPaths } from "@/hooks/useSensiwatchData";
 import type { VFTracking } from "@/hooks/useVesselFinder";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { seaRoute } from "searoute-ts";
+
+/** Build a realistic sea route polyline through the given [lat,lon] waypoints. */
+function buildSeaRouteLatLngs(points: [number, number][]): [number, number][] {
+  if (points.length < 2) return points;
+  const out: [number, number][] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const [aLat, aLon] = points[i];
+    const [bLat, bLon] = points[i + 1];
+    try {
+      const origin = { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [aLon, aLat] } };
+      const dest   = { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [bLon, bLat] } };
+      const route = seaRoute(origin as any, dest as any);
+      const coords = (route?.geometry?.coordinates || []) as [number, number][];
+      if (coords.length >= 2) {
+        const segLatLng = coords.map(([lon, lat]) => [lat, lon] as [number, number]);
+        if (out.length && segLatLng.length) segLatLng.shift(); // avoid dup at junction
+        out.push(...segLatLng);
+        continue;
+      }
+    } catch {
+      // fall through to straight segment
+    }
+    if (!out.length) out.push([aLat, aLon]);
+    out.push([bLat, bLon]);
+  }
+  return out;
+}
 
 interface Props {
   trip: SFTrip;
