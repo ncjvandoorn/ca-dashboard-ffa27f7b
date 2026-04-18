@@ -75,7 +75,18 @@ export function useSensiwatchTrips() {
     }
   }, []);
 
-  useEffect(() => { fetchTrips(); }, [fetchTrips]);
+  useEffect(() => {
+    fetchTrips();
+    // Auto-refresh every 60s so new push data appears without manual reload
+    const id = setInterval(fetchTrips, 60_000);
+    // Refetch when the tab regains focus
+    const onFocus = () => fetchTrips();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [fetchTrips]);
 
   return { data, isLoading, error, refetch: fetchTrips };
 }
