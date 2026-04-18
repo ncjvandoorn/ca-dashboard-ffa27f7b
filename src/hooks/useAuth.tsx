@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
 type AppRole = "admin" | "user" | "customer";
-export type CustomerTier = "basic" | "pro" | "pro_plus" | "heavy";
-export type RoleKey = "admin" | "user" | "customer_basic" | "customer_pro";
+type CustomerTier = "basic" | "pro" | "pro_plus" | "heavy";
+type RoleKey = "admin" | "user" | "customer_basic" | "customer_pro";
 
 interface CustomerAccountInfo {
   customerAccountId: string;
