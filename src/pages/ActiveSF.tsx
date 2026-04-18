@@ -7,9 +7,11 @@ import { useVesselFinderActiveSet } from "@/hooks/useVesselFinder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle } from "lucide-react";
+import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle, Layers, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
+import { CompareTripsDialog } from "@/components/dashboard/CompareTripsDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 import { stripLoggerSuffix, formatShortDate } from "@/lib/sfFormat";
@@ -48,6 +50,8 @@ const ActiveSF = () => {
   const [sortField, setSortField] = useState<SortField>("tripId");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selectedTrip, setSelectedTrip] = useState<SFTrip | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
