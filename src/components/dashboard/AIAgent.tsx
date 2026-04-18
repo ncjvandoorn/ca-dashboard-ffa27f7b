@@ -486,7 +486,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
         setIsLoading(false);
       }
     },
-    [messages, isLoading, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, logisticsData]
+    [messages, isLoading, farmData, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, logisticsData, sfTracking]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
