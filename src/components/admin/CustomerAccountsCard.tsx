@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus, RefreshCw, Trash2, Users, KeyRound } from "lucide-react";
@@ -17,7 +17,6 @@ export const CustomerAccountsCard = () => {
   const [newCustUsername, setNewCustUsername] = useState("");
   const [newCustPassword, setNewCustPassword] = useState("");
   const [newCustAccountId, setNewCustAccountId] = useState("");
-  const [newCustTrials, setNewCustTrials] = useState(false);
   const [newCustTier, setNewCustTier] = useState<"basic" | "pro" | "pro_plus" | "heavy">("basic");
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
@@ -84,7 +83,6 @@ export const CustomerAccountsCard = () => {
           username: newCustUsername,
           password: newCustPassword,
           customerAccountId: newCustAccountId,
-          canSeeTrials: newCustTrials,
           tier: newCustTier,
         }),
       });
@@ -94,7 +92,6 @@ export const CustomerAccountsCard = () => {
       setNewCustUsername("");
       setNewCustPassword("");
       setNewCustAccountId("");
-      setNewCustTrials(false);
       setNewCustTier("basic");
       fetchCustomerAccounts();
     } catch (err) {
@@ -223,24 +220,18 @@ export const CustomerAccountsCard = () => {
             </select>
           </div>
           <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Switch checked={newCustTrials} onCheckedChange={setNewCustTrials} />
-                <Label className="text-sm">Can see Trials Dashboard</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-sm">Tier:</Label>
-                <select
-                  value={newCustTier}
-                  onChange={(e) => setNewCustTier(e.target.value as "basic" | "pro" | "pro_plus" | "heavy")}
-                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
-                >
-                  <option value="basic">Basic</option>
-                  <option value="pro">Pro</option>
-                  <option value="pro_plus">Pro+</option>
-                  <option value="heavy">Heavy</option>
-                </select>
-              </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm">Tier:</Label>
+              <select
+                value={newCustTier}
+                onChange={(e) => setNewCustTier(e.target.value as "basic" | "pro" | "pro_plus" | "heavy")}
+                className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+              >
+                <option value="basic">Basic</option>
+                <option value="pro">Pro</option>
+                <option value="pro_plus">Pro+</option>
+                <option value="heavy">Heavy</option>
+              </select>
             </div>
             <Button onClick={createCustomerAccount} disabled={creating} size="sm" className="gap-2">
               {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
@@ -263,7 +254,6 @@ export const CustomerAccountsCard = () => {
                   <TableHead>Username</TableHead>
                   <TableHead>Linked Customer</TableHead>
                   <TableHead>Tier</TableHead>
-                  <TableHead>Trials Access</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -290,12 +280,6 @@ export const CustomerAccountsCard = () => {
                         <option value="pro_plus">Pro+</option>
                         <option value="heavy">Heavy</option>
                       </select>
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={ca.can_see_trials}
-                        onCheckedChange={(checked) => updateCustomerAccount(ca.id, { canSeeTrials: checked })}
-                      />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
