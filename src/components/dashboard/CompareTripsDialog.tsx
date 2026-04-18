@@ -6,7 +6,8 @@ import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts }
 import { Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { SFWorldMap } from "./SFWorldMap";
-import { useMemo } from "react";
+import { ExportPdfButton } from "./ExportPdfButton";
+import { useMemo, useRef } from "react";
 
 interface Props {
   open: boolean;
@@ -110,22 +111,31 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
       });
   }, [trips, lookupOrder]);
 
+  const exportRef = useRef<HTMLDivElement>(null);
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg">
-            Comparing {trips.length} trip{trips.length !== 1 ? "s" : ""}
+          <DialogTitle className="text-lg flex items-center justify-between gap-3 pr-8">
+            <span>Comparing {trips.length} trip{trips.length !== 1 ? "s" : ""}</span>
+            <ExportPdfButton
+              targetRef={exportRef}
+              filename={`active-sf-compare-${trips.length}-trips`}
+              label="Export PDF"
+            />
           </DialogTitle>
         </DialogHeader>
 
+        <div ref={exportRef} className="space-y-4">
         {/* Combined map */}
-        <div className="mb-4 rounded-xl border border-border overflow-hidden">
+        <div className="rounded-xl border border-border overflow-hidden" data-pdf-section>
           <SFWorldMap trips={trips} onSelectTrip={() => {}} />
         </div>
 
-        {/* Legend chips */}
-        <div className="flex flex-wrap gap-2 mb-3">
+        {/* Legend + multigraph (one PDF section so they stay together) */}
+        <div data-pdf-section className="space-y-3">
+        <div className="flex flex-wrap gap-2">
           {tripMeta.map((m) => (
             <span
               key={m.trip.tripId}
@@ -217,6 +227,7 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
             No sensor readings available for the selected trips
           </p>
         )}
+        </div>{/* /legend+multigraph PDF section */}
 
         {/* Per-container details */}
         {containerGroups.length > 0 && (
@@ -229,7 +240,7 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
                 g.tripLabels.length ? `Trip${g.tripLabels.length > 1 ? "s" : ""} ${g.tripLabels.join(", ")}` : null,
               ].filter(Boolean).join(" · ");
               return (
-                <div key={g.containerId} className="rounded-xl border border-border bg-card/50 p-4 space-y-4">
+                <div key={g.containerId} data-pdf-section className="rounded-xl border border-border bg-card/50 p-4 space-y-4">
                   <div className="flex items-baseline justify-between gap-2 flex-wrap border-b border-border pb-2">
                     <h3 className="font-semibold text-base font-mono">{headerLabel}</h3>
                     {subLabel && <span className="text-xs text-muted-foreground">{subLabel}</span>}
@@ -308,6 +319,8 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
             })}
           </div>
         )}
+
+        </div>{/* /exportRef wrapper */}
 
         {/* Silence unused-var lint for perSerial (kept for future per-trip stats) */}
         <span className="hidden">{Object.keys(perSerial).length}</span>
