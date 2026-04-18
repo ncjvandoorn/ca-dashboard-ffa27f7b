@@ -151,12 +151,12 @@ export function useVesselFinderActiveSet(isAdmin: boolean) {
         const m = new Map<string, VFActiveInfo>();
         for (const item of res.items || []) {
           const resp = (item as any).response as VFResponse | null | undefined;
-          // ETA = last schedule stop's last event date (e.g. "Vessel arrival at final POD")
+          // ETA = "Vessel arrival at final POD" event (code: VAD) on the last schedule stop.
+          // We deliberately do NOT take the *last* event of the stop because that is
+          // usually a post-arrival gate-out / discharge event, not the ETA itself.
           const lastStop = resp?.schedule?.[resp.schedule.length - 1];
-          const lastEventDate = lastStop?.events?.length
-            ? lastStop.events[lastStop.events.length - 1].date ?? null
-            : null;
-          const etaDate = lastEventDate ?? lastStop?.date ?? resp?.general?.destination?.date ?? null;
+          const vadEvent = lastStop?.events?.find((e: any) => e?.code === "VAD");
+          const etaDate = vadEvent?.date ?? lastStop?.date ?? resp?.general?.destination?.date ?? null;
           m.set(item.container_id, {
             status: item.status,
             enabled: item.enabled,
