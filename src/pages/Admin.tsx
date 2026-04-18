@@ -175,16 +175,28 @@ const Admin = () => {
 
   /** Upload many files in one go, auto-routing each by filename to the correct slot. */
   const handleBulkUpload = async (files: File[]) => {
-    const recognized: File[] = [];
+    // Aliases: incoming filename → canonical storage filename
+    const FILENAME_ALIASES: Record<string, string> = {
+      "ALL_account.csv": "account.csv",
+      "ALL_user.csv": "user.csv",
+    };
+    const recognized: { file: File; targetName: string }[] = [];
     const unknown: string[] = [];
     for (const f of files) {
-      if (ALLOWED_FILENAMES.has(f.name as any)) recognized.push(f);
-      else unknown.push(f.name);
+      const targetName = FILENAME_ALIASES[f.name] ?? f.name;
+      if (ALLOWED_FILENAMES.has(targetName as any)) {
+        recognized.push({
+          file: targetName === f.name ? f : new File([f], targetName, { type: f.type }),
+          targetName,
+        });
+      } else {
+        unknown.push(f.name);
+      }
     }
     if (unknown.length > 0) {
       toast({
         title: `${unknown.length} file(s) skipped`,
-        description: `Unrecognized: ${unknown.join(", ")}. Filename must match exactly (e.g. container.csv).`,
+        description: `Unrecognized: ${unknown.join(", ")}. Filename must match (e.g. container.csv, ALL_account.csv, ALL_user.csv).`,
         variant: "destructive",
       });
     }
@@ -192,20 +204,20 @@ const Admin = () => {
     setBulkUploading(true);
     let success = 0;
     const failed: string[] = [];
-    for (const file of recognized) {
+    for (const { file, targetName } of recognized) {
       try {
-        const processed = file.name.endsWith(".csv")
-          ? await convertTimestampsInCsv(file.name, file)
+        const processed = targetName.endsWith(".csv")
+          ? await convertTimestampsInCsv(targetName, file)
           : file;
         const { error } = await supabase.storage
           .from("data-files")
-          .upload(file.name, processed, { upsert: true, cacheControl: "0" });
+          .upload(targetName, processed, { upsert: true, cacheControl: "0" });
         if (error) throw error;
-        const queryKey = fileQueryKeyMap[file.name];
+        const queryKey = fileQueryKeyMap[targetName];
         if (queryKey) await queryClient.invalidateQueries({ queryKey: [queryKey] });
         success++;
       } catch (err: any) {
-        failed.push(`${file.name} (${err.message})`);
+        failed.push(`${targetName} (${err.message})`);
       }
     }
     setBulkUploading(false);
