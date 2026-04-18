@@ -18,7 +18,7 @@ export const CustomerAccountsCard = () => {
   const [newCustPassword, setNewCustPassword] = useState("");
   const [newCustAccountId, setNewCustAccountId] = useState("");
   const [newCustTrials, setNewCustTrials] = useState(false);
-  const [newCustTier, setNewCustTier] = useState<"basic" | "pro">("basic");
+  const [newCustTier, setNewCustTier] = useState<"basic" | "pro" | "pro_plus" | "heavy">("basic");
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
   const { data: allAccounts } = useAccounts();
@@ -232,11 +232,13 @@ export const CustomerAccountsCard = () => {
                 <Label className="text-sm">Tier:</Label>
                 <select
                   value={newCustTier}
-                  onChange={(e) => setNewCustTier(e.target.value as "basic" | "pro")}
+                  onChange={(e) => setNewCustTier(e.target.value as "basic" | "pro" | "pro_plus" | "heavy")}
                   className="h-9 rounded-md border border-input bg-background px-2 text-sm"
                 >
                   <option value="basic">Basic</option>
-                  <option value="pro">Pro / Pro+ / Heavy</option>
+                  <option value="pro">Pro</option>
+                  <option value="pro_plus">Pro+</option>
+                  <option value="heavy">Heavy</option>
                 </select>
               </div>
             </div>
@@ -284,7 +286,9 @@ export const CustomerAccountsCard = () => {
                         className="h-8 rounded-md border border-input bg-background px-2 text-xs"
                       >
                         <option value="basic">Basic</option>
-                        <option value="pro">Pro / Pro+ / Heavy</option>
+                        <option value="pro">Pro</option>
+                        <option value="pro_plus">Pro+</option>
+                        <option value="heavy">Heavy</option>
                       </select>
                     </TableCell>
                     <TableCell>
