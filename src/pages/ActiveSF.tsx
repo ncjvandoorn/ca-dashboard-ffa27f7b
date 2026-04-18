@@ -312,7 +312,9 @@ const ActiveSF = () => {
                           return (
                             <span className="inline-flex items-center gap-1.5 text-[10px]">
                               <span className={`h-2 w-2 rounded-full ${cls}`} />
-                              <span className="text-muted-foreground capitalize">{vf.status}</span>
+                              {vf.status !== "success" && (
+                                <span className="text-muted-foreground capitalize">{vf.status}</span>
+                              )}
                             </span>
                           );
                         })()}
