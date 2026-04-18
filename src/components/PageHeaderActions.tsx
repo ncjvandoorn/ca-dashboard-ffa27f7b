@@ -17,6 +17,7 @@ import {
   CalendarRange,
   Package,
   Ship,
+  CreditCard,
 } from "lucide-react";
 
 interface PageHeaderActionsProps {
@@ -67,6 +68,10 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
               Trials Dashboard
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
+            <CreditCard className="h-4 w-4 mr-2" />
+            Subscription Plans
+          </DropdownMenuItem>
           {isAdmin && (
             <>
               <DropdownMenuSeparator />

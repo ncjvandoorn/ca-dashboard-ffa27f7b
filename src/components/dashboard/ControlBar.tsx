@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings, LogOut, FlaskConical, CalendarRange, Search, X, Menu, Package, Ship } from "lucide-react";
+import { Settings, LogOut, FlaskConical, CalendarRange, Search, X, Menu, Package, Ship, CreditCard } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -257,6 +257,10 @@ export function ControlBar({
                   Trials Dashboard
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
+                <CreditCard className="h-4 w-4 mr-2" />
+                Subscription Plans
+              </DropdownMenuItem>
               {isAdmin && (
                 <>
                   <DropdownMenuSeparator />
