@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+const FragmentWithKey = Fragment;
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -119,8 +120,8 @@ export const PermissionsMatrixCard = () => {
               </thead>
               <tbody>
                 {groups.map(([group, items]) => (
-                  <>
-                    <tr key={`g-${group}`}>
+                  <FragmentWithKey key={group}>
+                    <tr>
                       <td colSpan={ROLE_COLUMNS.length + 1} className="pt-5 pb-1 text-xs uppercase tracking-wide text-muted-foreground font-semibold">
                         {group}
                       </td>
@@ -139,7 +140,7 @@ export const PermissionsMatrixCard = () => {
                         ))}
                       </tr>
                     ))}
-                  </>
+                  </FragmentWithKey>
                 ))}
               </tbody>
             </table>
