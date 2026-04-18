@@ -267,7 +267,6 @@ const ActiveSF = () => {
                   <TableHead>Shipping</TableHead>
                   <TableHead>Origin &amp; Current Location</TableHead>
                   <TableHead>Destination</TableHead>
-                  <TableHead className="text-center">Stops</TableHead>
                   {isAdmin && <TableHead className="text-center">Tracking</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -299,7 +298,6 @@ const ActiveSF = () => {
                     <TableCell>
                       <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
                     </TableCell>
-                    <TableCell className="text-center">{trip.stops}</TableCell>
                     {isAdmin && (
                       <TableCell className="text-center">
                         {(() => {
