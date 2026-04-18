@@ -19,14 +19,32 @@ Deno.serve(async (req) => {
 
     const users = [
       { email: "admin@chrysal.app", password: "CA@2026" },
-      { email: "user@chrysal.app", password: "CA@2026" },
+      { email: "chrysal@chrysal.app", password: "CA@2026" },
     ];
 
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const results: string[] = [];
 
+    // One-time rename: user@chrysal.app -> chrysal@chrysal.app (preserves user_id, role, password)
+    const legacyUser = existingUsers?.users?.find((e) => e.email === "user@chrysal.app");
+    const newUser = existingUsers?.users?.find((e) => e.email === "chrysal@chrysal.app");
+    if (legacyUser && !newUser) {
+      const { error: renameError } = await supabaseAdmin.auth.admin.updateUserById(legacyUser.id, {
+        email: "chrysal@chrysal.app",
+        email_confirm: true,
+      });
+      if (renameError) {
+        results.push(`rename user->chrysal error: ${renameError.message}`);
+      } else {
+        results.push(`renamed user@chrysal.app -> chrysal@chrysal.app`);
+      }
+    }
+
+    // Re-fetch after potential rename
+    const { data: refreshed } = await supabaseAdmin.auth.admin.listUsers();
+
     for (const u of users) {
-      const existing = existingUsers?.users?.find((e) => e.email === u.email);
+      const existing = refreshed?.users?.find((e) => e.email === u.email);
       if (existing) {
         results.push(`${u.email} already exists`);
         continue;
