@@ -65,7 +65,7 @@ export const ChangePasswordCard = () => {
         },
         body: JSON.stringify({
           action: "reset_password_by_email",
-          email: "user@chrysal.app",
+          email: "chrysal@chrysal.app",
           password: chrysalPassword,
         }),
       });
