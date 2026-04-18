@@ -218,77 +218,94 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
           </p>
         )}
 
-        {/* Shipper Reports */}
-        {containerIds.size > 0 && (
+        {/* Per-container details */}
+        {containerGroups.length > 0 && (
           <div className="mt-6 space-y-6 text-sm">
-            <section>
-              <h3 className="font-semibold mb-2">Shipper Reports ({allReports.length})</h3>
-              {allReports.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No shipper reports.</p>
-              ) : (
-                <div className="space-y-2">
-                  {allReports.map((r) => (
-                    <div key={r.id} className="border border-border rounded-md p-3 text-xs space-y-1">
-                      <div className="flex justify-between">
-                        <span>Week <span className="font-mono">{r.weekNr}</span></span>
-                        <span className="text-muted-foreground">Stuffed: {formatDate(r.stuffingDate)}</span>
-                      </div>
-                      {r.loadingMin !== null && <div className="text-muted-foreground">Loading: {r.loadingMin} min</div>}
-                      {r.generalComments && <p className="text-foreground/80 italic">"{r.generalComments}"</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
+            {containerGroups.map((g) => {
+              const headerLabel =
+                g.containerNumber || g.bookingCode || `Container ${g.containerId.slice(0, 8)}`;
+              const subLabel = [
+                g.bookingCode && g.containerNumber ? g.bookingCode : null,
+                g.tripLabels.length ? `Trip${g.tripLabels.length > 1 ? "s" : ""} ${g.tripLabels.join(", ")}` : null,
+              ].filter(Boolean).join(" · ");
+              return (
+                <div key={g.containerId} className="rounded-xl border border-border bg-card/50 p-4 space-y-4">
+                  <div className="flex items-baseline justify-between gap-2 flex-wrap border-b border-border pb-2">
+                    <h3 className="font-semibold text-base font-mono">{headerLabel}</h3>
+                    {subLabel && <span className="text-xs text-muted-foreground">{subLabel}</span>}
+                  </div>
 
-            <section>
-              <h3 className="font-semibold mb-2">Orders &amp; Arrivals ({allOrders.length})</h3>
-              {allOrders.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No linked orders.</p>
-              ) : (
-                <div className="space-y-2">
-                  {allOrders.map((o) => {
-                    const arrival = arrivalByOrderId.get(o.id);
-                    return (
-                      <div key={o.id} className="border border-border rounded-md p-3 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-medium">{o.orderNumber}</span>
-                          {o.statusName && <Badge variant="secondary" className="text-[10px]">{o.statusName}</Badge>}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Farm: <span className="text-foreground">{accountNameMap.get(o.farmAccountId) || o.farmAccountId.slice(0, 8)}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Customer: <span className="text-foreground">{accountNameMap.get(o.customerAccountId) || o.customerAccountId.slice(0, 8)}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground grid grid-cols-3 gap-1 pt-1">
-                          <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
-                          <span>Forecast: <span className="text-foreground">{typeof o.forecast === "number" ? o.forecast.toLocaleString("de-DE") : (o.forecast ?? "—")}</span></span>
-                          <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
-                        </div>
-                        {arrival && (
-                          <div className="mt-2 pt-2 border-t border-border text-xs space-y-1">
+                  <section>
+                    <h4 className="font-semibold mb-2 text-sm">Shipper Reports ({g.reports.length})</h4>
+                    {g.reports.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No shipper reports.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {g.reports.map((r) => (
+                          <div key={r.id} className="border border-border rounded-md p-3 text-xs space-y-1">
                             <div className="flex justify-between">
-                              <span className="font-medium">Arrival</span>
-                              <span className="text-muted-foreground">{formatDate(arrival.arrivalDate)}</span>
+                              <span>Week <span className="font-mono">{r.weekNr}</span></span>
+                              <span className="text-muted-foreground">Stuffed: {formatDate(r.stuffingDate)}</span>
                             </div>
-                            {(arrival.arrivalTemp1 !== null || arrival.arrivalTemp2 !== null || arrival.arrivalTemp3 !== null) && (
-                              <div className="text-muted-foreground">
-                                Temps: {[arrival.arrivalTemp1, arrival.arrivalTemp2, arrival.arrivalTemp3].filter((v) => v !== null).join(" / ")} °C
-                              </div>
-                            )}
-                            {arrival.dischargeWaitingMin !== null && (
-                              <div className="text-muted-foreground">Discharge wait: {arrival.dischargeWaitingMin} min</div>
-                            )}
-                            {arrival.specificComments && <p className="text-foreground/80 italic">"{arrival.specificComments}"</p>}
+                            {r.loadingMin !== null && <div className="text-muted-foreground">Loading: {r.loadingMin} min</div>}
+                            {r.generalComments && <p className="text-foreground/80 italic">"{r.generalComments}"</p>}
                           </div>
-                        )}
+                        ))}
                       </div>
-                    );
-                  })}
+                    )}
+                  </section>
+
+                  <section>
+                    <h4 className="font-semibold mb-2 text-sm">Orders &amp; Arrivals ({g.orders.length})</h4>
+                    {g.orders.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No linked orders.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {g.orders.map((o) => {
+                          const arrival = arrivalByOrderId.get(o.id);
+                          return (
+                            <div key={o.id} className="border border-border rounded-md p-3 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono font-medium">{o.orderNumber}</span>
+                                {o.statusName && <Badge variant="secondary" className="text-[10px]">{o.statusName}</Badge>}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Farm: <span className="text-foreground">{accountNameMap.get(o.farmAccountId) || o.farmAccountId.slice(0, 8)}</span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Customer: <span className="text-foreground">{accountNameMap.get(o.customerAccountId) || o.customerAccountId.slice(0, 8)}</span>
+                              </div>
+                              <div className="text-xs text-muted-foreground grid grid-cols-3 gap-1 pt-1">
+                                <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
+                                <span>Forecast: <span className="text-foreground">{typeof o.forecast === "number" ? o.forecast.toLocaleString("de-DE") : (o.forecast ?? "—")}</span></span>
+                                <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
+                              </div>
+                              {arrival && (
+                                <div className="mt-2 pt-2 border-t border-border text-xs space-y-1">
+                                  <div className="flex justify-between">
+                                    <span className="font-medium">Arrival</span>
+                                    <span className="text-muted-foreground">{formatDate(arrival.arrivalDate)}</span>
+                                  </div>
+                                  {(arrival.arrivalTemp1 !== null || arrival.arrivalTemp2 !== null || arrival.arrivalTemp3 !== null) && (
+                                    <div className="text-muted-foreground">
+                                      Temps: {[arrival.arrivalTemp1, arrival.arrivalTemp2, arrival.arrivalTemp3].filter((v) => v !== null).join(" / ")} °C
+                                    </div>
+                                  )}
+                                  {arrival.dischargeWaitingMin !== null && (
+                                    <div className="text-muted-foreground">Discharge wait: {arrival.dischargeWaitingMin} min</div>
+                                  )}
+                                  {arrival.specificComments && <p className="text-foreground/80 italic">"{arrival.specificComments}"</p>}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </section>
                 </div>
-              )}
-            </section>
+              );
+            })}
           </div>
         )}
 
