@@ -288,6 +288,29 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
     });
   }, [containers, servicesOrders, shipperArrivals, shipperReports, accounts]);
 
+  // Live SensiWatch tracker data — all active SF trips with current temp/humidity/location/ETA
+  const sfTracking = useMemo(() => {
+    if (!sfTrips?.length) return null;
+    return sfTrips.map((t) => compact({
+      tripId: t.tripId,
+      status: t.tripStatus,
+      internalTripId: t.internalTripId,
+      origin: t.originName,
+      originAddr: t.originAddress,
+      destination: t.destinationName,
+      carrier: t.carrier,
+      stops: t.stops,
+      serial: t.serialNumber,
+      lastTempC: t.lastTemp,
+      lastHumidity: t.lastHumidity,
+      lastLight: t.lastLight,
+      lastReadingTime: t.lastReadingTime,
+      lastLocation: t.lastLocation,
+      lat: t.latitude,
+      lon: t.longitude,
+    }));
+  }, [sfTrips]);
+
   // Fetch recent weekly plans for AI context
   const [weeklyPlans, setWeeklyPlans] = useState<any[]>([]);
   useEffect(() => {
