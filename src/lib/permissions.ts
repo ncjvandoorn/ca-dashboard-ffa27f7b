@@ -24,12 +24,12 @@ export interface PermissionItem {
 export const PERMISSION_ITEMS: PermissionItem[] = [
   { key: "ai_agent", label: "AI Agent", group: "Dashboard buttons" },
   { key: "all_reports", label: "All Reports", group: "Dashboard buttons" },
-  { key: "reporting_check", label: "Reporting Check", group: "Dashboard buttons" },
   { key: "seasonality_insights", label: "Seasonality Insights", group: "Dashboard buttons" },
   { key: "exception_report", label: "Exception Report", group: "Dashboard buttons" },
   { key: "containers", label: "Containers", group: "Menu items" },
   { key: "active_sf", label: "Active SF", group: "Menu items" },
   { key: "trial_planner", label: "Trial Planner", group: "Menu items" },
+  { key: "reporting_check", label: "Reporting Check", group: "Menu items" },
   { key: "crm_activities", label: "CRM Activities", group: "Menu items" },
   { key: "trials_dashboard", label: "Trials Dashboard", group: "Menu items" },
   { key: "subscription_plans", label: "Subscription Plans", group: "Menu items" },

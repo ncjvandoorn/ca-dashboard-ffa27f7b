@@ -17,6 +17,9 @@ interface ReportingCheckProps {
   reports: QualityReport[];
   accounts: Account[];
   users: User[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
 interface FarmCompliance {
@@ -39,8 +42,10 @@ function isNoteFilled(value: string | null): boolean {
   return trimmed.length > 0 && trimmed !== "-" && trimmed !== "n/a" && trimmed !== "na" && trimmed !== "none";
 }
 
-export function ReportingCheck({ reports, accounts, users }: ReportingCheckProps) {
-  const [open, setOpen] = useState(false);
+export function ReportingCheck({ reports, accounts, users, open: openProp, onOpenChange, hideTrigger }: ReportingCheckProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [expandedFarm, setExpandedFarm] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
