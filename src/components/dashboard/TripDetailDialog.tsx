@@ -103,7 +103,8 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
 
         {/* Summary cards: Most Recent | Origin | Active Tracking (admin) */}
         <div
-          className={`grid grid-cols-1 gap-4 mb-4 ${
+          data-pdf-section
+          className={`grid grid-cols-1 gap-4 ${
             isAdmin ? "md:grid-cols-[1fr_1fr_0.85fr]" : "md:grid-cols-2"
           }`}
         >
@@ -120,7 +121,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
         </div>
 
         {/* Multigraph tabs */}
-        <Tabs defaultValue="multigraph" className="w-full">
+        <Tabs defaultValue="multigraph" className="w-full" data-pdf-section>
           <TabsList>
             <TabsTrigger value="multigraph">Multigraph</TabsTrigger>
             <TabsTrigger value="statistics">Trip Statistics</TabsTrigger>
@@ -176,8 +177,8 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
         </Tabs>
 
         {containerId && (
-          <div className="mt-6 space-y-6 text-sm">
-            <section>
+          <div className="mt-2 space-y-6 text-sm">
+            <section data-pdf-section>
               <h3 className="font-semibold mb-2">Shipper Reports ({detailReports.length})</h3>
               {detailReports.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No shipper reports.</p>
@@ -197,7 +198,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
               )}
             </section>
 
-            <section>
+            <section data-pdf-section>
               <h3 className="font-semibold mb-2">Orders &amp; Arrivals ({detailOrders.length})</h3>
               {detailOrders.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No linked orders.</p>
@@ -247,6 +248,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
             </section>
           </div>
         )}
+        </div>{/* /exportRef wrapper */}
       </DialogContent>
     </Dialog>
   );
