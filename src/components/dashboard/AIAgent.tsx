@@ -179,7 +179,7 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[], use
   return summaries;
 }
 
-export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis, containers, servicesOrders, shipperArrivals, shipperReports, sfTrips }: AIAgentProps) {
+export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis, containers, servicesOrders, shipperArrivals, shipperReports, sfTrips, customerScope }: AIAgentProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -217,12 +217,41 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
     return base;
   }, [reports, accounts, activities, users]);
 
+  // Lightweight farm index for AI discovery (NOT bulk data)
+  const farmIndex = useMemo(() => farmData.map((f: any) => ({
+    farmId: f.farmId,
+    farm: f.farm,
+    weeks: (f.d || []).length,
+    firstWeek: f.d?.[0]?.w ?? null,
+    lastWeek: f.d?.[f.d.length - 1]?.w ?? null,
+  })), [farmData]);
+
+  // Raw activities flat list for the search_activities tool — includes farmId for scoping
+  const rawActivitiesForAI = useMemo(() => {
+    if (!activities?.length) return [];
+    const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
+    return activities.map((a) => compact({
+      id: a.id,
+      farmId: a.accountId,
+      farm: accountMap.get(a.accountId) || null,
+      type: a.type,
+      status: a.status,
+      subject: a.subject,
+      description: a.description,
+      assignedUserId: a.assignedUserId,
+      ownerUserId: a.ownerUserId,
+      startDate: a.startsAt ? new Date(a.startsAt).toISOString().slice(0, 10) : null,
+      completedDate: a.completedAt ? new Date(a.completedAt).toISOString().slice(0, 10) : null,
+      createdDate: a.createdAt ? new Date(a.createdAt).toISOString().slice(0, 10) : null,
+    }));
+  }, [activities, accounts]);
+
   const staffSummary = useMemo(() => buildStaffSummary(reports, users || []), [reports, users]);
   const activitySummary = useMemo(() => buildActivitySummary(activities || [], users || []), [activities, users]);
 
-  // Build compressed logistics dataset linking containers ↔ services orders ↔ shipper arrivals/reports
+  // Build compressed logistics dataset
   const logisticsData = useMemo(() => {
-    if (!containers?.length) return null;
+    if (!containers?.length) return [];
     const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
     const ordersByContainer = new Map<string, ServicesOrder[]>();
     for (const o of servicesOrders || []) {
@@ -248,42 +277,42 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
 
     const dateStr = (ts: number | null) => (ts ? new Date(ts).toISOString().slice(0, 10) : null);
 
-    // Cap to most recent 150 containers (by shipping date desc) to stay within LLM token limits
     const sortedContainers = [...containers]
       .sort((a, b) => (b.shippingDate ?? 0) - (a.shippingDate ?? 0))
-      .slice(0, 150);
+      .slice(0, 200);
 
     return sortedContainers.map((c) => {
       const orders = ordersByContainer.get(c.id) || [];
       const reports = reportsByContainer.get(c.id) || [];
       return compact({
+        id: c.id,
         cn: c.containerNumber,
         bk: c.bookingCode,
         sl: c.shippingLineId,
         drop: dateStr(c.dropoffDate),
         ship: dateStr(c.shippingDate),
-        orders: orders.length
-          ? orders.map((o) => compact({
-              on: o.orderNumber,
-              farm: accountMap.get(o.farmAccountId) || null,
-              cust: accountMap.get(o.customerAccountId) || null,
-              pal: o.pallets,
-              fc: o.forecast,
-              dWk: o.dippingWeek,
-              status: o.statusName,
-              purpose: o.purposeName,
-              arrivals: (arrivalsByOrder.get(o.id) || []).map((a) => compact({
-                date: dateStr(a.arrivalDate),
-                t1: a.arrivalTemp1, t2: a.arrivalTemp2, t3: a.arrivalTemp3,
-                vc1: a.afterVc1Temp, vc2: a.afterVc2Temp, vc3: a.afterVc3Temp,
-                dwm: a.dischargeWaitingMin,
-                gOff: a.gensetOffMoment,
-                vcCy: a.vcCycles,
-                vcDur: a.vcDurationMin,
-                cmt: a.specificComments,
-              })),
-            }))
-          : null,
+        orders: orders.map((o) => compact({
+          orderId: o.id,            // for server scoping
+          farmId: o.farmAccountId,  // for server scoping
+          on: o.orderNumber,
+          farm: accountMap.get(o.farmAccountId) || null,
+          cust: accountMap.get(o.customerAccountId) || null,
+          pal: o.pallets,
+          fc: o.forecast,
+          dWk: o.dippingWeek,
+          status: o.statusName,
+          purpose: o.purposeName,
+          arrivals: (arrivalsByOrder.get(o.id) || []).map((a) => compact({
+            date: dateStr(a.arrivalDate),
+            t1: a.arrivalTemp1, t2: a.arrivalTemp2, t3: a.arrivalTemp3,
+            vc1: a.afterVc1Temp, vc2: a.afterVc2Temp, vc3: a.afterVc3Temp,
+            dwm: a.dischargeWaitingMin,
+            gOff: a.gensetOffMoment,
+            vcCy: a.vcCycles,
+            vcDur: a.vcDurationMin,
+            cmt: a.specificComments,
+          })),
+        })),
         reports: reports.length
           ? reports.map((r) => compact({
               wk: r.weekNr,
@@ -296,30 +325,54 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
     });
   }, [containers, servicesOrders, shipperArrivals, shipperReports, accounts]);
 
-  // Live SensiWatch tracker data — all active SF trips with current temp/humidity/location/ETA
-  const sfTracking = useMemo(() => {
-    if (!sfTrips?.length) return null;
-    return sfTrips.map((t) => compact({
-      tripId: t.tripId,
-      status: t.tripStatus,
-      internalTripId: t.internalTripId,
-      origin: t.originName,
-      originAddr: t.originAddress,
-      destination: t.destinationName,
-      carrier: t.carrier,
-      stops: t.stops,
-      serial: t.serialNumber,
-      lastTempC: t.lastTemp,
-      lastHumidity: t.lastHumidity,
-      lastLight: t.lastLight,
-      lastReadingTime: t.lastReadingTime,
-      lastLocation: t.lastLocation,
-      lat: t.latitude,
-      lon: t.longitude,
-    }));
-  }, [sfTrips]);
+  const containerIndex = useMemo(() => logisticsData.map((c: any) => ({
+    id: c.id, cn: c.cn, bk: c.bk, ship: c.ship, orderCount: (c.orders || []).length,
+  })), [logisticsData]);
 
-  // Fetch recent weekly plans for AI context
+  // Live SensiWatch tracker data — joined to containerNumber for AI lookup
+  const sfTracking = useMemo(() => {
+    if (!sfTrips?.length) return [];
+    const orderToContainer = new Map<string, string>();
+    for (const c of logisticsData as any[]) {
+      for (const o of c.orders || []) {
+        if (o.on && c.cn) orderToContainer.set(o.on, c.cn);
+      }
+    }
+    return sfTrips.map((t) => {
+      const stripped = (t.internalTripId || "").split(/[_-]/)[0];
+      return compact({
+        tripId: t.tripId,
+        status: t.tripStatus,
+        internalTripId: t.internalTripId,
+        containerNumber: orderToContainer.get(stripped) || null,
+        origin: t.originName,
+        originAddr: t.originAddress,
+        destination: t.destinationName,
+        carrier: t.carrier,
+        stops: t.stops,
+        serial: t.serialNumber,
+        lastTempC: t.lastTemp,
+        lastHumidity: t.lastHumidity,
+        lastLight: t.lastLight,
+        lastReadingTime: t.lastReadingTime,
+        lastLocation: t.lastLocation,
+        lat: t.latitude,
+        lon: t.longitude,
+      });
+    });
+  }, [sfTrips, logisticsData]);
+
+  const tripIndex = useMemo(() => sfTracking.map((t: any) => ({
+    tripId: t.tripId,
+    internalTripId: t.internalTripId,
+    status: t.status,
+    origin: t.origin,
+    destination: t.destination,
+    lastTempC: t.lastTempC,
+    lastReadingTime: t.lastReadingTime,
+  })), [sfTracking]);
+
+  // Fetch recent weekly plans
   const [weeklyPlans, setWeeklyPlans] = useState<any[]>([]);
   useEffect(() => {
     (async () => {
