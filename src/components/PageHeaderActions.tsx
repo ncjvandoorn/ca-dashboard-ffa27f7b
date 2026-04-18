@@ -18,6 +18,7 @@ import {
   Package,
   Ship,
   CreditCard,
+  Users,
 } from "lucide-react";
 
 interface PageHeaderActionsProps {
