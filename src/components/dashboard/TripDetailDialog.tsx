@@ -7,8 +7,9 @@ import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts }
 import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { TripPathMap } from "./TripPathMap";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { VesselTrackingCard } from "./VesselTrackingCard";
+import { ExportPdfButton } from "./ExportPdfButton";
 import { useAuth } from "@/hooks/useAuth";
 import type { VFTracking } from "@/hooks/useVesselFinder";
 
@@ -65,6 +66,8 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
     return out;
   }, [shipperArrivals, detailOrders]);
 
+  const exportRef = useRef<HTMLDivElement>(null);
+
   if (!trip) return null;
 
   const chrysalBlue = "hsl(207, 100%, 35%)";
@@ -75,7 +78,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
     <Dialog open={!!trip} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
+          <DialogTitle className="flex items-center gap-2 text-lg pr-8">
             Trip {trip.tripId}
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
               trip.tripStatus === "In Transit" || trip.tripStatus === "InTransit"
@@ -84,11 +87,17 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
             }`}>
               {trip.tripStatus}
             </span>
+            <ExportPdfButton
+              targetRef={exportRef}
+              filename={`active-sf-trip-${trip.tripId}`}
+              label="Export PDF"
+            />
           </DialogTitle>
         </DialogHeader>
 
+        <div ref={exportRef} className="space-y-4">
         {/* Trip route map */}
-        <div className="mb-4 rounded-xl border border-border overflow-hidden">
+        <div className="rounded-xl border border-border overflow-hidden" data-pdf-section>
           <TripPathMap trip={trip} height={280} vfTracking={vfTracking} />
         </div>
 
