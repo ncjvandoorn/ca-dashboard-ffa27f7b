@@ -345,7 +345,7 @@ const ActiveSF = () => {
                   >
                     <TableCell
                       className="w-10"
-                      onClick={(e) => { e.stopPropagation(); toggleSelected(trip.tripId); }}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Checkbox
                         checked={selectedIds.has(trip.tripId)}
