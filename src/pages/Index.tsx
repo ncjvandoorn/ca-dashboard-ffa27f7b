@@ -320,31 +320,34 @@ const Index = () => {
 
             {/* Action buttons row */}
             <div className="flex items-center gap-2 flex-wrap mb-3">
-              <AIAgent
-                reports={scopedReports}
-                accounts={scopedAccounts}
-                activities={isCustomer ? [] : scopedActivities}
-                users={isCustomer ? [] : (users || [])}
-                exceptionAnalysis={visibleFarmIds ? null : exceptionAnalysis}
-                seasonalityAnalysis={visibleFarmIds ? null : seasonalityAnalysis}
-                containers={isCustomer ? [] : (containers || [])}
-                servicesOrders={isCustomer ? [] : (servicesOrders || [])}
-                shipperArrivals={isCustomer ? [] : (shipperArrivals || [])}
-                shipperReports={isCustomer ? [] : (shipperReports || [])}
-                sfTrips={isCustomer ? [] : (sfTrips || [])}
-              />
-              {/* CRM moved to dedicated /crm page (menu: CRM Activities) */}
-              <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
-                All Reports
-              </Button>
-              {isAdmin && (
+              {can("ai_agent") && (
+                <AIAgent
+                  reports={scopedReports}
+                  accounts={scopedAccounts}
+                  activities={isCustomer ? [] : scopedActivities}
+                  users={isCustomer ? [] : (users || [])}
+                  exceptionAnalysis={visibleFarmIds ? null : exceptionAnalysis}
+                  seasonalityAnalysis={visibleFarmIds ? null : seasonalityAnalysis}
+                  containers={isCustomer ? [] : (containers || [])}
+                  servicesOrders={isCustomer ? [] : (servicesOrders || [])}
+                  shipperArrivals={isCustomer ? [] : (shipperArrivals || [])}
+                  shipperReports={isCustomer ? [] : (shipperReports || [])}
+                  sfTrips={isCustomer ? [] : (sfTrips || [])}
+                />
+              )}
+              {can("all_reports") && (
+                <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
+                  All Reports
+                </Button>
+              )}
+              {can("reporting_check") && (
                 <ReportingCheck
                   reports={yearFilteredReports}
                   accounts={scopedAccounts}
                   users={users || []}
                 />
               )}
-              {!isCustomer && (
+              {can("seasonality_insights") && (
                 <SeasonalityInsights
                   reports={yearFilteredReports}
                   accounts={scopedAccounts}
@@ -352,15 +355,17 @@ const Index = () => {
                   onOpenChange={setSeasonalityOpen}
                 />
               )}
-              <ExceptionReport
-                reports={yearFilteredReports}
-                accounts={scopedAccounts}
-                onSelectFarm={(id) => { setSelectedFarmId(id); }}
-                open={exceptionOpen}
-                onOpenChange={setExceptionOpen}
-                hideRefresh={isCustomer}
-                useSharedCache={true}
-              />
+              {can("exception_report") && (
+                <ExceptionReport
+                  reports={yearFilteredReports}
+                  accounts={scopedAccounts}
+                  onSelectFarm={(id) => { setSelectedFarmId(id); }}
+                  open={exceptionOpen}
+                  onOpenChange={setExceptionOpen}
+                  hideRefresh={isCustomer}
+                  useSharedCache={true}
+                />
+              )}
               <Button variant="outline" size="sm" onClick={handleDashboardExport} className="gap-2">
                 <FileDown className="h-4 w-4" />
                 Export PDF
