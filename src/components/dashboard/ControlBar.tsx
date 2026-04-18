@@ -257,7 +257,7 @@ export function ControlBar({
                   CRM Activities
                 </DropdownMenuItem>
               )}
-              {(!isCustomer || customerAccount?.canSeeTrials) && (
+              {!isCustomer && (
                 <DropdownMenuItem onClick={() => navigate("/trials")}>
                   <FlaskConical className="h-4 w-4 mr-2" />
                   Trials Dashboard
