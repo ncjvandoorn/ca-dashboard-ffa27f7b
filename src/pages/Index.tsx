@@ -87,6 +87,13 @@ const Index = () => {
     loadCachedAnalyses();
   }, []);
 
+  // Open Reporting Check dialog when navigated via menu (?check=reporting)
+  useEffect(() => {
+    if (searchParams.get("check") === "reporting") {
+      setReportingCheckOpen(true);
+    }
+  }, [searchParams]);
+
 
   // Compute scoped farm visibility (selected customer + role-based customer access).
   // Fail closed while customer mappings are loading.
