@@ -350,6 +350,54 @@ export type Database = {
         }
         Relationships: []
       }
+      vesselfinder_tracking: {
+        Row: {
+          container_id: string
+          container_number_override: string | null
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          error_code: string | null
+          error_message: string | null
+          id: string
+          last_polled_at: string | null
+          response: Json | null
+          sealine: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          container_id: string
+          container_number_override?: string | null
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          last_polled_at?: string | null
+          response?: Json | null
+          sealine?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          container_id?: string
+          container_number_override?: string | null
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          last_polled_at?: string | null
+          response?: Json | null
+          sealine?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       weekly_plan_cache: {
         Row: {
           analysis: Json
