@@ -179,7 +179,6 @@ const Admin = () => {
     const FILENAME_ALIASES: Record<string, string> = {
       "ALL_account.csv": "account.csv",
       "ALL_user.csv": "user.csv",
-      "datalogdevice.csv": "servicesOrderDatalogdevice.csv",
     };
     const recognized: { file: File; targetName: string }[] = [];
     const unknown: string[] = [];
