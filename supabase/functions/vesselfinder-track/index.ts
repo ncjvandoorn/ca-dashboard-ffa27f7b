@@ -1,5 +1,5 @@
 // VesselFinder Container Tracking - admin-only proxy with caching in DB.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,20 +52,21 @@ Deno.serve(async (req) => {
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: userRes, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userRes?.user) return json({ error: "Unauthorized" }, 401);
-    const userId = userRes.user.id;
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims?.sub) return json({ error: "Unauthorized" }, 401);
+    const userId = claimsData.claims.sub as string;
 
-    // Admin gate
-    const { data: roleRow } = await userClient
+    const admin = createClient(supabaseUrl, serviceKey);
+
+    // Admin gate (use service role to bypass RLS)
+    const { data: roleRow } = await admin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
     if (!roleRow) return json({ error: "Forbidden — admin only" }, 403);
-
-    const admin = createClient(supabaseUrl, serviceKey);
     const body = (await req.json().catch(() => ({}))) as ReqBody;
     const action = body.action;
 
