@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Ship, Loader2, RefreshCw, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { Ship, Loader2, RefreshCw, AlertCircle, CheckCircle2, Clock, ListTree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useVesselFinderTracking, type VFTracking } from "@/hooks/useVesselFinder";
+import { VesselTrackingDetailsSheet } from "./VesselTrackingDetailsSheet";
 
 interface Props {
   containerId: string | null;
@@ -26,6 +27,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
   const [sealine, setSealine] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (tracking) {
@@ -143,8 +145,20 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
               Force
             </Button>
           )}
+          {tracking?.status === "success" && tracking.response && (
+            <Button size="sm" variant="outline" onClick={() => setDetailsOpen(true)} className="h-7 text-xs">
+              <ListTree className="h-3 w-3 mr-1" />
+              Details
+            </Button>
+          )}
         </div>
       </div>
+
+      <VesselTrackingDetailsSheet
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        response={tracking?.response ?? null}
+      />
 
       {(actionError || error) && (
         <div className="mt-2 text-[11px] text-destructive flex items-start gap-1">
