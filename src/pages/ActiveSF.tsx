@@ -54,6 +54,7 @@ const ActiveSF = () => {
   const { data: accounts } = useAccounts();
   const { data: customerFarms } = useCustomerFarms();
   const { data: containers } = useContainers();
+  const vfActiveSet = useVesselFinderActiveSet(isAdmin);
 
   // Map orderNumber -> { customerName, farmName, dippingWeek, bookingCode, containerNumber, containerId, dropoffDate, shippingDate, purposeName, orderId }
   const orderInfo = useMemo(() => {
