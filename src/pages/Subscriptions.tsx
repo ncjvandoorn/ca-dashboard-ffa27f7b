@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Card } from "@/components/ui/card";
 import { Check, Sparkles, BarChart3, Ship, Brain, Leaf } from "lucide-react";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
@@ -19,12 +20,36 @@ const PLANS: {
   { key: "heavy", name: "Heavy", tagline: "Enterprise scale", monthly: "Upon request", yearly: "Upon request" },
 ];
 
-const FEATURES: { label: string; included: Record<PlanKey, boolean> }[] = [
-  { label: "Quality insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
-  { label: "Seasonality insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
-  { label: "AI insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
-  { label: "Sea freight insights", included: { basic: false, pro: true, proPlus: true, heavy: true } },
-  { label: "Sea freight tracking", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+type FeatureGroup = {
+  group: string;
+  rows: { label: string; included: Record<PlanKey, boolean> }[];
+};
+
+const FEATURE_GROUPS: FeatureGroup[] = [
+  {
+    group: "Quality & AI",
+    rows: [
+      { label: "Quality insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "Seasonality insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "AI insights", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "AI chat agent", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+    ],
+  },
+  {
+    group: "Sea freight",
+    rows: [
+      { label: "Sea freight overview", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "Sea freight insights", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+      { label: "Sea freight tracking", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+    ],
+  },
+  {
+    group: "Trials",
+    rows: [
+      { label: "Trials overview", included: { basic: true, pro: true, proPlus: true, heavy: true } },
+      { label: "Trials insights", included: { basic: false, pro: true, proPlus: true, heavy: true } },
+    ],
+  },
 ];
 
 const LIMITS: { label: string; values: Record<PlanKey, string> }[] = [
@@ -119,19 +144,33 @@ export default function Subscriptions() {
                 </tr>
               </thead>
               <tbody>
-                {FEATURES.map((row) => (
-                  <tr key={row.label} className="border-t border-border">
-                    <td className="px-4 py-3 text-foreground">{row.label}</td>
-                    {PLANS.map((p) => (
-                      <td key={p.key} className="px-4 py-3 text-center">
-                        {row.included[p.key] ? (
-                          <Check className="h-4 w-4 text-primary inline" />
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
+                {FEATURE_GROUPS.map((grp, gi) => (
+                  <Fragment key={grp.group}>
+                    {gi > 0 && (
+                      <tr className="border-t border-border bg-muted/20">
+                        <td
+                          colSpan={PLANS.length + 1}
+                          className="px-4 py-2 text-xs uppercase tracking-wide text-muted-foreground font-medium"
+                        >
+                          {grp.group}
+                        </td>
+                      </tr>
+                    )}
+                    {grp.rows.map((row) => (
+                      <tr key={row.label} className="border-t border-border">
+                        <td className="px-4 py-3 text-foreground">{row.label}</td>
+                        {PLANS.map((p) => (
+                          <td key={p.key} className="px-4 py-3 text-center">
+                            {row.included[p.key] ? (
+                              <Check className="h-4 w-4 text-primary inline" />
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
+                  </Fragment>
                 ))}
 
                 <tr className="border-t border-border bg-muted/20">
