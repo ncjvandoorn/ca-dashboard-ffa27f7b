@@ -175,15 +175,16 @@ const Admin = () => {
 
   /** Upload many files in one go, auto-routing each by filename to the correct slot. */
   const handleBulkUpload = async (files: File[]) => {
-    // Aliases: incoming filename → canonical storage filename
+    // Aliases: incoming filename (lowercased) → canonical storage filename
     const FILENAME_ALIASES: Record<string, string> = {
-      "ALL_account.csv": "account.csv",
-      "ALL_user.csv": "user.csv",
+      "all_account.csv": "account.csv",
+      "all_user.csv": "user.csv",
     };
     const recognized: { file: File; targetName: string }[] = [];
     const unknown: string[] = [];
     for (const f of files) {
-      const targetName = FILENAME_ALIASES[f.name] ?? f.name;
+      const lower = f.name.toLowerCase();
+      const targetName = FILENAME_ALIASES[lower] ?? f.name;
       if (ALLOWED_FILENAMES.has(targetName as any)) {
         recognized.push({
           file: targetName === f.name ? f : new File([f], targetName, { type: f.type }),
@@ -196,7 +197,7 @@ const Admin = () => {
     if (unknown.length > 0) {
       toast({
         title: `${unknown.length} file(s) skipped`,
-        description: `Unrecognized: ${unknown.join(", ")}. Filename must match (e.g. container.csv, ALL_account.csv, ALL_user.csv).`,
+        description: `Unrecognized: ${unknown.join(", ")}. Filename must match (e.g. container.csv, ALL_Account.csv, ALL_User.csv).`,
         variant: "destructive",
       });
     }
