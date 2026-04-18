@@ -1,19 +1,22 @@
 import { useEffect, useRef } from "react";
 import type { SFTrip } from "@/pages/ActiveSF";
 import { useSensiwatchTripPaths } from "@/hooks/useSensiwatchData";
+import type { VFTracking } from "@/hooks/useVesselFinder";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 interface Props {
   trip: SFTrip;
   height?: number;
+  vfTracking?: VFTracking | null;
 }
 
 const COLOR_PASSED = "hsl(142, 71%, 38%)";
 const COLOR_CURRENT = "hsl(207, 100%, 35%)";
 const COLOR_DESTINATION = "hsl(340, 75%, 45%)";
+const COLOR_VESSEL = "hsl(28, 90%, 50%)";
 
-export function TripPathMap({ trip, height = 280 }: Props) {
+export function TripPathMap({ trip, height = 280, vfTracking }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layersRef = useRef<L.LayerGroup | null>(null);

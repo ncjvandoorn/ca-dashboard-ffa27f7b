@@ -103,9 +103,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
           {isAdmin && (
             <VesselTrackingCard
               containerId={containerId || null}
-              defaultContainerNumber={
-                detailOrders[0]?.id ? null : null /* placeholder */
-              }
+              defaultContainerNumber={orderInfo?.containerNumber || null}
               isAdmin={isAdmin}
               onTrackingChange={setVfTracking}
             />
