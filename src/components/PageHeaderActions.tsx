@@ -63,6 +63,12 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
               Trial Planner
             </DropdownMenuItem>
           )}
+          {!isCustomer && (
+            <DropdownMenuItem onClick={() => navigate("/crm")}>
+              <Users className="h-4 w-4 mr-2" />
+              CRM Activities
+            </DropdownMenuItem>
+          )}
           {(!isCustomer || customerAccount?.canSeeTrials) && (
             <DropdownMenuItem onClick={() => navigate("/trials")}>
               <FlaskConical className="h-4 w-4 mr-2" />
