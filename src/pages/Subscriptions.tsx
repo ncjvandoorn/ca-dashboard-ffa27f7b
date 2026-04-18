@@ -143,19 +143,8 @@ export default function Subscriptions() {
                 </tr>
               </thead>
               <tbody>
-                {FEATURES.map((row) => (
-                  <tr key={row.label} className="border-t border-border">
-                    <td className="px-4 py-3 text-foreground">{row.label}</td>
-                    {PLANS.map((p) => (
-                      <td key={p.key} className="px-4 py-3 text-center">
-                        {row.included[p.key] ? (
-                          <Check className="h-4 w-4 text-primary inline" />
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
+                {FEATURE_GROUPS.map((grp) => (
+                  <FragmentRows key={grp.group} group={grp} />
                 ))}
 
                 <tr className="border-t border-border bg-muted/20">
