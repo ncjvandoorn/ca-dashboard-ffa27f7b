@@ -3,10 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
 type AppRole = "admin" | "user" | "customer";
+export type CustomerTier = "basic" | "pro";
+export type RoleKey = "admin" | "user" | "customer_basic" | "customer_pro";
 
 interface CustomerAccountInfo {
   customerAccountId: string;
   canSeeTrials: boolean;
+  tier: CustomerTier;
 }
 
 interface AuthContextType {
@@ -16,6 +19,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isCustomer: boolean;
   role: AppRole | null;
+  roleKey: RoleKey | null;
   customerAccount: CustomerAccountInfo | null;
   signIn: (username: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -47,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (userRole === "customer") {
       const { data: caData } = await supabase
         .from("customer_accounts")
-        .select("customer_account_id, can_see_trials")
+        .select("customer_account_id, can_see_trials, tier")
         .eq("user_id", userId)
         .limit(1)
         .maybeSingle();
@@ -56,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCustomerAccount({
           customerAccountId: caData.customer_account_id,
           canSeeTrials: caData.can_see_trials ?? false,
+          tier: ((caData as { tier?: string }).tier === "pro" ? "pro" : "basic"),
         });
       } else {
         setCustomerAccount(null);
@@ -126,8 +131,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = role === "admin";
   const isCustomer = role === "customer";
 
+  let roleKey: RoleKey | null = null;
+  if (role === "admin") roleKey = "admin";
+  else if (role === "user") roleKey = "user";
+  else if (role === "customer") {
+    roleKey = customerAccount?.tier === "pro" ? "customer_pro" : "customer_basic";
+  }
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, isCustomer, role, customerAccount, signIn, signOut, changePassword }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isCustomer, role, roleKey, customerAccount, signIn, signOut, changePassword }}>
       {children}
     </AuthContext.Provider>
   );
