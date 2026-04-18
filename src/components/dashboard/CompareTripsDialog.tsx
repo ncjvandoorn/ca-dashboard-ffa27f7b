@@ -133,8 +133,9 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
           <SFWorldMap trips={trips} onSelectTrip={() => {}} />
         </div>
 
-        {/* Legend chips */}
-        <div className="flex flex-wrap gap-2 mb-3">
+        {/* Legend + multigraph (one PDF section so they stay together) */}
+        <div data-pdf-section className="space-y-3">
+        <div className="flex flex-wrap gap-2">
           {tripMeta.map((m) => (
             <span
               key={m.trip.tripId}
