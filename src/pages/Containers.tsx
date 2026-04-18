@@ -257,7 +257,7 @@ export default function Containers() {
                   </TableHead>
                   <TableHead>Booking Code</TableHead>
                   <TableHead>Container #</TableHead>
-                  <TableHead>Datalogger Device ID</TableHead>
+                  <TableHead className="text-center"># Dataloggers</TableHead>
                   <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("dropoffDate")}>
                     Drop-off <SortIcon field="dropoffDate" />
                   </TableHead>
@@ -277,8 +277,8 @@ export default function Containers() {
                     <TableCell className="font-mono text-xs">{getWeekNr(r.container.shippingDate)}</TableCell>
                     <TableCell>{r.container.bookingCode}</TableCell>
                     <TableCell className="font-mono">{r.container.containerNumber}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {Array.from(new Set(r.orders.map((o) => o.datalogdeviceId).filter(Boolean))).join(", ") || "—"}
+                    <TableCell className="text-center font-mono text-xs">
+                      {r.orders.filter((o) => o.datalogdeviceId).length}
                     </TableCell>
                     <TableCell>{formatDate(r.container.dropoffDate)}</TableCell>
                     <TableCell>{formatDate(r.container.shippingDate)}</TableCell>
@@ -353,6 +353,9 @@ export default function Containers() {
                             <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
                             <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
                             <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Datalogger Device ID: <span className="text-foreground font-mono">{o.datalogdeviceId || "—"}</span>
                           </div>
 
                           {arrivals.length > 0 && (
