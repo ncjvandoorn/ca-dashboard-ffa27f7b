@@ -101,6 +101,7 @@ export type Database = {
           created_at: string
           customer_account_id: string
           id: string
+          tier: string
           updated_at: string
           user_id: string
         }
@@ -109,6 +110,7 @@ export type Database = {
           created_at?: string
           customer_account_id: string
           id?: string
+          tier?: string
           updated_at?: string
           user_id: string
         }
@@ -117,6 +119,7 @@ export type Database = {
           created_at?: string
           customer_account_id?: string
           id?: string
+          tier?: string
           updated_at?: string
           user_id?: string
         }
@@ -209,6 +212,27 @@ export type Database = {
           region?: string | null
           user_email?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          id: string
+          permissions: Json
+          role_key: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          permissions?: Json
+          role_key: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          permissions?: Json
+          role_key?: string
+          updated_at?: string
         }
         Relationships: []
       }
