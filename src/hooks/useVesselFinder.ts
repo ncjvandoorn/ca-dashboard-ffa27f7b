@@ -151,11 +151,17 @@ export function useVesselFinderActiveSet(isAdmin: boolean) {
         const m = new Map<string, VFActiveInfo>();
         for (const item of res.items || []) {
           const resp = (item as any).response as VFResponse | null | undefined;
+          // ETA = last schedule stop's last event date (e.g. "Vessel arrival at final POD")
+          const lastStop = resp?.schedule?.[resp.schedule.length - 1];
+          const lastEventDate = lastStop?.events?.length
+            ? lastStop.events[lastStop.events.length - 1].date ?? null
+            : null;
+          const etaDate = lastEventDate ?? lastStop?.date ?? resp?.general?.destination?.date ?? null;
           m.set(item.container_id, {
             status: item.status,
             enabled: item.enabled,
-            destinationName: resp?.general?.destination?.name ?? null,
-            destinationDate: resp?.general?.destination?.date ?? null,
+            destinationName: resp?.general?.destination?.name ?? lastStop?.name ?? null,
+            destinationDate: etaDate,
           });
         }
         setActive(m);
