@@ -128,6 +128,76 @@ export function TripPathMap({ trip, height = 280, vfTracking }: Props) {
       bounds.push([path.destination.lat, path.destination.lon]);
     }
 
+    // VesselFinder vessel route overlay (orange) — schedule + current vessel position
+    const vfGen = vfTracking?.response?.general;
+    const vfSchedule = vfTracking?.response?.schedule;
+    if (vfTracking?.status === "success" && vfGen) {
+      const routePts: [number, number][] = [];
+      if (vfGen.origin) routePts.push([vfGen.origin.latitude, vfGen.origin.longitude]);
+      if (Array.isArray(vfSchedule)) {
+        for (const s of vfSchedule) {
+          if (typeof s.latitude === "number" && typeof s.longitude === "number") {
+            routePts.push([s.latitude, s.longitude]);
+          }
+        }
+      }
+      if (vfGen.destination) routePts.push([vfGen.destination.latitude, vfGen.destination.longitude]);
+
+      if (routePts.length >= 2) {
+        const vesselLine = L.polyline(routePts, {
+          color: COLOR_VESSEL,
+          weight: 3,
+          opacity: 0.85,
+          dashArray: "4, 6",
+        });
+        vesselLine.bindTooltip(`<strong>VesselFinder route</strong><br/>${vfGen.carrier || ""} · ${vfGen.containerNumber || ""}`, {
+          sticky: true,
+        });
+        group.addLayer(vesselLine);
+        for (const p of routePts) bounds.push(p);
+      }
+
+      // Schedule waypoint dots (orange)
+      if (Array.isArray(vfSchedule)) {
+        for (const s of vfSchedule) {
+          if (typeof s.latitude !== "number" || typeof s.longitude !== "number") continue;
+          const dot = L.circleMarker([s.latitude, s.longitude], {
+            radius: 5, color: "white", weight: 1.5,
+            fillColor: COLOR_VESSEL, fillOpacity: 1,
+          });
+          dot.bindTooltip(`<strong>${s.name || "Port"}</strong>${s.country ? `<br/>${s.country}` : ""}`, { direction: "top" });
+          group.addLayer(dot);
+        }
+      }
+
+      // Current vessel position marker
+      const v = vfGen.currentLocation?.vessel;
+      if (v && typeof v.latitude === "number" && typeof v.longitude === "number") {
+        const shipIcon = L.divIcon({
+          className: "vf-ship-marker",
+          html: `<div style="
+            width:22px;height:22px;border-radius:50%;
+            background:${COLOR_VESSEL};border:2px solid white;
+            box-shadow:0 1px 4px rgba(0,0,0,.4);
+            display:flex;align-items:center;justify-content:center;
+            color:white;font-weight:700;font-size:11px;">⚓</div>`,
+          iconSize: [22, 22], iconAnchor: [11, 11],
+        });
+        const m = L.marker([v.latitude, v.longitude], { icon: shipIcon });
+        const eta = vfGen.destination?.date
+          ? new Date(vfGen.destination.date * 1000).toLocaleDateString("en-GB")
+          : "—";
+        m.bindTooltip(
+          `<strong>${v.name || "Vessel"}</strong><br/>` +
+          (v.speed != null ? `Speed: ${v.speed} kn<br/>` : "") +
+          `ETA: ${eta}`,
+          { direction: "top", offset: [0, -10] }
+        );
+        group.addLayer(m);
+        bounds.push([v.latitude, v.longitude]);
+      }
+    }
+
     // Fit map to relevant bounds
     if (bounds.length > 1) {
       map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] });
@@ -136,7 +206,7 @@ export function TripPathMap({ trip, height = 280, vfTracking }: Props) {
     }
     // Ensure tiles render correctly inside the dialog
     setTimeout(() => map.invalidateSize(), 50);
-  }, [trip, paths]);
+  }, [trip, paths, vfTracking]);
 
   return <div ref={containerRef} className="w-full rounded-lg overflow-hidden" style={{ height }} />;
 }
