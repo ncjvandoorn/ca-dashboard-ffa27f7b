@@ -20,6 +20,7 @@ import {
   Ship,
   CreditCard,
   Users,
+  ClipboardCheck,
 } from "lucide-react";
 
 interface PageHeaderActionsProps {
@@ -63,6 +64,12 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
             <DropdownMenuItem onClick={() => navigate("/planner")}>
               <CalendarRange className="h-4 w-4 mr-2" />
               Trial Planner
+            </DropdownMenuItem>
+          )}
+          {can("reporting_check") && (
+            <DropdownMenuItem onClick={() => navigate("/?check=reporting")}>
+              <ClipboardCheck className="h-4 w-4 mr-2" />
+              Reporting Check
             </DropdownMenuItem>
           )}
           {can("crm_activities") && (
