@@ -23,6 +23,8 @@ interface CRMReportProps {
   users: User[];
   accounts: Account[];
   reports: QualityReport[];
+  /** When true, render inline (no Dialog/trigger) — used by the dedicated CRM page */
+  inline?: boolean;
 }
 
 const STATUS_COLUMNS = ["To Do", "In Progress", "Completed"] as const;
@@ -56,7 +58,7 @@ function timeAgo(timestamp: number | null): string {
   return months === 1 ? "1 month ago" : `${months} months ago`;
 }
 
-export function CRMReport({ activities, users, accounts, reports }: CRMReportProps) {
+export function CRMReport({ activities, users, accounts, reports, inline = false }: CRMReportProps) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"board" | "analysis" | "coming-week">("board");
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
@@ -116,6 +118,141 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
 
   const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : "Current Week Planner";
 
+  const body = (
+    <div className="py-4">
+      {view === "board" ? (
+        <>
+          {/* Toolbar */}
+          <div className="flex items-center gap-3 mb-5 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => setView("analysis")} className="gap-1.5">
+              <BarChart3 className="h-4 w-4" />
+              Activity Analysis
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setView("coming-week")} className="gap-1.5">
+              <CalendarClock className="h-4 w-4" />
+              Current Week
+            </Button>
+
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                <SelectTrigger className="w-[200px] h-8 text-sm">
+                  <SelectValue placeholder="All Users" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Users</SelectItem>
+                  {activeUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <span className="text-xs text-muted-foreground ml-auto">
+              {filteredActivities.filter((a) => STATUS_COLUMNS.includes(a.status as any)).length} activities
+            </span>
+          </div>
+
+          {/* Kanban columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {STATUS_COLUMNS.map((status) => {
+              const items = columns[status];
+              const meta = columnMeta[status];
+              return (
+                <div key={status} className="flex flex-col">
+                  <div className="flex items-center gap-2 mb-3">
+                    <meta.icon className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-semibold text-sm">{status}</h3>
+                    <Badge variant="secondary" className="text-xs ml-auto">{items.length}</Badge>
+                  </div>
+                  <div className={`rounded-xl border p-2 min-h-[200px] space-y-2 ${statusStyle[status] || "border-border bg-muted/20"}`}>
+                    {items.slice(0, visibleCounts[status] || 25).map((activity, i) => {
+                      const Icon = typeIcon[activity.type] || ClipboardList;
+                      const assignedName = activity.assignedUserId ? userMap.get(activity.assignedUserId) : null;
+                      const farmName = activity.accountId ? accountMap.get(activity.accountId) : null;
+                      return (
+                        <motion.div
+                          key={activity.id}
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(i, 25) * 0.015 }}
+                          className="rounded-lg border border-border bg-background p-3 shadow-sm"
+                        >
+                          <div className="flex items-start gap-2 mb-1.5">
+                            <Icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                            <span className="text-sm font-medium leading-tight line-clamp-2">
+                              {activity.subject || "Untitled"}
+                            </span>
+                          </div>
+                          {activity.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2 ml-6">
+                              {activity.description}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between ml-6">
+                            <div className="flex flex-col gap-0.5">
+                              {farmName && (
+                                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {farmName}
+                                </span>
+                              )}
+                              <span className="text-[11px] text-muted-foreground/60">
+                                {timeAgo(activity.createdAt)} · {formatDate(activity.startsAt || activity.createdAt)}
+                              </span>
+                            </div>
+                            {assignedName && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                                {assignedName.split(" ").map((n) => n[0]).join("").toUpperCase()}
+                              </Badge>
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                    {items.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-8">No activities</p>
+                    )}
+                    {items.length > (visibleCounts[status] || 25) && (
+                      <button
+                        onClick={() => setVisibleCounts((prev) => ({ ...prev, [status]: (prev[status] || 25) + 25 }))}
+                        className="text-xs text-primary hover:underline text-center w-full pt-1 cursor-pointer"
+                      >
+                        +{items.length - (visibleCounts[status] || 25)} more — show 25 more
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : view === "analysis" ? (
+        <ActivityAnalysis
+          allActivities={crmActivities}
+          users={users}
+          accounts={accounts}
+          activeUsers={activeUsers}
+          selectedUserId={selectedUserId}
+          onBack={() => setView("board")}
+        />
+      ) : (
+        <ComingWeekView
+          allActivities={crmActivities}
+          users={users}
+          accounts={accounts}
+          reports={reports}
+          activeUsers={activeUsers}
+          onBack={() => setView("board")}
+        />
+      )}
+    </div>
+  );
+
+  if (inline) {
+    return <div className="px-1">{body}</div>;
+  }
+
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => { setOpen(true); setView("board"); }} className="gap-2">
@@ -133,134 +270,7 @@ export function CRMReport({ activities, users, accounts, reports }: CRMReportPro
           </DialogHeader>
 
           <ScrollArea className="flex-1 px-5">
-            <div className="py-4">
-              {view === "board" ? (
-                <>
-                  {/* Toolbar */}
-                  <div className="flex items-center gap-3 mb-5 flex-wrap">
-                    <Button variant="outline" size="sm" onClick={() => setView("analysis")} className="gap-1.5">
-                      <BarChart3 className="h-4 w-4" />
-                      Activity Analysis
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setView("coming-week")} className="gap-1.5">
-                      <CalendarClock className="h-4 w-4" />
-                      Current Week
-                    </Button>
-
-                    <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4 text-muted-foreground" />
-                      <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                        <SelectTrigger className="w-[200px] h-8 text-sm">
-                          <SelectValue placeholder="All Users" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Users</SelectItem>
-                          {activeUsers.map((u) => (
-                            <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <span className="text-xs text-muted-foreground ml-auto">
-                      {filteredActivities.filter((a) => STATUS_COLUMNS.includes(a.status as any)).length} activities
-                    </span>
-                  </div>
-
-                  {/* Kanban columns */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {STATUS_COLUMNS.map((status) => {
-                      const items = columns[status];
-                      const meta = columnMeta[status];
-                      return (
-                        <div key={status} className="flex flex-col">
-                          <div className="flex items-center gap-2 mb-3">
-                            <meta.icon className="h-4 w-4 text-muted-foreground" />
-                            <h3 className="font-semibold text-sm">{status}</h3>
-                            <Badge variant="secondary" className="text-xs ml-auto">{items.length}</Badge>
-                          </div>
-                          <div className={`rounded-xl border p-2 min-h-[200px] space-y-2 ${statusStyle[status] || "border-border bg-muted/20"}`}>
-                            {items.slice(0, visibleCounts[status] || 25).map((activity, i) => {
-                              const Icon = typeIcon[activity.type] || ClipboardList;
-                              const assignedName = activity.assignedUserId ? userMap.get(activity.assignedUserId) : null;
-                              const farmName = activity.accountId ? accountMap.get(activity.accountId) : null;
-                              return (
-                                <motion.div
-                                  key={activity.id}
-                                  initial={{ opacity: 0, y: 4 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: Math.min(i, 25) * 0.015 }}
-                                  className="rounded-lg border border-border bg-background p-3 shadow-sm"
-                                >
-                                  <div className="flex items-start gap-2 mb-1.5">
-                                    <Icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                                    <span className="text-sm font-medium leading-tight line-clamp-2">
-                                      {activity.subject || "Untitled"}
-                                    </span>
-                                  </div>
-                                  {activity.description && (
-                                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2 ml-6">
-                                      {activity.description}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center justify-between ml-6">
-                                    <div className="flex flex-col gap-0.5">
-                                      {farmName && (
-                                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                                          <MapPin className="h-3 w-3" />
-                                          {farmName}
-                                        </span>
-                                      )}
-                                      <span className="text-[11px] text-muted-foreground/60">
-                                        {timeAgo(activity.createdAt)} · {formatDate(activity.startsAt || activity.createdAt)}
-                                      </span>
-                                    </div>
-                                    {assignedName && (
-                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                                        {assignedName.split(" ").map((n) => n[0]).join("").toUpperCase()}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </motion.div>
-                              );
-                            })}
-                            {items.length === 0 && (
-                              <p className="text-xs text-muted-foreground text-center py-8">No activities</p>
-                            )}
-                            {items.length > (visibleCounts[status] || 25) && (
-                              <button
-                                onClick={() => setVisibleCounts((prev) => ({ ...prev, [status]: (prev[status] || 25) + 25 }))}
-                                className="text-xs text-primary hover:underline text-center w-full pt-1 cursor-pointer"
-                              >
-                                +{items.length - (visibleCounts[status] || 25)} more — show 25 more
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              ) : view === "analysis" ? (
-                <ActivityAnalysis
-                  allActivities={crmActivities}
-                  users={users}
-                  accounts={accounts}
-                  activeUsers={activeUsers}
-                  selectedUserId={selectedUserId}
-                  onBack={() => setView("board")}
-                />
-              ) : (
-                <ComingWeekView
-                  allActivities={crmActivities}
-                  users={users}
-                  accounts={accounts}
-                  reports={reports}
-                  activeUsers={activeUsers}
-                  onBack={() => setView("board")}
-                />
-              )}
-            </div>
+            {body}
           </ScrollArea>
         </DialogContent>
       </Dialog>

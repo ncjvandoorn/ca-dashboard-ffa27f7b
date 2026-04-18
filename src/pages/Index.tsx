@@ -13,7 +13,7 @@ import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
 import { AIAgent } from "@/components/dashboard/AIAgent";
 
-import { CRMReport } from "@/components/dashboard/CRMReport";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -331,14 +331,7 @@ const Index = () => {
                 shipperReports={isCustomer ? [] : (shipperReports || [])}
                 sfTrips={isCustomer ? [] : (sfTrips || [])}
               />
-              {!isCustomer && (
-                <CRMReport
-                  activities={activities || []}
-                  users={users || []}
-                  accounts={accounts || []}
-                  reports={reports || []}
-                />
-              )}
+              {/* CRM moved to dedicated /crm page (menu: CRM Activities) */}
               <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                 All Reports
               </Button>

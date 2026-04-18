@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings, LogOut, FlaskConical, CalendarRange, Search, X, Menu, Package, Ship, CreditCard } from "lucide-react";
+import { Settings, LogOut, FlaskConical, CalendarRange, Search, X, Menu, Package, Ship, CreditCard, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -249,6 +249,12 @@ export function ControlBar({
                 <DropdownMenuItem onClick={() => navigate("/planner")}>
                   <CalendarRange className="h-4 w-4 mr-2" />
                   Trial Planner
+                </DropdownMenuItem>
+              )}
+              {!isCustomer && (
+                <DropdownMenuItem onClick={() => navigate("/crm")}>
+                  <Users className="h-4 w-4 mr-2" />
+                  CRM Activities
                 </DropdownMenuItem>
               )}
               {(!isCustomer || customerAccount?.canSeeTrials) && (
