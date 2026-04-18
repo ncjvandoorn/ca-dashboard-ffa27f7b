@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
 type AppRole = "admin" | "user" | "customer";
-export type CustomerTier = "basic" | "pro";
+export type CustomerTier = "basic" | "pro" | "pro_plus" | "heavy";
 export type RoleKey = "admin" | "user" | "customer_basic" | "customer_pro";
 
 interface CustomerAccountInfo {
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCustomerAccount({
           customerAccountId: caData.customer_account_id,
           canSeeTrials: caData.can_see_trials ?? false,
-          tier: ((caData as { tier?: string }).tier === "pro" ? "pro" : "basic"),
+          tier: (((caData as { tier?: string }).tier as CustomerTier) || "basic"),
         });
       } else {
         setCustomerAccount(null);
@@ -135,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (role === "admin") roleKey = "admin";
   else if (role === "user") roleKey = "user";
   else if (role === "customer") {
-    roleKey = customerAccount?.tier === "pro" ? "customer_pro" : "customer_basic";
+    roleKey = customerAccount?.tier === "basic" ? "customer_basic" : "customer_pro";
   }
 
   return (
