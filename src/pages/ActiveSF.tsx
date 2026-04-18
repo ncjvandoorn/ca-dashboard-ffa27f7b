@@ -377,7 +377,7 @@ const ActiveSF = () => {
                         return (
                           <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
                             {vf.destinationDate && (
-                              <span>ETA {formatShortDate(vf.destinationDate)}</span>
+                              <span>ETA {formatShortDate(vf.destinationDate * 1000)}</span>
                             )}
                             {vf.destinationName && (
                               <span>{vf.destinationDate ? " · " : ""}{vf.destinationName}</span>
