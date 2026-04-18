@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Card } from "@/components/ui/card";
 import { Check, Sparkles, BarChart3, Ship, Brain, Leaf } from "lucide-react";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
@@ -143,8 +144,33 @@ export default function Subscriptions() {
                 </tr>
               </thead>
               <tbody>
-                {FEATURE_GROUPS.map((grp) => (
-                  <FragmentRows key={grp.group} group={grp} />
+                {FEATURE_GROUPS.map((grp, gi) => (
+                  <Fragment key={grp.group}>
+                    {gi > 0 && (
+                      <tr className="border-t border-border bg-muted/20">
+                        <td
+                          colSpan={PLANS.length + 1}
+                          className="px-4 py-2 text-xs uppercase tracking-wide text-muted-foreground font-medium"
+                        >
+                          {grp.group}
+                        </td>
+                      </tr>
+                    )}
+                    {grp.rows.map((row) => (
+                      <tr key={row.label} className="border-t border-border">
+                        <td className="px-4 py-3 text-foreground">{row.label}</td>
+                        {PLANS.map((p) => (
+                          <td key={p.key} className="px-4 py-3 text-center">
+                            {row.included[p.key] ? (
+                              <Check className="h-4 w-4 text-primary inline" />
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </Fragment>
                 ))}
 
                 <tr className="border-t border-border bg-muted/20">
