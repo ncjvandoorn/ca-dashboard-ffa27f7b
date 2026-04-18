@@ -1,5 +1,6 @@
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { ChangePasswordCard } from "@/components/admin/ChangePasswordCard";
+import { PermissionsMatrixCard } from "@/components/admin/PermissionsMatrixCard";
 import { AIInstructionsCard } from "@/components/admin/AIInstructionsCard";
 import { AILearningsCard } from "@/components/admin/AILearningsCard";
 import { CrmUserFilterCard } from "@/components/admin/CrmUserFilterCard";
@@ -19,6 +20,7 @@ const Admin = () => {
         </div>
 
         <ChangePasswordCard />
+        <PermissionsMatrixCard />
         <AIInstructionsCard />
         <AILearningsCard />
         <CrmUserFilterCard />
