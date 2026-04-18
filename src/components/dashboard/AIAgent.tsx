@@ -377,6 +377,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             seasonalityAnalysis: seasonalityAnalysis || null,
             weeklyPlans: weeklyPlans.length > 0 ? weeklyPlans : null,
             logisticsData: logisticsData || null,
+            sfTracking: sfTracking || null,
           }),
         });
 
