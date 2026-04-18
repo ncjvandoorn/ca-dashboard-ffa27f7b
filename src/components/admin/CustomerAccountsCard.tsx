@@ -262,7 +262,7 @@ export const CustomerAccountsCard = () => {
                   <TableHead>Linked Customer</TableHead>
                   <TableHead>Tier</TableHead>
                   <TableHead>Trials Access</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
+                  <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
