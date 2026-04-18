@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, Sparkles, BarChart3, Ship, Brain, Leaf } from "lucide-react";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 
