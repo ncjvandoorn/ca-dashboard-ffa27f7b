@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create") {
-      const { username, password, customerAccountId, canSeeTrials } = body;
+      const { username, password, customerAccountId, canSeeTrials, tier } = body;
 
       if (!username || !password || !customerAccountId) {
         return new Response(JSON.stringify({ error: "Missing fields" }), {
@@ -93,6 +93,7 @@ Deno.serve(async (req) => {
       }
 
       const email = `${username}@chrysal.app`;
+      const safeTier = tier === "pro" ? "pro" : "basic";
 
       // Create auth user
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -119,6 +120,7 @@ Deno.serve(async (req) => {
         user_id: newUser.user.id,
         customer_account_id: customerAccountId,
         can_see_trials: canSeeTrials || false,
+        tier: safeTier,
       });
 
       return new Response(JSON.stringify({ success: true, userId: newUser.user.id }), {
@@ -127,11 +129,12 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update") {
-      const { id, canSeeTrials, customerAccountId } = body;
+      const { id, canSeeTrials, customerAccountId, tier } = body;
 
       const updates: Record<string, any> = { updated_at: new Date().toISOString() };
       if (typeof canSeeTrials === "boolean") updates.can_see_trials = canSeeTrials;
       if (customerAccountId) updates.customer_account_id = customerAccountId;
+      if (tier === "basic" || tier === "pro") updates.tier = tier;
 
       await supabaseAdmin.from("customer_accounts").update(updates).eq("id", id);
 

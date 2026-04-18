@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { PermissionKey } from "@/lib/permissions";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
 import Admin from "./pages/Admin.tsx";
@@ -19,56 +21,33 @@ import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
-function InternalRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, isCustomer } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+function PermissionRoute({ permission, children }: { permission: PermissionKey; children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const { can, loaded } = usePermissions();
+  if (loading || !loaded) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
-  if (isCustomer) return <Navigate to="/" replace />;
-  return <>{children}</>;
-}
-
-function TrialsRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, isCustomer, customerAccount } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  if (!user) return <Navigate to="/login" replace />;
-  if (isCustomer && !customerAccount?.canSeeTrials) return <Navigate to="/" replace />;
+  if (!can(permission)) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, isAdmin } = useAuth();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
@@ -84,13 +63,13 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/planner" element={<InternalRoute><Planner /></InternalRoute>} />
-            <Route path="/trials" element={<TrialsRoute><TrialsDashboard /></TrialsRoute>} />
-            <Route path="/report" element={<ProtectedRoute><AllReports /></ProtectedRoute>} />
-            <Route path="/active-sf" element={<InternalRoute><ActiveSF /></InternalRoute>} />
-            <Route path="/containers" element={<InternalRoute><Containers /></InternalRoute>} />
-            <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
-            <Route path="/crm" element={<InternalRoute><CRM /></InternalRoute>} />
+            <Route path="/planner" element={<PermissionRoute permission="trial_planner"><Planner /></PermissionRoute>} />
+            <Route path="/trials" element={<PermissionRoute permission="trials_dashboard"><TrialsDashboard /></PermissionRoute>} />
+            <Route path="/report" element={<PermissionRoute permission="all_reports"><AllReports /></PermissionRoute>} />
+            <Route path="/active-sf" element={<PermissionRoute permission="active_sf"><ActiveSF /></PermissionRoute>} />
+            <Route path="/containers" element={<PermissionRoute permission="containers"><Containers /></PermissionRoute>} />
+            <Route path="/subscriptions" element={<PermissionRoute permission="subscription_plans"><Subscriptions /></PermissionRoute>} />
+            <Route path="/crm" element={<PermissionRoute permission="crm_activities"><CRM /></PermissionRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -27,6 +27,7 @@ export interface CustomerAccountRecord {
   username: string;
   customer_account_id: string;
   can_see_trials: boolean;
+  tier: "basic" | "pro";
 }
 
 export const formatAdminDate = (iso: string): string => {
