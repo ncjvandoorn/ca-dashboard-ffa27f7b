@@ -7,9 +7,11 @@ import { useVesselFinderActiveSet } from "@/hooks/useVesselFinder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle } from "lucide-react";
+import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle, Layers, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
+import { CompareTripsDialog } from "@/components/dashboard/CompareTripsDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 import { stripLoggerSuffix, formatShortDate } from "@/lib/sfFormat";
@@ -48,6 +50,8 @@ const ActiveSF = () => {
   const [sortField, setSortField] = useState<SortField>("tripId");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selectedTrip, setSelectedTrip] = useState<SFTrip | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
@@ -163,6 +167,31 @@ const ActiveSF = () => {
     [filtered]
   );
 
+  // Selected trips, kept in same order as `filtered` for stable display.
+  const selectedTrips = useMemo(
+    () => filtered.filter((t) => selectedIds.has(t.tripId)),
+    [filtered, selectedIds]
+  );
+
+  const toggleSelected = (tripId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tripId)) next.delete(tripId);
+      else next.add(tripId);
+      return next;
+    });
+  };
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.tripId));
+  const someFilteredSelected = !allFilteredSelected && filtered.some((t) => selectedIds.has(t.tripId));
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((t) => t.tripId)));
+    }
+  };
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortField(field); setSortDir("desc"); }
@@ -227,9 +256,9 @@ const ActiveSF = () => {
           </div>
         )}
 
-        {/* Search */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative flex-1 max-w-sm">
+        {/* Search + compare actions */}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search week, booking, container, customer, farm, serial, location, temp…"
@@ -241,6 +270,33 @@ const ActiveSF = () => {
           <span className="text-sm text-muted-foreground">
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
+          <div className="ml-auto flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedIds(new Set())}
+                className="text-muted-foreground"
+              >
+                <X className="h-4 w-4" />
+                Clear ({selectedIds.size})
+              </Button>
+            )}
+            <Button
+              variant="default"
+              size="sm"
+              disabled={selectedIds.size < 2}
+              onClick={() => setCompareOpen(true)}
+            >
+              <Layers className="h-4 w-4" />
+              View together
+              {selectedIds.size >= 2 && (
+                <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px]">
+                  {selectedIds.size}
+                </span>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Trip Table */}
@@ -259,6 +315,13 @@ const ActiveSF = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allFilteredSelected ? true : someFilteredSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all trips"
+                    />
+                  </TableHead>
                   <TableHead>Week</TableHead>
                   <TableHead>Internal Trip ID</TableHead>
                   <TableHead>Booking</TableHead>
@@ -276,9 +339,20 @@ const ActiveSF = () => {
                   return (
                   <TableRow
                     key={trip.tripId}
+                    data-state={selectedIds.has(trip.tripId) ? "selected" : undefined}
                     className="cursor-pointer hover:bg-primary/5 transition-colors"
                     onClick={() => setSelectedTrip(trip)}
                   >
+                    <TableCell
+                      className="w-10"
+                      onClick={(e) => { e.stopPropagation(); toggleSelected(trip.tripId); }}
+                    >
+                      <Checkbox
+                        checked={selectedIds.has(trip.tripId)}
+                        onCheckedChange={() => toggleSelected(trip.tripId)}
+                        aria-label={`Select trip ${trip.tripId}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-semibold text-sm">
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                     </TableCell>
@@ -334,6 +408,14 @@ const ActiveSF = () => {
         trip={selectedTrip}
         orderInfo={selectedTrip ? lookupOrder(selectedTrip.internalTripId) : null}
         onClose={() => setSelectedTrip(null)}
+      />
+
+      {/* Compare-trips dialog */}
+      <CompareTripsDialog
+        open={compareOpen && selectedTrips.length >= 2}
+        trips={selectedTrips}
+        lookupOrder={lookupOrder}
+        onClose={() => setCompareOpen(false)}
       />
     </div>
   );

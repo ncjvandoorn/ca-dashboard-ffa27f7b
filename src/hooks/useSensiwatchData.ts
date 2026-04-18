@@ -133,6 +133,87 @@ export function useSensiwatchReadings(serialNumber: string | null, _departureTim
   return { readings, isLoading };
 }
 
+// One reading point keyed by serial number, used by the multi-trip compare view.
+export type MultiReading = {
+  time: string;
+  // dynamic fields keyed as `temp_<serial>`, `light_<serial>`, `humidity_<serial>`
+  [key: string]: string | number;
+};
+
+// Fetch readings for multiple serial numbers in parallel, then merge into a
+// single time-series suitable for a multi-line recharts graph.
+export function useMultiSensiwatchReadings(serialNumbers: string[]) {
+  const [data, setData] = useState<MultiReading[]>([]);
+  const [perSerial, setPerSerial] = useState<Record<string, { time: string; temp: number; light: number; humidity: number }[]>>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Stable key for the dependency array
+  const key = serialNumbers.filter(Boolean).sort().join("|");
+
+  useEffect(() => {
+    const serials = key ? key.split("|") : [];
+    if (serials.length === 0) {
+      setData([]);
+      setPerSerial({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setIsLoading(true);
+      try {
+        const results = await Promise.all(
+          serials.map(async (sn) => {
+            const { data: rows, error } = await supabase
+              .from("sensiwatch_reports" as any)
+              .select("last_device_time, last_temp, last_light, last_humidity")
+              .eq("serial_number", sn)
+              .order("last_device_time", { ascending: true, nullsFirst: false })
+              .limit(1000);
+            if (error) {
+              console.warn(`Could not fetch readings for ${sn}:`, error.message);
+              return [sn, [] as { time: string; temp: number; light: number; humidity: number }[]] as const;
+            }
+            const mapped = (rows ?? []).map((r: any) => ({
+              time: r.last_device_time ?? "",
+              temp: normalizeTempC(r.last_temp) ?? 0,
+              light: r.last_light ?? 0,
+              humidity: r.last_humidity ?? 0,
+            }));
+            return [sn, mapped] as const;
+          })
+        );
+        if (cancelled) return;
+        const ps: Record<string, typeof results[number][1]> = {};
+        const merged = new Map<string, MultiReading>();
+        for (const [sn, rows] of results) {
+          ps[sn] = rows;
+          for (const r of rows) {
+            if (!r.time) continue;
+            const existing = merged.get(r.time) || { time: r.time };
+            existing[`temp_${sn}`] = r.temp;
+            existing[`light_${sn}`] = r.light;
+            existing[`humidity_${sn}`] = r.humidity;
+            merged.set(r.time, existing);
+          }
+        }
+        const sorted = Array.from(merged.values()).sort((a, b) =>
+          String(a.time).localeCompare(String(b.time))
+        );
+        setPerSerial(ps);
+        setData(sorted);
+      } catch (err) {
+        console.error("Multi readings fetch error:", err);
+        if (!cancelled) { setData([]); setPerSerial({}); }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [key]);
+
+  return { data, perSerial, isLoading };
+}
+
 // Fetch ordered location paths for all trips (one path per trip_id) so the map
 // can draw passed-locations + a dotted line to the destination.
 export function useSensiwatchTripPaths() {
