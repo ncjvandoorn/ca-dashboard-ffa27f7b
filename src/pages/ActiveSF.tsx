@@ -167,6 +167,31 @@ const ActiveSF = () => {
     [filtered]
   );
 
+  // Selected trips, kept in same order as `filtered` for stable display.
+  const selectedTrips = useMemo(
+    () => filtered.filter((t) => selectedIds.has(t.tripId)),
+    [filtered, selectedIds]
+  );
+
+  const toggleSelected = (tripId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tripId)) next.delete(tripId);
+      else next.add(tripId);
+      return next;
+    });
+  };
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.tripId));
+  const someFilteredSelected = !allFilteredSelected && filtered.some((t) => selectedIds.has(t.tripId));
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((t) => t.tripId)));
+    }
+  };
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortField(field); setSortDir("desc"); }
