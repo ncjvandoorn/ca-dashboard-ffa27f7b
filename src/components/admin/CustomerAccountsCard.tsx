@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, RefreshCw, Trash2, Users } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Trash2, Users, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
@@ -142,6 +142,32 @@ export const CustomerAccountsCard = () => {
     }
   };
 
+  const resetPassword = async (userId: string, username: string) => {
+    const password = window.prompt(`Set a new password for "${username}":`, "");
+    if (!password) return;
+    if (password.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: "reset_password", userId, password }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast({ title: "Password updated", description: `New password set for ${username}.` });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: "Error", description: msg, variant: "destructive" });
+    }
+  };
+
   return (
     <Card className="mb-8">
       <CardHeader>
@@ -236,7 +262,7 @@ export const CustomerAccountsCard = () => {
                   <TableHead>Linked Customer</TableHead>
                   <TableHead>Tier</TableHead>
                   <TableHead>Trials Access</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
+                  <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -268,14 +294,25 @@ export const CustomerAccountsCard = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteCustomerAccount(ca.id, ca.user_id, ca.username)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => resetPassword(ca.user_id, ca.username)}
+                          title="Reset password"
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteCustomerAccount(ca.id, ca.user_id, ca.username)}
+                          className="text-destructive hover:text-destructive"
+                          title="Delete account"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
