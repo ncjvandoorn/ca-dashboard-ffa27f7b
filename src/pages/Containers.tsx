@@ -354,6 +354,9 @@ export default function Containers() {
                             <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
                             <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
                           </div>
+                          <div className="text-xs text-muted-foreground">
+                            Datalogger Device ID: <span className="text-foreground font-mono">{o.datalogdeviceId || "—"}</span>
+                          </div>
 
                           {arrivals.length > 0 && (
                             <div className="pt-2 border-t border-border space-y-2">
