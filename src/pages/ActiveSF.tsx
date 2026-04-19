@@ -324,7 +324,6 @@ const ActiveSF = () => {
                   </TableHead>
                   <TableHead>Week</TableHead>
                   <TableHead>Internal Trip ID</TableHead>
-                  <TableHead>Booking</TableHead>
                   <TableHead>Container #</TableHead>
                   <TableHead>Drop-off</TableHead>
                   <TableHead>Shipping</TableHead>
