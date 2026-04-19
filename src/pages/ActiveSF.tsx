@@ -302,7 +302,17 @@ const ActiveSF = () => {
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
           <div className="ml-auto flex items-center gap-2">
-            {isAdmin && hiddenIds.size > 0 && (
+            {isAdmin && (
+              <Button
+                variant={showAll ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowAll((s) => !s)}
+              >
+                <Ship className="h-4 w-4" />
+                {showAll ? "Sea Freight only" : "Show all loggers"}
+              </Button>
+            )}
+            {isAdmin && hiddenIds.size > 0 && !showAll && (
               <Button
                 variant="ghost"
                 size="sm"
