@@ -300,6 +300,17 @@ const ActiveSF = () => {
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
           <div className="ml-auto flex items-center gap-2">
+            {isAdmin && hiddenIds.size > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHidden((s) => !s)}
+                className="text-muted-foreground"
+              >
+                {showHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                {showHidden ? "Hide hidden" : `Show hidden (${hiddenIds.size})`}
+              </Button>
+            )}
             {selectedIds.size > 0 && (
               <Button
                 variant="ghost"
