@@ -56,6 +56,7 @@ const ActiveSF = () => {
   const [compareOpen, setCompareOpen] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [showHidden, setShowHidden] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
@@ -128,13 +129,14 @@ const ActiveSF = () => {
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    // Only show trips whose linked order has purposeName "Sea Freight"
+    // Default: only Sea Freight. Admin "Show all loggers" bypasses this filter.
     let list = trips.filter((t) => {
+      if (isAdmin && showAll) return true;
       const info = lookupOrder(t.internalTripId);
       return info?.purposeName === "Sea Freight";
     });
-    // Hide rows admin marked as hidden (toggleable for admins only)
-    if (!(isAdmin && showHidden)) {
+    // Hide rows admin marked as hidden — also bypassed by Show all / Show hidden.
+    if (!(isAdmin && (showHidden || showAll))) {
       list = list.filter((t) => !hiddenIds.has(t.tripId));
     }
     if (q) {
@@ -189,7 +191,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [trips, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, showHidden]);
+  }, [trips, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, showHidden, showAll]);
 
   const tripsWithLocation = useMemo(
     () => filtered.filter((t) => t.latitude !== null && t.longitude !== null),
@@ -300,7 +302,17 @@ const ActiveSF = () => {
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
           <div className="ml-auto flex items-center gap-2">
-            {isAdmin && hiddenIds.size > 0 && (
+            {isAdmin && (
+              <Button
+                variant={showAll ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowAll((s) => !s)}
+              >
+                <Ship className="h-4 w-4" />
+                {showAll ? "Sea Freight only" : "Show all loggers"}
+              </Button>
+            )}
+            {isAdmin && hiddenIds.size > 0 && !showAll && (
               <Button
                 variant="ghost"
                 size="sm"
