@@ -324,7 +324,6 @@ const ActiveSF = () => {
                   </TableHead>
                   <TableHead>Week</TableHead>
                   <TableHead>Internal Trip ID</TableHead>
-                  <TableHead>Booking</TableHead>
                   <TableHead>Container #</TableHead>
                   <TableHead>Drop-off</TableHead>
                   <TableHead>Shipping</TableHead>
@@ -356,9 +355,13 @@ const ActiveSF = () => {
                     <TableCell className="font-semibold text-sm">
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{trip.internalTripId}</TableCell>
                     <TableCell className="font-mono text-xs">
-                      {info?.bookingCode || <span className="text-muted-foreground">—</span>}
+                      {trip.internalTripId}
+                      {trip.lastReadingTime && (
+                        <div className="text-[10px] text-muted-foreground font-sans normal-case mt-0.5">
+                          last update {new Date(trip.lastReadingTime).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="font-mono text-xs">
                       {info?.containerNumber || <span className="text-muted-foreground">—</span>}
