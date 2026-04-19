@@ -133,6 +133,10 @@ const ActiveSF = () => {
       const info = lookupOrder(t.internalTripId);
       return info?.purposeName === "Sea Freight";
     });
+    // Hide rows admin marked as hidden (toggleable for admins only)
+    if (!(isAdmin && showHidden)) {
+      list = list.filter((t) => !hiddenIds.has(t.tripId));
+    }
     if (q) {
       list = list.filter((t) => {
         const info = lookupOrder(t.internalTripId);
