@@ -386,11 +386,24 @@ const ActiveSF = () => {
                       className="w-10"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Checkbox
-                        checked={selectedIds.has(trip.tripId)}
-                        onCheckedChange={() => toggleSelected(trip.tripId)}
-                        aria-label={`Select trip ${trip.tripId}`}
-                      />
+                      <div className="flex items-center gap-1">
+                        <Checkbox
+                          checked={selectedIds.has(trip.tripId)}
+                          onCheckedChange={() => toggleSelected(trip.tripId)}
+                          aria-label={`Select trip ${trip.tripId}`}
+                        />
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => { e.stopPropagation(); toggleHidden(trip.tripId); }}
+                            title={hiddenIds.has(trip.tripId) ? "Unhide row" : "Hide row for everyone"}
+                          >
+                            {hiddenIds.has(trip.tripId) ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-semibold text-sm">
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
