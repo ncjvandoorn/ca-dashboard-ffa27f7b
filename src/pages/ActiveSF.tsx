@@ -1,13 +1,15 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
 import { useServicesOrders, useAccounts, useCustomerFarms, useContainers } from "@/hooks/useQualityData";
 import { useVesselFinderActiveSet } from "@/hooks/useVesselFinder";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle, Layers, X } from "lucide-react";
+import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle, Layers, X, EyeOff, Eye } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
