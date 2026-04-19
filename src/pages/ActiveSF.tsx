@@ -54,6 +54,8 @@ const ActiveSF = () => {
   const [selectedTrip, setSelectedTrip] = useState<SFTrip | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [compareOpen, setCompareOpen] = useState(false);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [showHidden, setShowHidden] = useState(false);
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
@@ -61,6 +63,27 @@ const ActiveSF = () => {
   const { data: customerFarms } = useCustomerFarms();
   const { data: containers } = useContainers();
   const vfActiveSet = useVesselFinderActiveSet(isAdmin);
+
+  // Load hidden trip IDs (visible to all authenticated users)
+  const loadHidden = useCallback(async () => {
+    const { data, error } = await supabase.from("sf_hidden_trips").select("trip_id");
+    if (!error && data) setHiddenIds(new Set(data.map((r) => r.trip_id)));
+  }, []);
+  useEffect(() => { loadHidden(); }, [loadHidden]);
+
+  const toggleHidden = async (tripId: string) => {
+    if (!isAdmin) return;
+    const isHidden = hiddenIds.has(tripId);
+    if (isHidden) {
+      const { error } = await supabase.from("sf_hidden_trips").delete().eq("trip_id", tripId);
+      if (error) { toast({ title: "Failed to unhide", description: error.message, variant: "destructive" }); return; }
+      setHiddenIds((prev) => { const n = new Set(prev); n.delete(tripId); return n; });
+    } else {
+      const { error } = await supabase.from("sf_hidden_trips").insert({ trip_id: tripId });
+      if (error) { toast({ title: "Failed to hide", description: error.message, variant: "destructive" }); return; }
+      setHiddenIds((prev) => new Set(prev).add(tripId));
+    }
+  };
 
   // Map orderNumber -> { customerName, farmName, dippingWeek, bookingCode, containerNumber, containerId, dropoffDate, shippingDate, purposeName, orderId }
   const orderInfo = useMemo(() => {
