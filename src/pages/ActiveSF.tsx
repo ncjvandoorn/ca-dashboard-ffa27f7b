@@ -355,7 +355,7 @@ const ActiveSF = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead className="w-10">
+                  <TableHead className={isAdmin ? "w-20" : "w-10"}>
                     <Checkbox
                       checked={allFilteredSelected ? true : someFilteredSelected ? "indeterminate" : false}
                       onCheckedChange={toggleSelectAll}
