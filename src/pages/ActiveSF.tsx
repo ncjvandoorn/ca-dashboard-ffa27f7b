@@ -383,7 +383,7 @@ const ActiveSF = () => {
                     onClick={() => setSelectedTrip(trip)}
                   >
                     <TableCell
-                      className="w-10"
+                      className={isAdmin ? "w-20" : "w-10"}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-center gap-1">
