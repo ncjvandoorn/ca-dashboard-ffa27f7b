@@ -189,7 +189,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [trips, query, sortField, sortDir, lookupOrder]);
+  }, [trips, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, showHidden]);
 
   const tripsWithLocation = useMemo(
     () => filtered.filter((t) => t.latitude !== null && t.longitude !== null),
