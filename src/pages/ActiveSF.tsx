@@ -1,13 +1,15 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
 import { useServicesOrders, useAccounts, useCustomerFarms, useContainers } from "@/hooks/useQualityData";
 import { useVesselFinderActiveSet } from "@/hooks/useVesselFinder";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle, Layers, X } from "lucide-react";
+import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle, Layers, X, EyeOff, Eye } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
@@ -52,6 +54,8 @@ const ActiveSF = () => {
   const [selectedTrip, setSelectedTrip] = useState<SFTrip | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [compareOpen, setCompareOpen] = useState(false);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [showHidden, setShowHidden] = useState(false);
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
@@ -59,6 +63,27 @@ const ActiveSF = () => {
   const { data: customerFarms } = useCustomerFarms();
   const { data: containers } = useContainers();
   const vfActiveSet = useVesselFinderActiveSet(isAdmin);
+
+  // Load hidden trip IDs (visible to all authenticated users)
+  const loadHidden = useCallback(async () => {
+    const { data, error } = await supabase.from("sf_hidden_trips").select("trip_id");
+    if (!error && data) setHiddenIds(new Set(data.map((r) => r.trip_id)));
+  }, []);
+  useEffect(() => { loadHidden(); }, [loadHidden]);
+
+  const toggleHidden = async (tripId: string) => {
+    if (!isAdmin) return;
+    const isHidden = hiddenIds.has(tripId);
+    if (isHidden) {
+      const { error } = await supabase.from("sf_hidden_trips").delete().eq("trip_id", tripId);
+      if (error) { toast({ title: "Failed to unhide", description: error.message, variant: "destructive" }); return; }
+      setHiddenIds((prev) => { const n = new Set(prev); n.delete(tripId); return n; });
+    } else {
+      const { error } = await supabase.from("sf_hidden_trips").insert({ trip_id: tripId });
+      if (error) { toast({ title: "Failed to hide", description: error.message, variant: "destructive" }); return; }
+      setHiddenIds((prev) => new Set(prev).add(tripId));
+    }
+  };
 
   // Map orderNumber -> { customerName, farmName, dippingWeek, bookingCode, containerNumber, containerId, dropoffDate, shippingDate, purposeName, orderId }
   const orderInfo = useMemo(() => {
@@ -108,6 +133,10 @@ const ActiveSF = () => {
       const info = lookupOrder(t.internalTripId);
       return info?.purposeName === "Sea Freight";
     });
+    // Hide rows admin marked as hidden (toggleable for admins only)
+    if (!(isAdmin && showHidden)) {
+      list = list.filter((t) => !hiddenIds.has(t.tripId));
+    }
     if (q) {
       list = list.filter((t) => {
         const info = lookupOrder(t.internalTripId);
@@ -160,7 +189,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [trips, query, sortField, sortDir, lookupOrder]);
+  }, [trips, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, showHidden]);
 
   const tripsWithLocation = useMemo(
     () => filtered.filter((t) => t.latitude !== null && t.longitude !== null),
@@ -271,6 +300,17 @@ const ActiveSF = () => {
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
           <div className="ml-auto flex items-center gap-2">
+            {isAdmin && hiddenIds.size > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHidden((s) => !s)}
+                className="text-muted-foreground"
+              >
+                {showHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                {showHidden ? "Hide hidden" : `Show hidden (${hiddenIds.size})`}
+              </Button>
+            )}
             {selectedIds.size > 0 && (
               <Button
                 variant="ghost"
@@ -315,7 +355,7 @@ const ActiveSF = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead className="w-10">
+                  <TableHead className={isAdmin ? "w-20" : "w-10"}>
                     <Checkbox
                       checked={allFilteredSelected ? true : someFilteredSelected ? "indeterminate" : false}
                       onCheckedChange={toggleSelectAll}
@@ -343,14 +383,27 @@ const ActiveSF = () => {
                     onClick={() => setSelectedTrip(trip)}
                   >
                     <TableCell
-                      className="w-10"
+                      className={isAdmin ? "w-20" : "w-10"}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Checkbox
-                        checked={selectedIds.has(trip.tripId)}
-                        onCheckedChange={() => toggleSelected(trip.tripId)}
-                        aria-label={`Select trip ${trip.tripId}`}
-                      />
+                      <div className="flex items-center gap-1">
+                        <Checkbox
+                          checked={selectedIds.has(trip.tripId)}
+                          onCheckedChange={() => toggleSelected(trip.tripId)}
+                          aria-label={`Select trip ${trip.tripId}`}
+                        />
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => { e.stopPropagation(); toggleHidden(trip.tripId); }}
+                            title={hiddenIds.has(trip.tripId) ? "Unhide row" : "Hide row for everyone"}
+                          >
+                            {hiddenIds.has(trip.tripId) ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-semibold text-sm">
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}

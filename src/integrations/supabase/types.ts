@@ -356,6 +356,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sf_hidden_trips: {
+        Row: {
+          created_at: string
+          hidden_by: string | null
+          id: string
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string
+          hidden_by?: string | null
+          id?: string
+          trip_id: string
+        }
+        Update: {
+          created_at?: string
+          hidden_by?: string | null
+          id?: string
+          trip_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
