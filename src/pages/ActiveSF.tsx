@@ -129,13 +129,14 @@ const ActiveSF = () => {
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    // Only show trips whose linked order has purposeName "Sea Freight"
+    // Default: only Sea Freight. Admin "Show all loggers" bypasses this filter.
     let list = trips.filter((t) => {
+      if (isAdmin && showAll) return true;
       const info = lookupOrder(t.internalTripId);
       return info?.purposeName === "Sea Freight";
     });
-    // Hide rows admin marked as hidden (toggleable for admins only)
-    if (!(isAdmin && showHidden)) {
+    // Hide rows admin marked as hidden — also bypassed by Show all / Show hidden.
+    if (!(isAdmin && (showHidden || showAll))) {
       list = list.filter((t) => !hiddenIds.has(t.tripId));
     }
     if (q) {
