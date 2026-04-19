@@ -355,7 +355,7 @@ const ActiveSF = () => {
                     <TableCell className="font-semibold text-sm">
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                     </TableCell>
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="font-mono text-xs whitespace-nowrap">
                       {trip.internalTripId}
                       {trip.lastReadingTime && (
                         <div className="text-[10px] text-muted-foreground font-sans normal-case mt-0.5">

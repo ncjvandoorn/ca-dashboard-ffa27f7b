@@ -65,9 +65,9 @@ export default function Subscriptions() {
       <header className="bg-card border-b border-border">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-card border border-border rounded-md p-1.5 flex items-center justify-center">
-                <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto" />
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="bg-card border border-border rounded-md p-1.5 flex items-center justify-center shrink-0">
+                <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto max-w-none block shrink-0" />
               </div>
               <div>
                 <h1 className="text-xl font-semibold tracking-tight text-foreground">
