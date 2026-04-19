@@ -56,6 +56,7 @@ const ActiveSF = () => {
   const [compareOpen, setCompareOpen] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [showHidden, setShowHidden] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
