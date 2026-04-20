@@ -60,24 +60,250 @@ Deno.serve(async (req) => {
     const { action } = body;
 
     if (action === "list") {
-      // List all customer accounts with their auth user email
+      // List all customer accounts with their auth user email and credit balance
       const { data: customerAccounts } = await supabaseAdmin
         .from("customer_accounts")
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Get user emails
-      const enriched = [];
+      const { data: balances } = await supabaseAdmin
+        .from("customer_credit_balance")
+        .select("customer_account_id, total_granted, total_consumed, balance");
+      const balanceMap = new Map(
+        (balances || []).map((b: any) => [b.customer_account_id, b]),
+      );
+
+      const enriched: any[] = [];
       for (const ca of customerAccounts || []) {
         const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(ca.user_id);
+        const bal = balanceMap.get(ca.id) || { total_granted: 0, total_consumed: 0, balance: 0 };
         enriched.push({
           ...ca,
           email: user?.email || "unknown",
           username: user?.email?.replace("@chrysal.app", "") || "unknown",
+          credit_balance: bal.balance,
+          credit_granted: bal.total_granted,
+          credit_consumed: bal.total_consumed,
         });
       }
 
       return new Response(JSON.stringify({ accounts: enriched }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- Invitations ----------
+    if (action === "list_invitations") {
+      const { data } = await supabaseAdmin
+        .from("customer_invitations")
+        .select("*")
+        .order("created_at", { ascending: false });
+      return new Response(JSON.stringify({ invitations: data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "create_invitation") {
+      const { customerAccountId, companyName, tier, billingCycle, canSeeTrials, notes } = body;
+      if (!customerAccountId) {
+        return new Response(JSON.stringify({ error: "customerAccountId required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const safeTier = ["basic", "pro", "pro_plus", "heavy"].includes(tier) ? tier : "basic";
+      const safeCycle = ["monthly", "yearly"].includes(billingCycle) ? billingCycle : "monthly";
+
+      // Generate code: <slug>-<6 digit hex>
+      const slug = String(companyName || customerAccountId).toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 8) || "chry";
+      const rand = Array.from(crypto.getRandomValues(new Uint8Array(3)))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      const code = `${slug}-${rand}`;
+
+      const { data: invRow, error: invErr } = await supabaseAdmin
+        .from("customer_invitations")
+        .insert({
+          code,
+          customer_account_id: customerAccountId,
+          company_name: companyName || null,
+          tier: safeTier,
+          billing_cycle: safeCycle,
+          can_see_trials: !!canSeeTrials,
+          notes: notes || null,
+          created_by: callerId,
+        })
+        .select()
+        .single();
+      if (invErr) {
+        return new Response(JSON.stringify({ error: invErr.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ invitation: invRow }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "delete_invitation") {
+      const { id } = body;
+      await supabaseAdmin.from("customer_invitations").delete().eq("id", id);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- Pending approvals ----------
+    if (action === "approve_customer") {
+      const { id, customerAccountId, canSeeTrials } = body;
+      const updates: Record<string, any> = {
+        status: "active",
+        approved_at: new Date().toISOString(),
+        approved_by: callerId,
+        updated_at: new Date().toISOString(),
+      };
+      if (customerAccountId) updates.customer_account_id = customerAccountId;
+      if (typeof canSeeTrials === "boolean") updates.can_see_trials = canSeeTrials;
+
+      const { data: ca, error: updErr } = await supabaseAdmin
+        .from("customer_accounts")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (updErr) {
+        return new Response(JSON.stringify({ error: updErr.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // grant initial credits based on tier
+      const grant = ca.tier === "pro" ? 4 : ca.tier === "pro_plus" ? 10 : 0;
+      if (grant > 0) {
+        const period = new Date().toISOString().slice(0, 7) + "-monthly_grant";
+        await supabaseAdmin.from("container_credits_ledger").insert({
+          customer_account_id: ca.id,
+          delta: grant,
+          reason: "signup_grant",
+          note: period,
+          created_by: callerId,
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "reject_customer") {
+      const { id, userId } = body;
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      // customer_accounts deletes via cascade-less manual cleanup
+      await supabaseAdmin.from("customer_accounts").delete().eq("id", id);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- Credits ----------
+    if (action === "grant_credits") {
+      const { customerAccountId, delta, note } = body;
+      const amt = Number(delta);
+      if (!customerAccountId || !Number.isFinite(amt) || amt === 0) {
+        return new Response(JSON.stringify({ error: "customerAccountId and non-zero delta required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await supabaseAdmin.from("container_credits_ledger").insert({
+        customer_account_id: customerAccountId,
+        delta: Math.trunc(amt),
+        reason: "admin_grant",
+        note: note || null,
+        created_by: callerId,
+      });
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "credit_history") {
+      const { customerAccountId } = body;
+      const { data } = await supabaseAdmin
+        .from("container_credits_ledger")
+        .select("*")
+        .eq("customer_account_id", customerAccountId)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      return new Response(JSON.stringify({ history: data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "consume_credit") {
+      // Called by Active SF when a customer (or admin acting for one) activates a container
+      const { customerAccountId, containerId, note } = body;
+      if (!customerAccountId) {
+        return new Response(JSON.stringify({ error: "customerAccountId required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: ca } = await supabaseAdmin
+        .from("customer_accounts")
+        .select("id, tier")
+        .eq("id", customerAccountId)
+        .maybeSingle();
+      if (!ca) {
+        return new Response(JSON.stringify({ error: "Customer account not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Heavy tier: log consumption only, no balance check
+      if (ca.tier === "heavy") {
+        await supabaseAdmin.from("container_credits_ledger").insert({
+          customer_account_id: ca.id,
+          delta: 0, // tracked, but doesn't reduce a balance
+          reason: "consumption",
+          container_id: containerId || null,
+          note: note || "heavy-tier consumption",
+          created_by: callerId,
+        });
+        return new Response(JSON.stringify({ success: true, heavy: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Other tiers: check balance
+      const { data: bal } = await supabaseAdmin
+        .from("customer_credit_balance")
+        .select("balance")
+        .eq("customer_account_id", ca.id)
+        .maybeSingle();
+      const current = bal?.balance ?? 0;
+      if (current <= 0) {
+        return new Response(JSON.stringify({ error: "No container credits available", balance: current }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await supabaseAdmin.from("container_credits_ledger").insert({
+        customer_account_id: ca.id,
+        delta: -1,
+        reason: "consumption",
+        container_id: containerId || null,
+        note: note || null,
+        created_by: callerId,
+      });
+
+      return new Response(JSON.stringify({ success: true, balance: current - 1 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
