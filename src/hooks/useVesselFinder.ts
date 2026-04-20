@@ -61,10 +61,23 @@ interface InvokeArgs {
 }
 
 async function invoke(args: InvokeArgs) {
+  // Guard: only call the edge function when a real user session exists.
+  // Without it the function returns 401 (anon key is not a user JWT).
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session) {
+    return { items: [] } as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
+  }
   const { data, error } = await supabase.functions.invoke("vesselfinder-track", {
     body: args,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Swallow auth/permission errors so they don't blank the page.
+    const msg = String(error.message || "");
+    if (/401|403|Unauthorized|Forbidden/i.test(msg)) {
+      return { items: [] } as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
+    }
+    throw new Error(error.message);
+  }
   if (data?.error) throw new Error(data.error);
   return data as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
 }
