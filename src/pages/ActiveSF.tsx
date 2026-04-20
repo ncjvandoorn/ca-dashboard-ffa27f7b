@@ -770,9 +770,8 @@ const ActiveSF = () => {
                         })()}
                       </TableCell>
                       {(isAdmin || isCustomer) && (
-                        <TableCell className="text-center">
-                          <div className="inline-flex items-center gap-6">
-                            {/* Data logger dot: green if any logger is sending live data, red if backfill-only, gray if none linked */}
+                        <>
+                          <TableCell className="text-center">
                             {(() => {
                               if (g.tripsWithData.length === 0) {
                                 return (
@@ -794,12 +793,13 @@ const ActiveSF = () => {
                                 </span>
                               );
                             })()}
-                            {/* Tracking dot: green when active VF tracking, red otherwise */}
+                          </TableCell>
+                          <TableCell className="text-center">
                             {(() => {
                               if (!vf || !vf.enabled) {
                                 return (
                                   <span
-                                    className="inline-flex items-center gap-1 text-[10px]"
+                                    className="inline-flex items-center"
                                     title="No active vessel tracking"
                                   >
                                     <span className="h-2 w-2 rounded-full bg-destructive" />
@@ -823,8 +823,8 @@ const ActiveSF = () => {
                                 </span>
                               );
                             })()}
-                          </div>
-                        </TableCell>
+                          </TableCell>
+                        </>
                       )}
                     </TableRow>
                   );
