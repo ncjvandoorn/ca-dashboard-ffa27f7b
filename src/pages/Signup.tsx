@@ -283,6 +283,12 @@ export default function Signup() {
                         <span className="text-muted-foreground">Account:</span>{" "}
                         <strong>{invitation.company_name || invitation.customer_account_id}</strong>
                       </div>
+                      {invitation.username && (
+                        <div>
+                          <span className="text-muted-foreground">Sign in as:</span>{" "}
+                          <strong>{invitation.username}@chrysal.app</strong>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
