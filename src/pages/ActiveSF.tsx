@@ -22,8 +22,6 @@ import chrysalLogo from "@/assets/chrysal-logo.png";
 import { stripLoggerSuffix, formatShortDate } from "@/lib/sfFormat";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 
-export { stripLoggerSuffix, formatShortDate };
-
 export type SFTrip = {
   tripId: string;
   tripStatus: string;
@@ -214,10 +212,10 @@ const ActiveSF = () => {
         });
       }
     }
-    // 2) orphan trips not linked to an order
-    for (const t of trips) {
-      if (!usedTripIds.has(t.tripId)) rows.push(t);
-    }
+    // Note: orphan trips (sensiwatch trips not linked to any order) are
+    // intentionally NOT added — Active SF only displays orders that resolve
+    // to a real container. The `filtered` step would drop them anyway.
+    void usedTripIds; // kept for clarity above; no orphan emission needed
     return rows;
   }, [trips, orderInfo]);
 

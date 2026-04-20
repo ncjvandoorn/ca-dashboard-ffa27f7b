@@ -1,12 +1,12 @@
 import { useState, useMemo, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUp, ArrowDown, Search, FileDown, ArrowLeft } from "lucide-react";
+import { ArrowUp, ArrowDown, Search, FileDown } from "lucide-react";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -45,7 +45,6 @@ type SortField = "dropoffDate" | "shippingDate" | "weekNr";
 type SortDir = "asc" | "desc";
 
 export default function Containers() {
-  const navigate = useNavigate();
   const { isCustomer, customerAccount } = useAuth();
   const { data: containers, isLoading } = useContainers();
   const { data: servicesOrders } = useServicesOrders();
