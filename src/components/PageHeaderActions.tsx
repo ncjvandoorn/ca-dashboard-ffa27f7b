@@ -21,6 +21,7 @@ import {
   CreditCard,
   Users,
   ClipboardCheck,
+  UserCircle,
 } from "lucide-react";
 
 interface PageHeaderActionsProps {
@@ -30,7 +31,7 @@ interface PageHeaderActionsProps {
 
 export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderActionsProps) {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, isCustomer } = useAuth();
   const { can } = usePermissions();
 
   return (
@@ -90,14 +91,20 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
               Subscription Plans
             </DropdownMenuItem>
           )}
-          {can("settings") && (
+          {(isCustomer || can("settings")) && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/admin")}>
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
+              <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <UserCircle className="h-4 w-4 mr-2" />
+                My Profile
               </DropdownMenuItem>
             </>
+          )}
+          {can("settings") && (
+            <DropdownMenuItem onClick={() => navigate("/admin")}>
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => signOut()}>

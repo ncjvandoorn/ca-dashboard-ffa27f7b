@@ -350,7 +350,9 @@ export const CustomerAccountsCard = () => {
                   <TableHead>Username</TableHead>
                   <TableHead>Linked Customer</TableHead>
                   <TableHead>Tier</TableHead>
-                  <TableHead className="w-[120px]">Actions</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Credits</TableHead>
+                  <TableHead className="w-[160px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -358,9 +360,12 @@ export const CustomerAccountsCard = () => {
                   <TableRow key={ca.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-accent" />
+                        <div className={`w-2 h-2 rounded-full ${ca.status === "pending" ? "bg-muted-foreground" : "bg-accent"}`} />
                         <span className="font-medium text-sm">{ca.username}</span>
                       </div>
+                      {ca.company_name && (
+                        <p className="text-[11px] text-muted-foreground ml-4">{ca.company_name}</p>
+                      )}
                     </TableCell>
                     <TableCell className="text-sm">
                       {customerNameMap.get(ca.customer_account_id) || ca.customer_account_id}
@@ -378,22 +383,32 @@ export const CustomerAccountsCard = () => {
                       </select>
                     </TableCell>
                     <TableCell>
+                      <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${
+                        ca.status === "pending" ? "bg-muted text-muted-foreground" :
+                        ca.status === "suspended" ? "bg-destructive/10 text-destructive" :
+                        "bg-accent/10 text-accent"
+                      }`}>
+                        {ca.status || "active"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm font-mono">
+                      {ca.tier === "heavy" ? (
+                        <span className="text-primary">∞ ({ca.credit_consumed ?? 0} used)</span>
+                      ) : (
+                        <span className={ca.credit_balance != null && ca.credit_balance <= 0 ? "text-destructive" : ""}>
+                          {ca.credit_balance ?? 0}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => resetPassword(ca.user_id, ca.username)}
-                          title="Reset password"
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => openCreditDialog(ca)} title="Manage credits">
+                          <Coins className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => resetPassword(ca.user_id, ca.username)} title="Reset password">
                           <KeyRound className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteCustomerAccount(ca.id, ca.user_id, ca.username)}
-                          className="text-destructive hover:text-destructive"
-                          title="Delete account"
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => deleteCustomerAccount(ca.id, ca.user_id, ca.username)} className="text-destructive hover:text-destructive" title="Delete account">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -405,6 +420,63 @@ export const CustomerAccountsCard = () => {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={!!creditDialogFor} onOpenChange={(o) => !o && setCreditDialogFor(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Container credits — {creditDialogFor?.username}</DialogTitle>
+            <DialogDescription>Grant free credits or review activity. Credits roll over indefinitely.</DialogDescription>
+          </DialogHeader>
+          <div className="border border-border rounded-lg p-4 space-y-3">
+            <p className="text-sm font-medium">Grant credits (admin, free)</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Amount (+ or -)</Label>
+                <Input type="number" value={grantAmount} onChange={(e) => setGrantAmount(e.target.value)} placeholder="e.g. 5" />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <Label className="text-xs">Note (optional)</Label>
+                <Input value={grantNote} onChange={(e) => setGrantNote(e.target.value)} placeholder="e.g. Bonus offered" />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={grantCredits} disabled={granting} size="sm" className="gap-2">
+                {granting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                Apply
+              </Button>
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <History className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm font-medium">History (last 100)</p>
+            </div>
+            {creditHistoryLoading ? (
+              <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+            ) : creditHistory.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">No activity yet.</p>
+            ) : (
+              <div className="max-h-72 overflow-y-auto divide-y divide-border text-xs">
+                {creditHistory.map((h) => (
+                  <div key={h.id} className="flex items-center justify-between py-2">
+                    <div>
+                      <p className="font-medium capitalize">{h.reason.replace(/_/g, " ")}</p>
+                      <p className="text-muted-foreground text-[11px]">
+                        {new Date(h.created_at).toLocaleString("en-GB")}
+                        {h.container_id && ` · ${h.container_id}`}
+                        {h.note && ` · ${h.note}`}
+                      </p>
+                    </div>
+                    <span className={`font-mono font-semibold ${h.delta > 0 ? "text-accent" : h.delta < 0 ? "text-destructive" : ""}`}>
+                      {h.delta > 0 ? "+" : ""}{h.delta}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

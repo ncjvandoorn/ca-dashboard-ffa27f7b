@@ -6,6 +6,8 @@ import { AILearningsCard } from "@/components/admin/AILearningsCard";
 import { CrmUserFilterCard } from "@/components/admin/CrmUserFilterCard";
 import { DataFilesCard } from "@/components/admin/DataFilesCard";
 import { CustomerAccountsCard } from "@/components/admin/CustomerAccountsCard";
+import { InvitationsCard } from "@/components/admin/InvitationsCard";
+import { PendingApprovalsCard } from "@/components/admin/PendingApprovalsCard";
 import { LoginLogsCard } from "@/components/admin/LoginLogsCard";
 import { QuestionLogsCard } from "@/components/admin/QuestionLogsCard";
 
@@ -25,6 +27,8 @@ const Admin = () => {
         <AILearningsCard />
         <CrmUserFilterCard />
         <DataFilesCard />
+        <PendingApprovalsCard />
+        <InvitationsCard />
         <CustomerAccountsCard />
         <LoginLogsCard />
         <QuestionLogsCard />
