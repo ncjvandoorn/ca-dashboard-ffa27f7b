@@ -536,7 +536,11 @@ const ActiveSF = () => {
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="font-mono text-xs whitespace-nowrap">
-                      {trip.internalTripId}
+                      {info?.containerNumber || (
+                        <span className="text-muted-foreground normal-case font-sans">
+                          {trip.internalTripId || "—"}
+                        </span>
+                      )}
                       {(() => {
                         const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
                         const fmt = (iso: string | null | undefined) =>
@@ -561,9 +565,6 @@ const ActiveSF = () => {
                           </div>
                         );
                       })()}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {info?.containerNumber || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.dropoffDate ?? null)}</TableCell>
                     <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.shippingDate ?? null)}</TableCell>
