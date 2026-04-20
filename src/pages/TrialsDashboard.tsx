@@ -6,6 +6,7 @@ import chrysalLogo from "@/assets/chrysal-logo.png";
 export default function TrialsDashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <div className="chrysal-gradient h-1.5" />
       <header className="border-b border-border px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
