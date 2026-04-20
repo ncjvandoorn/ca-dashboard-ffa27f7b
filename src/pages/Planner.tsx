@@ -158,9 +158,14 @@ export default function Planner() {
         <div className="chrysal-gradient h-1.5" />
         <div className="max-w-[1400px] mx-auto px-6 pt-8 space-y-6">
           <div className="flex items-center gap-4">
-            <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0">
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              aria-label="Go to dashboard"
+              className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0 hover:bg-accent/10 transition-colors cursor-pointer"
+            >
               <img src={chrysalLogo} alt="Chrysal" className="h-6 w-auto max-w-none block shrink-0" />
-            </div>
+            </button>
             <div className="space-y-2">
               <Skeleton className="h-6 w-40" />
               <Skeleton className="h-4 w-52" />

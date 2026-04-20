@@ -1,4 +1,5 @@
 import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { CRMReport } from "@/components/dashboard/CRMReport";
 import {
@@ -23,9 +24,13 @@ export default function CRM() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="bg-card border border-border rounded-md p-1.5 flex items-center justify-center">
+              <Link
+                to="/"
+                aria-label="Go to dashboard"
+                className="bg-card border border-border rounded-md p-1.5 flex items-center justify-center hover:bg-accent/10 transition-colors"
+              >
                 <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto" />
-              </div>
+              </Link>
               <div>
                 <h1 className="text-xl font-semibold tracking-tight text-foreground">
                   CRM Activities

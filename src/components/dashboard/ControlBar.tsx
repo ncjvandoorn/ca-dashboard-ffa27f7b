@@ -241,9 +241,14 @@ export function ControlBar({
     <header className="sticky top-0 z-10 backdrop-blur-sm py-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label="Go to dashboard"
+            className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0 hover:bg-accent/10 transition-colors cursor-pointer"
+          >
             <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto max-w-none block shrink-0" />
-          </div>
+          </button>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-foreground">Chrysal Intelligence</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Quality, Sea Freight & trial insights</p>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,9 +125,13 @@ export default function Profile() {
       <header className="bg-card border-b border-border">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="bg-card border border-border rounded-md p-1.5">
+            <Link
+              to="/"
+              aria-label="Go to dashboard"
+              className="bg-card border border-border rounded-md p-1.5 hover:bg-accent/10 transition-colors"
+            >
               <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto" />
-            </div>
+            </Link>
             <div>
               <h1 className="text-xl font-semibold tracking-tight">My Profile</h1>
               <p className="text-sm text-muted-foreground mt-0.5">
