@@ -255,8 +255,42 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                               <div className="text-muted-foreground">Discharge wait: {arrival.dischargeWaitingMin} min</div>
                             )}
                             {arrival.specificComments && <p className="text-foreground/80 italic">"{arrival.specificComments}"</p>}
+                        {arrival && arrival.specificComments && <p className="text-foreground/80 italic">"{arrival.specificComments}"</p>}
                           </div>
                         )}
+                        {(() => {
+                          const qrId = o.qualityReportId;
+                          const qr = qrId ? qualityReportMap.get(qrId) : null;
+                          if (!qr) return null;
+                          const isOpen = expandedReportFor === o.id;
+                          const farmName = accountNameMap.get(qr.farmAccountId) || accountNameMap.get(o.farmAccountId) || "—";
+                          const createdByName =
+                            (qr.submittedByUserId && userNameMap.get(qr.submittedByUserId)) ||
+                            (qr.createdByUserId && userNameMap.get(qr.createdByUserId)) ||
+                            (qr.updatedByUserId && userNameMap.get(qr.updatedByUserId)) ||
+                            qr.signoffName ||
+                            "—";
+                          return (
+                            <div className="mt-2 pt-2 border-t border-border">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs gap-1 text-primary hover:text-primary"
+                                onClick={() => setExpandedReportFor(isOpen ? null : o.id)}
+                              >
+                                {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                <FileText className="h-3.5 w-3.5" />
+                                {isOpen ? "Hide Quality Report" : "Quality Report"}
+                                <span className="text-muted-foreground ml-1">· wk {qr.weekNr}</span>
+                              </Button>
+                              {isOpen && (
+                                <div className="mt-3 rounded-lg bg-muted/20 border border-border p-2" data-pdf-section>
+                                  <QualityReportBody report={qr} farmName={farmName} createdByName={createdByName} />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}
