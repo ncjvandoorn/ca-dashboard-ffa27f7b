@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Ship, Loader2, RefreshCw, AlertCircle, CheckCircle2, Clock, ListTree } from "lucide-react";
+import { Ship, Loader2, RefreshCw, AlertCircle, CheckCircle2, Clock, ListTree, Lock, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -11,6 +11,7 @@ interface Props {
   containerId: string | null;
   defaultContainerNumber: string | null;
   isAdmin: boolean;
+  isCustomer?: boolean;
   onTrackingChange?: (t: VFTracking | null) => void;
 }
 
@@ -21,8 +22,9 @@ function fmtDate(ts?: number | null) {
   });
 }
 
-export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmin, onTrackingChange }: Props) {
-  const { tracking, loading, error, enable, disable } = useVesselFinderTracking(containerId, isAdmin);
+export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmin, isCustomer = false, onTrackingChange }: Props) {
+  const canAccess = isAdmin || isCustomer;
+  const { tracking, loading, error, enable, disable } = useVesselFinderTracking(containerId, canAccess);
   const [override, setOverride] = useState("");
   const [sealine, setSealine] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -43,7 +45,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
     onTrackingChange?.(tracking);
   }, [tracking, onTrackingChange]);
 
-  if (!isAdmin) return null;
+  if (!canAccess) return null;
   if (!containerId) {
     return (
       <div className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground">
@@ -53,15 +55,18 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
   }
 
   const isActive = !!tracking?.enabled && tracking.status !== "error";
+  // Customer-effective container number is always the locked default (no override allowed)
+  const effectiveNumber = isAdmin ? override.trim() : (defaultContainerNumber || "").trim();
+
   const handleSubmit = async (force = false) => {
-    if (!override.trim()) {
+    if (!effectiveNumber) {
       setActionError("Container number required");
       return;
     }
     setSubmitting(true);
     setActionError(null);
     try {
-      await enable(override.trim(), sealine.trim() || null, force);
+      await enable(effectiveNumber, isAdmin ? (sealine.trim() || null) : null, force);
     } catch (e: any) {
       setActionError(e?.message || "Failed");
     } finally {
@@ -70,8 +75,12 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
   };
 
   const handleToggle = async (next: boolean) => {
-    if (!next) await disable();
-    else await handleSubmit(false);
+    if (!next) {
+      if (!isAdmin) return; // customers cannot disable
+      await disable();
+    } else {
+      await handleSubmit(false);
+    }
   };
 
   const StatusBadge = () => {
@@ -92,6 +101,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
   };
 
   const general = tracking?.response?.general;
+  const showActivationCTA = isCustomer && !tracking;
 
   return (
     <div className="rounded-xl border border-border p-4 bg-card">
@@ -99,50 +109,90 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
         <Ship className="h-4 w-4 text-primary" />
         <span className="font-semibold text-sm">Active Tracking</span>
         <StatusBadge />
-        <div className="ml-auto flex items-center gap-2">
-          <Label htmlFor="vf-toggle" className="text-xs text-muted-foreground">Enable</Label>
-          <Switch
-            id="vf-toggle"
-            checked={isActive}
-            onCheckedChange={handleToggle}
-            disabled={submitting || loading}
-          />
-        </div>
+        {isAdmin && (
+          <div className="ml-auto flex items-center gap-2">
+            <Label htmlFor="vf-toggle" className="text-xs text-muted-foreground">Enable</Label>
+            <Switch
+              id="vf-toggle"
+              checked={isActive}
+              onCheckedChange={handleToggle}
+              disabled={submitting || loading}
+            />
+          </div>
+        )}
       </div>
+
+      {/* Customer activation CTA when no tracking exists yet */}
+      {showActivationCTA && (
+        <div className="rounded-md border border-primary/20 bg-primary/5 p-3 text-xs space-y-2 mb-3">
+          <div className="flex items-start gap-2">
+            <Coins className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium text-foreground">Live vessel tracking is not yet activated</p>
+              <p className="text-muted-foreground mt-0.5">
+                Activating uses <strong>1 container credit</strong> and connects this container to live VesselFinder data.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <div>
-          <Label className="text-[10px] uppercase text-muted-foreground">Container # (override)</Label>
+          <Label className="text-[10px] uppercase text-muted-foreground flex items-center gap-1">
+            Container #
+            {!isAdmin && <Lock className="h-2.5 w-2.5" />}
+          </Label>
           <Input
-            value={override}
-            onChange={(e) => setOverride(e.target.value.toUpperCase())}
+            value={isAdmin ? override : (defaultContainerNumber || "")}
+            onChange={(e) => isAdmin && setOverride(e.target.value.toUpperCase())}
             placeholder="e.g. MMAU1432549"
             className="h-8 text-xs font-mono mt-1"
+            readOnly={!isAdmin}
+            disabled={!isAdmin}
           />
         </div>
-        <div>
-          <Label className="text-[10px] uppercase text-muted-foreground">Carrier SCAC (optional)</Label>
-          <Input
-            value={sealine}
-            onChange={(e) => setSealine(e.target.value.toUpperCase())}
-            placeholder="auto-detect"
-            className="h-8 text-xs font-mono mt-1"
-          />
-        </div>
+        {isAdmin && (
+          <div>
+            <Label className="text-[10px] uppercase text-muted-foreground">Carrier SCAC (optional)</Label>
+            <Input
+              value={sealine}
+              onChange={(e) => setSealine(e.target.value.toUpperCase())}
+              placeholder="auto-detect"
+              className="h-8 text-xs font-mono mt-1"
+            />
+          </div>
+        )}
         <div className="flex items-center gap-2 pt-1">
-          <Button
-            size="sm"
-            variant="default"
-            onClick={() => handleSubmit(false)}
-            disabled={submitting || loading || !override.trim()}
-            className="h-7 text-xs"
-          >
-            {submitting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-            {tracking ? "Refresh" : "Track"}
-          </Button>
-          {tracking && (
-            <Button size="sm" variant="outline" onClick={() => handleSubmit(true)} disabled={submitting} className="h-7 text-xs">
-              Force
+          {isAdmin ? (
+            <>
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => handleSubmit(false)}
+                disabled={submitting || loading || !effectiveNumber}
+                className="h-7 text-xs"
+              >
+                {submitting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                {tracking ? "Refresh" : "Track"}
+              </Button>
+              {tracking && (
+                <Button size="sm" variant="outline" onClick={() => handleSubmit(true)} disabled={submitting} className="h-7 text-xs">
+                  Force
+                </Button>
+              )}
+            </>
+          ) : (
+            // Customer: single primary CTA. Activate (uses 1 credit) OR Refresh (free, no credit).
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => handleSubmit(false)}
+              disabled={submitting || loading || !effectiveNumber}
+              className="h-7 text-xs"
+            >
+              {submitting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : tracking ? <RefreshCw className="h-3 w-3 mr-1" /> : <Coins className="h-3 w-3 mr-1" />}
+              {tracking ? "Refresh" : "Activate (1 credit)"}
             </Button>
           )}
           {tracking?.status === "success" && tracking.response && (
