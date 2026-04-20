@@ -635,7 +635,12 @@ const ActiveSF = () => {
                   <TableHead>Shipping</TableHead>
                   <TableHead>Origin</TableHead>
                   <TableHead>Destination</TableHead>
-                  {(isAdmin || isCustomer) && <TableHead className="text-center whitespace-nowrap">Data logger · Tracking</TableHead>}
+                  {(isAdmin || isCustomer) && (
+                    <>
+                      <TableHead className="text-center whitespace-nowrap">Data logger</TableHead>
+                      <TableHead className="text-center whitespace-nowrap">Tracking</TableHead>
+                    </>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
