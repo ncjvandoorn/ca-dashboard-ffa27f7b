@@ -593,6 +593,9 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
           <p className="text-sm text-muted-foreground">
             Ask questions about quality and trial data. I can analyze trends, compare farms, and create tables.
           </p>
+          <p className="text-xs text-muted-foreground italic mt-1">
+            Please note AI can make mistakes and should only be used to give you direction & insights — always verify the data.
+          </p>
         </DialogHeader>
 
         {/* Chat area */}
