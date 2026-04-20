@@ -98,6 +98,9 @@ const Index = () => {
   // Compute scoped farm visibility (selected customer + role-based customer access).
   // Fail closed while customer mappings are loading.
   const visibleFarmIds = useMemo(() => {
+    // Fail closed for customers until both their auth profile AND the farm
+    // mappings have loaded — never show "all farms" to a customer, even briefly.
+    if (isCustomer && !customerAccount) return new Set<string>();
     if (!customerFarms) {
       if (isCustomer || selectedCustomerId) return new Set<string>();
       return null;
