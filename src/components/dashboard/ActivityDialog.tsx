@@ -210,6 +210,7 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                             <p className="text-[11px] text-muted-foreground/60 ml-[22px] mt-0.5">
                               {formatDate(activity.startsAt || activity.createdAt)}
                               {activity.type && ` · ${activity.type}`}
+                              {activity.assignedUserId && userMap.get(activity.assignedUserId) && ` · ${userMap.get(activity.assignedUserId)}`}
                             </p>
                           </div>
                         </motion.div>
