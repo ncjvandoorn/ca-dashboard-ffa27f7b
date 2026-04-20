@@ -675,10 +675,10 @@ const ActiveSF = () => {
                     />
                   </TableHead>
                   <TableHead>Week</TableHead>
+                  <TableHead>Booking</TableHead>
                   <TableHead>Container #</TableHead>
                   <TableHead>Drop-off</TableHead>
                   <TableHead>Shipping</TableHead>
-                  <TableHead>Origin</TableHead>
                   <TableHead>Destination</TableHead>
                   {(isAdmin || isCustomer) && (
                     <>
@@ -739,6 +739,9 @@ const ActiveSF = () => {
                         {g.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="font-mono text-xs whitespace-nowrap">
+                        {g.bookingCode || <span className="text-muted-foreground font-sans">—</span>}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs whitespace-nowrap">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span>
                             {g.containerNumber || (
@@ -793,9 +796,6 @@ const ActiveSF = () => {
                       </TableCell>
                       <TableCell className="text-xs whitespace-nowrap">
                         {formatShortDate(g.shippingDate)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-sm">{repTrip?.originName || "—"}</div>
                       </TableCell>
                       <TableCell>
                         <div className="font-medium text-sm">{repTrip?.destinationName || "—"}</div>
