@@ -220,9 +220,13 @@ export default function Signup() {
         <Card className="w-full max-w-lg">
           <CardHeader className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="bg-card border border-border rounded-md p-1.5">
+              <Link
+                to="/"
+                aria-label="Go to dashboard"
+                className="bg-card border border-border rounded-md p-1.5 hover:bg-accent/10 transition-colors"
+              >
                 <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto" />
-              </div>
+              </Link>
               <div>
                 <CardTitle className="text-xl">Create your Chrysal account</CardTitle>
                 <p className="text-sm text-muted-foreground mt-0.5">

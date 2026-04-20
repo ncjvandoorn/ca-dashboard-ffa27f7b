@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -235,9 +235,13 @@ export default function Containers() {
       <div className="chrysal-gradient h-1.5" />
       <div className="max-w-[1400px] mx-auto px-6 pt-6 pb-12">
         <div className="flex items-center gap-4 mb-6">
-          <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0">
+          <Link
+            to="/"
+            aria-label="Go to dashboard"
+            className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0 hover:bg-accent/10 transition-colors"
+          >
             <img src={chrysalLogo} alt="Chrysal" className="h-6 w-auto max-w-none block shrink-0" />
-          </div>
+          </Link>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">Containers ({filtered.length})</h1>
             <p className="text-sm text-muted-foreground">Container shipments, linked orders, and arrivals.</p>
