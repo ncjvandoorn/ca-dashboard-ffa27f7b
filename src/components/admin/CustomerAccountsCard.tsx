@@ -261,7 +261,7 @@ export const CustomerAccountsCard = () => {
     }
   };
 
-    <Card className="mb-8">
+    return (
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
