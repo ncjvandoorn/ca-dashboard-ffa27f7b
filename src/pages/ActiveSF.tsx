@@ -436,11 +436,30 @@ const ActiveSF = () => {
                     </TableCell>
                     <TableCell className="font-mono text-xs whitespace-nowrap">
                       {trip.internalTripId}
-                      {trip.lastReadingTime && (
-                        <div className="text-[10px] text-muted-foreground font-sans normal-case mt-0.5">
-                          last: {new Date(trip.lastReadingTime).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                        </div>
-                      )}
+                      {(() => {
+                        const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
+                        const fmt = (iso: string | null | undefined) =>
+                          iso
+                            ? new Date(iso).toLocaleString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : null;
+                        const lastQuality = fmt(trip.lastReadingTime);
+                        const lastLocation =
+                          vf?.enabled && vf.lastLocationAt
+                            ? fmt(new Date(vf.lastLocationAt).toISOString())
+                            : null;
+                        if (!lastQuality && !lastLocation) return null;
+                        return (
+                          <div className="text-[10px] text-muted-foreground font-sans normal-case mt-0.5 leading-tight space-y-0.5">
+                            {lastQuality && <div>Last quality: {lastQuality}</div>}
+                            {lastLocation && <div>Last location: {lastLocation}</div>}
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="font-mono text-xs">
                       {info?.containerNumber || <span className="text-muted-foreground">—</span>}
