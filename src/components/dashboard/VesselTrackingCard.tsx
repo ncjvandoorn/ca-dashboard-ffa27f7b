@@ -55,8 +55,9 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
   }
 
   const isActive = !!tracking?.enabled && tracking.status !== "error";
-  // Customer-effective container number is always the locked default (no override allowed)
-  const effectiveNumber = isAdmin ? override.trim() : (defaultContainerNumber || "").trim();
+  // Customer locked number: prefer the already-linked override (so Refresh hits the same container), else the order default.
+  const customerLockedNumber = (tracking?.container_number_override || defaultContainerNumber || "").trim();
+  const effectiveNumber = isAdmin ? override.trim() : customerLockedNumber;
 
   const handleSubmit = async (force = false) => {
     if (!effectiveNumber) {
@@ -144,7 +145,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
             {!isAdmin && <Lock className="h-2.5 w-2.5" />}
           </Label>
           <Input
-            value={isAdmin ? override : (defaultContainerNumber || "")}
+            value={isAdmin ? override : customerLockedNumber}
             onChange={(e) => isAdmin && setOverride(e.target.value.toUpperCase())}
             placeholder="e.g. MMAU1432549"
             className="h-8 text-xs font-mono mt-1"
