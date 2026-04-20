@@ -13,6 +13,7 @@ interface PendingAccount {
   user_id: string;
   username: string;
   email: string;
+  contact_email: string | null;
   company_name: string | null;
   customer_account_id: string;
   tier: string;
@@ -126,18 +127,22 @@ export const PendingApprovalsCard = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Company</TableHead>
+                  <TableHead>Company / Contact</TableHead>
                   <TableHead>Plan</TableHead>
-                  <TableHead>Link to Customer</TableHead>
-                  <TableHead className="w-[140px]">Actions</TableHead>
+                  <TableHead className="min-w-[180px]">Link to customer account</TableHead>
+                  <TableHead className="min-w-[160px]">Assign username</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {pending.map((acc) => (
                   <TableRow key={acc.id}>
-                    <TableCell className="text-sm font-medium">{acc.username}</TableCell>
-                    <TableCell className="text-sm">{acc.company_name || "—"}</TableCell>
+                    <TableCell className="text-sm">
+                      <div className="font-medium">{acc.company_name || "—"}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {acc.contact_email || acc.email}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm capitalize">
                       {acc.tier.replace("_", "+")} · {acc.billing_cycle}
                     </TableCell>
@@ -152,6 +157,16 @@ export const PendingApprovalsCard = () => {
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                       </select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={usernameInput[acc.id] || ""}
+                        onChange={(e) =>
+                          setUsernameInput((s) => ({ ...s, [acc.id]: e.target.value.toLowerCase() }))
+                        }
+                        placeholder="username"
+                        className="h-8 text-xs font-mono"
+                      />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
