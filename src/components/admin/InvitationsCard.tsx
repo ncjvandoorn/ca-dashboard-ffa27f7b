@@ -47,9 +47,6 @@ export const InvitationsCard = () => {
 
   const [accountId, setAccountId] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [tier, setTier] = useState("basic");
-  const [cycle, setCycle] = useState("monthly");
-  const [canSeeTrials, setCanSeeTrials] = useState(false);
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -83,9 +80,6 @@ export const InvitationsCard = () => {
     const data = await call("create_invitation", {
       customerAccountId: accountId,
       companyName: companyName || customerNameMap.get(accountId) || accountId,
-      tier,
-      billingCycle: cycle,
-      canSeeTrials,
     });
     setCreating(false);
     if (data.error) {
@@ -95,7 +89,6 @@ export const InvitationsCard = () => {
     toast({ title: "Invitation created", description: `Code: ${data.invitation.code}` });
     setAccountId("");
     setCompanyName("");
-    setCanSeeTrials(false);
     fetchInvitations();
   };
 
