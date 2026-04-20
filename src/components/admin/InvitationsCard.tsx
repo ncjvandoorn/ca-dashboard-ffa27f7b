@@ -136,28 +136,18 @@ export const InvitationsCard = () => {
       <CardContent>
         <div className="border border-border rounded-lg p-4 mb-6 space-y-4">
           <p className="text-sm font-medium">Create New Invitation</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label className="text-xs">Customer account</Label>
-              <select
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="">Select…</option>
-                {availableAccounts.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Company display name (optional)</Label>
-              <Input
-                placeholder="Company name"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-              />
-            </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Customer account</Label>
+            <select
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">Select…</option>
+              {availableAccounts.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Login username</Label>
