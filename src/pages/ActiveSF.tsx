@@ -47,7 +47,7 @@ type SortDir = "asc" | "desc";
 
 const ActiveSF = () => {
   const navigate = useNavigate();
-  const { isCustomer, isAdmin } = useAuth();
+  const { isCustomer, isAdmin, customerAccount } = useAuth();
   const [query, setQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("tripId");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -135,6 +135,20 @@ const ActiveSF = () => {
       const info = lookupOrder(t.internalTripId);
       return info?.purposeName === "Sea Freight";
     });
+    // Customers: only trips whose linked order belongs to them.
+    if (isCustomer) {
+      if (!customerAccount) {
+        list = [];
+      } else {
+        const myOrderIds = new Set(
+          (servicesOrders || [])
+            .filter((o) => o.customerAccountId === customerAccount.customerAccountId)
+            .map((o) => o.orderNumber)
+            .filter(Boolean)
+        );
+        list = list.filter((t) => myOrderIds.has(stripLoggerSuffix(t.internalTripId)));
+      }
+    }
     // Hide rows admin marked as hidden — also bypassed by Show all / Show hidden.
     if (!(isAdmin && (showHidden || showAll))) {
       list = list.filter((t) => !hiddenIds.has(t.tripId));
@@ -191,7 +205,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [trips, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, showHidden, showAll]);
+  }, [trips, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, showAll]);
 
   const tripsWithLocation = useMemo(
     () => filtered.filter((t) => t.latitude !== null && t.longitude !== null),
