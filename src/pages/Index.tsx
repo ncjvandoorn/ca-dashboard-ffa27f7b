@@ -51,7 +51,7 @@ function weekYear(weekNr: number): number {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isAdmin, isCustomer, customerAccount } = useAuth();
+  const { isAdmin, isCustomer, customerAccount, loading: authLoading } = useAuth();
   const { can } = usePermissions();
   const { data: accounts, isLoading: loadingAccounts } = useAccounts();
   const { data: reports, isLoading: loadingReports } = useQualityReports();
@@ -276,7 +276,10 @@ const Index = () => {
     "EC (Export)": r.qrExportEc,
   }));
 
-  const isLoading = loadingAccounts || loadingReports;
+  // Wait for auth + customer account + customer farm mappings before rendering,
+  // so customers never briefly see another customer's farm.
+  const customerDataReady = !isCustomer || (!!customerAccount && !!customerFarms);
+  const isLoading = authLoading || loadingAccounts || loadingReports || !customerDataReady;
 
   const chrysalBlue = "hsl(207, 100%, 35%)";
   const chrysalGreen = "hsl(90, 67%, 41%)";
