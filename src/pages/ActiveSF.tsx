@@ -504,7 +504,16 @@ const ActiveSF = () => {
         {/* World Map */}
         {tripsWithLocation.length > 0 && (
           <div className="rounded-xl border border-border bg-card shadow-sm mb-6 overflow-hidden">
-            <SFWorldMap trips={tripsWithLocation} vfByTrip={vfByTrip} onSelectTrip={setSelectedTrip} />
+            <SFWorldMap
+              trips={tripsWithLocation}
+              vfByTrip={vfByTrip}
+              onSelectTrip={(t) => {
+                const info = lookupOrder(t.internalTripId);
+                const key = info?.containerId || `trip:${t.tripId}`;
+                const g = groupedRows.find((x) => x.key === key);
+                if (g) setSelectedGroup(g);
+              }}
+            />
           </div>
         )}
 
