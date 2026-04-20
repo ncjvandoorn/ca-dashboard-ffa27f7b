@@ -97,13 +97,6 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg pr-8">
             Trip {trip.tripId}
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-              trip.tripStatus === "In Transit" || trip.tripStatus === "InTransit"
-                ? "bg-primary/10 text-primary"
-                : "bg-muted text-muted-foreground"
-            }`}>
-              {trip.tripStatus}
-            </span>
             <ExportPdfButton
               targetRef={exportRef}
               filename={`active-sf-trip-${trip.tripId}`}
