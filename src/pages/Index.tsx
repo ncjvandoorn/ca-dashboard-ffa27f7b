@@ -166,6 +166,21 @@ const Index = () => {
     return activities.filter((a) => visibleFarmIds.has(a.accountId));
   }, [activities, visibleFarmIds]);
 
+  // Customer scope passed to the AI agent so the server can enforce access.
+  const aiCustomerScope = useMemo(() => {
+    if (!isCustomer || !customerAccount) return undefined;
+    const allowedFarmIds = visibleFarmIds ? Array.from(visibleFarmIds) : [];
+    const allowedOrderIds = (servicesOrders || [])
+      .filter((o) => o.customerAccountId === customerAccount.customerAccountId)
+      .map((o) => o.id);
+    return {
+      isCustomer: true,
+      allowedFarmIds,
+      allowedOrderIds,
+      customerAccountId: customerAccount.customerAccountId,
+    };
+  }, [isCustomer, customerAccount, visibleFarmIds, servicesOrders]);
+
   const visibleReports = useMemo(() => {
     return scopedReports.filter(isVisibleFarmReport);
   }, [scopedReports]);
