@@ -119,12 +119,19 @@ const DataLoggers = () => {
   // Compute exception series once (heavy — only runs when readings change).
   const allSeries = useMemo(() => buildLoggerSeries(readings), [readings]);
 
-  // Filter to loggers that have at least one *currently selected* exception.
+  // Filter to loggers that have at least one *currently selected* exception,
+  // and (optionally) restrict to the last 12 weeks of activity.
   const flaggedSeries = useMemo(() => {
+    const cutoff = last12Weeks ? Date.now() - TWELVE_WEEKS_MS : 0;
     return allSeries
       .filter((s) => s.flags.some((f) => activeFilters.has(f.rule)))
+      .filter((s) => {
+        if (!last12Weeks) return true;
+        const t = s.lastTime ? new Date(s.lastTime).getTime() : 0;
+        return t >= cutoff;
+      })
       .sort((a, b) => (b.lastTime || "").localeCompare(a.lastTime || ""));
-  }, [allSeries, activeFilters]);
+  }, [allSeries, activeFilters, last12Weeks]);
 
   // Per-rule counts (independent of current filter selection — for the chips)
   const ruleCounts = useMemo(() => {
