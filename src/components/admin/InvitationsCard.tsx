@@ -159,8 +159,21 @@ export const InvitationsCard = () => {
               />
             </div>
           </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Login username</Label>
+            <Input
+              placeholder="e.g. xpol"
+              value={usernameInput}
+              onChange={(e) => setUsernameInput(e.target.value.toLowerCase())}
+            />
+            <p className="text-xs text-muted-foreground">
+              {usernameInput
+                ? `Customer will sign in as ${usernameInput}@chrysal.app`
+                : "Lowercase letters, numbers, _ and - only. Customer cannot change this."}
+            </p>
+          </div>
           <p className="text-xs text-muted-foreground">
-            The customer chooses their subscription tier and billing cycle when completing signup. Trial access is managed via the Permissions matrix.
+            The customer chooses their subscription tier and billing cycle when completing signup, and provides their contact email. Trial access is managed via the Permissions matrix.
           </p>
           <div className="flex justify-end">
             <Button onClick={create} disabled={creating} size="sm" className="gap-2">
