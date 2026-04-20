@@ -85,6 +85,7 @@ const ActiveSF = () => {
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [showHidden, setShowHidden] = useState(false);
   const [onlySF, setOnlySF] = useState(true);
+  const [last8Weeks, setLast8Weeks] = useState(true);
   const [onlyActiveDL, setOnlyActiveDL] = useState(false);
   const [onlyLiveTracking, setOnlyLiveTracking] = useState(false);
   const [year, setYear] = useState<string>("2026");
