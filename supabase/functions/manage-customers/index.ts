@@ -165,14 +165,67 @@ Deno.serve(async (req) => {
 
     // ---------- Pending approvals ----------
     if (action === "approve_customer") {
-      const { id, customerAccountId, canSeeTrials } = body;
+      const { id, customerAccountId, canSeeTrials, username } = body;
+      if (!customerAccountId) {
+        return new Response(JSON.stringify({ error: "customerAccountId required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const cleanUsername = String(username || "").trim().toLowerCase();
+      if (!cleanUsername || !/^[a-z0-9_-]+$/.test(cleanUsername)) {
+        return new Response(
+          JSON.stringify({ error: "Username required (lowercase letters, numbers, _ and -)" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // Load the pending account so we know which auth user to rename.
+      const { data: pendingCa, error: loadErr } = await supabaseAdmin
+        .from("customer_accounts")
+        .select("id, user_id")
+        .eq("id", id)
+        .maybeSingle();
+      if (loadErr || !pendingCa) {
+        return new Response(JSON.stringify({ error: loadErr?.message || "Pending account not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const newEmail = `${cleanUsername}@chrysal.app`;
+
+      // Make sure the username isn't taken by another auth user.
+      const { data: existingList } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const collision = existingList.users.find(
+        (u) => u.email?.toLowerCase() === newEmail && u.id !== pendingCa.user_id,
+      );
+      if (collision) {
+        return new Response(JSON.stringify({ error: `Username "${cleanUsername}" is already in use` }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Rename the auth user so they can finally log in with their assigned username.
+      const { error: renameErr } = await supabaseAdmin.auth.admin.updateUserById(pendingCa.user_id, {
+        email: newEmail,
+        email_confirm: true,
+      });
+      if (renameErr) {
+        return new Response(JSON.stringify({ error: `Failed to assign username: ${renameErr.message}` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const updates: Record<string, any> = {
         status: "active",
         approved_at: new Date().toISOString(),
         approved_by: callerId,
         updated_at: new Date().toISOString(),
+        customer_account_id: customerAccountId,
       };
-      if (customerAccountId) updates.customer_account_id = customerAccountId;
       if (typeof canSeeTrials === "boolean") updates.can_see_trials = canSeeTrials;
 
       const { data: ca, error: updErr } = await supabaseAdmin
@@ -201,7 +254,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ success: true }), {
+      return new Response(JSON.stringify({ success: true, username: cleanUsername }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

@@ -151,25 +151,29 @@ Deno.serve(async (req) => {
     }
 
     // ---------- public signup (pending approval) ----------
+    // No username is asked from the customer — admin assigns one when approving.
+    // We provision a temporary auth identity (pending-<random>@chrysal.pending) that
+    // the customer cannot use to log in. On approval the admin sets the real username
+    // and the auth email is rewritten to <username>@chrysal.app.
     if (action === "signup_public") {
-      const username = String(body.username || "").trim().toLowerCase();
       const password = String(body.password || "");
       const companyName = String(body.companyName || "").trim();
       const tier = String(body.tier || "basic");
       const billingCycle = String(body.billingCycle || "monthly");
       const contactEmail = String(body.contactEmail || "").trim();
 
-      if (!username || password.length < 6 || !companyName) {
-        return bad("Username, company name and password (min 6 chars) are required");
+      if (password.length < 6 || !companyName) {
+        return bad("Company name and password (min 6 chars) are required");
       }
-      if (!/^[a-z0-9_-]+$/.test(username)) return bad("Username may only contain letters, numbers, _ and -");
       if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
         return bad("A valid contact email is required");
       }
       if (!VALID_TIERS.includes(tier as typeof VALID_TIERS[number])) return bad("Invalid tier");
       if (!VALID_CYCLES.includes(billingCycle as typeof VALID_CYCLES[number])) return bad("Invalid billing cycle");
 
-      const email = `${username}@chrysal.app`;
+      const placeholder = `pending-${crypto.randomUUID().slice(0, 12)}`;
+      const email = `${placeholder}@chrysal.pending`;
+
       const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
@@ -180,8 +184,6 @@ Deno.serve(async (req) => {
 
       await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "customer" });
 
-      // For public signups we don't yet know the internal customer_account_id —
-      // store the company_name in customer_account_id placeholder; admin will set the real one on approval.
       const { error: caErr } = await supabaseAdmin.from("customer_accounts").insert({
         user_id: userId,
         customer_account_id: `pending:${companyName.slice(0, 60)}`,
@@ -197,7 +199,7 @@ Deno.serve(async (req) => {
         return bad(caErr.message);
       }
 
-      return ok({ success: true, email, pending: true });
+      return ok({ success: true, pending: true });
     }
 
     return bad("Unknown action");

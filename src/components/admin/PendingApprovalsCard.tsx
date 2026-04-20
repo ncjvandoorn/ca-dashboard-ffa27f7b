@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, UserCheck, Check, X, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,7 @@ interface PendingAccount {
   user_id: string;
   username: string;
   email: string;
+  contact_email: string | null;
   company_name: string | null;
   customer_account_id: string;
   tier: string;
@@ -37,6 +39,7 @@ export const PendingApprovalsCard = () => {
   const [pending, setPending] = useState<PendingAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [accountSelect, setAccountSelect] = useState<Record<string, string>>({});
+  const [usernameInput, setUsernameInput] = useState<Record<string, string>>({});
   const [acting, setActing] = useState<string | null>(null);
   const { data: allAccounts } = useAccounts();
   const { data: customerFarms } = useCustomerFarms();
@@ -65,18 +68,23 @@ export const PendingApprovalsCard = () => {
 
   const approve = async (acc: PendingAccount) => {
     const customerAccountId = accountSelect[acc.id];
+    const username = (usernameInput[acc.id] || "").trim().toLowerCase();
     if (!customerAccountId) {
       toast({ title: "Pick a customer account first", variant: "destructive" });
       return;
     }
+    if (!username || !/^[a-z0-9_-]+$/.test(username)) {
+      toast({ title: "Assign a username", description: "Lowercase letters, numbers, _ and - only", variant: "destructive" });
+      return;
+    }
     setActing(acc.id);
-    const data = await call("approve_customer", { id: acc.id, customerAccountId });
+    const data = await call("approve_customer", { id: acc.id, customerAccountId, username });
     setActing(null);
     if (data.error) {
       toast({ title: "Error", description: data.error, variant: "destructive" });
       return;
     }
-    toast({ title: "Approved", description: `${acc.username} is now active.` });
+    toast({ title: "Approved", description: `Login: ${username}@chrysal.app` });
     fetchPending();
   };
 
@@ -85,7 +93,7 @@ export const PendingApprovalsCard = () => {
     setActing(acc.id);
     await call("reject_customer", { id: acc.id, userId: acc.user_id });
     setActing(null);
-    toast({ title: "Rejected", description: `${acc.username} deleted.` });
+    toast({ title: "Rejected", description: `Request from ${acc.company_name || acc.username} deleted.` });
     fetchPending();
   };
 
@@ -119,18 +127,22 @@ export const PendingApprovalsCard = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Company</TableHead>
+                  <TableHead>Company / Contact</TableHead>
                   <TableHead>Plan</TableHead>
-                  <TableHead>Link to Customer</TableHead>
-                  <TableHead className="w-[140px]">Actions</TableHead>
+                  <TableHead className="min-w-[180px]">Link to customer account</TableHead>
+                  <TableHead className="min-w-[160px]">Assign username</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {pending.map((acc) => (
                   <TableRow key={acc.id}>
-                    <TableCell className="text-sm font-medium">{acc.username}</TableCell>
-                    <TableCell className="text-sm">{acc.company_name || "—"}</TableCell>
+                    <TableCell className="text-sm">
+                      <div className="font-medium">{acc.company_name || "—"}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {acc.contact_email || acc.email}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm capitalize">
                       {acc.tier.replace("_", "+")} · {acc.billing_cycle}
                     </TableCell>
@@ -145,6 +157,16 @@ export const PendingApprovalsCard = () => {
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                       </select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={usernameInput[acc.id] || ""}
+                        onChange={(e) =>
+                          setUsernameInput((s) => ({ ...s, [acc.id]: e.target.value.toLowerCase() }))
+                        }
+                        placeholder="username"
+                        className="h-8 text-xs font-mono"
+                      />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
