@@ -105,16 +105,26 @@ function executeTool(name: string, args: any, ctx: ToolContext): any {
   switch (name) {
     case "get_farm_quality": {
       const farmId = args.farmId;
-      const farmName = args.farmName?.toLowerCase();
+      const farmNameRaw = (args.farmName || "").toLowerCase().trim();
       const fromWeek = args.fromWeek as number | undefined;
       const toWeek = args.toWeek as number | undefined;
       const farms = applyScope(ctx.farmData, ctx.scope);
-      let match = farms.find((f) => f.farmId === farmId || f.farm?.toLowerCase() === farmName);
-      if (!match) {
-        // fuzzy
-        match = farms.find((f) => farmName && f.farm?.toLowerCase().includes(farmName));
+      // Exact match first (id or full name match — case-insensitive)
+      let match = farms.find((f) =>
+        (farmId && f.farmId === farmId) ||
+        (farmNameRaw && f.farm?.toLowerCase() === farmNameRaw)
+      );
+      // Fuzzy match ONLY when not a customer (customers must never be silently
+      // redirected to a different farm than the one they asked about).
+      if (!match && !ctx.scope?.isCustomer && farmNameRaw) {
+        match = farms.find((f) => f.farm?.toLowerCase().includes(farmNameRaw));
       }
-      if (!match) return { error: `Farm not found or not accessible: ${farmId || args.farmName}` };
+      if (!match) {
+        if (ctx.scope?.isCustomer) {
+          return { error: `You do not have access to "${args.farmName || farmId}". This farm is either outside your account scope or does not exist. Do NOT suggest a similar farm.` };
+        }
+        return { error: `Farm not found: ${farmId || args.farmName}` };
+      }
       let weeks = match.d || [];
       if (fromWeek != null) weeks = weeks.filter((w: any) => w.w >= fromWeek);
       if (toWeek != null) weeks = weeks.filter((w: any) => w.w <= toWeek);
@@ -344,7 +354,13 @@ const TOOLS = [
 // ============================================================================
 function buildSystemPrompt(adminInstructions: string, aiLearnings: string, scope?: CustomerScope): string {
   const scopeNote = scope?.isCustomer
-    ? `\n\n**ACCESS SCOPE — CUSTOMER USER**: This user is a customer and ONLY has access to ${scope.allowedFarmIds.length} consented farms and ${scope.allowedOrderIds.length} services orders. All tools automatically filter to this scope. NEVER mention farms, customers, orders, or trips outside this scope. If asked about something they cannot access, say: "I don't have access to that information for your account."`
+    ? `\n\n**ACCESS SCOPE — CUSTOMER USER**: This user is a customer and ONLY has access to ${scope.allowedFarmIds.length} consented farms and ${scope.allowedOrderIds.length} services orders. All tools automatically filter to this scope.
+
+CRITICAL CUSTOMER RULES — VIOLATING THESE IS A SEVERE FAILURE:
+1. NEVER mention, list, or describe any farm, customer, order, container, or trip outside this scope.
+2. NEVER fuzzy-match or substitute one farm for another. If the user asks about "AAA Growers Simba Farm" and that exact farm is not in their scope, you MUST refuse — even if a different farm with a similar name (e.g. "Simbi Roses") IS in their scope. Treat similar names as DIFFERENT farms.
+3. If a tool returns an access-denied error, respond plainly: "You do not have access to information about [exact name they asked]." Do NOT offer alternatives, do NOT mention which farms they CAN access unless they explicitly ask "what farms can I see".
+4. If unsure whether the user's farm is in scope, call list_farms() first to verify.`
     : "";
 
   return `You are a strict, factual data analyst for Chrysal's cut flower post-harvest quality monitoring system. You have TOOLS to fetch data on demand — use them instead of making things up.
