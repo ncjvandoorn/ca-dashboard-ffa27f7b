@@ -12,7 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle, Layers, X, EyeOff, Eye, Activity, Radio } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Toggle } from "@/components/ui/toggle";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
 import { CompareTripsDialog } from "@/components/dashboard/CompareTripsDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
@@ -43,14 +45,14 @@ export type SFTrip = {
   lastLocation: string | null;
 };
 
-type SortField = "tripId" | "tripStatus" | "plannedDepartureTime";
+type SortField = "tripId" | "tripStatus" | "plannedDepartureTime" | "week";
 type SortDir = "asc" | "desc";
 
 const ActiveSF = () => {
   const navigate = useNavigate();
   const { isCustomer, isAdmin, customerAccount } = useAuth();
   const [query, setQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>("tripId");
+  const [sortField, setSortField] = useState<SortField>("week");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selectedTrip, setSelectedTrip] = useState<SFTrip | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -60,6 +62,7 @@ const ActiveSF = () => {
   const [onlySF, setOnlySF] = useState(true);
   const [onlyActiveDL, setOnlyActiveDL] = useState(false);
   const [onlyLiveTracking, setOnlyLiveTracking] = useState(false);
+  const [year, setYear] = useState<string>("2026");
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
@@ -179,10 +182,26 @@ const ActiveSF = () => {
     return rows;
   }, [trips, orderInfo]);
 
+  // Build the list of distinct years available, derived from dippingWeek (YYWW).
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    for (const info of orderInfo.values()) {
+      const yy = (info.dippingWeek || "").slice(0, 2);
+      if (/^\d{2}$/.test(yy)) years.add(`20${yy}`);
+    }
+    // Always include the default year so the dropdown is never empty.
+    years.add("2026");
+    return Array.from(years).sort((a, b) => Number(b) - Number(a));
+  }, [orderInfo]);
+
   const filtered = useMemo(() => {
-    const q = query.toLowerCase();
+    const q = query.toLowerCase().trim();
+    const yearSuffix = year ? year.slice(-2) : "";
     let list = allRows.filter((t) => {
       const info = lookupOrder(t.internalTripId);
+      // Year filter — match dippingWeek YY prefix. Rows with no dippingWeek
+      // are kept only when they're orphans (no order info at all).
+      if (year && info && !(info.dippingWeek || "").startsWith(yearSuffix)) return false;
       // Only SF: keep rows whose linked order has purpose "Sea Freight".
       // Orphan trips (no order) are excluded when this toggle is on.
       if (onlySF && info?.purposeName !== "Sea Freight") return false;
@@ -233,7 +252,10 @@ const ActiveSF = () => {
           t.actualDepartureTime,
           String(t.stops ?? ""),
           info?.dippingWeek,
+          // Also match just the WW portion (e.g. "12") so users can search by week
+          (info?.dippingWeek || "").slice(2),
           info?.bookingCode,
+          stripLoggerSuffix(t.internalTripId), // order number
           info?.containerNumber,
           info?.customer,
           info?.farm,
@@ -248,6 +270,14 @@ const ActiveSF = () => {
       });
     }
     return [...list].sort((a, b) => {
+      if (sortField === "week") {
+        // Sort by dippingWeek (YYWW) numerically; rows without a week sink last.
+        const aw = lookupOrder(a.internalTripId)?.dippingWeek || "";
+        const bw = lookupOrder(b.internalTripId)?.dippingWeek || "";
+        const an = aw ? Number(aw) : sortDir === "asc" ? Infinity : -Infinity;
+        const bn = bw ? Number(bw) : sortDir === "asc" ? Infinity : -Infinity;
+        return sortDir === "asc" ? an - bn : bn - an;
+      }
       if (sortField === "tripId") {
         return sortDir === "asc"
           ? Number(a.tripId) - Number(b.tripId)
@@ -265,7 +295,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet]);
+  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year]);
 
   // Map tripId -> VF active tracking info (when available for the trip's container)
   const vfByTrip = useMemo(() => {
@@ -388,46 +418,47 @@ const ActiveSF = () => {
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search week, booking, container, customer, farm, serial, location, temp…"
+              placeholder="Search week, order, booking, container, customer, farm, serial, location, temp…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9"
             />
           </div>
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger className="h-9 w-[110px]">
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.map((y) => (
+                <SelectItem key={y} value={y}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <span className="text-sm text-muted-foreground">
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
-          <div className="ml-auto flex items-center gap-2 flex-wrap">
-            <Toggle
-              size="sm"
-              variant="outline"
-              pressed={onlySF}
-              onPressedChange={setOnlySF}
-              aria-label="Only Sea Freight"
-            >
-              <Ship className="h-4 w-4" />
-              Only SF
-            </Toggle>
-            <Toggle
-              size="sm"
-              variant="outline"
-              pressed={onlyActiveDL}
-              onPressedChange={setOnlyActiveDL}
-              aria-label="Only active dataloggers"
-            >
-              <Activity className="h-4 w-4" />
-              Only active DL
-            </Toggle>
-            <Toggle
-              size="sm"
-              variant="outline"
-              pressed={onlyLiveTracking}
-              onPressedChange={setOnlyLiveTracking}
-              aria-label="Only live tracking"
-            >
-              <Radio className="h-4 w-4" />
-              Only live tracking
-            </Toggle>
+          <div className="ml-auto flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Switch id="t-sf" checked={onlySF} onCheckedChange={setOnlySF} />
+              <Label htmlFor="t-sf" className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <Ship className="h-4 w-4" />
+                SF
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="t-dl" checked={onlyActiveDL} onCheckedChange={setOnlyActiveDL} />
+              <Label htmlFor="t-dl" className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <Activity className="h-4 w-4" />
+                Active DL
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="t-live" checked={onlyLiveTracking} onCheckedChange={setOnlyLiveTracking} />
+              <Label htmlFor="t-live" className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <Radio className="h-4 w-4" />
+                Live tracking
+              </Label>
+            </div>
             {isAdmin && hiddenIds.size > 0 && (
               <Button
                 variant="ghost"
