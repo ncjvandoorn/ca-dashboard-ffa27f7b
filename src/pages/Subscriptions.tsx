@@ -206,7 +206,7 @@ export default function Subscriptions() {
                   <h3 className="text-lg font-bold text-foreground">{p.name}</h3>
                   <p className="text-xs text-muted-foreground">{p.tagline}</p>
                 </div>
-                <div className="mb-5">
+                <div className="mb-5 opacity-0 pointer-events-none select-none" aria-hidden="true">
                   <div className="text-2xl font-bold text-foreground leading-none">{price}</div>
                   {priceSuffix && (
                     <div className="text-[11px] text-muted-foreground mt-1">{priceSuffix}</div>
