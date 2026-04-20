@@ -12,10 +12,13 @@ export type LoggerReading = {
   light: number | null;
 };
 
+// Only analyse the most recent 8 weeks of readings — anything older is rarely
+// actionable and slows down both the query and client-side analysis.
+const ANALYSIS_WINDOW_DAYS = 8 * 7;
+
 /**
- * Pull every reading from `sensiwatch_reports` for exception analysis.
- * Paginates in 1000-row chunks (PostgREST default cap) so we get the full
- * history. Heavy-ish but only invoked from the Data Loggers page.
+ * Pull readings from `sensiwatch_reports` for exception analysis, restricted
+ * to the last 8 weeks. Paginates in 1000-row chunks (PostgREST default cap).
  */
 export function useAllSensiwatchReadings() {
   const [data, setData] = useState<LoggerReading[]>([]);
