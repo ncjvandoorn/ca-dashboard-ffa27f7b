@@ -5,6 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Mail, Plus, Loader2, Copy, Check, Trash2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +54,8 @@ export const InvitationsCard = () => {
   const [usernameInput, setUsernameInput] = useState("");
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const customerNameMap = useMemo(
     () => new Map((allAccounts || []).map((a) => [a.id, a.name])),
@@ -108,8 +114,15 @@ export const InvitationsCard = () => {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Delete this invitation?")) return;
-    await call("delete_invitation", { id });
+    setDeleting(true);
+    const data = await call("delete_invitation", { id });
+    setDeleting(false);
+    setPendingDeleteId(null);
+    if (data?.error) {
+      toast({ title: "Delete failed", description: data.error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Invitation deleted" });
     fetchInvitations();
   };
 
@@ -211,7 +224,7 @@ export const InvitationsCard = () => {
                             {copiedId === inv.id ? <Check className="h-4 w-4 text-accent" /> : <Copy className="h-4 w-4" />}
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" onClick={() => remove(inv.id)} className="text-destructive hover:text-destructive" title="Delete">
+                        <Button variant="ghost" size="icon" onClick={() => setPendingDeleteId(inv.id)} className="text-destructive hover:text-destructive" title="Delete">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -223,6 +236,27 @@ export const InvitationsCard = () => {
           </div>
         )}
       </CardContent>
+
+      <AlertDialog open={!!pendingDeleteId} onOpenChange={(o) => !o && setPendingDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this invitation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the invitation code. If it has already been used, the customer account remains unaffected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => { e.preventDefault(); if (pendingDeleteId) remove(pendingDeleteId); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
