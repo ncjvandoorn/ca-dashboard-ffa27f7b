@@ -283,6 +283,12 @@ export default function Signup() {
                         <span className="text-muted-foreground">Account:</span>{" "}
                         <strong>{invitation.company_name || invitation.customer_account_id}</strong>
                       </div>
+                      {invitation.username && (
+                        <div>
+                          <span className="text-muted-foreground">Sign in as:</span>{" "}
+                          <strong>{invitation.username}@chrysal.app</strong>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -328,25 +334,23 @@ export default function Signup() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Username</Label>
-                <Input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                  placeholder="Username"
-                  required
-                  readOnly={usernameLocked}
-                  disabled={usernameLocked}
-                  autoComplete="username"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {usernameLocked
-                    ? `Pre-assigned by your invitation. Login: ${username}@chrysal.app`
-                    : username
+              {!usernameLocked && (
+                <div className="space-y-1.5">
+                  <Label>Username</Label>
+                  <Input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                    placeholder="Username"
+                    required
+                    autoComplete="username"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {username
                       ? `Login: ${username}@chrysal.app`
                       : "Letters, numbers, _ and - only."}
-                </p>
-              </div>
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <Label>Contact email</Label>
