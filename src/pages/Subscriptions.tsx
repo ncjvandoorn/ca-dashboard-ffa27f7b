@@ -210,7 +210,7 @@ export default function Subscriptions() {
                   <h3 className="text-lg font-bold text-foreground">{p.name}</h3>
                   <p className="text-xs text-muted-foreground">{p.tagline}</p>
                 </div>
-                <div className="mb-5 opacity-0 pointer-events-none select-none" aria-hidden="true">
+                <div className="mb-5 blur-sm pointer-events-none select-none" aria-hidden="true">
                   <div className="text-2xl font-bold text-foreground leading-none">{price}</div>
                   {priceSuffix && (
                     <div className="text-[11px] text-muted-foreground mt-1">{priceSuffix}</div>
@@ -313,7 +313,7 @@ export default function Subscriptions() {
                   {PLANS.map((p) => (
                     <td
                       key={p.key}
-                      className="px-4 py-3 text-center font-semibold text-foreground opacity-0 select-none"
+                      className="px-4 py-3 text-center font-semibold text-foreground blur-sm select-none"
                       aria-hidden="true"
                     >
                       {p.monthly}
@@ -325,7 +325,7 @@ export default function Subscriptions() {
                   {PLANS.map((p) => (
                     <td
                       key={p.key}
-                      className="px-4 py-3 text-center font-semibold text-foreground opacity-0 select-none"
+                      className="px-4 py-3 text-center font-semibold text-foreground blur-sm select-none"
                       aria-hidden="true"
                     >
                       {p.yearly}
@@ -355,7 +355,7 @@ export default function Subscriptions() {
           </div>
         </Card>
 
-        <p className="text-xs text-muted-foreground text-center opacity-0 select-none" aria-hidden="true">
+        <p className="text-xs text-muted-foreground text-center">
           All prices in euros (EUR), excluding VAT. Contact us for custom Heavy plan pricing.
         </p>
       </main>
