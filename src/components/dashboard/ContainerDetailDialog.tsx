@@ -205,7 +205,9 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
             </div>
           )}
 
-          {/* Per-trip section — tabs when there's more than one logger */}
+          {/* Per-trip section — tabs when there's more than one logger.
+              The multigraph is rendered ONCE below at container scope so all
+              loggers can be compared on a single chart. */}
           {trips.length === 0 ? (
             <div className="rounded-xl border border-border p-6 text-center text-sm text-muted-foreground">
               No datalogger trips for this container.
@@ -236,6 +238,14 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
             </Tabs>
           ) : (
             <TripSection trip={trips[0]} vfTracking={vfTracking} />
+          )}
+
+          {/* Combined multigraph — when multiple loggers, overlays all of them
+              on one chart so transit conditions can be compared at a glance. */}
+          {trips.length > 0 && (
+            <div data-pdf-section>
+              <CombinedMultigraph trips={trips} />
+            </div>
           )}
 
           {/* Shipper Reports — container-level */}
