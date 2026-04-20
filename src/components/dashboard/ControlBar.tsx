@@ -263,69 +263,7 @@ export function ControlBar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-popover">
-              {can("containers") && onOpenContainers && (
-                <DropdownMenuItem onClick={onOpenContainers}>
-                  <Package className="h-4 w-4 mr-2" />
-                  Containers
-                </DropdownMenuItem>
-              )}
-              {can("active_sf") && (
-                <DropdownMenuItem onClick={() => navigate("/active-sf")}>
-                  <Ship className="h-4 w-4 mr-2" />
-                  Active SF
-                </DropdownMenuItem>
-              )}
-              {can("trials_dashboard") && (
-                <DropdownMenuItem onClick={() => navigate("/trials")}>
-                  <FlaskConical className="h-4 w-4 mr-2" />
-                  Trials Dashboard
-                </DropdownMenuItem>
-              )}
-              {can("subscription_plans") && (
-                <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Subscription Plans
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              {can("trial_planner") && (
-                <DropdownMenuItem onClick={() => navigate("/planner")}>
-                  <CalendarRange className="h-4 w-4 mr-2" />
-                  Trial Planner
-                </DropdownMenuItem>
-              )}
-              {can("reporting_check") && (
-                <DropdownMenuItem onClick={() => navigate("/?check=reporting")}>
-                  <ClipboardCheck className="h-4 w-4 mr-2" />
-                  Reporting Check
-                </DropdownMenuItem>
-              )}
-              {can("crm_activities") && (
-                <DropdownMenuItem onClick={() => navigate("/crm")}>
-                  <Users className="h-4 w-4 mr-2" />
-                  CRM Activities
-                </DropdownMenuItem>
-              )}
-              {(isCustomer || can("settings")) && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    <UserCircle className="h-4 w-4 mr-2" />
-                    My Profile
-                  </DropdownMenuItem>
-                </>
-              )}
-              {can("settings") && (
-                <DropdownMenuItem onClick={() => navigate("/admin")}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut()}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </DropdownMenuItem>
+              <AppMenuItems onOpenContainers={onOpenContainers} />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
