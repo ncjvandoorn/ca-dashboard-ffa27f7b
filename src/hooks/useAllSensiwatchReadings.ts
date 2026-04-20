@@ -12,9 +12,9 @@ export type LoggerReading = {
   light: number | null;
 };
 
-// Only analyse the most recent 8 weeks of readings — anything older is rarely
+// Only analyse the most recent 12 weeks of readings — anything older is rarely
 // actionable and slows down both the query and client-side analysis.
-const ANALYSIS_WINDOW_DAYS = 8 * 7;
+const ANALYSIS_WINDOW_DAYS = 12 * 7;
 
 /**
  * Pull readings from `sensiwatch_reports` for exception analysis, restricted
