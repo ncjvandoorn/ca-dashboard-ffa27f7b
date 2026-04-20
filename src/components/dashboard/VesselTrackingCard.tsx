@@ -145,7 +145,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
             {!isAdmin && <Lock className="h-2.5 w-2.5" />}
           </Label>
           <Input
-            value={isAdmin ? override : (defaultContainerNumber || "")}
+            value={isAdmin ? override : customerLockedNumber}
             onChange={(e) => isAdmin && setOverride(e.target.value.toUpperCase())}
             placeholder="e.g. MMAU1432549"
             className="h-8 text-xs font-mono mt-1"
