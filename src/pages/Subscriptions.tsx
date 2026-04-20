@@ -27,8 +27,8 @@ const PLANS: {
   highlight?: boolean;
 }[] = [
   { key: "basic", name: "Basic", tagline: "Quality fundamentals", monthly: "€45", yearly: "€39" },
-  { key: "pro", name: "Pro", tagline: "Quality + sea freight", monthly: "€95", yearly: "€89", highlight: true },
-  { key: "proPlus", name: "Pro+", tagline: "Scaling operations", monthly: "€145", yearly: "€139" },
+  { key: "pro", name: "Pro", tagline: "Quality + sea freight", monthly: "€95", yearly: "€89" },
+  { key: "proPlus", name: "Pro+", tagline: "Scaling operations", monthly: "€145", yearly: "€139", highlight: true },
   { key: "heavy", name: "Heavy", tagline: "Enterprise scale", monthly: "Upon request", yearly: "Upon request" },
 ];
 
@@ -76,6 +76,10 @@ export default function Subscriptions() {
   const [cycle, setCycle] = useState<Cycle>("yearly");
 
   const goToSignup = (planKey: PlanKey) => {
+    if (planKey === "heavy") {
+      window.location.href = "mailto:info@chrysal.co.ke?subject=Heavy%20tier%20enquiry";
+      return;
+    }
     const tier = SIGNUP_TIER[planKey];
     navigate(`/signup?tier=${tier}&cycle=${cycle}`);
   };
