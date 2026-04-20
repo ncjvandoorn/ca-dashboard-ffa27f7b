@@ -133,7 +133,7 @@ export function buildLoggerSeries(rows: LoggerReading[]): LoggerSeries[] {
 
     const flags: LoggerExceptionFlag[] = [];
 
-    const t5 = longestRunMs(rdgs, (r) => r.temp != null && r.temp > 5);
+    const t5 = longestRunMs(rdgs, (r) => r.temp != null && r.temp > 3);
     if (t5.ms > 3 * DAY_MS) {
       flags.push({ rule: "temp_above_5", durationMs: t5.ms, start: t5.start, end: t5.end });
     }
