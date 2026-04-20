@@ -27,7 +27,7 @@ function formatDate(ts: number | null): string {
 }
 
 export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isCustomer } = useAuth();
   const [vfTracking, setVfTracking] = useState<VFTracking | null>(null);
   const { readings, isLoading: readingsLoading } = useSensiwatchReadings(
     trip?.serialNumber ?? null,
@@ -122,16 +122,17 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
         <div
           data-pdf-section
           className={`grid grid-cols-1 gap-4 ${
-            isAdmin ? "md:grid-cols-[1fr_1fr_0.85fr]" : "md:grid-cols-2"
+            (isAdmin || isCustomer) ? "md:grid-cols-[1fr_1fr_0.85fr]" : "md:grid-cols-2"
           }`}
         >
           <MostRecentCard trip={trip} />
           <OriginCard trip={trip} />
-          {isAdmin && (
+          {(isAdmin || isCustomer) && (
             <VesselTrackingCard
               containerId={containerId || null}
               defaultContainerNumber={orderInfo?.containerNumber || null}
               isAdmin={isAdmin}
+              isCustomer={isCustomer}
               onTrackingChange={setVfTracking}
             />
           )}
