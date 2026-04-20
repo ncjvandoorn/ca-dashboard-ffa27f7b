@@ -43,6 +43,9 @@ export type SFTrip = {
   lastHumidity: number | null;
   lastReadingTime: string | null;
   lastLocation: string | null;
+  /** True when the most recent reading came from the one-off historical
+   *  backfill — i.e. no live SensiWatch push has arrived since. */
+  isBackfillOnly: boolean;
 };
 
 /** A grouped container row — collapses all trips/orders sharing the same
