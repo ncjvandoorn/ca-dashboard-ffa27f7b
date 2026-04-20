@@ -16,6 +16,7 @@ import {
   Users,
   ClipboardCheck,
   UserCircle,
+  Activity,
 } from "lucide-react";
 
 interface AppMenuItemsProps {
@@ -81,6 +82,12 @@ export function AppMenuItems({ onOpenContainers }: AppMenuItemsProps = {}) {
         <DropdownMenuItem onClick={() => navigate("/planner")}>
           <CalendarRange className="h-4 w-4 mr-2" />
           Trial Planner
+        </DropdownMenuItem>
+      )}
+      {can("data_loggers") && (
+        <DropdownMenuItem onClick={() => navigate("/data-loggers")}>
+          <Activity className="h-4 w-4 mr-2" />
+          Data Loggers
         </DropdownMenuItem>
       )}
       {can("reporting_check") && (
