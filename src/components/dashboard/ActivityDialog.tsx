@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import type { Activity } from "@/lib/csvParser";
+import type { Activity, User } from "@/lib/csvParser";
 
 interface FarmInsight {
   farmId: string;
@@ -31,6 +31,7 @@ interface ActivityDialogProps {
   farmId: string;
   farmName: string;
   activities: Activity[];
+  users?: User[];
   analysis: AIAnalysis | null;
 }
 
