@@ -1,10 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { SFTrip, SFOrderInfo } from "@/pages/ActiveSF";
 import { useSensiwatchReadings } from "@/hooks/useSensiwatchData";
-import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts } from "@/hooks/useQualityData";
-import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2 } from "lucide-react";
+import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts, useQualityReports, useUsers } from "@/hooks/useQualityData";
+import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { TripPathMap } from "./TripPathMap";
 import { useMemo, useRef, useState } from "react";
@@ -12,6 +13,7 @@ import { VesselTrackingCard } from "./VesselTrackingCard";
 import { ExportPdfButton } from "./ExportPdfButton";
 import { useAuth } from "@/hooks/useAuth";
 import type { VFTracking } from "@/hooks/useVesselFinder";
+import { QualityReportBody } from "./QualityReportBody";
 
 interface Props {
   trip: SFTrip | null;
@@ -36,6 +38,21 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
   const { data: shipperArrivals } = useShipperArrivals();
   const { data: servicesOrders } = useServicesOrders();
   const { data: accounts } = useAccounts();
+  const { data: qualityReports } = useQualityReports();
+  const { data: users } = useUsers();
+  const [expandedReportFor, setExpandedReportFor] = useState<string | null>(null);
+
+  const qualityReportMap = useMemo(() => {
+    const m = new Map<string, NonNullable<typeof qualityReports>[number]>();
+    (qualityReports || []).forEach((r) => m.set(r.id, r));
+    return m;
+  }, [qualityReports]);
+
+  const userNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (users || []).forEach((u) => m.set(u.id, u.name));
+    return m;
+  }, [users]);
 
   const containerId = orderInfo?.containerId || "";
 
@@ -240,6 +257,39 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                             {arrival.specificComments && <p className="text-foreground/80 italic">"{arrival.specificComments}"</p>}
                           </div>
                         )}
+                        {(() => {
+                          const qrId = o.qualityReportId;
+                          const qr = qrId ? qualityReportMap.get(qrId) : null;
+                          if (!qr) return null;
+                          const isOpen = expandedReportFor === o.id;
+                          const farmName = accountNameMap.get(qr.farmAccountId) || accountNameMap.get(o.farmAccountId) || "—";
+                          const createdByName =
+                            (qr.submittedByUserId && userNameMap.get(qr.submittedByUserId)) ||
+                            (qr.createdByUserId && userNameMap.get(qr.createdByUserId)) ||
+                            (qr.updatedByUserId && userNameMap.get(qr.updatedByUserId)) ||
+                            qr.signoffName ||
+                            "—";
+                          return (
+                            <div className="mt-2 pt-2 border-t border-border">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs gap-1 text-primary hover:text-primary"
+                                onClick={() => setExpandedReportFor(isOpen ? null : o.id)}
+                              >
+                                {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                <FileText className="h-3.5 w-3.5" />
+                                {isOpen ? "Hide Quality Report" : "Quality Report"}
+                                <span className="text-muted-foreground ml-1">· wk {qr.weekNr}</span>
+                              </Button>
+                              {isOpen && (
+                                <div className="mt-3 rounded-lg bg-muted/20 border border-border p-2" data-pdf-section>
+                                  <QualityReportBody report={qr} farmName={farmName} createdByName={createdByName} />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}
