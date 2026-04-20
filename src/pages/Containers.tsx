@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowUp, ArrowDown, Search, FileDown, ArrowLeft } from "lucide-react";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
+import { useAuth } from "@/hooks/useAuth";
 import {
   useContainers,
   useServicesOrders,
@@ -45,6 +46,7 @@ type SortDir = "asc" | "desc";
 
 export default function Containers() {
   const navigate = useNavigate();
+  const { isCustomer, customerAccount } = useAuth();
   const { data: containers, isLoading } = useContainers();
   const { data: servicesOrders } = useServicesOrders();
   const { data: orderDatalogdevices } = useServicesOrderDatalogdevices();
@@ -86,16 +88,26 @@ export default function Containers() {
 
   const shippingLineName = (id: string) => shippingLineNameMap.get(id) || id;
 
+  // Customers only see orders where they are the customer
+  const scopedOrders = useMemo(() => {
+    if (!servicesOrders) return [];
+    if (!isCustomer) return servicesOrders;
+    if (!customerAccount) return [];
+    return servicesOrders.filter(
+      (o) => o.customerAccountId === customerAccount.customerAccountId
+    );
+  }, [servicesOrders, isCustomer, customerAccount]);
+
   const ordersByContainer = useMemo(() => {
     const m = new Map<string, typeof servicesOrders>();
-    (servicesOrders || []).forEach((o) => {
+    scopedOrders.forEach((o) => {
       if (!o.containerId) return;
       const arr = m.get(o.containerId) || [];
       arr.push(o);
       m.set(o.containerId, arr);
     });
     return m;
-  }, [servicesOrders]);
+  }, [scopedOrders]);
 
   const arrivalsByOrder = useMemo(() => {
     const m = new Map<string, typeof shipperArrivals>();
@@ -126,12 +138,15 @@ export default function Containers() {
   };
   const rows = useMemo<Row[]>(() => {
     if (!containers) return [];
-    return containers.map((c) => ({
-      rowKey: c.id,
-      container: c,
-      orders: ordersByContainer.get(c.id) || [],
-    }));
-  }, [containers, ordersByContainer]);
+    return containers
+      .map((c) => ({
+        rowKey: c.id,
+        container: c,
+        orders: ordersByContainer.get(c.id) || [],
+      }))
+      // Customers only see containers with at least one of their orders
+      .filter((r) => (isCustomer ? r.orders.length > 0 : true));
+  }, [containers, ordersByContainer, isCustomer]);
 
   const weekOptions = useMemo(() => {
     if (!containers) return [];
