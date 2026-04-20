@@ -1,10 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { SFTrip, SFOrderInfo } from "@/pages/ActiveSF";
 import { useSensiwatchReadings } from "@/hooks/useSensiwatchData";
-import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts } from "@/hooks/useQualityData";
-import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2 } from "lucide-react";
+import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts, useQualityReports, useUsers } from "@/hooks/useQualityData";
+import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { TripPathMap } from "./TripPathMap";
 import { useMemo, useRef, useState } from "react";
@@ -12,6 +13,7 @@ import { VesselTrackingCard } from "./VesselTrackingCard";
 import { ExportPdfButton } from "./ExportPdfButton";
 import { useAuth } from "@/hooks/useAuth";
 import type { VFTracking } from "@/hooks/useVesselFinder";
+import { QualityReportBody } from "./QualityReportBody";
 
 interface Props {
   trip: SFTrip | null;
