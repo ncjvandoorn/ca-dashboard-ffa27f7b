@@ -100,8 +100,14 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !/^[a-z0-9_-]+$/.test(username)) {
-      toast({ title: "Invalid username", description: "Use only lowercase letters, numbers, _ and -", variant: "destructive" });
+
+    if (mode === "invite") {
+      if (!username || !/^[a-z0-9_-]+$/.test(username)) {
+        toast({ title: "Invalid invitation", description: "Verify your code first", variant: "destructive" });
+        return;
+      }
+    } else if (!companyName.trim()) {
+      toast({ title: "Company name required", variant: "destructive" });
       return;
     }
     if (password.length < 6) {
@@ -129,19 +135,12 @@ export default function Signup() {
             }
           : {
               action: "signup_public",
-              username: username.toLowerCase(),
               password,
               companyName: companyName.trim(),
               tier,
               billingCycle,
               contactEmail: cleanEmail,
             };
-
-      if (mode === "public" && !payload.companyName) {
-        toast({ title: "Company name required", variant: "destructive" });
-        setSubmitting(false);
-        return;
-      }
 
       const res = await fetch(fnUrl("customer-signup"), {
         method: "POST",
