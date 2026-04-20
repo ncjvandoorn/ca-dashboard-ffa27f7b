@@ -635,7 +635,7 @@ const ActiveSF = () => {
                   <TableHead>Shipping</TableHead>
                   <TableHead>Origin</TableHead>
                   <TableHead>Destination</TableHead>
-                  {(isAdmin || isCustomer) && <TableHead className="text-center">Tracking</TableHead>}
+                  {(isAdmin || isCustomer) && <TableHead className="text-center whitespace-nowrap">DL · Tracking</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -766,27 +766,61 @@ const ActiveSF = () => {
                       </TableCell>
                       {(isAdmin || isCustomer) && (
                         <TableCell className="text-center">
-                          {(() => {
-                            if (!vf || !vf.enabled) {
-                              return <span className="text-muted-foreground/50 text-xs">—</span>;
-                            }
-                            const cls =
-                              vf.status === "success"
-                                ? "bg-accent"
-                                : vf.status === "error"
-                                ? "bg-destructive"
-                                : "bg-primary animate-pulse";
-                            return (
-                              <span className="inline-flex items-center gap-1.5 text-[10px]">
-                                <span className={`h-2 w-2 rounded-full ${cls}`} />
-                                {vf.status !== "success" && (
-                                  <span className="text-muted-foreground capitalize">
-                                    {vf.status}
+                          <div className="inline-flex items-center gap-3">
+                            {/* DL dot: green if any logger is sending live data, red if only backfill, dash if no logger */}
+                            {(() => {
+                              if (g.tripsWithData.length === 0) {
+                                return (
+                                  <span
+                                    className="inline-flex items-center gap-1 text-[10px]"
+                                    title="No datalogger linked"
+                                  >
+                                    <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+                                    <span className="text-muted-foreground">DL</span>
                                   </span>
-                                )}
-                              </span>
-                            );
-                          })()}
+                                );
+                              }
+                              const hasLive = g.tripsWithData.some((t) => !t.isBackfillOnly);
+                              return (
+                                <span
+                                  className="inline-flex items-center gap-1 text-[10px]"
+                                  title={hasLive ? "Live SensiWatch data" : "Historical backfill only — no live push"}
+                                >
+                                  <span className={`h-2 w-2 rounded-full ${hasLive ? "bg-accent" : "bg-destructive"}`} />
+                                  <span className="text-muted-foreground">DL</span>
+                                </span>
+                              );
+                            })()}
+                            {/* Tracking dot: green when active VF tracking, red otherwise */}
+                            {(() => {
+                              if (!vf || !vf.enabled) {
+                                return (
+                                  <span
+                                    className="inline-flex items-center gap-1 text-[10px]"
+                                    title="No active vessel tracking"
+                                  >
+                                    <span className="h-2 w-2 rounded-full bg-destructive" />
+                                  </span>
+                                );
+                              }
+                              const cls =
+                                vf.status === "success"
+                                  ? "bg-accent"
+                                  : vf.status === "error"
+                                  ? "bg-destructive"
+                                  : "bg-primary animate-pulse";
+                              return (
+                                <span className="inline-flex items-center gap-1 text-[10px]">
+                                  <span className={`h-2 w-2 rounded-full ${cls}`} />
+                                  {vf.status !== "success" && (
+                                    <span className="text-muted-foreground capitalize">
+                                      {vf.status}
+                                    </span>
+                                  )}
+                                </span>
+                              );
+                            })()}
+                          </div>
                         </TableCell>
                       )}
                     </TableRow>
