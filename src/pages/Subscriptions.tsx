@@ -134,8 +134,9 @@ export default function Subscriptions() {
               Intelligent Sea Freight tracking.
             </h2>
             <p className="mt-3 text-base text-muted-foreground max-w-2xl">
-              Pick the plan that matches how deep you want to go — from essential
-              quality insights to full live container tracking and unlimited scale.
+              Pick the plan that matches how deep you want to go
+              <br />
+              from essential quality insights to full live container tracking and unlimited scale.
             </p>
 
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl">
