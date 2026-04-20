@@ -175,18 +175,16 @@ const ActiveSF = () => {
       tripsByOrder.get(key)!.push(t);
     }
     const rows: SFTrip[] = [];
-    const usedTripIds = new Set<string>();
-    // 1) one row per (order × logger). When an order has multiple loggers we
-    //    emit one trip-row per logger so they all surface in the table; the
-    //    container-level grouping below collapses them into one displayed row
-    //    while still letting the popup expose every logger.
+    // One row per (order × logger). When an order has multiple loggers we emit
+    // one trip-row per logger so they all surface in the table; the
+    // container-level grouping below collapses them into one displayed row
+    // while still letting the popup expose every logger.
+    // Orphan trips (no matching order) are intentionally not emitted —
+    // Active SF only displays orders that resolve to a real container.
     for (const [orderNumber, info] of orderInfo.entries()) {
       const ts = tripsByOrder.get(orderNumber);
       if (ts && ts.length) {
-        for (const t of ts) {
-          usedTripIds.add(t.tripId);
-          rows.push(t);
-        }
+        for (const t of ts) rows.push(t);
       } else {
         // Synthetic row for an order with no datalogger trip yet
         rows.push({
@@ -212,10 +210,6 @@ const ActiveSF = () => {
         });
       }
     }
-    // Note: orphan trips (sensiwatch trips not linked to any order) are
-    // intentionally NOT added — Active SF only displays orders that resolve
-    // to a real container. The `filtered` step would drop them anyway.
-    void usedTripIds; // kept for clarity above; no orphan emission needed
     return rows;
   }, [trips, orderInfo]);
 
