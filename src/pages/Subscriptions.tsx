@@ -311,7 +311,11 @@ export default function Subscriptions() {
                 <tr className="border-t border-border">
                   <td className="px-4 py-3 text-foreground">Monthly renewal</td>
                   {PLANS.map((p) => (
-                    <td key={p.key} className="px-4 py-3 text-center font-semibold text-foreground">
+                    <td
+                      key={p.key}
+                      className="px-4 py-3 text-center font-semibold text-foreground opacity-0 select-none"
+                      aria-hidden="true"
+                    >
                       {p.monthly}
                     </td>
                   ))}
@@ -319,7 +323,11 @@ export default function Subscriptions() {
                 <tr className="border-t border-border">
                   <td className="px-4 py-3 text-foreground">Yearly renewal (per month)</td>
                   {PLANS.map((p) => (
-                    <td key={p.key} className="px-4 py-3 text-center font-semibold text-foreground">
+                    <td
+                      key={p.key}
+                      className="px-4 py-3 text-center font-semibold text-foreground opacity-0 select-none"
+                      aria-hidden="true"
+                    >
                       {p.yearly}
                     </td>
                   ))}
@@ -347,7 +355,7 @@ export default function Subscriptions() {
           </div>
         </Card>
 
-        <p className="text-xs text-muted-foreground text-center">
+        <p className="text-xs text-muted-foreground text-center opacity-0 select-none" aria-hidden="true">
           All prices in euros (EUR), excluding VAT. Contact us for custom Heavy plan pricing.
         </p>
       </main>
