@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LineChart,
@@ -11,8 +11,11 @@ import {
   Legend,
   ReferenceLine,
 } from "recharts";
-import { ArrowLeft, Loader2, AlertTriangle, Filter } from "lucide-react";
+import { ArrowLeft, Loader2, AlertTriangle, Filter, RefreshCw } from "lucide-react";
 import chrysalLogo from "@/assets/chrysal-logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,7 +36,7 @@ import {
   useContainers,
 } from "@/hooks/useQualityData";
 import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
-import { useAllSensiwatchReadings } from "@/hooks/useAllSensiwatchReadings";
+import { fetchAllSensiwatchReadings } from "@/hooks/useAllSensiwatchReadings";
 import {
   buildLoggerSeries,
   EXCEPTION_RULES,
@@ -61,15 +64,48 @@ function shortDate(iso: string | null): string {
 
 const TWELVE_WEEKS_MS = 12 * 7 * 24 * 60 * 60 * 1000;
 
+/** Week nr in YYWW format. Week 1 = Sat–Fri week containing Jan 1. */
+function getCurrentWeekNr(): number {
+  const now = new Date();
+  const daysSinceSat = (now.getDay() + 1) % 7;
+  const currentSat = new Date(now);
+  currentSat.setDate(now.getDate() - daysSinceSat);
+  currentSat.setHours(0, 0, 0, 0);
+  const jan1 = new Date(currentSat.getFullYear(), 0, 1);
+  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
+  const week1Sat = new Date(jan1);
+  week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
+  week1Sat.setHours(0, 0, 0, 0);
+  const weekNum = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
+  const year = currentSat.getFullYear() % 100;
+  return year * 100 + weekNum;
+}
+
+function formatCachedAt(iso: string | null): string {
+  if (!iso) return "never";
+  const d = new Date(iso);
+  return d.toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
 const DataLoggers = () => {
   const navigate = useNavigate();
+  const { isAdmin, roleKey } = useAuth();
+  const canRefresh = isAdmin || roleKey === "user";
+
   const [activeFilters, setActiveFilters] = useState<Set<ExceptionType>>(
     new Set(EXCEPTION_RULES.map((r) => r.key))
   );
   const [last12Weeks, setLast12Weeks] = useState(true);
   const [selectedSerial, setSelectedSerial] = useState<string | null>(null);
 
-  const { data: readings, isLoading: loadingReadings, error } = useAllSensiwatchReadings();
+  // Cached analysis state — loaded from cloud, refreshed on demand only.
+  const [allSeries, setAllSeries] = useState<LoggerSeries[]>([]);
+  const [cachedAt, setCachedAt] = useState<string | null>(null);
+  const [cacheWeekNr, setCacheWeekNr] = useState<number | null>(null);
+  const [loadingCache, setLoadingCache] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const { data: trips } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
   const { data: accounts } = useAccounts();
@@ -116,8 +152,68 @@ const DataLoggers = () => {
     return m;
   }, [servicesOrders, accounts, customerFarms, containers]);
 
-  // Compute exception series once (heavy — only runs when readings change).
-  const allSeries = useMemo(() => buildLoggerSeries(readings), [readings]);
+  // Load latest cached analysis from cloud on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingCache(true);
+      const { data, error: qErr } = await supabase
+        .from("data_loggers_report_cache" as any)
+        .select("analysis, week_nr, created_at")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (qErr) {
+        setError(qErr.message);
+      } else if (data) {
+        const payload = (data as any).analysis as { allSeries?: LoggerSeries[] } | null;
+        setAllSeries(payload?.allSeries || []);
+        setCachedAt((data as any).created_at || null);
+        setCacheWeekNr((data as any).week_nr ?? null);
+      }
+      setLoadingCache(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onRefresh = async () => {
+    if (!canRefresh) return;
+    setRefreshing(true);
+    setError(null);
+    try {
+      const readings = await fetchAllSensiwatchReadings();
+      const series = buildLoggerSeries(readings);
+      // Drop readings of non-flagged loggers — they're never used in the UI
+      // and would inflate the cache payload massively.
+      const trimmed: LoggerSeries[] = series.map((s) =>
+        s.flags.length === 0 ? { ...s, readings: [] } : s,
+      );
+      const weekNr = getCurrentWeekNr();
+      const { error: upErr } = await supabase
+        .from("data_loggers_report_cache" as any)
+        .upsert({ week_nr: weekNr, analysis: { allSeries: trimmed } }, { onConflict: "week_nr" });
+      if (upErr) throw new Error(upErr.message);
+      setAllSeries(trimmed);
+      setCachedAt(new Date().toISOString());
+      setCacheWeekNr(weekNr);
+      toast({
+        title: "Analysis refreshed",
+        description: `Re-analysed ${readings.length.toLocaleString()} readings · ${
+          trimmed.filter((s) => s.flags.length > 0).length
+        } flagged loggers.`,
+      });
+    } catch (err: any) {
+      const msg = err?.message || "Refresh failed";
+      setError(msg);
+      toast({ title: "Refresh failed", description: msg, variant: "destructive" });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
 
   // Filter to loggers that have at least one *currently selected* exception,
   // and (optionally) restrict to the last 12 weeks of activity.
@@ -246,9 +342,33 @@ const DataLoggers = () => {
             <PageHeaderActions />
           </div>
           <div className="container mx-auto px-6 pb-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              <h1 className="text-2xl font-semibold">Data Loggers — Exception Report</h1>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <h1 className="text-2xl font-semibold">Data Loggers — Exception Report</h1>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">
+                  Last refreshed: {formatCachedAt(cachedAt)}
+                  {cacheWeekNr ? ` · week ${cacheWeekNr}` : ""}
+                </span>
+                {canRefresh && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onRefresh}
+                    disabled={refreshing || loadingCache}
+                    className="gap-2"
+                  >
+                    {refreshing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    )}
+                    {refreshing ? "Refreshing…" : "Refresh analysis"}
+                  </Button>
+                )}
+              </div>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               Loggers across all trips that hit one of the exception rules below. Click any
@@ -316,20 +436,30 @@ const DataLoggers = () => {
           </section>
 
           {/* Status / loading */}
-          {loadingReadings && (
+          {(loadingCache || refreshing) && (
             <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-sm">Analysing every datalogger reading…</span>
+              <span className="text-sm">
+                {refreshing ? "Re-analysing every datalogger reading…" : "Loading saved analysis…"}
+              </span>
             </div>
           )}
-          {error && (
+          {error && !refreshing && !loadingCache && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-              Could not load readings: {error}
+              {error}
+            </div>
+          )}
+          {!loadingCache && !refreshing && allSeries.length === 0 && !error && (
+            <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground text-center">
+              No saved analysis yet.
+              {canRefresh
+                ? " Click \u201CRefresh analysis\u201D to compute one from the latest data."
+                : " Ask an admin to refresh the analysis."}
             </div>
           )}
 
           {/* Multigraph */}
-          {!loadingReadings && (
+          {!loadingCache && !refreshing && allSeries.length > 0 && (
             <section className="rounded-xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-baseline justify-between gap-2 flex-wrap">
                 <h2 className="font-semibold text-base">
@@ -434,7 +564,7 @@ const DataLoggers = () => {
           )}
 
           {/* Flagged loggers table */}
-          {!loadingReadings && (
+          {!loadingCache && !refreshing && allSeries.length > 0 && (
             <section className="rounded-xl border border-border bg-card overflow-hidden">
               <div className="px-4 py-3 border-b border-border flex items-baseline justify-between">
                 <h2 className="font-semibold text-base">
