@@ -59,11 +59,14 @@ function shortDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
 }
 
+const TWELVE_WEEKS_MS = 12 * 7 * 24 * 60 * 60 * 1000;
+
 const DataLoggers = () => {
   const navigate = useNavigate();
   const [activeFilters, setActiveFilters] = useState<Set<ExceptionType>>(
     new Set(EXCEPTION_RULES.map((r) => r.key))
   );
+  const [last12Weeks, setLast12Weeks] = useState(true);
   const [selectedSerial, setSelectedSerial] = useState<string | null>(null);
 
   const { data: readings, isLoading: loadingReadings, error } = useAllSensiwatchReadings();
