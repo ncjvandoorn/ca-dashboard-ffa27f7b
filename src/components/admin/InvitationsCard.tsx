@@ -54,6 +54,8 @@ export const InvitationsCard = () => {
   const [usernameInput, setUsernameInput] = useState("");
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const customerNameMap = useMemo(
     () => new Map((allAccounts || []).map((a) => [a.id, a.name])),
