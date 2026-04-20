@@ -196,7 +196,71 @@ export const CustomerAccountsCard = () => {
     }
   };
 
-  return (
+  const openCreditDialog = async (ca: ExtendedCustomerAccount) => {
+    setCreditDialogFor(ca);
+    setGrantAmount("");
+    setGrantNote("");
+    setCreditHistoryLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: "credit_history", customerAccountId: ca.id }),
+      });
+      const data = await res.json();
+      setCreditHistory(data.history || []);
+    } catch {
+      setCreditHistory([]);
+    } finally {
+      setCreditHistoryLoading(false);
+    }
+  };
+
+  const grantCredits = async () => {
+    if (!creditDialogFor) return;
+    const amt = parseInt(grantAmount, 10);
+    if (!Number.isFinite(amt) || amt === 0) {
+      toast({ title: "Enter a non-zero amount", variant: "destructive" });
+      return;
+    }
+    setGranting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          action: "grant_credits",
+          customerAccountId: creditDialogFor.id,
+          delta: amt,
+          note: grantNote || null,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast({ title: "Credits updated" });
+      await openCreditDialog(creditDialogFor);
+      fetchCustomerAccounts();
+      setGrantAmount("");
+      setGrantNote("");
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed",
+        variant: "destructive",
+      });
+    } finally {
+      setGranting(false);
+    }
+  };
+
     <Card className="mb-8">
       <CardHeader>
         <div className="flex items-center justify-between">
