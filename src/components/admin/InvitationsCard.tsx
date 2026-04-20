@@ -16,9 +16,6 @@ interface Invitation {
   code: string;
   customer_account_id: string;
   company_name: string | null;
-  tier: string;
-  billing_cycle: string;
-  can_see_trials: boolean;
   used_at: string | null;
   used_by_user_id: string | null;
   created_at: string;
