@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { SFTrip, SFOrderInfo } from "@/pages/ActiveSF";
-import { useSensiwatchReadings } from "@/hooks/useSensiwatchData";
+import { useSensiwatchReadings, useMultiSensiwatchReadings } from "@/hooks/useSensiwatchData";
 import {
   useShipperReports,
   useShipperArrivals,
@@ -205,7 +205,9 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
             </div>
           )}
 
-          {/* Per-trip section — tabs when there's more than one logger */}
+          {/* Per-trip section — tabs when there's more than one logger.
+              The multigraph is rendered ONCE below at container scope so all
+              loggers can be compared on a single chart. */}
           {trips.length === 0 ? (
             <div className="rounded-xl border border-border p-6 text-center text-sm text-muted-foreground">
               No datalogger trips for this container.
@@ -236,6 +238,14 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
             </Tabs>
           ) : (
             <TripSection trip={trips[0]} vfTracking={vfTracking} />
+          )}
+
+          {/* Combined multigraph — when multiple loggers, overlays all of them
+              on one chart so transit conditions can be compared at a glance. */}
+          {trips.length > 0 && (
+            <div data-pdf-section>
+              <CombinedMultigraph trips={trips} />
+            </div>
           )}
 
           {/* Shipper Reports — container-level */}
@@ -419,16 +429,14 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
   );
 }
 
-/** A single trip's panel: route map, summary cards, multigraph + stats. */
+/** A single trip's panel: route map, summary cards, and per-trip statistics.
+ *  The multigraph itself is rendered once at container scope so multiple
+ *  loggers can be compared on one chart. */
 function TripSection({ trip, vfTracking }: { trip: SFTrip; vfTracking: VFTracking | null }) {
-  const { readings, isLoading: readingsLoading } = useSensiwatchReadings(
+  const { readings } = useSensiwatchReadings(
     trip.serialNumber ?? null,
     trip.actualDepartureTime ?? null
   );
-
-  const chrysalBlue = "hsl(207, 100%, 35%)";
-  const chrysalGreen = "hsl(90, 67%, 41%)";
-  const chrysalWarm = "hsl(38, 92%, 50%)";
 
   return (
     <div className="space-y-4">
@@ -441,109 +449,143 @@ function TripSection({ trip, vfTracking }: { trip: SFTrip; vfTracking: VFTrackin
         <OriginCard trip={trip} />
       </div>
 
-      <Tabs defaultValue="multigraph" className="w-full" data-pdf-section>
-        <TabsList>
-          <TabsTrigger value="multigraph">Multigraph</TabsTrigger>
-          <TabsTrigger value="statistics">Trip Statistics</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-3 gap-4" data-pdf-section>
+        <StatBox
+          label="Avg Temperature"
+          value={
+            readings.length > 0
+              ? (readings.reduce((s, r) => s + r.temp, 0) / readings.length).toFixed(1) + " °C"
+              : "—"
+          }
+          color="text-primary"
+        />
+        <StatBox
+          label="Avg Humidity"
+          value={
+            readings.length > 0
+              ? (readings.reduce((s, r) => s + r.humidity, 0) / readings.length).toFixed(1) + " %"
+              : "—"
+          }
+          color="text-accent"
+        />
+        <StatBox
+          label="Max Light"
+          value={
+            readings.length > 0
+              ? Math.max(...readings.map((r) => r.light)).toFixed(1) + " %"
+              : "—"
+          }
+          color="text-warning"
+        />
+      </div>
+    </div>
+  );
+}
 
-        <TabsContent value="multigraph">
-          {readingsLoading ? (
-            <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-sm">Loading sensor data…</span>
-            </div>
-          ) : readings.length > 0 ? (
-            <div className="h-[300px] mt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={readings} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis
-                    dataKey="time"
-                    tick={{ fontSize: 10 }}
-                    interval={Math.max(0, Math.floor(readings.length / 6))}
-                  />
-                  <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
-                  <Tooltip
-                    contentStyle={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                  />
-                  <Legend />
+// Color palette for per-logger lines in the combined multigraph. Each logger
+// gets a temp/humidity/light triple drawn in the same hue family so they're
+// visually grouped.
+const LOGGER_COLORS: { temp: string; humidity: string; light: string }[] = [
+  { temp: "hsl(207, 100%, 35%)", humidity: "hsl(90, 67%, 41%)", light: "hsl(38, 92%, 50%)" },
+  { temp: "hsl(340, 75%, 45%)", humidity: "hsl(170, 70%, 38%)", light: "hsl(20, 90%, 55%)" },
+  { temp: "hsl(265, 65%, 50%)", humidity: "hsl(195, 75%, 42%)", light: "hsl(55, 90%, 50%)" },
+  { temp: "hsl(0, 70%, 45%)", humidity: "hsl(140, 60%, 40%)", light: "hsl(45, 95%, 52%)" },
+];
+
+/** Combined multigraph for one or many loggers on a container. When only a
+ *  single logger is present this is identical to the previous per-trip graph;
+ *  with multiple loggers each metric gets one line per serial. */
+function CombinedMultigraph({ trips }: { trips: SFTrip[] }) {
+  const serials = useMemo(
+    () => trips.map((t) => t.serialNumber).filter((s): s is string => !!s),
+    [trips]
+  );
+  const { data, isLoading } = useMultiSensiwatchReadings(serials);
+  const isMulti = serials.length > 1;
+
+  return (
+    <div className="rounded-xl border border-border p-4">
+      <h3 className="font-semibold text-sm mb-3">
+        Multigraph
+        {isMulti && (
+          <span className="ml-2 text-xs font-normal text-muted-foreground">
+            ({serials.length} loggers combined)
+          </span>
+        )}
+      </h3>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm">Loading sensor data…</span>
+        </div>
+      ) : data.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-8 text-center">
+          No sensor readings available.
+        </p>
+      ) : (
+        <div className="h-[320px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis
+                dataKey="time"
+                tick={{ fontSize: 10 }}
+                interval={Math.max(0, Math.floor(data.length / 6))}
+              />
+              <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              {serials.flatMap((sn, i) => {
+                const c = LOGGER_COLORS[i % LOGGER_COLORS.length];
+                const suffix = isMulti ? ` · ${sn}` : "";
+                return [
                   <Line
+                    key={`t-${sn}`}
                     yAxisId="left"
                     type="monotone"
-                    dataKey="temp"
-                    name="Temperature (°C)"
-                    stroke={chrysalBlue}
+                    dataKey={`temp_${sn}`}
+                    name={`Temp (°C)${suffix}`}
+                    stroke={c.temp}
                     strokeWidth={2}
                     dot={false}
-                  />
+                    connectNulls
+                  />,
                   <Line
+                    key={`h-${sn}`}
                     yAxisId="right"
                     type="monotone"
-                    dataKey="humidity"
-                    name="Humidity (%)"
-                    stroke={chrysalGreen}
+                    dataKey={`humidity_${sn}`}
+                    name={`Humidity (%)${suffix}`}
+                    stroke={c.humidity}
                     strokeWidth={2}
                     dot={false}
-                  />
+                    connectNulls
+                  />,
                   <Line
+                    key={`l-${sn}`}
                     yAxisId="right"
                     type="monotone"
-                    dataKey="light"
-                    name="Light (%)"
-                    stroke={chrysalWarm}
+                    dataKey={`light_${sn}`}
+                    name={`Light (%)${suffix}`}
+                    stroke={c.light}
                     strokeWidth={2}
                     dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No sensor readings available for this trip
-            </p>
-          )}
-        </TabsContent>
-
-        <TabsContent value="statistics">
-          <div className="grid grid-cols-3 gap-4 py-4">
-            <StatBox
-              label="Avg Temperature"
-              value={
-                readings.length > 0
-                  ? (readings.reduce((s, r) => s + r.temp, 0) / readings.length).toFixed(1) + " °C"
-                  : "—"
-              }
-              color="text-primary"
-            />
-            <StatBox
-              label="Avg Humidity"
-              value={
-                readings.length > 0
-                  ? (readings.reduce((s, r) => s + r.humidity, 0) / readings.length).toFixed(1) +
-                    " %"
-                  : "—"
-              }
-              color="text-accent"
-            />
-            <StatBox
-              label="Max Light"
-              value={
-                readings.length > 0
-                  ? Math.max(...readings.map((r) => r.light)).toFixed(1) + " %"
-                  : "—"
-              }
-              color="text-warning"
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
+                    connectNulls
+                  />,
+                ];
+              })}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
