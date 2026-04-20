@@ -392,7 +392,8 @@ IDEAL RANGES: pH 3.5–5.0 (>5.5=bacterial risk), EC 200–800 μS/cm, Temp 1–
 3. Never invent farm names, weeks, values, or activities. Use list_farms() if unsure what's available.
 4. For activity COUNTS: always use the ACTIVITY SUMMARY in context. Never count by listing.
 5. Cite specific farm names, week numbers, and exact values from tool results.
-6. Use markdown tables for comparisons. Be concise but complete.`;
+6. Use markdown tables for comparisons. Be concise but complete.
+7. NEVER assume corporate groupings, parent companies, or affiliations between farms based on name similarity (e.g. shared prefix like "AAA Growers"). Only state grouping/ownership if it is explicitly present in tool results.`;
 }
 
 // ============================================================================
