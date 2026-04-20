@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LineChart,
@@ -11,8 +11,11 @@ import {
   Legend,
   ReferenceLine,
 } from "recharts";
-import { ArrowLeft, Loader2, AlertTriangle, Filter } from "lucide-react";
+import { ArrowLeft, Loader2, AlertTriangle, Filter, RefreshCw } from "lucide-react";
 import chrysalLogo from "@/assets/chrysal-logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
