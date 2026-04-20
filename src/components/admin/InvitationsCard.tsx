@@ -78,10 +78,16 @@ export const InvitationsCard = () => {
       toast({ title: "Customer account required", variant: "destructive" });
       return;
     }
+    const cleanUsername = usernameInput.trim().toLowerCase();
+    if (!cleanUsername || !/^[a-z0-9_-]+$/.test(cleanUsername)) {
+      toast({ title: "Username required", description: "Lowercase letters, numbers, _ and - only", variant: "destructive" });
+      return;
+    }
     setCreating(true);
     const data = await call("create_invitation", {
       customerAccountId: accountId,
       companyName: companyName || customerNameMap.get(accountId) || accountId,
+      username: cleanUsername,
     });
     setCreating(false);
     if (data.error) {
@@ -91,6 +97,7 @@ export const InvitationsCard = () => {
     toast({ title: "Invitation created", description: `Code: ${data.invitation.code}` });
     setAccountId("");
     setCompanyName("");
+    setUsernameInput("");
     fetchInvitations();
   };
 
