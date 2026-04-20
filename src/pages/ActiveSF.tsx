@@ -360,7 +360,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year]);
+  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year, last8Weeks]);
 
   // Map tripId -> VF active tracking info (when available for the trip's container)
   const vfByTrip = useMemo(() => {
@@ -590,6 +590,12 @@ const ActiveSF = () => {
               <Label htmlFor="t-sf" className="flex items-center gap-1.5 text-sm cursor-pointer">
                 <Ship className="h-4 w-4" />
                 SF
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="t-8w" checked={last8Weeks} onCheckedChange={setLast8Weeks} />
+              <Label htmlFor="t-8w" className="text-sm cursor-pointer">
+                8 weeks
               </Label>
             </div>
             <div className="flex items-center gap-2">
