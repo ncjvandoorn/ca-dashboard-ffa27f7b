@@ -196,6 +196,7 @@ export const InvitationsCard = () => {
                 <TableRow>
                   <TableHead>Code</TableHead>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Username</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
@@ -207,6 +208,7 @@ export const InvitationsCard = () => {
                     <TableCell className="text-sm">
                       {inv.company_name || customerNameMap.get(inv.customer_account_id) || inv.customer_account_id}
                     </TableCell>
+                    <TableCell className="text-sm font-mono">{inv.username || "—"}</TableCell>
                     <TableCell>
                       {inv.used_at ? (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Used</span>
