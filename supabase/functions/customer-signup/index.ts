@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
 
       const { data: inv } = await supabaseAdmin
         .from("customer_invitations")
-        .select("id, code, customer_account_id, company_name, tier, billing_cycle, can_see_trials, used_at")
+        .select("id, code, customer_account_id, company_name, used_at")
         .eq("code", code)
         .maybeSingle();
 
@@ -56,9 +56,6 @@ Deno.serve(async (req) => {
           code: inv.code,
           customer_account_id: inv.customer_account_id,
           company_name: inv.company_name,
-          tier: inv.tier,
-          billing_cycle: inv.billing_cycle,
-          can_see_trials: inv.can_see_trials,
         },
       });
     }
@@ -68,10 +65,15 @@ Deno.serve(async (req) => {
       const code = String(body.code || "").trim().toLowerCase();
       const username = String(body.username || "").trim().toLowerCase();
       const password = String(body.password || "");
+      const tier = String(body.tier || "basic");
+      const billingCycle = String(body.billingCycle || "monthly");
+
       if (!code || !username || password.length < 6) {
         return bad("Code, username and password (min 6 chars) are required");
       }
       if (!/^[a-z0-9_-]+$/.test(username)) return bad("Username may only contain letters, numbers, _ and -");
+      if (!VALID_TIERS.includes(tier as typeof VALID_TIERS[number])) return bad("Invalid tier");
+      if (!VALID_CYCLES.includes(billingCycle as typeof VALID_CYCLES[number])) return bad("Invalid billing cycle");
 
       // fetch invitation
       const { data: inv } = await supabaseAdmin
@@ -98,9 +100,9 @@ Deno.serve(async (req) => {
         user_id: userId,
         customer_account_id: inv.customer_account_id,
         company_name: inv.company_name,
-        tier: inv.tier,
-        billing_cycle: inv.billing_cycle,
-        can_see_trials: inv.can_see_trials,
+        tier,
+        billing_cycle: billingCycle,
+        can_see_trials: false,
         status: "active",
         approved_at: new Date().toISOString(),
       });
@@ -115,8 +117,8 @@ Deno.serve(async (req) => {
         .update({ used_at: new Date().toISOString(), used_by_user_id: userId })
         .eq("id", inv.id);
 
-      // grant initial signup credits based on tier so they can start using right away
-      const grant = inv.tier === "pro" ? 4 : inv.tier === "pro_plus" ? 10 : 0;
+      // grant initial signup credits based on chosen tier so they can start using right away
+      const grant = tier === "pro" ? 4 : tier === "pro_plus" ? 10 : 0;
       if (grant > 0) {
         const { data: ca } = await supabaseAdmin
           .from("customer_accounts")

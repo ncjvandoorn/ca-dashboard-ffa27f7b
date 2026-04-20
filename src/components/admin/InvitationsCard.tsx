@@ -16,9 +16,6 @@ interface Invitation {
   code: string;
   customer_account_id: string;
   company_name: string | null;
-  tier: string;
-  billing_cycle: string;
-  can_see_trials: boolean;
   used_at: string | null;
   used_by_user_id: string | null;
   created_at: string;
@@ -50,9 +47,6 @@ export const InvitationsCard = () => {
 
   const [accountId, setAccountId] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [tier, setTier] = useState("basic");
-  const [cycle, setCycle] = useState("monthly");
-  const [canSeeTrials, setCanSeeTrials] = useState(false);
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -86,9 +80,6 @@ export const InvitationsCard = () => {
     const data = await call("create_invitation", {
       customerAccountId: accountId,
       companyName: companyName || customerNameMap.get(accountId) || accountId,
-      tier,
-      billingCycle: cycle,
-      canSeeTrials,
     });
     setCreating(false);
     if (data.error) {
@@ -98,7 +89,6 @@ export const InvitationsCard = () => {
     toast({ title: "Invitation created", description: `Code: ${data.invitation.code}` });
     setAccountId("");
     setCompanyName("");
-    setCanSeeTrials(false);
     fetchInvitations();
   };
 
@@ -160,35 +150,9 @@ export const InvitationsCard = () => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <Label className="text-xs">Tier</Label>
-              <select value={tier} onChange={(e) => setTier(e.target.value)} className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm">
-                <option value="basic">Basic</option>
-                <option value="pro">Pro</option>
-                <option value="pro_plus">Pro+</option>
-                <option value="heavy">Heavy</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Billing</Label>
-              <select value={cycle} onChange={(e) => setCycle(e.target.value)} className="w-full h-9 rounded-md border border-input bg-background px-2 text-sm">
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Trials access</Label>
-              <label className="flex items-center gap-2 h-9 text-sm">
-                <input
-                  type="checkbox"
-                  checked={canSeeTrials}
-                  onChange={(e) => setCanSeeTrials(e.target.checked)}
-                />
-                Allow Trials
-              </label>
-            </div>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            The customer chooses their subscription tier and billing cycle when completing signup. Trial access is managed via the Permissions matrix.
+          </p>
           <div className="flex justify-end">
             <Button onClick={create} disabled={creating} size="sm" className="gap-2">
               {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
@@ -210,7 +174,6 @@ export const InvitationsCard = () => {
                 <TableRow>
                   <TableHead>Code</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Plan</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
@@ -221,9 +184,6 @@ export const InvitationsCard = () => {
                     <TableCell className="font-mono text-xs">{inv.code}</TableCell>
                     <TableCell className="text-sm">
                       {inv.company_name || customerNameMap.get(inv.customer_account_id) || inv.customer_account_id}
-                    </TableCell>
-                    <TableCell className="text-sm capitalize">
-                      {inv.tier.replace("_", "+")} · {inv.billing_cycle}
                     </TableCell>
                     <TableCell>
                       {inv.used_at ? (

@@ -22,9 +22,6 @@ interface InvitationDetails {
   code: string;
   customer_account_id: string;
   company_name: string | null;
-  tier: Tier;
-  billing_cycle: Cycle;
-  can_see_trials: boolean;
 }
 
 const fnUrl = (name: string) => `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`;
@@ -89,11 +86,8 @@ export default function Signup() {
   }, []);
 
   const planLabel = useMemo(() => {
-    if (mode === "invite" && invitation) {
-      return `${TIER_LABELS[invitation.tier]} · ${invitation.billing_cycle}`;
-    }
     return `${TIER_LABELS[tier]} · ${billingCycle}`;
-  }, [mode, invitation, tier, billingCycle]);
+  }, [tier, billingCycle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +104,14 @@ export default function Signup() {
     try {
       const payload =
         mode === "invite" && invitation
-          ? { action: "signup_with_invitation", code: invitation.code, username: username.toLowerCase(), password }
+          ? {
+              action: "signup_with_invitation",
+              code: invitation.code,
+              username: username.toLowerCase(),
+              password,
+              tier,
+              billingCycle,
+            }
           : {
               action: "signup_public",
               username: username.toLowerCase(),
@@ -266,55 +267,50 @@ export default function Signup() {
                         <span className="text-muted-foreground">Account:</span>{" "}
                         <strong>{invitation.company_name || invitation.customer_account_id}</strong>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Plan:</span>{" "}
-                        <strong>{TIER_LABELS[invitation.tier]} · {invitation.billing_cycle}</strong>
-                      </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <>
-                  <div className="space-y-1.5">
-                    <Label>Company name</Label>
-                    <Input
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="e.g. Xpol"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Your account will be reviewed and approved by our team before activation.
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label>Plan</Label>
-                      <select
-                        value={tier}
-                        onChange={(e) => setTier(e.target.value as Tier)}
-                        className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-                      >
-                        <option value="basic">Basic</option>
-                        <option value="pro">Pro</option>
-                        <option value="pro_plus">Pro+</option>
-                        <option value="heavy">Heavy</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Billing</Label>
-                      <select
-                        value={billingCycle}
-                        onChange={(e) => setBillingCycle(e.target.value as Cycle)}
-                        className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-                      >
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                      </select>
-                    </div>
-                  </div>
-                </>
+                <div className="space-y-1.5">
+                  <Label>Company name</Label>
+                  <Input
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="e.g. Xpol"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Your account will be reviewed and approved by our team before activation.
+                  </p>
+                </div>
               )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Plan</Label>
+                  <select
+                    value={tier}
+                    onChange={(e) => setTier(e.target.value as Tier)}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="basic">Basic</option>
+                    <option value="pro">Pro</option>
+                    <option value="pro_plus">Pro+</option>
+                    <option value="heavy">Heavy</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Billing</Label>
+                  <select
+                    value={billingCycle}
+                    onChange={(e) => setBillingCycle(e.target.value as Cycle)}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+              </div>
 
               <div className="space-y-1.5">
                 <Label>Username</Label>
