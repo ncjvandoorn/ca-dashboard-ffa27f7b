@@ -61,6 +61,19 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
               Active SF
             </DropdownMenuItem>
           )}
+          {can("trials_dashboard") && (
+            <DropdownMenuItem onClick={() => navigate("/trials")}>
+              <FlaskConical className="h-4 w-4 mr-2" />
+              Trials Dashboard
+            </DropdownMenuItem>
+          )}
+          {can("subscription_plans") && (
+            <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
+              <CreditCard className="h-4 w-4 mr-2" />
+              Subscription Plans
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
           {can("trial_planner") && (
             <DropdownMenuItem onClick={() => navigate("/planner")}>
               <CalendarRange className="h-4 w-4 mr-2" />
@@ -77,18 +90,6 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
             <DropdownMenuItem onClick={() => navigate("/crm")}>
               <Users className="h-4 w-4 mr-2" />
               CRM Activities
-            </DropdownMenuItem>
-          )}
-          {can("trials_dashboard") && (
-            <DropdownMenuItem onClick={() => navigate("/trials")}>
-              <FlaskConical className="h-4 w-4 mr-2" />
-              Trials Dashboard
-            </DropdownMenuItem>
-          )}
-          {can("subscription_plans") && (
-            <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
-              <CreditCard className="h-4 w-4 mr-2" />
-              Subscription Plans
             </DropdownMenuItem>
           )}
           {(isCustomer || can("settings")) && (
