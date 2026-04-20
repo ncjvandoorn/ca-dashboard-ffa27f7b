@@ -359,6 +359,7 @@ const Index = () => {
                   shipperArrivals={isCustomer ? [] : (shipperArrivals || [])}
                   shipperReports={isCustomer ? [] : (shipperReports || [])}
                   sfTrips={isCustomer ? [] : (sfTrips || [])}
+                  customerScope={aiCustomerScope}
                 />
               )}
               {can("all_reports") && (
