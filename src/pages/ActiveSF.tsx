@@ -78,7 +78,7 @@ const ActiveSF = () => {
   const [query, setQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("week");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [selectedTrip, setSelectedTrip] = useState<SFTrip | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<ContainerGroup | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [compareOpen, setCompareOpen] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
