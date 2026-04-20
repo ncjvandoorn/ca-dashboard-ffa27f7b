@@ -144,8 +144,7 @@ export function ControlBar({
   onOpenContainers,
 }: ControlBarProps) {
   const navigate = useNavigate();
-  const { signOut, isCustomer } = useAuth();
-  const { can } = usePermissions();
+  const { isCustomer } = useAuth();
 
   const customers = useMemo(() => {
     const customerIds = new Set(customerFarms.map((cf) => cf.customerAccountId));
