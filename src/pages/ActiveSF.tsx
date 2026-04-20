@@ -146,7 +146,10 @@ const ActiveSF = () => {
         dippingWeek: o.dippingWeek || "",
         bookingCode: c?.bookingCode || "",
         containerNumber: c?.containerNumber || "",
-        containerId: o.containerId || "",
+        // Only expose containerId when the container actually exists in
+        // containers.csv — Active SF should ignore orders pointing at
+        // unknown / removed containers.
+        containerId: c ? o.containerId : "",
         dropoffDate: c?.dropoffDate ?? null,
         shippingDate: c?.shippingDate ?? null,
         purposeName: o.purposeName || "",
