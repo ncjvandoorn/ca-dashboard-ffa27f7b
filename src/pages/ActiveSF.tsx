@@ -252,7 +252,10 @@ const ActiveSF = () => {
           t.actualDepartureTime,
           String(t.stops ?? ""),
           info?.dippingWeek,
+          // Also match just the WW portion (e.g. "12") so users can search by week
+          (info?.dippingWeek || "").slice(2),
           info?.bookingCode,
+          stripLoggerSuffix(t.internalTripId), // order number
           info?.containerNumber,
           info?.customer,
           info?.farm,
