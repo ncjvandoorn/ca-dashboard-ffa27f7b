@@ -78,10 +78,19 @@ export function useSensiwatchTrips() {
 
   useEffect(() => {
     fetchTrips();
-    // Auto-refresh every 60s so new push data appears without manual reload
-    const id = setInterval(fetchTrips, 60_000);
-    // Refetch when the tab regains focus
-    const onFocus = () => fetchTrips();
+    // Background refresh every 5 min so new push data eventually appears
+    // without forcing the table to flicker on every click.
+    const id = setInterval(fetchTrips, 5 * 60_000);
+    // Refetch on focus only if the last fetch is older than 2 min — avoids
+    // re-running on every alt-tab / iframe click.
+    let lastFetchAt = Date.now();
+    const wrapped = async () => {
+      lastFetchAt = Date.now();
+      await fetchTrips();
+    };
+    const onFocus = () => {
+      if (Date.now() - lastFetchAt > 2 * 60_000) wrapped();
+    };
     window.addEventListener("focus", onFocus);
     return () => {
       clearInterval(id);
