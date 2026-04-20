@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
 
       const { data: inv } = await supabaseAdmin
         .from("customer_invitations")
-        .select("id, code, customer_account_id, company_name, used_at")
+        .select("id, code, customer_account_id, company_name, username, used_at")
         .eq("code", code)
         .maybeSingle();
 
@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
           code: inv.code,
           customer_account_id: inv.customer_account_id,
           company_name: inv.company_name,
+          username: inv.username,
         },
       });
     }
@@ -67,11 +68,15 @@ Deno.serve(async (req) => {
       const password = String(body.password || "");
       const tier = String(body.tier || "basic");
       const billingCycle = String(body.billingCycle || "monthly");
+      const contactEmail = String(body.contactEmail || "").trim();
 
       if (!code || !username || password.length < 6) {
         return bad("Code, username and password (min 6 chars) are required");
       }
       if (!/^[a-z0-9_-]+$/.test(username)) return bad("Username may only contain letters, numbers, _ and -");
+      if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+        return bad("A valid contact email is required");
+      }
       if (!VALID_TIERS.includes(tier as typeof VALID_TIERS[number])) return bad("Invalid tier");
       if (!VALID_CYCLES.includes(billingCycle as typeof VALID_CYCLES[number])) return bad("Invalid billing cycle");
 
@@ -83,6 +88,11 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!inv) return bad("Invitation code not found", 404);
       if (inv.used_at) return bad("This invitation has already been used", 410);
+
+      // Enforce admin-assigned username if invitation has one
+      if (inv.username && inv.username !== username) {
+        return bad("This invitation is locked to a specific username");
+      }
 
       const email = `${username}@chrysal.app`;
 
@@ -100,6 +110,7 @@ Deno.serve(async (req) => {
         user_id: userId,
         customer_account_id: inv.customer_account_id,
         company_name: inv.company_name,
+        contact_email: contactEmail,
         tier,
         billing_cycle: billingCycle,
         can_see_trials: false,
@@ -146,11 +157,15 @@ Deno.serve(async (req) => {
       const companyName = String(body.companyName || "").trim();
       const tier = String(body.tier || "basic");
       const billingCycle = String(body.billingCycle || "monthly");
+      const contactEmail = String(body.contactEmail || "").trim();
 
       if (!username || password.length < 6 || !companyName) {
         return bad("Username, company name and password (min 6 chars) are required");
       }
       if (!/^[a-z0-9_-]+$/.test(username)) return bad("Username may only contain letters, numbers, _ and -");
+      if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+        return bad("A valid contact email is required");
+      }
       if (!VALID_TIERS.includes(tier as typeof VALID_TIERS[number])) return bad("Invalid tier");
       if (!VALID_CYCLES.includes(billingCycle as typeof VALID_CYCLES[number])) return bad("Invalid billing cycle");
 
@@ -171,6 +186,7 @@ Deno.serve(async (req) => {
         user_id: userId,
         customer_account_id: `pending:${companyName.slice(0, 60)}`,
         company_name: companyName,
+        contact_email: contactEmail,
         tier,
         billing_cycle: billingCycle,
         can_see_trials: false,

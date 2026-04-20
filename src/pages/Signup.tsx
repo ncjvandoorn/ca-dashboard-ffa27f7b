@@ -22,6 +22,7 @@ interface InvitationDetails {
   code: string;
   customer_account_id: string;
   company_name: string | null;
+  username: string | null;
 }
 
 const fnUrl = (name: string) => `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`;
@@ -50,9 +51,17 @@ export default function Signup() {
 
   // Shared
   const [username, setUsername] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<"active" | "pending" | null>(null);
+
+  // When an invitation is verified and pre-assigned a username, lock it in
+  useEffect(() => {
+    if (invitation?.username) setUsername(invitation.username);
+  }, [invitation]);
+
+  const usernameLocked = mode === "invite" && !!invitation?.username;
 
   const validateInvite = async (c: string) => {
     setInviteLoading(true);
@@ -99,6 +108,11 @@ export default function Signup() {
       toast({ title: "Password too short", description: "Minimum 6 characters", variant: "destructive" });
       return;
     }
+    const cleanEmail = contactEmail.trim();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast({ title: "Valid contact email required", variant: "destructive" });
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -111,6 +125,7 @@ export default function Signup() {
               password,
               tier,
               billingCycle,
+              contactEmail: cleanEmail,
             }
           : {
               action: "signup_public",
@@ -119,6 +134,7 @@ export default function Signup() {
               companyName: companyName.trim(),
               tier,
               billingCycle,
+              contactEmail: cleanEmail,
             };
 
       if (mode === "public" && !payload.companyName) {
@@ -319,10 +335,31 @@ export default function Signup() {
                   onChange={(e) => setUsername(e.target.value.toLowerCase())}
                   placeholder="e.g. xpol"
                   required
+                  readOnly={usernameLocked}
+                  disabled={usernameLocked}
                   autoComplete="username"
                 />
                 <p className="text-xs text-muted-foreground">
-                  {username ? `Login: ${username}@chrysal.app` : "Letters, numbers, _ and - only."}
+                  {usernameLocked
+                    ? `Pre-assigned by your invitation. Login: ${username}@chrysal.app`
+                    : username
+                      ? `Login: ${username}@chrysal.app`
+                      : "Letters, numbers, _ and - only."}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Contact email</Label>
+                <Input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoComplete="email"
+                />
+                <p className="text-xs text-muted-foreground">
+                  We use this only to reach out about your account — your sign-in stays as the username above.
                 </p>
               </div>
 

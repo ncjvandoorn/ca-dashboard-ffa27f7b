@@ -104,12 +104,19 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create_invitation") {
-      const { customerAccountId, companyName, notes } = body;
+      const { customerAccountId, companyName, username, notes } = body;
       if (!customerAccountId) {
         return new Response(JSON.stringify({ error: "customerAccountId required" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+      const cleanUsername = String(username || "").trim().toLowerCase();
+      if (!cleanUsername || !/^[a-z0-9_-]+$/.test(cleanUsername)) {
+        return new Response(
+          JSON.stringify({ error: "Username required (lowercase letters, numbers, _ and -)" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
 
       // Generate code: <slug>-<6 digit hex>
@@ -127,6 +134,7 @@ Deno.serve(async (req) => {
           code,
           customer_account_id: customerAccountId,
           company_name: companyName || null,
+          username: cleanUsername,
           tier: "basic",
           billing_cycle: "monthly",
           can_see_trials: false,

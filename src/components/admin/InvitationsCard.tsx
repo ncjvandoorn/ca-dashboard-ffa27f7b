@@ -16,6 +16,7 @@ interface Invitation {
   code: string;
   customer_account_id: string;
   company_name: string | null;
+  username: string | null;
   used_at: string | null;
   used_by_user_id: string | null;
   created_at: string;
@@ -47,6 +48,7 @@ export const InvitationsCard = () => {
 
   const [accountId, setAccountId] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [usernameInput, setUsernameInput] = useState("");
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -76,10 +78,16 @@ export const InvitationsCard = () => {
       toast({ title: "Customer account required", variant: "destructive" });
       return;
     }
+    const cleanUsername = usernameInput.trim().toLowerCase();
+    if (!cleanUsername || !/^[a-z0-9_-]+$/.test(cleanUsername)) {
+      toast({ title: "Username required", description: "Lowercase letters, numbers, _ and - only", variant: "destructive" });
+      return;
+    }
     setCreating(true);
     const data = await call("create_invitation", {
       customerAccountId: accountId,
       companyName: companyName || customerNameMap.get(accountId) || accountId,
+      username: cleanUsername,
     });
     setCreating(false);
     if (data.error) {
@@ -89,6 +97,7 @@ export const InvitationsCard = () => {
     toast({ title: "Invitation created", description: `Code: ${data.invitation.code}` });
     setAccountId("");
     setCompanyName("");
+    setUsernameInput("");
     fetchInvitations();
   };
 
@@ -150,8 +159,21 @@ export const InvitationsCard = () => {
               />
             </div>
           </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Login username</Label>
+            <Input
+              placeholder="e.g. xpol"
+              value={usernameInput}
+              onChange={(e) => setUsernameInput(e.target.value.toLowerCase())}
+            />
+            <p className="text-xs text-muted-foreground">
+              {usernameInput
+                ? `Customer will sign in as ${usernameInput}@chrysal.app`
+                : "Lowercase letters, numbers, _ and - only. Customer cannot change this."}
+            </p>
+          </div>
           <p className="text-xs text-muted-foreground">
-            The customer chooses their subscription tier and billing cycle when completing signup. Trial access is managed via the Permissions matrix.
+            The customer chooses their subscription tier and billing cycle when completing signup, and provides their contact email. Trial access is managed via the Permissions matrix.
           </p>
           <div className="flex justify-end">
             <Button onClick={create} disabled={creating} size="sm" className="gap-2">
@@ -174,6 +196,7 @@ export const InvitationsCard = () => {
                 <TableRow>
                   <TableHead>Code</TableHead>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Username</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
@@ -185,6 +208,7 @@ export const InvitationsCard = () => {
                     <TableCell className="text-sm">
                       {inv.company_name || customerNameMap.get(inv.customer_account_id) || inv.customer_account_id}
                     </TableCell>
+                    <TableCell className="text-sm font-mono">{inv.username || "—"}</TableCell>
                     <TableCell>
                       {inv.used_at ? (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Used</span>
