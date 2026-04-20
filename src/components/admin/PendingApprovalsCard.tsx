@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, UserCheck, Check, X, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,7 @@ export const PendingApprovalsCard = () => {
   const [pending, setPending] = useState<PendingAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [accountSelect, setAccountSelect] = useState<Record<string, string>>({});
+  const [usernameInput, setUsernameInput] = useState<Record<string, string>>({});
   const [acting, setActing] = useState<string | null>(null);
   const { data: allAccounts } = useAccounts();
   const { data: customerFarms } = useCustomerFarms();
@@ -65,18 +67,23 @@ export const PendingApprovalsCard = () => {
 
   const approve = async (acc: PendingAccount) => {
     const customerAccountId = accountSelect[acc.id];
+    const username = (usernameInput[acc.id] || "").trim().toLowerCase();
     if (!customerAccountId) {
       toast({ title: "Pick a customer account first", variant: "destructive" });
       return;
     }
+    if (!username || !/^[a-z0-9_-]+$/.test(username)) {
+      toast({ title: "Assign a username", description: "Lowercase letters, numbers, _ and - only", variant: "destructive" });
+      return;
+    }
     setActing(acc.id);
-    const data = await call("approve_customer", { id: acc.id, customerAccountId });
+    const data = await call("approve_customer", { id: acc.id, customerAccountId, username });
     setActing(null);
     if (data.error) {
       toast({ title: "Error", description: data.error, variant: "destructive" });
       return;
     }
-    toast({ title: "Approved", description: `${acc.username} is now active.` });
+    toast({ title: "Approved", description: `Login: ${username}@chrysal.app` });
     fetchPending();
   };
 
@@ -85,7 +92,7 @@ export const PendingApprovalsCard = () => {
     setActing(acc.id);
     await call("reject_customer", { id: acc.id, userId: acc.user_id });
     setActing(null);
-    toast({ title: "Rejected", description: `${acc.username} deleted.` });
+    toast({ title: "Rejected", description: `Request from ${acc.company_name || acc.username} deleted.` });
     fetchPending();
   };
 
