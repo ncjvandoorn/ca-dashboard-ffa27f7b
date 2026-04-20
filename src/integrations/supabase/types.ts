@@ -597,6 +597,7 @@ export type Database = {
           destinations: Json | null
           device_name: string | null
           internal_trip_id: string | null
+          is_backfill_only: boolean | null
           last_address: string | null
           last_device_time: string | null
           last_humidity: number | null

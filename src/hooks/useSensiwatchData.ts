@@ -45,6 +45,7 @@ function mapRow(row: any): SFTrip {
     lastHumidity: row.last_humidity,
     lastReadingTime: row.last_device_time ?? null,
     lastLocation: row.last_address ?? null,
+    isBackfillOnly: row.is_backfill_only === true,
   };
 }
 

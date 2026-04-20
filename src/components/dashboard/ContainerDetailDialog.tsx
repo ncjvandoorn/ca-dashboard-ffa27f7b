@@ -567,6 +567,14 @@ function MostRecentCard({ trip }: { trip: SFTrip }) {
           <span className="text-xs text-muted-foreground ml-auto">{trip.lastReadingTime}</span>
         )}
       </div>
+      {trip.isBackfillOnly && (
+        <div className="mb-3 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5">
+          <p className="text-[11px] text-warning-foreground/90 leading-tight">
+            <span className="font-semibold">Historical data only</span> — no live
+            update since the backfill (last reading: 19 Apr 23:59).
+          </p>
+        </div>
+      )}
       {trip.lastLocation && (
         <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
           <MapPin className="h-3 w-3" /> {trip.lastLocation}
