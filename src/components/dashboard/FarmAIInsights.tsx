@@ -215,6 +215,7 @@ export function FarmAIInsights({ farmId, farmName, activities, reports, users, h
         farmId={farmId}
         farmName={farmName}
         activities={activities}
+        users={users}
         analysis={analysis}
       />
       <FarmReportsDialog

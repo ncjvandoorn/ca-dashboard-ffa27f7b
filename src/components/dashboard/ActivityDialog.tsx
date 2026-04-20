@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import type { Activity } from "@/lib/csvParser";
+import type { Activity, User } from "@/lib/csvParser";
 
 interface FarmInsight {
   farmId: string;
@@ -31,6 +31,7 @@ interface ActivityDialogProps {
   farmId: string;
   farmName: string;
   activities: Activity[];
+  users?: User[];
   analysis: AIAnalysis | null;
 }
 
@@ -104,7 +105,8 @@ function formatDate(timestamp: number | null): string {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export function ActivityDialog({ open, onOpenChange, farmId, farmName, activities, analysis }: ActivityDialogProps) {
+export function ActivityDialog({ open, onOpenChange, farmId, farmName, activities, users, analysis }: ActivityDialogProps) {
+  const userMap = useMemo(() => new Map((users ?? []).map((u) => [u.id, u.name])), [users]);
   const farmActivities = useMemo(() => {
     return activities
       .filter((a) => a.accountId === farmId)
@@ -208,6 +210,7 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                             <p className="text-[11px] text-muted-foreground/60 ml-[22px] mt-0.5">
                               {formatDate(activity.startsAt || activity.createdAt)}
                               {activity.type && ` · ${activity.type}`}
+                              {activity.assignedUserId && userMap.get(activity.assignedUserId) && ` · ${userMap.get(activity.assignedUserId)}`}
                             </p>
                           </div>
                         </motion.div>
