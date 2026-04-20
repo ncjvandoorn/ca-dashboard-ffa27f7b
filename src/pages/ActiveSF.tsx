@@ -207,6 +207,7 @@ const ActiveSF = () => {
           lastHumidity: null,
           lastReadingTime: null,
           lastLocation: null,
+          isBackfillOnly: false,
         });
       }
     }
