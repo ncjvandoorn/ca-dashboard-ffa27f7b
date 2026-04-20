@@ -85,7 +85,7 @@ export const InvitationsCard = () => {
     setCreating(true);
     const data = await call("create_invitation", {
       customerAccountId: accountId,
-      companyName: companyName || customerNameMap.get(accountId) || accountId,
+      companyName: customerNameMap.get(accountId) || accountId,
       username: cleanUsername,
     });
     setCreating(false);
@@ -95,7 +95,6 @@ export const InvitationsCard = () => {
     }
     toast({ title: "Invitation created", description: `Code: ${data.invitation.code}` });
     setAccountId("");
-    setCompanyName("");
     setUsernameInput("");
     fetchInvitations();
   };
