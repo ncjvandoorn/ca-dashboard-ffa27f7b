@@ -104,15 +104,13 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create_invitation") {
-      const { customerAccountId, companyName, tier, billingCycle, canSeeTrials, notes } = body;
+      const { customerAccountId, companyName, notes } = body;
       if (!customerAccountId) {
         return new Response(JSON.stringify({ error: "customerAccountId required" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const safeTier = ["basic", "pro", "pro_plus", "heavy"].includes(tier) ? tier : "basic";
-      const safeCycle = ["monthly", "yearly"].includes(billingCycle) ? billingCycle : "monthly";
 
       // Generate code: <slug>-<6 digit hex>
       const slug = String(companyName || customerAccountId).toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 8) || "chry";
@@ -121,15 +119,17 @@ Deno.serve(async (req) => {
         .join("");
       const code = `${slug}-${rand}`;
 
+      // Tier/billing/trials are chosen by the customer at signup, but the
+      // customer_invitations table requires non-null values — store neutral defaults.
       const { data: invRow, error: invErr } = await supabaseAdmin
         .from("customer_invitations")
         .insert({
           code,
           customer_account_id: customerAccountId,
           company_name: companyName || null,
-          tier: safeTier,
-          billing_cycle: safeCycle,
-          can_see_trials: !!canSeeTrials,
+          tier: "basic",
+          billing_cycle: "monthly",
+          can_see_trials: false,
           notes: notes || null,
           created_by: callerId,
         })
