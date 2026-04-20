@@ -103,7 +103,7 @@ export default function Subscriptions() {
                   Subscription Plans
                 </h1>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Choose the Chrysal Intelligence plan that fits your operation
+                  Integrated quality, cold chain & sea freight intelligence platform: on top of every shipment, with live data & insights
                 </p>
               </div>
             </div>
