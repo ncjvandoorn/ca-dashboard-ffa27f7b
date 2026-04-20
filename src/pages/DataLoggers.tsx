@@ -342,9 +342,33 @@ const DataLoggers = () => {
             <PageHeaderActions />
           </div>
           <div className="container mx-auto px-6 pb-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              <h1 className="text-2xl font-semibold">Data Loggers — Exception Report</h1>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <h1 className="text-2xl font-semibold">Data Loggers — Exception Report</h1>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">
+                  Last refreshed: {formatCachedAt(cachedAt)}
+                  {cacheWeekNr ? ` · week ${cacheWeekNr}` : ""}
+                </span>
+                {canRefresh && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onRefresh}
+                    disabled={refreshing || loadingCache}
+                    className="gap-2"
+                  >
+                    {refreshing ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    )}
+                    {refreshing ? "Refreshing…" : "Refresh analysis"}
+                  </Button>
+                )}
+              </div>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
               Loggers across all trips that hit one of the exception rules below. Click any
