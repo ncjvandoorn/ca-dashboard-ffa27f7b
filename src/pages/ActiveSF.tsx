@@ -418,46 +418,47 @@ const ActiveSF = () => {
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search week, booking, container, customer, farm, serial, location, temp…"
+              placeholder="Search week, order, booking, container, customer, farm, serial, location, temp…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9"
             />
           </div>
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger className="h-9 w-[110px]">
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.map((y) => (
+                <SelectItem key={y} value={y}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <span className="text-sm text-muted-foreground">
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
-          <div className="ml-auto flex items-center gap-2 flex-wrap">
-            <Toggle
-              size="sm"
-              variant="outline"
-              pressed={onlySF}
-              onPressedChange={setOnlySF}
-              aria-label="Only Sea Freight"
-            >
-              <Ship className="h-4 w-4" />
-              Only SF
-            </Toggle>
-            <Toggle
-              size="sm"
-              variant="outline"
-              pressed={onlyActiveDL}
-              onPressedChange={setOnlyActiveDL}
-              aria-label="Only active dataloggers"
-            >
-              <Activity className="h-4 w-4" />
-              Only active DL
-            </Toggle>
-            <Toggle
-              size="sm"
-              variant="outline"
-              pressed={onlyLiveTracking}
-              onPressedChange={setOnlyLiveTracking}
-              aria-label="Only live tracking"
-            >
-              <Radio className="h-4 w-4" />
-              Only live tracking
-            </Toggle>
+          <div className="ml-auto flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Switch id="t-sf" checked={onlySF} onCheckedChange={setOnlySF} />
+              <Label htmlFor="t-sf" className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <Ship className="h-4 w-4" />
+                SF
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="t-dl" checked={onlyActiveDL} onCheckedChange={setOnlyActiveDL} />
+              <Label htmlFor="t-dl" className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <Activity className="h-4 w-4" />
+                Active DL
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="t-live" checked={onlyLiveTracking} onCheckedChange={setOnlyLiveTracking} />
+              <Label htmlFor="t-live" className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <Radio className="h-4 w-4" />
+                Live tracking
+              </Label>
+            </div>
             {isAdmin && hiddenIds.size > 0 && (
               <Button
                 variant="ghost"
