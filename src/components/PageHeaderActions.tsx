@@ -31,8 +31,9 @@ interface PageHeaderActionsProps {
 
 export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderActionsProps) {
   const navigate = useNavigate();
-  const { signOut, isCustomer } = useAuth();
-  const { can } = usePermissions();
+  const { signOut, isCustomer, loading: authLoading } = useAuth();
+  const { can, loaded: permsLoaded } = usePermissions();
+  const ready = !authLoading && permsLoaded;
 
   return (
     <div className="flex items-center gap-2">
