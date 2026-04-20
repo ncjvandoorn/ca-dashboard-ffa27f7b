@@ -104,7 +104,14 @@ export default function Signup() {
     try {
       const payload =
         mode === "invite" && invitation
-          ? { action: "signup_with_invitation", code: invitation.code, username: username.toLowerCase(), password }
+          ? {
+              action: "signup_with_invitation",
+              code: invitation.code,
+              username: username.toLowerCase(),
+              password,
+              tier,
+              billingCycle,
+            }
           : {
               action: "signup_public",
               username: username.toLowerCase(),
