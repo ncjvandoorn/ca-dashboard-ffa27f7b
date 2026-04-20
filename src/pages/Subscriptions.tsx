@@ -81,7 +81,13 @@ export default function Subscriptions() {
                 </p>
               </div>
             </div>
-            <PageHeaderActions />
+            {user ? (
+              <PageHeaderActions />
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => navigate("/login")}>
+                Sign in
+              </Button>
+            )}
           </div>
         </div>
       </header>
