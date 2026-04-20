@@ -658,8 +658,10 @@ const ActiveSF = () => {
                     g.tripsWithData[0] ||
                     g.rows.find((r) => r.lastReadingTime) ||
                     g.rows[0];
-                  const extraOrders = g.orderInfos.length > 1 ? g.orderInfos.length - 1 : 0;
-                  const extraLoggers = g.tripsWithData.length > 1 ? g.tripsWithData.length - 1 : 0;
+                  const totalOrders = g.orderInfos.length;
+                  const distinctLoggerCount = new Set(
+                    g.tripsWithData.map((t) => t.serialNumber).filter(Boolean)
+                  ).size;
                   const groupSel = groupSelectionState(g);
                   const allHidden = g.rows.every((t) => hiddenIds.has(t.tripId));
                   const vf = g.containerId ? vfActiveSet.get(g.containerId) : null;
@@ -709,14 +711,14 @@ const ActiveSF = () => {
                               </span>
                             )}
                           </span>
-                          {extraOrders > 0 && (
+                          {totalOrders > 0 && (
                             <span className="rounded bg-secondary text-secondary-foreground px-1.5 py-0.5 text-[10px] font-sans normal-case">
-                              +{extraOrders} order{extraOrders > 1 ? "s" : ""}
+                              {totalOrders} order{totalOrders > 1 ? "s" : ""}
                             </span>
                           )}
-                          {extraLoggers > 0 && (
+                          {distinctLoggerCount > 0 && (
                             <span className="rounded bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-sans normal-case">
-                              +{extraLoggers} logger{extraLoggers > 1 ? "s" : ""}
+                              {distinctLoggerCount} logger{distinctLoggerCount > 1 ? "s" : ""}
                             </span>
                           )}
                         </div>
