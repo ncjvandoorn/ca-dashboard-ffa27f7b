@@ -675,10 +675,10 @@ const ActiveSF = () => {
                     />
                   </TableHead>
                   <TableHead>Week</TableHead>
+                  <TableHead>Booking</TableHead>
                   <TableHead>Container #</TableHead>
                   <TableHead>Drop-off</TableHead>
                   <TableHead>Shipping</TableHead>
-                  <TableHead>Origin</TableHead>
                   <TableHead>Destination</TableHead>
                   {(isAdmin || isCustomer) && (
                     <>
