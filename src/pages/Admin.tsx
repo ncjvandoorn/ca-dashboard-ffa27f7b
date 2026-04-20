@@ -21,7 +21,6 @@ const Admin = () => {
           <PageHeaderActions />
         </div>
 
-        <ChangePasswordCard />
         <PendingApprovalsCard />
         <CustomerAccountsCard />
         <InvitationsCard />
@@ -30,6 +29,7 @@ const Admin = () => {
         <AILearningsCard />
         <CrmUserFilterCard />
         <PermissionsMatrixCard />
+        <ChangePasswordCard />
         <LoginLogsCard />
         <QuestionLogsCard />
       </div>
