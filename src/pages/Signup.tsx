@@ -51,9 +51,17 @@ export default function Signup() {
 
   // Shared
   const [username, setUsername] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<"active" | "pending" | null>(null);
+
+  // When an invitation is verified and pre-assigned a username, lock it in
+  useEffect(() => {
+    if (invitation?.username) setUsername(invitation.username);
+  }, [invitation]);
+
+  const usernameLocked = mode === "invite" && !!invitation?.username;
 
   const validateInvite = async (c: string) => {
     setInviteLoading(true);
