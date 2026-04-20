@@ -133,29 +133,16 @@ export function buildLoggerSeries(rows: LoggerReading[]): LoggerSeries[] {
 
     const flags: LoggerExceptionFlag[] = [];
 
-    // Total span of this logger's reporting window. Used so loggers that only
-    // reported for a short time (e.g. trip ended early) but were *consistently*
-    // out of range still get flagged — otherwise a 2-day run at 45°C would be
-    // silently dropped because it never reached the 3-day threshold.
-    const firstT = rdgs[0] ? new Date(rdgs[0].time).getTime() : 0;
-    const lastT = rdgs[rdgs.length - 1] ? new Date(rdgs[rdgs.length - 1].time).getTime() : 0;
-    const totalSpanMs = Math.max(0, lastT - firstT);
-    // Minimum span required for the "covers most of the trip" fallback to kick
-    // in — avoids flagging a 5-minute test reading.
-    const MIN_SHORT_TRIP_MS = 12 * HOUR_MS;
-    const shortTripFlag = (runMs: number) =>
-      totalSpanMs >= MIN_SHORT_TRIP_MS && runMs >= 0.8 * totalSpanMs;
-
     const t5 = longestRunMs(rdgs, (r) => r.temp != null && r.temp > 5);
-    if (t5.ms > 3 * DAY_MS || shortTripFlag(t5.ms)) {
+    if (t5.ms > 3 * DAY_MS) {
       flags.push({ rule: "temp_above_5", durationMs: t5.ms, start: t5.start, end: t5.end });
     }
     const t15 = longestRunMs(rdgs, (r) => r.temp != null && r.temp > 15);
-    if (t15.ms > 3 * DAY_MS || shortTripFlag(t15.ms)) {
+    if (t15.ms > 3 * DAY_MS) {
       flags.push({ rule: "temp_above_15", durationMs: t15.ms, start: t15.start, end: t15.end });
     }
     const h = longestRunMs(rdgs, (r) => r.humidity != null && r.humidity < 70);
-    if (h.ms > 3 * DAY_MS || shortTripFlag(h.ms)) {
+    if (h.ms > 3 * DAY_MS) {
       flags.push({ rule: "humidity_below_70", durationMs: h.ms, start: h.start, end: h.end });
     }
     const l = longestRunMs(rdgs, (r) => r.light != null && r.light > 3);
