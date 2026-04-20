@@ -20,6 +20,7 @@ export default function CRM() {
 
   return (
     <div className="min-h-screen bg-background">
+      <div className="chrysal-gradient h-1.5" />
       <header className="bg-card border-b border-border">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between gap-4">
