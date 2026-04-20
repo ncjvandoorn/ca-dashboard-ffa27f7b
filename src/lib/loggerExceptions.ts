@@ -18,8 +18,8 @@ export interface ExceptionRule {
 export const EXCEPTION_RULES: ExceptionRule[] = [
   {
     key: "temp_above_5",
-    label: "Temperature > 5°C for more than 3 days",
-    shortLabel: "Temp > 5°C · 3d",
+    label: "Temperature > 3°C for more than 3 days",
+    shortLabel: "Temp > 3°C · 3d",
     hue: 28, // amber
     description: "Sustained warm exposure (cold-chain drift)",
   },
