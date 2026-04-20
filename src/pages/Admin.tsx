@@ -22,14 +22,14 @@ const Admin = () => {
         </div>
 
         <ChangePasswordCard />
-        <PermissionsMatrixCard />
+        <PendingApprovalsCard />
+        <CustomerAccountsCard />
+        <InvitationsCard />
+        <DataFilesCard />
         <AIInstructionsCard />
         <AILearningsCard />
         <CrmUserFilterCard />
-        <DataFilesCard />
-        <PendingApprovalsCard />
-        <InvitationsCard />
-        <CustomerAccountsCard />
+        <PermissionsMatrixCard />
         <LoginLogsCard />
         <QuestionLogsCard />
       </div>
