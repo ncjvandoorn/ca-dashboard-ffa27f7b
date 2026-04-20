@@ -59,14 +59,11 @@ function shortDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
 }
 
-const TWELVE_WEEKS_MS = 12 * 7 * 24 * 60 * 60 * 1000;
-
 const DataLoggers = () => {
   const navigate = useNavigate();
   const [activeFilters, setActiveFilters] = useState<Set<ExceptionType>>(
     new Set(EXCEPTION_RULES.map((r) => r.key))
   );
-  const [last12Weeks, setLast12Weeks] = useState(true);
   const [selectedSerial, setSelectedSerial] = useState<string | null>(null);
 
   const { data: readings, isLoading: loadingReadings, error } = useAllSensiwatchReadings();
@@ -119,19 +116,12 @@ const DataLoggers = () => {
   // Compute exception series once (heavy — only runs when readings change).
   const allSeries = useMemo(() => buildLoggerSeries(readings), [readings]);
 
-  // Filter to loggers that have at least one *currently selected* exception,
-  // and (optionally) restrict to the last 12 weeks of activity.
+  // Filter to loggers that have at least one *currently selected* exception.
   const flaggedSeries = useMemo(() => {
-    const cutoff = last12Weeks ? Date.now() - TWELVE_WEEKS_MS : 0;
     return allSeries
       .filter((s) => s.flags.some((f) => activeFilters.has(f.rule)))
-      .filter((s) => {
-        if (!last12Weeks) return true;
-        const t = s.lastTime ? new Date(s.lastTime).getTime() : 0;
-        return t >= cutoff;
-      })
       .sort((a, b) => (b.lastTime || "").localeCompare(a.lastTime || ""));
-  }, [allSeries, activeFilters, last12Weeks]);
+  }, [allSeries, activeFilters]);
 
   // Per-rule counts (independent of current filter selection — for the chips)
   const ruleCounts = useMemo(() => {
@@ -296,23 +286,6 @@ const DataLoggers = () => {
                 </UITooltip>
               );
             })}
-            <span className="mx-2 h-5 w-px bg-border" />
-            <button
-              onClick={() => setLast12Weeks((v) => !v)}
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors"
-              style={{
-                borderColor: last12Weeks ? "hsl(var(--primary))" : "hsl(var(--border))",
-                background: last12Weeks ? "hsl(var(--primary) / 0.12)" : "transparent",
-                color: last12Weeks ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-              }}
-              title="Restrict to loggers active in the last 12 weeks"
-            >
-              <span
-                className="h-2 w-2 rounded-full bg-primary"
-                style={{ opacity: last12Weeks ? 1 : 0.4 }}
-              />
-              <span className="font-medium">Last 12 weeks</span>
-            </button>
           </section>
 
           {/* Status / loading */}
