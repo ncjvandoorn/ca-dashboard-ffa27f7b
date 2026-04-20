@@ -239,27 +239,6 @@ export type Database = {
         }
         Relationships: []
       }
-      data_loggers_report_cache: {
-        Row: {
-          analysis: Json
-          created_at: string
-          id: string
-          week_nr: number
-        }
-        Insert: {
-          analysis: Json
-          created_at?: string
-          id?: string
-          week_nr: number
-        }
-        Update: {
-          analysis?: Json
-          created_at?: string
-          id?: string
-          week_nr?: number
-        }
-        Relationships: []
-      }
       exception_report_cache: {
         Row: {
           analysis: Json
