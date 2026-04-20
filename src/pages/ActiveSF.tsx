@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
+import { ContainerDetailDialog } from "@/components/dashboard/ContainerDetailDialog";
 import { CompareTripsDialog } from "@/components/dashboard/CompareTripsDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
 import chrysalLogo from "@/assets/chrysal-logo.png";
@@ -45,6 +45,30 @@ export type SFTrip = {
   lastLocation: string | null;
 };
 
+/** A grouped container row — collapses all trips/orders sharing the same
+ *  containerId into a single displayed table row. */
+type ContainerGroup = {
+  /** Stable group key — `containerId` when present, else `trip:<tripId>` for
+   *  orphan trips that don't link to any order. */
+  key: string;
+  containerId: string;
+  containerNumber: string;
+  bookingCode: string;
+  /** First non-empty dippingWeek across this container's orders. */
+  dippingWeek: string;
+  dropoffDate: number | null;
+  shippingDate: number | null;
+  purposeName: string;
+  /** Every trip-row that maps to this container — including synthetic
+   *  "No Logger" rows (which the popup ignores) and per-logger trip rows. */
+  rows: SFTrip[];
+  /** Distinct services orders linked to this container. */
+  orderInfos: NonNullable<SFOrderInfo>[];
+  /** Trips that actually have sensor data — used to populate logger tabs in
+   *  the container detail dialog. */
+  tripsWithData: SFTrip[];
+};
+
 type SortField = "tripId" | "tripStatus" | "plannedDepartureTime" | "week";
 type SortDir = "asc" | "desc";
 
@@ -54,7 +78,7 @@ const ActiveSF = () => {
   const [query, setQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("week");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [selectedTrip, setSelectedTrip] = useState<SFTrip | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<ContainerGroup | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [compareOpen, setCompareOpen] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
@@ -137,20 +161,28 @@ const ActiveSF = () => {
   // (sensiwatch trips whose internal id doesn't match any order). Each row is
   // a synthetic SFTrip — for orders without a logger, sensor fields are null.
   const allRows = useMemo<SFTrip[]>(() => {
-    // Index sensiwatch trips by stripped internal trip id (= orderNumber)
-    const tripByOrder = new Map<string, SFTrip>();
+    // Index sensiwatch trips by stripped internal trip id (= orderNumber).
+    // One order can have multiple loggers, so this map's value is an array.
+    const tripsByOrder = new Map<string, SFTrip[]>();
     for (const t of trips) {
       const key = stripLoggerSuffix(t.internalTripId);
-      if (key && !tripByOrder.has(key)) tripByOrder.set(key, t);
+      if (!key) continue;
+      if (!tripsByOrder.has(key)) tripsByOrder.set(key, []);
+      tripsByOrder.get(key)!.push(t);
     }
     const rows: SFTrip[] = [];
     const usedTripIds = new Set<string>();
-    // 1) one row per services order
+    // 1) one row per (order × logger). When an order has multiple loggers we
+    //    emit one trip-row per logger so they all surface in the table; the
+    //    container-level grouping below collapses them into one displayed row
+    //    while still letting the popup expose every logger.
     for (const [orderNumber, info] of orderInfo.entries()) {
-      const t = tripByOrder.get(orderNumber);
-      if (t) {
-        usedTripIds.add(t.tripId);
-        rows.push(t);
+      const ts = tripsByOrder.get(orderNumber);
+      if (ts && ts.length) {
+        for (const t of ts) {
+          usedTripIds.add(t.tripId);
+          rows.push(t);
+        }
       } else {
         // Synthetic row for an order with no datalogger trip yet
         rows.push({
@@ -319,28 +351,91 @@ const ActiveSF = () => {
     [filtered, vfByTrip]
   );
 
+  // Group filtered rows by container — one displayed row per physical
+  // container. Rows without a containerId (orphan trips) become their own
+  // single-element group keyed by tripId.
+  const groupedRows = useMemo<ContainerGroup[]>(() => {
+    const groups = new Map<string, ContainerGroup>();
+    const order: string[] = [];
+    for (const t of filtered) {
+      const info = lookupOrder(t.internalTripId);
+      const key = info?.containerId || `trip:${t.tripId}`;
+      if (!groups.has(key)) {
+        order.push(key);
+        groups.set(key, {
+          key,
+          containerId: info?.containerId || "",
+          containerNumber: info?.containerNumber || "",
+          bookingCode: info?.bookingCode || "",
+          dippingWeek: info?.dippingWeek || "",
+          dropoffDate: info?.dropoffDate ?? null,
+          shippingDate: info?.shippingDate ?? null,
+          purposeName: info?.purposeName || "",
+          rows: [],
+          orderInfos: [],
+          tripsWithData: [],
+        });
+      }
+      const g = groups.get(key)!;
+      g.rows.push(t);
+      // Track distinct orders linked to this container
+      if (info && !g.orderInfos.find((x) => x?.orderId === info.orderId)) {
+        g.orderInfos.push(info);
+      }
+      // Track trips that have actual sensor data (not synthetic "No Logger" rows)
+      if (t.serialNumber || t.lastReadingTime || t.latitude !== null) {
+        if (!g.tripsWithData.find((x) => x.tripId === t.tripId)) {
+          g.tripsWithData.push(t);
+        }
+      }
+    }
+    return order.map((k) => groups.get(k)!);
+  }, [filtered, lookupOrder]);
+
   // Selected trips, kept in same order as `filtered` for stable display.
   const selectedTrips = useMemo(
     () => filtered.filter((t) => selectedIds.has(t.tripId)),
     [filtered, selectedIds]
   );
 
-  const toggleSelected = (tripId: string) => {
+  // Group-level checkbox state: a group is selected if ALL of its rows are.
+  const groupSelectionState = useCallback(
+    (g: ContainerGroup): boolean | "indeterminate" => {
+      if (!g.rows.length) return false;
+      const sel = g.rows.filter((t) => selectedIds.has(t.tripId)).length;
+      if (sel === 0) return false;
+      if (sel === g.rows.length) return true;
+      return "indeterminate";
+    },
+    [selectedIds]
+  );
+
+  const toggleGroupSelected = (g: ContainerGroup) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(tripId)) next.delete(tripId);
-      else next.add(tripId);
+      const allSelected = g.rows.every((t) => next.has(t.tripId));
+      if (allSelected) {
+        for (const t of g.rows) next.delete(t.tripId);
+      } else {
+        for (const t of g.rows) next.add(t.tripId);
+      }
       return next;
     });
   };
 
-  const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.tripId));
-  const someFilteredSelected = !allFilteredSelected && filtered.some((t) => selectedIds.has(t.tripId));
+  const allFilteredSelected =
+    groupedRows.length > 0 &&
+    groupedRows.every((g) => g.rows.every((t) => selectedIds.has(t.tripId)));
+  const someFilteredSelected =
+    !allFilteredSelected &&
+    groupedRows.some((g) => g.rows.some((t) => selectedIds.has(t.tripId)));
   const toggleSelectAll = () => {
     if (allFilteredSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filtered.map((t) => t.tripId)));
+      const next = new Set<string>();
+      for (const g of groupedRows) for (const t of g.rows) next.add(t.tripId);
+      setSelectedIds(next);
     }
   };
 
@@ -409,7 +504,16 @@ const ActiveSF = () => {
         {/* World Map */}
         {tripsWithLocation.length > 0 && (
           <div className="rounded-xl border border-border bg-card shadow-sm mb-6 overflow-hidden">
-            <SFWorldMap trips={tripsWithLocation} vfByTrip={vfByTrip} onSelectTrip={setSelectedTrip} />
+            <SFWorldMap
+              trips={tripsWithLocation}
+              vfByTrip={vfByTrip}
+              onSelectTrip={(t) => {
+                const info = lookupOrder(t.internalTripId);
+                const key = info?.containerId || `trip:${t.tripId}`;
+                const g = groupedRows.find((x) => x.key === key);
+                if (g) setSelectedGroup(g);
+              }}
+            />
           </div>
         )}
 
@@ -531,117 +635,157 @@ const ActiveSF = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((trip) => {
-                  const info = lookupOrder(trip.internalTripId);
+                {groupedRows.map((g) => {
+                  const repTrip =
+                    g.tripsWithData[0] ||
+                    g.rows.find((r) => r.lastReadingTime) ||
+                    g.rows[0];
+                  const extraOrders = g.orderInfos.length > 1 ? g.orderInfos.length - 1 : 0;
+                  const extraLoggers = g.tripsWithData.length > 1 ? g.tripsWithData.length - 1 : 0;
+                  const groupSel = groupSelectionState(g);
+                  const allHidden = g.rows.every((t) => hiddenIds.has(t.tripId));
+                  const vf = g.containerId ? vfActiveSet.get(g.containerId) : null;
                   return (
-                  <TableRow
-                    key={trip.tripId}
-                    data-state={selectedIds.has(trip.tripId) ? "selected" : undefined}
-                    className="cursor-pointer hover:bg-primary/5 transition-colors"
-                    onClick={() => setSelectedTrip(trip)}
-                  >
-                    <TableCell
-                      className={isAdmin ? "w-20" : "w-10"}
-                      onClick={(e) => e.stopPropagation()}
+                    <TableRow
+                      key={g.key}
+                      data-state={groupSel === true ? "selected" : undefined}
+                      className="cursor-pointer hover:bg-primary/5 transition-colors"
+                      onClick={() => setSelectedGroup(g)}
                     >
-                      <div className="flex items-center gap-1">
-                        <Checkbox
-                          checked={selectedIds.has(trip.tripId)}
-                          onCheckedChange={() => toggleSelected(trip.tripId)}
-                          aria-label={`Select trip ${trip.tripId}`}
-                        />
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                            onClick={(e) => { e.stopPropagation(); toggleHidden(trip.tripId); }}
-                            title={hiddenIds.has(trip.tripId) ? "Unhide row" : "Hide row for everyone"}
-                          >
-                            {hiddenIds.has(trip.tripId) ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-semibold text-sm">
-                      {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs whitespace-nowrap">
-                      {info?.containerNumber || (
-                        <span className="text-muted-foreground normal-case font-sans">
-                          {trip.internalTripId || "—"}
-                        </span>
-                      )}
-                      {(() => {
-                        const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
-                        const fmt = (iso: string | null | undefined) =>
-                          iso
-                            ? new Date(iso).toLocaleString("en-GB", {
-                                day: "2-digit",
-                                month: "short",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : null;
-                        const lastQuality = fmt(trip.lastReadingTime);
-                        const lastLocation =
-                          vf?.enabled && vf.lastLocationAt
-                            ? fmt(new Date(vf.lastLocationAt).toISOString())
-                            : null;
-                        if (!lastQuality && !lastLocation) return null;
-                        return (
-                          <div className="text-[10px] text-muted-foreground font-sans normal-case mt-0.5 leading-tight space-y-0.5">
-                            {lastQuality && <div>Last quality: {lastQuality}</div>}
-                            {lastLocation && <div>Last location: {lastLocation}</div>}
-                          </div>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.dropoffDate ?? null)}</TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.shippingDate ?? null)}</TableCell>
-                    <TableCell>
-                      <div className="font-medium text-sm">{trip.originName}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
-                      {(() => {
-                        const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
-                        if (!vf || !vf.enabled || (!vf.destinationName && !vf.destinationDate)) return null;
-                        return (
-                          <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
-                            {vf.destinationDate && (
-                              <span>ETA {formatShortDate(vf.destinationDate * 1000)}</span>
+                      <TableCell
+                        className={isAdmin ? "w-20" : "w-10"}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-1">
+                          <Checkbox
+                            checked={groupSel}
+                            onCheckedChange={() => toggleGroupSelected(g)}
+                            aria-label={`Select container ${g.containerNumber || g.key}`}
+                          />
+                          {isAdmin && g.rows.length > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Hide/unhide every trip-row in this group
+                                for (const t of g.rows) toggleHidden(t.tripId);
+                              }}
+                              title={allHidden ? "Unhide rows" : "Hide rows for everyone"}
+                            >
+                              {allHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-semibold text-sm">
+                        {g.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>
+                            {g.containerNumber || (
+                              <span className="text-muted-foreground normal-case font-sans">
+                                {repTrip?.internalTripId || "—"}
+                              </span>
                             )}
-                            {vf.destinationName && (
-                              <span>{vf.destinationDate ? " · " : ""}{vf.destinationName}</span>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </TableCell>
-                    {(isAdmin || isCustomer) && (
-                      <TableCell className="text-center">
-                        {(() => {
-                          const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
-                          if (!vf || !vf.enabled) {
-                            return <span className="text-muted-foreground/50 text-xs">—</span>;
-                          }
-                          const cls =
-                            vf.status === "success" ? "bg-accent" :
-                            vf.status === "error" ? "bg-destructive" :
-                            "bg-primary animate-pulse";
-                          return (
-                            <span className="inline-flex items-center gap-1.5 text-[10px]">
-                              <span className={`h-2 w-2 rounded-full ${cls}`} />
-                              {vf.status !== "success" && (
-                                <span className="text-muted-foreground capitalize">{vf.status}</span>
-                              )}
+                          </span>
+                          {extraOrders > 0 && (
+                            <span className="rounded bg-secondary text-secondary-foreground px-1.5 py-0.5 text-[10px] font-sans normal-case">
+                              +{extraOrders} order{extraOrders > 1 ? "s" : ""}
                             </span>
+                          )}
+                          {extraLoggers > 0 && (
+                            <span className="rounded bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-sans normal-case">
+                              +{extraLoggers} logger{extraLoggers > 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        {(() => {
+                          const fmt = (iso: string | null | undefined) =>
+                            iso
+                              ? new Date(iso).toLocaleString("en-GB", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : null;
+                          // Use the freshest reading across all loggers in the group.
+                          const freshest = g.tripsWithData
+                            .map((t) => t.lastReadingTime)
+                            .filter(Boolean)
+                            .sort()
+                            .pop() as string | undefined;
+                          const lastQuality = fmt(freshest);
+                          const lastLocation =
+                            vf?.enabled && vf.lastLocationAt
+                              ? fmt(new Date(vf.lastLocationAt).toISOString())
+                              : null;
+                          if (!lastQuality && !lastLocation) return null;
+                          return (
+                            <div className="text-[10px] text-muted-foreground font-sans normal-case mt-0.5 leading-tight space-y-0.5">
+                              {lastQuality && <div>Last quality: {lastQuality}</div>}
+                              {lastLocation && <div>Last location: {lastLocation}</div>}
+                            </div>
                           );
                         })()}
                       </TableCell>
-                    )}
-                  </TableRow>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {formatShortDate(g.dropoffDate)}
+                      </TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {formatShortDate(g.shippingDate)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-sm">{repTrip?.originName || "—"}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-sm">{repTrip?.destinationName || "—"}</div>
+                        {(() => {
+                          if (!vf || !vf.enabled || (!vf.destinationName && !vf.destinationDate)) return null;
+                          return (
+                            <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                              {vf.destinationDate && (
+                                <span>ETA {formatShortDate(vf.destinationDate * 1000)}</span>
+                              )}
+                              {vf.destinationName && (
+                                <span>
+                                  {vf.destinationDate ? " · " : ""}
+                                  {vf.destinationName}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </TableCell>
+                      {(isAdmin || isCustomer) && (
+                        <TableCell className="text-center">
+                          {(() => {
+                            if (!vf || !vf.enabled) {
+                              return <span className="text-muted-foreground/50 text-xs">—</span>;
+                            }
+                            const cls =
+                              vf.status === "success"
+                                ? "bg-accent"
+                                : vf.status === "error"
+                                ? "bg-destructive"
+                                : "bg-primary animate-pulse";
+                            return (
+                              <span className="inline-flex items-center gap-1.5 text-[10px]">
+                                <span className={`h-2 w-2 rounded-full ${cls}`} />
+                                {vf.status !== "success" && (
+                                  <span className="text-muted-foreground capitalize">
+                                    {vf.status}
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
+                      )}
+                    </TableRow>
                   );
                 })}
               </TableBody>
@@ -650,11 +794,22 @@ const ActiveSF = () => {
         )}
       </div>
 
-      {/* Detail dialog */}
-      <TripDetailDialog
-        trip={selectedTrip}
-        orderInfo={selectedTrip ? lookupOrder(selectedTrip.internalTripId) : null}
-        onClose={() => setSelectedTrip(null)}
+      {/* Container detail dialog */}
+      <ContainerDetailDialog
+        trips={selectedGroup?.tripsWithData || []}
+        orders={selectedGroup?.orderInfos || []}
+        container={
+          selectedGroup
+            ? {
+                containerId: selectedGroup.containerId,
+                containerNumber: selectedGroup.containerNumber,
+                bookingCode: selectedGroup.bookingCode,
+                dropoffDate: selectedGroup.dropoffDate,
+                shippingDate: selectedGroup.shippingDate,
+              }
+            : null
+        }
+        onClose={() => setSelectedGroup(null)}
       />
 
       {/* Compare-trips dialog */}
