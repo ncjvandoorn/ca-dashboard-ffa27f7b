@@ -45,6 +45,30 @@ export type SFTrip = {
   lastLocation: string | null;
 };
 
+/** A grouped container row — collapses all trips/orders sharing the same
+ *  containerId into a single displayed table row. */
+type ContainerGroup = {
+  /** Stable group key — `containerId` when present, else `trip:<tripId>` for
+   *  orphan trips that don't link to any order. */
+  key: string;
+  containerId: string;
+  containerNumber: string;
+  bookingCode: string;
+  /** First non-empty dippingWeek across this container's orders. */
+  dippingWeek: string;
+  dropoffDate: number | null;
+  shippingDate: number | null;
+  purposeName: string;
+  /** Every trip-row that maps to this container — including synthetic
+   *  "No Logger" rows (which the popup ignores) and per-logger trip rows. */
+  rows: SFTrip[];
+  /** Distinct services orders linked to this container. */
+  orderInfos: NonNullable<SFOrderInfo>[];
+  /** Trips that actually have sensor data — used to populate logger tabs in
+   *  the container detail dialog. */
+  tripsWithData: SFTrip[];
+};
+
 type SortField = "tripId" | "tripStatus" | "plannedDepartureTime" | "week";
 type SortDir = "asc" | "desc";
 
