@@ -60,26 +60,42 @@ interface InvokeArgs {
   force?: boolean;
 }
 
-async function invoke(args: InvokeArgs) {
+type VFListItem = {
+  container_id: string;
+  status: string;
+  enabled: boolean;
+  last_polled_at: string | null;
+  container_number_override: string | null;
+  response: VFResponse | null;
+};
+
+type InvokeResult = {
+  tracking?: VFTracking;
+  items?: VFListItem[];
+  vfHttpStatus?: number;
+  cached?: boolean;
+};
+
+const EMPTY_RESULT: InvokeResult = { items: [] };
+
+async function invoke(args: InvokeArgs): Promise<InvokeResult> {
   // Guard: only call the edge function when a real user session exists.
   // Without it the function returns 401 (anon key is not a user JWT).
   const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData?.session) {
-    return { items: [] } as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
-  }
+  if (!sessionData?.session) return EMPTY_RESULT;
+
   const { data, error } = await supabase.functions.invoke("vesselfinder-track", {
     body: args,
   });
   if (error) {
     // Swallow auth/permission errors so they don't blank the page.
-    const msg = String(error.message || "");
-    if (/401|403|Unauthorized|Forbidden/i.test(msg)) {
-      return { items: [] } as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
+    if (/401|403|Unauthorized|Forbidden/i.test(String(error.message || ""))) {
+      return EMPTY_RESULT;
     }
     throw new Error(error.message);
   }
   if (data?.error) throw new Error(data.error);
-  return data as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
+  return data as InvokeResult;
 }
 
 /** Fetches single tracking row for a container. Available to admins and customers. */
