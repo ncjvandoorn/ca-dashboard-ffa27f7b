@@ -8,7 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   ReferenceLine,
 } from "recharts";
 import { ArrowLeft, Loader2, AlertTriangle, Filter } from "lucide-react";
@@ -355,7 +354,7 @@ const DataLoggers = () => {
                         }}
                         labelFormatter={(v: string) => (v ? new Date(v).toLocaleString("en-GB") : "")}
                       />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      
                       {plotSeries.map((s) => {
                         const orderNum = stripLoggerSuffix(s.internalTripIds[0] || s.tripIds[0] || "");
                         return (
