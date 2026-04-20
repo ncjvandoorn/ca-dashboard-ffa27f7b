@@ -48,6 +48,7 @@ export const InvitationsCard = () => {
 
   const [accountId, setAccountId] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [usernameInput, setUsernameInput] = useState("");
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
