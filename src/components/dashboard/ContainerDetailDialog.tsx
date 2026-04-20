@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { SFTrip, SFOrderInfo } from "@/pages/ActiveSF";
-import { useSensiwatchReadings } from "@/hooks/useSensiwatchData";
+import { useSensiwatchReadings, useMultiSensiwatchReadings } from "@/hooks/useSensiwatchData";
 import {
   useShipperReports,
   useShipperArrivals,
