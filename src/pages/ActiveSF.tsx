@@ -738,8 +738,26 @@ const ActiveSF = () => {
                       <TableCell className="font-semibold text-sm">
                         {g.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
-                      <TableCell className="font-mono text-xs whitespace-nowrap">
-                        {g.bookingCode || <span className="text-muted-foreground font-sans">—</span>}
+                      <TableCell className="font-mono text-xs">
+                        {(() => {
+                          if (!g.bookingCode) {
+                            return <span className="text-muted-foreground font-sans">—</span>;
+                          }
+                          const m = g.bookingCode.match(/^([^(]*)\(([^)]*)\)?\s*(.*)$/);
+                          if (!m) return <span className="whitespace-nowrap">{g.bookingCode}</span>;
+                          const main = m[1].trim();
+                          const paren = [m[2].trim(), m[3].trim()].filter(Boolean).join(" ");
+                          return (
+                            <>
+                              <div className="whitespace-nowrap">{main || g.bookingCode}</div>
+                              {paren && (
+                                <div className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                                  {paren}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="font-mono text-xs whitespace-nowrap">
                         <div className="flex items-center gap-1.5 flex-wrap">
