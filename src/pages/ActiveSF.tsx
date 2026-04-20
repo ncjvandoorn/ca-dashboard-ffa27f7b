@@ -397,18 +397,38 @@ const ActiveSF = () => {
           <span className="text-sm text-muted-foreground">
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
-          <div className="ml-auto flex items-center gap-2">
-            {isAdmin && (
-              <Button
-                variant={showAll ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowAll((s) => !s)}
-              >
-                <Ship className="h-4 w-4" />
-                {showAll ? "Sea Freight only" : "Show all loggers"}
-              </Button>
-            )}
-            {isAdmin && hiddenIds.size > 0 && !showAll && (
+          <div className="ml-auto flex items-center gap-2 flex-wrap">
+            <Toggle
+              size="sm"
+              variant="outline"
+              pressed={onlySF}
+              onPressedChange={setOnlySF}
+              aria-label="Only Sea Freight"
+            >
+              <Ship className="h-4 w-4" />
+              Only SF
+            </Toggle>
+            <Toggle
+              size="sm"
+              variant="outline"
+              pressed={onlyActiveDL}
+              onPressedChange={setOnlyActiveDL}
+              aria-label="Only active dataloggers"
+            >
+              <Activity className="h-4 w-4" />
+              Only active DL
+            </Toggle>
+            <Toggle
+              size="sm"
+              variant="outline"
+              pressed={onlyLiveTracking}
+              onPressedChange={setOnlyLiveTracking}
+              aria-label="Only live tracking"
+            >
+              <Radio className="h-4 w-4" />
+              Only live tracking
+            </Toggle>
+            {isAdmin && hiddenIds.size > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
