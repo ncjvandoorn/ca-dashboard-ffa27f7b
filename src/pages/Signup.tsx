@@ -22,6 +22,7 @@ interface InvitationDetails {
   code: string;
   customer_account_id: string;
   company_name: string | null;
+  username: string | null;
 }
 
 const fnUrl = (name: string) => `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`;
