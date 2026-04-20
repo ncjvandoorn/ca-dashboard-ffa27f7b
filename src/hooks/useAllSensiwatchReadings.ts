@@ -34,6 +34,7 @@ export function useAllSensiwatchReadings() {
         const pageSize = 1000;
         let from = 0;
         const all: LoggerReading[] = [];
+        const sinceIso = new Date(Date.now() - ANALYSIS_WINDOW_DAYS * 86_400_000).toISOString();
         // Hard cap at 50k rows to avoid runaway memory.
         for (let i = 0; i < 50; i++) {
           const { data: rows, error: qErr } = await supabase
@@ -43,6 +44,7 @@ export function useAllSensiwatchReadings() {
             )
             .not("serial_number", "is", null)
             .not("last_device_time", "is", null)
+            .gte("last_device_time", sinceIso)
             .order("last_device_time", { ascending: true, nullsFirst: false })
             .range(from, from + pageSize - 1);
           if (qErr) throw new Error(qErr.message);
