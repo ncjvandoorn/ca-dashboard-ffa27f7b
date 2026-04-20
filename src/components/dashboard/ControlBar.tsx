@@ -3,30 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Settings,
-  LogOut,
-  FlaskConical,
-  CalendarRange,
-  Search,
-  X,
-  Menu,
-  Package,
-  Ship,
-  CreditCard,
-  Users,
-  UserCircle,
-  ClipboardCheck,
-} from "lucide-react";
+import { Search, X, Menu } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AppMenuItems } from "@/components/AppMenuItems";
 import { useAuth } from "@/hooks/useAuth";
-import { usePermissions } from "@/hooks/usePermissions";
 import type { Account, CustomerFarm } from "@/lib/csvParser";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 
