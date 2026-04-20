@@ -207,9 +207,26 @@ const ActiveSF = () => {
     });
   }, [trips, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, showAll]);
 
+  // Map tripId -> VF active tracking info (when available for the trip's container)
+  const vfByTrip = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof vfActiveSet.get>>();
+    for (const t of filtered) {
+      const info = lookupOrder(t.internalTripId);
+      const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
+      if (vf && vf.enabled && vf.status === "success") m.set(t.tripId, vf);
+    }
+    return m;
+  }, [filtered, lookupOrder, vfActiveSet]);
+
   const tripsWithLocation = useMemo(
-    () => filtered.filter((t) => t.latitude !== null && t.longitude !== null),
-    [filtered]
+    () =>
+      filtered.filter((t) => {
+        if (t.latitude !== null && t.longitude !== null) return true;
+        const vf = vfByTrip.get(t.tripId);
+        const gen = vf?.response?.general;
+        return !!(gen?.currentLocation?.vessel || gen?.origin || gen?.destination);
+      }),
+    [filtered, vfByTrip]
   );
 
   // Selected trips, kept in same order as `filtered` for stable display.
