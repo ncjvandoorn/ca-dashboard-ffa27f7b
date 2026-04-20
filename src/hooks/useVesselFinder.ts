@@ -135,6 +135,8 @@ export type VFActiveInfo = {
   enabled: boolean;
   destinationName?: string | null;
   destinationDate?: number | null;
+  /** Last AIS / location update from VesselFinder (ms since epoch). */
+  lastLocationAt?: number | null;
 };
 
 /** Lists which container_ids have active tracking — for table indicator. */
@@ -157,11 +159,18 @@ export function useVesselFinderActiveSet(enabled: boolean) {
           const lastStop = resp?.schedule?.[resp.schedule.length - 1];
           const vadEvent = lastStop?.events?.find((e: any) => e?.code === "VAD");
           const etaDate = vadEvent?.date ?? lastStop?.date ?? resp?.general?.destination?.date ?? null;
+          // Prefer vessel AIS timestamp; fallback to general updatedAt or last_polled_at.
+          const vesselTs = resp?.general?.currentLocation?.vessel?.aisTimestamp ?? null;
+          const generalTs = resp?.general?.updatedAt ?? null;
+          const polledIso = (item as any).last_polled_at as string | null | undefined;
+          const polledTs = polledIso ? Math.floor(new Date(polledIso).getTime() / 1000) : null;
+          const lastLocSec = vesselTs ?? generalTs ?? polledTs ?? null;
           m.set(item.container_id, {
             status: item.status,
             enabled: item.enabled,
             destinationName: resp?.general?.destination?.name ?? lastStop?.name ?? null,
             destinationDate: etaDate,
+            lastLocationAt: lastLocSec ? lastLocSec * 1000 : null,
           });
         }
         setActive(m);
