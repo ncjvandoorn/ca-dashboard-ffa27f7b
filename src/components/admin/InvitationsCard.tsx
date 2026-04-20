@@ -114,8 +114,15 @@ export const InvitationsCard = () => {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Delete this invitation?")) return;
-    await call("delete_invitation", { id });
+    setDeleting(true);
+    const data = await call("delete_invitation", { id });
+    setDeleting(false);
+    setPendingDeleteId(null);
+    if (data?.error) {
+      toast({ title: "Delete failed", description: data.error, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Invitation deleted" });
     fetchInvitations();
   };
 
