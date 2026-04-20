@@ -38,6 +38,21 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
   const { data: shipperArrivals } = useShipperArrivals();
   const { data: servicesOrders } = useServicesOrders();
   const { data: accounts } = useAccounts();
+  const { data: qualityReports } = useQualityReports();
+  const { data: users } = useUsers();
+  const [expandedReportFor, setExpandedReportFor] = useState<string | null>(null);
+
+  const qualityReportMap = useMemo(() => {
+    const m = new Map<string, NonNullable<typeof qualityReports>[number]>();
+    (qualityReports || []).forEach((r) => m.set(r.id, r));
+    return m;
+  }, [qualityReports]);
+
+  const userNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (users || []).forEach((u) => m.set(u.id, u.name));
+    return m;
+  }, [users]);
 
   const containerId = orderInfo?.containerId || "";
 
