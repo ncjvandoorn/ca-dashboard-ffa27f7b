@@ -395,9 +395,12 @@ const ActiveSF = () => {
       if (info && !g.orderInfos.find((x) => x?.orderId === info.orderId)) {
         g.orderInfos.push(info);
       }
-      // Track trips that have actual sensor data (not synthetic "No Logger" rows)
+      // Track trips that have actual sensor data (not synthetic "No Logger"
+      // rows). Dedupe by `serialNumber` so the same physical logger reused
+      // across multiple orders shows up only once in the popup tabs/graph.
       if (t.serialNumber || t.lastReadingTime || t.latitude !== null) {
-        if (!g.tripsWithData.find((x) => x.tripId === t.tripId)) {
+        const dupKey = t.serialNumber || `trip:${t.tripId}`;
+        if (!g.tripsWithData.find((x) => (x.serialNumber || `trip:${x.tripId}`) === dupKey)) {
           g.tripsWithData.push(t);
         }
       }
