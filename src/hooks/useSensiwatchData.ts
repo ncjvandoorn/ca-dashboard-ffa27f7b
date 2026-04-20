@@ -113,12 +113,16 @@ export function useSensiwatchReadings(serialNumber: string | null, _departureTim
           console.warn("Could not fetch readings:", error.message);
           setReadings([]); return;
         }
-        const mapped = (rows ?? []).map((r: any) => ({
-          time: r.last_device_time ?? "",
-          temp: normalizeTempC(r.last_temp) ?? 0,
-          light: r.last_light ?? 0,
-          humidity: r.last_humidity ?? 0,
-        }));
+        const mapped = (rows ?? [])
+          .map((r: any) => ({
+            time: r.last_device_time ?? "",
+            temp: normalizeTempC(r.last_temp),
+            light: r.last_light,
+            humidity: r.last_humidity,
+          }))
+          // Drop rows where every metric is missing — those create the
+          // phantom "drop to zero" spikes in the chart.
+          .filter((r) => r.temp != null || r.light != null || r.humidity != null) as any;
         setReadings(mapped);
       } catch (err) {
         console.error("Readings fetch error:", err);
@@ -173,12 +177,14 @@ export function useMultiSensiwatchReadings(serialNumbers: string[]) {
               console.warn(`Could not fetch readings for ${sn}:`, error.message);
               return [sn, [] as { time: string; temp: number; light: number; humidity: number }[]] as const;
             }
-            const mapped = (rows ?? []).map((r: any) => ({
-              time: r.last_device_time ?? "",
-              temp: normalizeTempC(r.last_temp) ?? 0,
-              light: r.last_light ?? 0,
-              humidity: r.last_humidity ?? 0,
-            }));
+            const mapped = (rows ?? [])
+              .map((r: any) => ({
+                time: r.last_device_time ?? "",
+                temp: normalizeTempC(r.last_temp),
+                light: r.last_light,
+                humidity: r.last_humidity,
+              }))
+              .filter((r) => r.temp != null || r.light != null || r.humidity != null);
             return [sn, mapped] as const;
           })
         );
@@ -190,9 +196,9 @@ export function useMultiSensiwatchReadings(serialNumbers: string[]) {
           for (const r of rows) {
             if (!r.time) continue;
             const existing = merged.get(r.time) || { time: r.time };
-            existing[`temp_${sn}`] = r.temp;
-            existing[`light_${sn}`] = r.light;
-            existing[`humidity_${sn}`] = r.humidity;
+            if (r.temp != null) existing[`temp_${sn}`] = r.temp;
+            if (r.light != null) existing[`light_${sn}`] = r.light;
+            if (r.humidity != null) existing[`humidity_${sn}`] = r.humidity;
             merged.set(r.time, existing);
           }
         }
