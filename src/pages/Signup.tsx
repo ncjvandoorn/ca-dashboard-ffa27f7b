@@ -128,7 +128,7 @@ export default function Signup() {
           ? {
               action: "signup_with_invitation",
               code: invitation.code,
-              username: username.toLowerCase(),
+              username: (invitation.username || username).toLowerCase(),
               password,
               tier,
               billingCycle,
