@@ -564,7 +564,7 @@ const DataLoggers = () => {
           )}
 
           {/* Flagged loggers table */}
-          {!loadingReadings && (
+          {!loadingCache && !refreshing && allSeries.length > 0 && (
             <section className="rounded-xl border border-border bg-card overflow-hidden">
               <div className="px-4 py-3 border-b border-border flex items-baseline justify-between">
                 <h2 className="font-semibold text-base">
