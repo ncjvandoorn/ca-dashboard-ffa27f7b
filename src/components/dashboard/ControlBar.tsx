@@ -3,30 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Settings,
-  LogOut,
-  FlaskConical,
-  CalendarRange,
-  Search,
-  X,
-  Menu,
-  Package,
-  Ship,
-  CreditCard,
-  Users,
-  UserCircle,
-  ClipboardCheck,
-} from "lucide-react";
+import { Search, X, Menu } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AppMenuItems } from "@/components/AppMenuItems";
 import { useAuth } from "@/hooks/useAuth";
-import { usePermissions } from "@/hooks/usePermissions";
 import type { Account, CustomerFarm } from "@/lib/csvParser";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 
@@ -160,8 +144,7 @@ export function ControlBar({
   onOpenContainers,
 }: ControlBarProps) {
   const navigate = useNavigate();
-  const { signOut, isCustomer } = useAuth();
-  const { can } = usePermissions();
+  const { isCustomer } = useAuth();
 
   const customers = useMemo(() => {
     const customerIds = new Set(customerFarms.map((cf) => cf.customerAccountId));
@@ -263,69 +246,7 @@ export function ControlBar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-popover">
-              {can("containers") && onOpenContainers && (
-                <DropdownMenuItem onClick={onOpenContainers}>
-                  <Package className="h-4 w-4 mr-2" />
-                  Containers
-                </DropdownMenuItem>
-              )}
-              {can("active_sf") && (
-                <DropdownMenuItem onClick={() => navigate("/active-sf")}>
-                  <Ship className="h-4 w-4 mr-2" />
-                  Active SF
-                </DropdownMenuItem>
-              )}
-              {can("trials_dashboard") && (
-                <DropdownMenuItem onClick={() => navigate("/trials")}>
-                  <FlaskConical className="h-4 w-4 mr-2" />
-                  Trials Dashboard
-                </DropdownMenuItem>
-              )}
-              {can("subscription_plans") && (
-                <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Subscription Plans
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              {can("trial_planner") && (
-                <DropdownMenuItem onClick={() => navigate("/planner")}>
-                  <CalendarRange className="h-4 w-4 mr-2" />
-                  Trial Planner
-                </DropdownMenuItem>
-              )}
-              {can("reporting_check") && (
-                <DropdownMenuItem onClick={() => navigate("/?check=reporting")}>
-                  <ClipboardCheck className="h-4 w-4 mr-2" />
-                  Reporting Check
-                </DropdownMenuItem>
-              )}
-              {can("crm_activities") && (
-                <DropdownMenuItem onClick={() => navigate("/crm")}>
-                  <Users className="h-4 w-4 mr-2" />
-                  CRM Activities
-                </DropdownMenuItem>
-              )}
-              {(isCustomer || can("settings")) && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    <UserCircle className="h-4 w-4 mr-2" />
-                    My Profile
-                  </DropdownMenuItem>
-                </>
-              )}
-              {can("settings") && (
-                <DropdownMenuItem onClick={() => navigate("/admin")}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut()}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </DropdownMenuItem>
+              <AppMenuItems onOpenContainers={onOpenContainers} />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
