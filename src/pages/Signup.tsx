@@ -335,10 +335,31 @@ export default function Signup() {
                   onChange={(e) => setUsername(e.target.value.toLowerCase())}
                   placeholder="e.g. xpol"
                   required
+                  readOnly={usernameLocked}
+                  disabled={usernameLocked}
                   autoComplete="username"
                 />
                 <p className="text-xs text-muted-foreground">
-                  {username ? `Login: ${username}@chrysal.app` : "Letters, numbers, _ and - only."}
+                  {usernameLocked
+                    ? `Pre-assigned by your invitation. Login: ${username}@chrysal.app`
+                    : username
+                      ? `Login: ${username}@chrysal.app`
+                      : "Letters, numbers, _ and - only."}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Contact email</Label>
+                <Input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoComplete="email"
+                />
+                <p className="text-xs text-muted-foreground">
+                  We use this only to reach out about your account — your sign-in stays as the username above.
                 </p>
               </div>
 
