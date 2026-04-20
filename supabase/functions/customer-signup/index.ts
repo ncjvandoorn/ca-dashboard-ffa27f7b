@@ -157,11 +157,15 @@ Deno.serve(async (req) => {
       const companyName = String(body.companyName || "").trim();
       const tier = String(body.tier || "basic");
       const billingCycle = String(body.billingCycle || "monthly");
+      const contactEmail = String(body.contactEmail || "").trim();
 
       if (!username || password.length < 6 || !companyName) {
         return bad("Username, company name and password (min 6 chars) are required");
       }
       if (!/^[a-z0-9_-]+$/.test(username)) return bad("Username may only contain letters, numbers, _ and -");
+      if (!contactEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+        return bad("A valid contact email is required");
+      }
       if (!VALID_TIERS.includes(tier as typeof VALID_TIERS[number])) return bad("Invalid tier");
       if (!VALID_CYCLES.includes(billingCycle as typeof VALID_CYCLES[number])) return bad("Invalid billing cycle");
 
@@ -182,6 +186,7 @@ Deno.serve(async (req) => {
         user_id: userId,
         customer_account_id: `pending:${companyName.slice(0, 60)}`,
         company_name: companyName,
+        contact_email: contactEmail,
         tier,
         billing_cycle: billingCycle,
         can_see_trials: false,
