@@ -69,14 +69,14 @@ async function invoke(args: InvokeArgs) {
   return data as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
 }
 
-/** Fetches single tracking row for a container. */
-export function useVesselFinderTracking(containerId: string | null, isAdmin: boolean) {
+/** Fetches single tracking row for a container. Available to admins and customers. */
+export function useVesselFinderTracking(containerId: string | null, enabled: boolean) {
   const [tracking, setTracking] = useState<VFTracking | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!containerId || !isAdmin) return;
+    if (!containerId || !enabled) return;
     setLoading(true);
     setError(null);
     try {
@@ -87,7 +87,7 @@ export function useVesselFinderTracking(containerId: string | null, isAdmin: boo
     } finally {
       setLoading(false);
     }
-  }, [containerId, isAdmin]);
+  }, [containerId, enabled]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -138,11 +138,11 @@ export type VFActiveInfo = {
 };
 
 /** Lists which container_ids have active tracking — for table indicator. */
-export function useVesselFinderActiveSet(isAdmin: boolean) {
+export function useVesselFinderActiveSet(enabled: boolean) {
   const [active, setActive] = useState<Map<string, VFActiveInfo>>(new Map());
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!enabled) return;
     let cancelled = false;
     (async () => {
       try {
@@ -170,7 +170,7 @@ export function useVesselFinderActiveSet(isAdmin: boolean) {
       }
     })();
     return () => { cancelled = true; };
-  }, [isAdmin]);
+  }, [enabled]);
 
   return active;
 }

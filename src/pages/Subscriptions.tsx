@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,15 @@ import { PageHeaderActions } from "@/components/PageHeaderActions";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 
 type PlanKey = "basic" | "pro" | "proPlus" | "heavy";
+type Cycle = "monthly" | "yearly";
+
+// Maps PlanKey (UI) -> tier value used by the signup edge function
+const SIGNUP_TIER: Record<PlanKey, string> = {
+  basic: "basic",
+  pro: "pro",
+  proPlus: "pro_plus",
+  heavy: "heavy",
+};
 
 const PLANS: {
   key: PlanKey;
@@ -64,6 +73,13 @@ const LIMITS: { label: string; values: Record<PlanKey, string> }[] = [
 export default function Subscriptions() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [cycle, setCycle] = useState<Cycle>("yearly");
+
+  const goToSignup = (planKey: PlanKey) => {
+    const tier = SIGNUP_TIER[planKey];
+    navigate(`/signup?tier=${tier}&cycle=${cycle}`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header (matches other internal pages) */}
@@ -134,6 +150,76 @@ export default function Subscriptions() {
             </div>
           </div>
         </section>
+
+        {/* Billing cycle toggle */}
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-sm text-muted-foreground">Billing cycle:</span>
+          <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
+            <button
+              type="button"
+              onClick={() => setCycle("monthly")}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                cycle === "monthly"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setCycle("yearly")}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                cycle === "yearly"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Yearly <span className="text-[10px] opacity-80">(save up to 13%)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Plan cards with signup CTAs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {PLANS.map((p) => {
+            const price = cycle === "monthly" ? p.monthly : p.yearly;
+            const priceSuffix =
+              p.key === "heavy" ? "" : cycle === "monthly" ? " / month" : " / month, billed yearly";
+            return (
+              <Card
+                key={p.key}
+                className={`relative p-5 flex flex-col ${
+                  p.highlight ? "border-primary shadow-md ring-1 ring-primary/20" : ""
+                }`}
+              >
+                {p.highlight && (
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-wide px-2.5 py-0.5">
+                    Most popular
+                  </span>
+                )}
+                <div className="space-y-1 mb-4">
+                  <h3 className="text-lg font-bold text-foreground">{p.name}</h3>
+                  <p className="text-xs text-muted-foreground">{p.tagline}</p>
+                </div>
+                <div className="mb-5">
+                  <div className="text-2xl font-bold text-foreground leading-none">{price}</div>
+                  {priceSuffix && (
+                    <div className="text-[11px] text-muted-foreground mt-1">{priceSuffix}</div>
+                  )}
+                </div>
+                <Button
+                  className="w-full mt-auto gap-1"
+                  variant={p.highlight ? "default" : "outline"}
+                  onClick={() => goToSignup(p.key)}
+                >
+                  {p.key === "heavy" ? "Contact sales" : "Sign up"}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </Card>
+            );
+          })}
+        </div>
 
         {/* Comparison table */}
         <Card className="overflow-hidden">
@@ -227,6 +313,24 @@ export default function Subscriptions() {
                   {PLANS.map((p) => (
                     <td key={p.key} className="px-4 py-3 text-center font-semibold text-foreground">
                       {p.yearly}
+                    </td>
+                  ))}
+                </tr>
+
+                {/* Sign up row */}
+                <tr className="border-t border-border bg-muted/20">
+                  <td className="px-4 py-3 text-foreground font-medium">Get started</td>
+                  {PLANS.map((p) => (
+                    <td key={p.key} className="px-4 py-3 text-center">
+                      <Button
+                        size="sm"
+                        variant={p.highlight ? "default" : "outline"}
+                        onClick={() => goToSignup(p.key)}
+                        className="gap-1 text-xs h-8"
+                      >
+                        {p.key === "heavy" ? "Contact" : "Sign up"}
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
                     </td>
                   ))}
                 </tr>

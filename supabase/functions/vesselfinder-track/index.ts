@@ -1,4 +1,4 @@
-// VesselFinder Container Tracking - admin-only proxy with caching in DB.
+// VesselFinder Container Tracking - admin + customer access with credit consumption.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 
 const corsHeaders = {
@@ -14,9 +14,9 @@ type Action = "enable" | "disable" | "refresh" | "get" | "list";
 interface ReqBody {
   action: Action;
   containerId?: string;
-  containerNumber?: string;     // override
-  sealine?: string | null;       // optional carrier code (SCAC)
-  force?: boolean;               // force refresh ignoring cache
+  containerNumber?: string;     // override (admin only)
+  sealine?: string | null;
+  force?: boolean;
 }
 
 function json(body: unknown, status = 200) {
@@ -59,14 +59,31 @@ Deno.serve(async (req) => {
 
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Admin gate (use service role to bypass RLS)
+    // Determine role
     const { data: roleRow } = await admin
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .eq("role", "admin")
       .maybeSingle();
-    if (!roleRow) return json({ error: "Forbidden — admin only" }, 403);
+    const role = roleRow?.role as "admin" | "user" | "customer" | undefined;
+    const isAdmin = role === "admin";
+    const isCustomer = role === "customer";
+    if (!isAdmin && !isCustomer) return json({ error: "Forbidden" }, 403);
+
+    // Customer account (uuid + tier) for credit operations
+    let customerAccountUuid: string | null = null;
+    let customerTier: string | null = null;
+    if (isCustomer) {
+      const { data: ca } = await admin
+        .from("customer_accounts")
+        .select("id, tier, status")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!ca || ca.status !== "active") return json({ error: "Customer account not active" }, 403);
+      customerAccountUuid = ca.id as string;
+      customerTier = ca.tier as string;
+    }
+
     const body = (await req.json().catch(() => ({}))) as ReqBody;
     const action = body.action;
 
@@ -81,6 +98,8 @@ Deno.serve(async (req) => {
     if (!body.containerId) return json({ error: "containerId required" }, 400);
 
     if (action === "disable") {
+      // Customers cannot disable (would orphan the credit they paid)
+      if (!isAdmin) return json({ error: "Only admins can disable tracking" }, 403);
       const { error } = await admin
         .from("vesselfinder_tracking")
         .update({ enabled: false })
@@ -102,14 +121,24 @@ Deno.serve(async (req) => {
     if (action === "enable" || action === "refresh") {
       const containerNumber = (body.containerNumber || "").trim().toUpperCase();
       if (!containerNumber) return json({ error: "containerNumber required" }, 400);
-      const sealine = (body.sealine || "").trim().toUpperCase() || null;
+      const sealineInput = (body.sealine || "").trim().toUpperCase() || null;
 
-      // Upsert row first so we always have state
+      // Existing row state
       const { data: existing } = await admin
         .from("vesselfinder_tracking")
         .select("*")
         .eq("container_id", body.containerId)
         .maybeSingle();
+
+      // Customers may NOT override container number once a row exists with a different number.
+      // They also cannot pass a custom sealine (auto-detect only).
+      const sealine = isCustomer ? null : sealineInput;
+      if (isCustomer && existing && existing.container_number_override && existing.container_number_override !== containerNumber) {
+        return json({ error: "Container number cannot be changed" }, 403);
+      }
+
+      // Customers cannot force-refresh and cannot bypass cache aggressively.
+      const force = isAdmin ? !!body.force : false;
 
       // Cache: skip API call if last_polled_at < 60s ago AND not force
       const now = Date.now();
@@ -117,7 +146,7 @@ Deno.serve(async (req) => {
       const sameContainer = existing?.container_number_override === containerNumber;
       const sameSealine = (existing?.sealine || null) === sealine;
       if (
-        !body.force &&
+        !force &&
         action === "refresh" &&
         existing?.status === "success" &&
         sameContainer &&
@@ -127,13 +156,31 @@ Deno.serve(async (req) => {
         return json({ tracking: existing, cached: true });
       }
 
+      // CUSTOMER credit gate: charge 1 credit on first successful activation only.
+      // "Activation" = there is no existing enabled+successful row yet.
+      // If an admin already activated tracking, the customer pays nothing.
+      const isFirstActivation =
+        !existing || !existing.enabled || existing.status === "error" || !existing.container_number_override;
+
+      if (isCustomer && isFirstActivation && customerTier !== "heavy") {
+        const { data: bal } = await admin
+          .from("customer_credit_balance")
+          .select("balance")
+          .eq("customer_account_id", customerAccountUuid!)
+          .maybeSingle();
+        const current = (bal?.balance as number | null) ?? 0;
+        if (current <= 0) {
+          return json({ error: "No container credits available. Please top up to activate live tracking.", balance: current }, 402);
+        }
+      }
+
       // Call VesselFinder
       const { httpStatus, body: vfBody } = await callVesselFinder(vfKey, containerNumber, sealine);
 
       let status = "error";
       let errorCode: string | null = null;
       let errorMessage: string | null = null;
-      let response: any = vfBody;
+      const response: any = vfBody;
 
       if (httpStatus === 200 && vfBody?.status === "success") {
         status = "success";
@@ -164,6 +211,29 @@ Deno.serve(async (req) => {
         .select("*")
         .maybeSingle();
       if (upErr) return json({ error: upErr.message }, 500);
+
+      // Charge the credit only if VF accepted the request (success/queued/processing).
+      if (isCustomer && isFirstActivation && status !== "error") {
+        if (customerTier === "heavy") {
+          await admin.from("container_credits_ledger").insert({
+            customer_account_id: customerAccountUuid!,
+            delta: 0,
+            reason: "consumption",
+            container_id: body.containerId,
+            note: "heavy-tier vesselfinder activation",
+            created_by: userId,
+          });
+        } else {
+          await admin.from("container_credits_ledger").insert({
+            customer_account_id: customerAccountUuid!,
+            delta: -1,
+            reason: "consumption",
+            container_id: body.containerId,
+            note: `vesselfinder activation (${containerNumber})`,
+            created_by: userId,
+          });
+        }
+      }
 
       return json({ tracking: saved, vfHttpStatus: httpStatus });
     }

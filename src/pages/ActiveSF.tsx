@@ -63,7 +63,7 @@ const ActiveSF = () => {
   const { data: accounts } = useAccounts();
   const { data: customerFarms } = useCustomerFarms();
   const { data: containers } = useContainers();
-  const vfActiveSet = useVesselFinderActiveSet(isAdmin);
+  const vfActiveSet = useVesselFinderActiveSet(isAdmin || isCustomer);
 
   // Load hidden trip IDs (visible to all authenticated users)
   const loadHidden = useCallback(async () => {
