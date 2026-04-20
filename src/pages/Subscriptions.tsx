@@ -27,8 +27,8 @@ const PLANS: {
   highlight?: boolean;
 }[] = [
   { key: "basic", name: "Basic", tagline: "Quality fundamentals", monthly: "€45", yearly: "€39" },
-  { key: "pro", name: "Pro", tagline: "Quality + sea freight", monthly: "€95", yearly: "€89", highlight: true },
-  { key: "proPlus", name: "Pro+", tagline: "Scaling operations", monthly: "€145", yearly: "€139" },
+  { key: "pro", name: "Pro", tagline: "Quality + sea freight", monthly: "€95", yearly: "€89" },
+  { key: "proPlus", name: "Pro+", tagline: "Scaling operations", monthly: "€145", yearly: "€139", highlight: true },
   { key: "heavy", name: "Heavy", tagline: "Enterprise scale", monthly: "Upon request", yearly: "Upon request" },
 ];
 
