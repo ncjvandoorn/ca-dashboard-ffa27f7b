@@ -766,28 +766,26 @@ const ActiveSF = () => {
                       </TableCell>
                       {(isAdmin || isCustomer) && (
                         <TableCell className="text-center">
-                          <div className="inline-flex items-center gap-3">
-                            {/* DL dot: green if any logger is sending live data, red if only backfill, dash if no logger */}
+                          <div className="inline-flex items-center gap-6">
+                            {/* Data logger dot: green if any logger is sending live data, red if backfill-only, gray if none linked */}
                             {(() => {
                               if (g.tripsWithData.length === 0) {
                                 return (
                                   <span
-                                    className="inline-flex items-center gap-1 text-[10px]"
+                                    className="inline-flex items-center"
                                     title="No datalogger linked"
                                   >
                                     <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />
-                                    <span className="text-muted-foreground">DL</span>
                                   </span>
                                 );
                               }
                               const hasLive = g.tripsWithData.some((t) => !t.isBackfillOnly);
                               return (
                                 <span
-                                  className="inline-flex items-center gap-1 text-[10px]"
+                                  className="inline-flex items-center"
                                   title={hasLive ? "Live SensiWatch data" : "Historical backfill only — no live push"}
                                 >
                                   <span className={`h-2 w-2 rounded-full ${hasLive ? "bg-accent" : "bg-destructive"}`} />
-                                  <span className="text-muted-foreground">DL</span>
                                 </span>
                               );
                             })()}
