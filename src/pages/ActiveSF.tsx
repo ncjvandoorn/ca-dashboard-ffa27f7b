@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
+import { ContainerDetailDialog } from "@/components/dashboard/ContainerDetailDialog";
 import { CompareTripsDialog } from "@/components/dashboard/CompareTripsDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
 import chrysalLogo from "@/assets/chrysal-logo.png";
