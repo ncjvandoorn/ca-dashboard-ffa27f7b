@@ -105,16 +105,26 @@ function executeTool(name: string, args: any, ctx: ToolContext): any {
   switch (name) {
     case "get_farm_quality": {
       const farmId = args.farmId;
-      const farmName = args.farmName?.toLowerCase();
+      const farmNameRaw = (args.farmName || "").toLowerCase().trim();
       const fromWeek = args.fromWeek as number | undefined;
       const toWeek = args.toWeek as number | undefined;
       const farms = applyScope(ctx.farmData, ctx.scope);
-      let match = farms.find((f) => f.farmId === farmId || f.farm?.toLowerCase() === farmName);
-      if (!match) {
-        // fuzzy
-        match = farms.find((f) => farmName && f.farm?.toLowerCase().includes(farmName));
+      // Exact match first (id or full name match — case-insensitive)
+      let match = farms.find((f) =>
+        (farmId && f.farmId === farmId) ||
+        (farmNameRaw && f.farm?.toLowerCase() === farmNameRaw)
+      );
+      // Fuzzy match ONLY when not a customer (customers must never be silently
+      // redirected to a different farm than the one they asked about).
+      if (!match && !ctx.scope?.isCustomer && farmNameRaw) {
+        match = farms.find((f) => f.farm?.toLowerCase().includes(farmNameRaw));
       }
-      if (!match) return { error: `Farm not found or not accessible: ${farmId || args.farmName}` };
+      if (!match) {
+        if (ctx.scope?.isCustomer) {
+          return { error: `You do not have access to "${args.farmName || farmId}". This farm is either outside your account scope or does not exist. Do NOT suggest a similar farm.` };
+        }
+        return { error: `Farm not found: ${farmId || args.farmName}` };
+      }
       let weeks = match.d || [];
       if (fromWeek != null) weeks = weeks.filter((w: any) => w.w >= fromWeek);
       if (toWeek != null) weeks = weeks.filter((w: any) => w.w <= toWeek);
