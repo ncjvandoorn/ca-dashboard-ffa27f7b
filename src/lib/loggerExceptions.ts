@@ -18,8 +18,8 @@ export interface ExceptionRule {
 export const EXCEPTION_RULES: ExceptionRule[] = [
   {
     key: "temp_above_5",
-    label: "Temperature > 5°C for more than 3 days",
-    shortLabel: "Temp > 5°C · 3d",
+    label: "Temperature > 3°C for more than 3 days",
+    shortLabel: "Temp > 3°C · 3d",
     hue: 28, // amber
     description: "Sustained warm exposure (cold-chain drift)",
   },
@@ -133,7 +133,7 @@ export function buildLoggerSeries(rows: LoggerReading[]): LoggerSeries[] {
 
     const flags: LoggerExceptionFlag[] = [];
 
-    const t5 = longestRunMs(rdgs, (r) => r.temp != null && r.temp > 5);
+    const t5 = longestRunMs(rdgs, (r) => r.temp != null && r.temp > 3);
     if (t5.ms > 3 * DAY_MS) {
       flags.push({ rule: "temp_above_5", durationMs: t5.ms, start: t5.start, end: t5.end });
     }
