@@ -76,6 +76,10 @@ export default function Subscriptions() {
   const [cycle, setCycle] = useState<Cycle>("yearly");
 
   const goToSignup = (planKey: PlanKey) => {
+    if (planKey === "heavy") {
+      window.location.href = "mailto:info@chrysal.co.ke?subject=Heavy%20tier%20enquiry";
+      return;
+    }
     const tier = SIGNUP_TIER[planKey];
     navigate(`/signup?tier=${tier}&cycle=${cycle}`);
   };
