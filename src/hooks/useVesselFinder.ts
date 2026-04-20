@@ -173,6 +173,7 @@ export function useVesselFinderActiveSet(enabled: boolean) {
             destinationName: resp?.general?.destination?.name ?? lastStop?.name ?? null,
             destinationDate: etaDate,
             lastLocationAt: lastLocSec ? lastLocSec * 1000 : null,
+            response: resp ?? null,
           });
         }
         setActive(m);
