@@ -363,7 +363,14 @@ const ActiveSF = () => {
     const order: string[] = [];
     for (const t of filtered) {
       const info = lookupOrder(t.internalTripId);
-      const key = info?.containerId || `trip:${t.tripId}`;
+      // Group by container when available; otherwise fall back to the order id
+      // (so non-SF orders like TC service collapse into one row per order even
+      // without a container) — finally to the trip id for true orphan trips.
+      const key = info?.containerId
+        ? info.containerId
+        : info?.orderId
+        ? `order:${info.orderId}`
+        : `trip:${t.tripId}`;
       if (!groups.has(key)) {
         order.push(key);
         groups.set(key, {
