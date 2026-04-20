@@ -37,13 +37,19 @@ interface CreditEntry {
 }
 
 export const CustomerAccountsCard = () => {
-  const [customerAccounts, setCustomerAccounts] = useState<CustomerAccountRecord[]>([]);
+  const [customerAccounts, setCustomerAccounts] = useState<ExtendedCustomerAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCustUsername, setNewCustUsername] = useState("");
   const [newCustPassword, setNewCustPassword] = useState("");
   const [newCustAccountId, setNewCustAccountId] = useState("");
   const [newCustTier, setNewCustTier] = useState<"basic" | "pro" | "pro_plus" | "heavy">("basic");
   const [creating, setCreating] = useState(false);
+  const [creditDialogFor, setCreditDialogFor] = useState<ExtendedCustomerAccount | null>(null);
+  const [creditHistory, setCreditHistory] = useState<CreditEntry[]>([]);
+  const [creditHistoryLoading, setCreditHistoryLoading] = useState(false);
+  const [grantAmount, setGrantAmount] = useState("");
+  const [grantNote, setGrantNote] = useState("");
+  const [granting, setGranting] = useState(false);
   const { toast } = useToast();
   const { data: allAccounts } = useAccounts();
   const { data: customerFarms } = useCustomerFarms();
