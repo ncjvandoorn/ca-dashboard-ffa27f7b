@@ -102,7 +102,8 @@ export default function Signup() {
     e.preventDefault();
 
     if (mode === "invite") {
-      if (!username || !/^[a-z0-9_-]+$/.test(username)) {
+      const inviteUsername = invitation?.username || username;
+      if (!invitation || !inviteUsername || !/^[a-z0-9_-]+$/.test(inviteUsername)) {
         toast({ title: "Invalid invitation", description: "Verify your code first", variant: "destructive" });
         return;
       }
@@ -127,7 +128,7 @@ export default function Signup() {
           ? {
               action: "signup_with_invitation",
               code: invitation.code,
-              username: username.toLowerCase(),
+              username: (invitation.username || username).toLowerCase(),
               password,
               tier,
               billingCycle,
