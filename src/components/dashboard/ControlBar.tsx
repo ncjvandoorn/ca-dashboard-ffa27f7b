@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings, LogOut, FlaskConical, CalendarRange, Search, X, Menu, Package, Ship, CreditCard, Users } from "lucide-react";
+import { Settings, LogOut, FlaskConical, CalendarRange, Search, X, Menu, Package, Ship, CreditCard, Users, UserCircle, ClipboardCheck } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,118 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { Account, CustomerFarm } from "@/lib/csvParser";
 import chrysalLogo from "@/assets/chrysal-logo.png";
-
-interface ControlBarProps {
-  accounts: Account[];
-  allAccounts: Account[];
-  selectedFarmId: string;
-  onFarmChange: (id: string) => void;
-  years: number[];
-  selectedYear: string;
-  onYearChange: (year: string) => void;
-  farmCount: number;
-  customerFarms: CustomerFarm[];
-  selectedCustomerId: string;
-  onCustomerChange: (id: string) => void;
-  onOpenContainers?: () => void;
-}
-
-function SearchableDropdown({
-  label,
-  placeholder,
-  items,
-  value,
-  onChange,
-  width = "w-[280px]",
-}: {
-  label: string;
-  placeholder: string;
-  items: { id: string; name: string; secondary?: string }[];
-  value: string;
-  onChange: (id: string) => void;
-  width?: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const filtered = useMemo(() => {
-    if (!search) return items;
-    const q = search.toLowerCase();
-    return items.filter((i) => i.name.toLowerCase().includes(q));
-  }, [items, search]);
-
-  const selectedName = items.find((i) => i.id === value)?.name;
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className="label-text">{label}</span>
-      <div className="relative" ref={ref}>
-        <button
-          type="button"
-          onClick={() => { setOpen(!open); setTimeout(() => inputRef.current?.focus(), 50); }}
-          className={`${width} flex items-center justify-between h-10 rounded-lg bg-card shadow-card px-3 py-2 text-sm`}
-        >
-          <span className="truncate text-left">{selectedName || placeholder}</span>
-          <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0 ml-2" />
-        </button>
-        {open && (
-          <div className="absolute top-full mt-1 right-0 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden" style={{ width: "320px" }}>
-            <div className="flex items-center border-b px-3 py-1.5">
-              <Search className="h-3.5 w-3.5 text-muted-foreground mr-2 shrink-0" />
-              <input
-                ref={inputRef}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Type to search…"
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="p-0.5">
-                  <X className="h-3 w-3 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-            <div className="max-h-[280px] overflow-y-auto">
-              {filtered.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No results</p>
-              ) : (
-                filtered.slice(0, 50).map((item) => (
-                  <button
-                    key={item.id}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-accent/10 flex items-center justify-between gap-2 ${item.id === value ? "bg-accent/5 font-medium" : ""}`}
-                    onClick={() => {
-                      onChange(item.id);
-                      setSearch("");
-                      setOpen(false);
-                    }}
-                  >
-                    <span className="truncate">{item.name}</span>
-                    {item.secondary && (
-                      <span className="text-xs text-muted-foreground shrink-0">{item.secondary}</span>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
+...
 export function ControlBar({
   accounts, allAccounts, selectedFarmId, onFarmChange,
   years, selectedYear, onYearChange, farmCount,
@@ -132,99 +24,8 @@ export function ControlBar({
 }: ControlBarProps) {
   const navigate = useNavigate();
   const { signOut, isAdmin, isCustomer, customerAccount } = useAuth();
-
-  // Build customer list from customerFarms + accounts
-  const customers = useMemo(() => {
-    const customerIds = new Set(customerFarms.map((cf) => cf.customerAccountId));
-    const accountMap = new Map(allAccounts.map((a) => [a.id, a]));
-    return [...customerIds]
-      .map((id) => accountMap.get(id))
-      .filter((a): a is Account => !!a)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [customerFarms, allAccounts]);
-
-  // Farm items for dropdown — filtered by customer if one is selected
-  const farmItems = useMemo(() => {
-    let farms = [...accounts];
-    if (selectedCustomerId) {
-      const allowedFarmIds = new Set(
-        customerFarms
-          .filter((cf) =>
-            cf.customerAccountId === selectedCustomerId &&
-            cf.farmAccountConsent === "1" &&
-            !cf.deletedAt
-          )
-          .map((cf) => cf.farmAccountId)
-      );
-      farms = farms.filter((a) => allowedFarmIds.has(a.id));
-    }
-    return farms
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((a) => ({ id: a.id, name: a.name }));
-  }, [accounts, selectedCustomerId, customerFarms]);
-
-  const customerItems = useMemo(() =>
-    customers.map((c) => ({
-      id: c.id,
-      name: c.name,
-      secondary: `${customerFarms.filter((cf) => cf.customerAccountId === c.id && !cf.deletedAt).length} farms`,
-    })),
-    [customers, customerFarms]
-  );
-
-  // Global search scoped to the currently allowed farm universe
-  const [search, setSearch] = useState("");
-  const [showResults, setShowResults] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-
-  const searchableAccounts = useMemo(() => {
-    if (selectedCustomerId) {
-      const allowedFarmIds = new Set(
-        customerFarms
-          .filter((cf) =>
-            cf.customerAccountId === selectedCustomerId &&
-            cf.farmAccountConsent === "1" &&
-            !cf.deletedAt
-          )
-          .map((cf) => cf.farmAccountId)
-      );
-      return allAccounts.filter((a) => allowedFarmIds.has(a.id));
-    }
-    return isCustomer ? accounts : allAccounts;
-  }, [selectedCustomerId, customerFarms, allAccounts, isCustomer, accounts]);
-
-  const searchResults = search.length >= 2
-    ? searchableAccounts
-        .filter((a) => a.name.toLowerCase().includes(search.toLowerCase()))
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .slice(0, 15)
-    : [];
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowResults(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <header className="sticky top-0 z-10 backdrop-blur-sm py-5 space-y-4">
-      {/* Row 1: Logo + title (left) — nav buttons (right) */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0">
-            <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto max-w-none block shrink-0" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">
-              Chrysal Intelligence
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Quality, Sea Freight & trial insights
-            </p>
-          </div>
-        </div>
+  const { can } = usePermissions();
+...
         <div className="flex items-center gap-1 border-l border-border pl-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -233,48 +34,62 @@ export function ControlBar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-popover">
-              {!isCustomer && onOpenContainers && (
+              {can("containers") && onOpenContainers && (
                 <DropdownMenuItem onClick={onOpenContainers}>
                   <Package className="h-4 w-4 mr-2" />
                   Containers
                 </DropdownMenuItem>
               )}
-              {!isCustomer && (
+              {can("active_sf") && (
                 <DropdownMenuItem onClick={() => navigate("/active-sf")}>
                   <Ship className="h-4 w-4 mr-2" />
                   Active SF
                 </DropdownMenuItem>
               )}
-              {!isCustomer && (
+              {can("trial_planner") && (
                 <DropdownMenuItem onClick={() => navigate("/planner")}>
                   <CalendarRange className="h-4 w-4 mr-2" />
                   Trial Planner
                 </DropdownMenuItem>
               )}
-              {!isCustomer && (
+              {can("reporting_check") && (
+                <DropdownMenuItem onClick={() => navigate("/?check=reporting")}>
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  Reporting Check
+                </DropdownMenuItem>
+              )}
+              {can("crm_activities") && (
                 <DropdownMenuItem onClick={() => navigate("/crm")}>
                   <Users className="h-4 w-4 mr-2" />
                   CRM Activities
                 </DropdownMenuItem>
               )}
-              {!isCustomer && (
+              {can("trials_dashboard") && (
                 <DropdownMenuItem onClick={() => navigate("/trials")}>
                   <FlaskConical className="h-4 w-4 mr-2" />
                   Trials Dashboard
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
-                <CreditCard className="h-4 w-4 mr-2" />
-                Subscription Plans
-              </DropdownMenuItem>
-              {isAdmin && (
+              {can("subscription_plans") && (
+                <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Subscription Plans
+                </DropdownMenuItem>
+              )}
+              {(isCustomer || isAdmin || can("settings")) && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/admin")}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <UserCircle className="h-4 w-4 mr-2" />
+                    My Profile
                   </DropdownMenuItem>
                 </>
+              )}
+              {isAdmin && (
+                <DropdownMenuItem onClick={() => navigate("/admin")}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => signOut()}>
