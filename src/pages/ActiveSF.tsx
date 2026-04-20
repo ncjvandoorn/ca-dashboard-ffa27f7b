@@ -270,6 +270,14 @@ const ActiveSF = () => {
       });
     }
     return [...list].sort((a, b) => {
+      if (sortField === "week") {
+        // Sort by dippingWeek (YYWW) numerically; rows without a week sink last.
+        const aw = lookupOrder(a.internalTripId)?.dippingWeek || "";
+        const bw = lookupOrder(b.internalTripId)?.dippingWeek || "";
+        const an = aw ? Number(aw) : sortDir === "asc" ? Infinity : -Infinity;
+        const bn = bw ? Number(bw) : sortDir === "asc" ? Infinity : -Infinity;
+        return sortDir === "asc" ? an - bn : bn - an;
+      }
       if (sortField === "tripId") {
         return sortDir === "asc"
           ? Number(a.tripId) - Number(b.tripId)
@@ -287,7 +295,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet]);
+  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year]);
 
   // Map tripId -> VF active tracking info (when available for the trip's container)
   const vfByTrip = useMemo(() => {
