@@ -436,20 +436,30 @@ const DataLoggers = () => {
           </section>
 
           {/* Status / loading */}
-          {loadingReadings && (
+          {(loadingCache || refreshing) && (
             <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-sm">Analysing every datalogger reading…</span>
+              <span className="text-sm">
+                {refreshing ? "Re-analysing every datalogger reading…" : "Loading saved analysis…"}
+              </span>
             </div>
           )}
-          {error && (
+          {error && !refreshing && !loadingCache && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-              Could not load readings: {error}
+              {error}
+            </div>
+          )}
+          {!loadingCache && !refreshing && allSeries.length === 0 && !error && (
+            <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground text-center">
+              No saved analysis yet.
+              {canRefresh
+                ? " Click \u201CRefresh analysis\u201D to compute one from the latest data."
+                : " Ask an admin to refresh the analysis."}
             </div>
           )}
 
           {/* Multigraph */}
-          {!loadingReadings && (
+          {!loadingCache && !refreshing && allSeries.length > 0 && (
             <section className="rounded-xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-baseline justify-between gap-2 flex-wrap">
                 <h2 className="font-semibold text-base">
