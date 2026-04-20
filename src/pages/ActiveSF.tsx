@@ -9,9 +9,10 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle, Layers, X, EyeOff, Eye } from "lucide-react";
+import { ArrowLeft, Search, ArrowUp, ArrowDown, Ship, AlertCircle, Layers, X, EyeOff, Eye, Activity, Radio } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Toggle } from "@/components/ui/toggle";
 import { TripDetailDialog } from "@/components/dashboard/TripDetailDialog";
 import { CompareTripsDialog } from "@/components/dashboard/CompareTripsDialog";
 import { SFWorldMap } from "@/components/dashboard/SFWorldMap";
@@ -56,7 +57,9 @@ const ActiveSF = () => {
   const [compareOpen, setCompareOpen] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [showHidden, setShowHidden] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  const [onlySF, setOnlySF] = useState(true);
+  const [onlyActiveDL, setOnlyActiveDL] = useState(false);
+  const [onlyLiveTracking, setOnlyLiveTracking] = useState(false);
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
@@ -127,13 +130,70 @@ const ActiveSF = () => {
     [orderInfo]
   );
 
+  // Build the master list of rows: one per services order, plus orphan trips
+  // (sensiwatch trips whose internal id doesn't match any order). Each row is
+  // a synthetic SFTrip — for orders without a logger, sensor fields are null.
+  const allRows = useMemo<SFTrip[]>(() => {
+    // Index sensiwatch trips by stripped internal trip id (= orderNumber)
+    const tripByOrder = new Map<string, SFTrip>();
+    for (const t of trips) {
+      const key = stripLoggerSuffix(t.internalTripId);
+      if (key && !tripByOrder.has(key)) tripByOrder.set(key, t);
+    }
+    const rows: SFTrip[] = [];
+    const usedTripIds = new Set<string>();
+    // 1) one row per services order
+    for (const [orderNumber, info] of orderInfo.entries()) {
+      const t = tripByOrder.get(orderNumber);
+      if (t) {
+        usedTripIds.add(t.tripId);
+        rows.push(t);
+      } else {
+        // Synthetic row for an order with no datalogger trip yet
+        rows.push({
+          tripId: `order:${info.orderId}`,
+          tripStatus: "No Logger",
+          internalTripId: orderNumber,
+          originName: "",
+          originAddress: "",
+          destinationName: "",
+          carrier: "",
+          stops: 0,
+          plannedDepartureTime: null,
+          actualDepartureTime: null,
+          latitude: null,
+          longitude: null,
+          serialNumber: null,
+          lastTemp: null,
+          lastLight: null,
+          lastHumidity: null,
+          lastReadingTime: null,
+          lastLocation: null,
+        });
+      }
+    }
+    // 2) orphan trips not linked to an order
+    for (const t of trips) {
+      if (!usedTripIds.has(t.tripId)) rows.push(t);
+    }
+    return rows;
+  }, [trips, orderInfo]);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    // Default: only Sea Freight. Admin "Show all loggers" bypasses this filter.
-    let list = trips.filter((t) => {
-      if (isAdmin && showAll) return true;
+    let list = allRows.filter((t) => {
       const info = lookupOrder(t.internalTripId);
-      return info?.purposeName === "Sea Freight";
+      // Only SF: keep rows whose linked order has purpose "Sea Freight".
+      // Orphan trips (no order) are excluded when this toggle is on.
+      if (onlySF && info?.purposeName !== "Sea Freight") return false;
+      // Only active DL: must have a sensiwatch trip with readings
+      if (onlyActiveDL && !t.serialNumber) return false;
+      // Only live tracking: must have an enabled VF tracker for this container
+      if (onlyLiveTracking) {
+        const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
+        if (!vf || !vf.enabled) return false;
+      }
+      return true;
     });
     // Customers: only trips whose linked order belongs to them.
     if (isCustomer) {
@@ -149,8 +209,8 @@ const ActiveSF = () => {
         list = list.filter((t) => myOrderIds.has(stripLoggerSuffix(t.internalTripId)));
       }
     }
-    // Hide rows admin marked as hidden — also bypassed by Show all / Show hidden.
-    if (!(isAdmin && (showHidden || showAll))) {
+    // Hide rows admin marked as hidden — bypassed by Show hidden.
+    if (!(isAdmin && showHidden)) {
       list = list.filter((t) => !hiddenIds.has(t.tripId));
     }
     if (q) {
@@ -205,7 +265,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [trips, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, showAll]);
+  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet]);
 
   // Map tripId -> VF active tracking info (when available for the trip's container)
   const vfByTrip = useMemo(() => {
@@ -337,18 +397,38 @@ const ActiveSF = () => {
           <span className="text-sm text-muted-foreground">
             {filtered.length} trip{filtered.length !== 1 ? "s" : ""}
           </span>
-          <div className="ml-auto flex items-center gap-2">
-            {isAdmin && (
-              <Button
-                variant={showAll ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowAll((s) => !s)}
-              >
-                <Ship className="h-4 w-4" />
-                {showAll ? "Sea Freight only" : "Show all loggers"}
-              </Button>
-            )}
-            {isAdmin && hiddenIds.size > 0 && !showAll && (
+          <div className="ml-auto flex items-center gap-2 flex-wrap">
+            <Toggle
+              size="sm"
+              variant="outline"
+              pressed={onlySF}
+              onPressedChange={setOnlySF}
+              aria-label="Only Sea Freight"
+            >
+              <Ship className="h-4 w-4" />
+              Only SF
+            </Toggle>
+            <Toggle
+              size="sm"
+              variant="outline"
+              pressed={onlyActiveDL}
+              onPressedChange={setOnlyActiveDL}
+              aria-label="Only active dataloggers"
+            >
+              <Activity className="h-4 w-4" />
+              Only active DL
+            </Toggle>
+            <Toggle
+              size="sm"
+              variant="outline"
+              pressed={onlyLiveTracking}
+              onPressedChange={setOnlyLiveTracking}
+              aria-label="Only live tracking"
+            >
+              <Radio className="h-4 w-4" />
+              Only live tracking
+            </Toggle>
+            {isAdmin && hiddenIds.size > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -411,7 +491,6 @@ const ActiveSF = () => {
                     />
                   </TableHead>
                   <TableHead>Week</TableHead>
-                  <TableHead>Internal Trip ID</TableHead>
                   <TableHead>Container #</TableHead>
                   <TableHead>Drop-off</TableHead>
                   <TableHead>Shipping</TableHead>
@@ -457,7 +536,11 @@ const ActiveSF = () => {
                       {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="font-mono text-xs whitespace-nowrap">
-                      {trip.internalTripId}
+                      {info?.containerNumber || (
+                        <span className="text-muted-foreground normal-case font-sans">
+                          {trip.internalTripId || "—"}
+                        </span>
+                      )}
                       {(() => {
                         const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
                         const fmt = (iso: string | null | undefined) =>
@@ -482,9 +565,6 @@ const ActiveSF = () => {
                           </div>
                         );
                       })()}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {info?.containerNumber || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.dropoffDate ?? null)}</TableCell>
                     <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.shippingDate ?? null)}</TableCell>
