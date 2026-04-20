@@ -146,7 +146,10 @@ const ActiveSF = () => {
         dippingWeek: o.dippingWeek || "",
         bookingCode: c?.bookingCode || "",
         containerNumber: c?.containerNumber || "",
-        containerId: o.containerId || "",
+        // Only expose containerId when the container actually exists in
+        // containers.csv — Active SF should ignore orders pointing at
+        // unknown / removed containers.
+        containerId: c ? o.containerId : "",
         dropoffDate: c?.dropoffDate ?? null,
         shippingDate: c?.shippingDate ?? null,
         purposeName: o.purposeName || "",
@@ -235,17 +238,19 @@ const ActiveSF = () => {
     const yearSuffix = year ? year.slice(-2) : "";
     let list = allRows.filter((t) => {
       const info = lookupOrder(t.internalTripId);
-      // Year filter — match dippingWeek YY prefix. Rows with no dippingWeek
-      // are kept only when they're orphans (no order info at all).
-      if (year && info && !(info.dippingWeek || "").startsWith(yearSuffix)) return false;
+      // Active SF only shows orders that are linked to a real container
+      // (i.e. one that exists in containers.csv). Orphan trips and orders
+      // without a known container are excluded.
+      if (!info?.containerId) return false;
+      // Year filter — match dippingWeek YY prefix.
+      if (year && !(info.dippingWeek || "").startsWith(yearSuffix)) return false;
       // Only SF: keep rows whose linked order has purpose "Sea Freight".
-      // Orphan trips (no order) are excluded when this toggle is on.
-      if (onlySF && info?.purposeName !== "Sea Freight") return false;
+      if (onlySF && info.purposeName !== "Sea Freight") return false;
       // Only active DL: must have a sensiwatch trip with readings
       if (onlyActiveDL && !t.serialNumber) return false;
       // Only live tracking: must have an enabled VF tracker for this container
       if (onlyLiveTracking) {
-        const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
+        const vf = vfActiveSet.get(info.containerId);
         if (!vf || !vf.enabled) return false;
       }
       return true;
