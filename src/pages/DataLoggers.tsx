@@ -64,6 +64,29 @@ function shortDate(iso: string | null): string {
 
 const TWELVE_WEEKS_MS = 12 * 7 * 24 * 60 * 60 * 1000;
 
+/** Week nr in YYWW format. Week 1 = Sat–Fri week containing Jan 1. */
+function getCurrentWeekNr(): number {
+  const now = new Date();
+  const daysSinceSat = (now.getDay() + 1) % 7;
+  const currentSat = new Date(now);
+  currentSat.setDate(now.getDate() - daysSinceSat);
+  currentSat.setHours(0, 0, 0, 0);
+  const jan1 = new Date(currentSat.getFullYear(), 0, 1);
+  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
+  const week1Sat = new Date(jan1);
+  week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
+  week1Sat.setHours(0, 0, 0, 0);
+  const weekNum = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
+  const year = currentSat.getFullYear() % 100;
+  return year * 100 + weekNum;
+}
+
+function formatCachedAt(iso: string | null): string {
+  if (!iso) return "never";
+  const d = new Date(iso);
+  return d.toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
 const DataLoggers = () => {
   const navigate = useNavigate();
   const { isAdmin, roleKey } = useAuth();
