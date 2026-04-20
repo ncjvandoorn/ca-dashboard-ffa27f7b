@@ -86,11 +86,8 @@ export default function Signup() {
   }, []);
 
   const planLabel = useMemo(() => {
-    if (mode === "invite" && invitation) {
-      return `${TIER_LABELS[invitation.tier]} · ${invitation.billing_cycle}`;
-    }
     return `${TIER_LABELS[tier]} · ${billingCycle}`;
-  }, [mode, invitation, tier, billingCycle]);
+  }, [tier, billingCycle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
