@@ -62,6 +62,8 @@ const LIMITS: { label: string; values: Record<PlanKey, string> }[] = [
 ];
 
 export default function Subscriptions() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       {/* Header (matches other internal pages) */}
