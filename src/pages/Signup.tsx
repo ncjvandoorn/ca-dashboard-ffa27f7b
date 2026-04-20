@@ -264,7 +264,7 @@ export default function Signup() {
                     <Input
                       value={code}
                       onChange={(e) => setCode(e.target.value.toLowerCase())}
-                      placeholder="e.g. xpol-63844"
+                      placeholder="Invitation code"
                       required
                     />
                     <Button
@@ -292,7 +292,7 @@ export default function Signup() {
                   <Input
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="e.g. Xpol"
+                    placeholder="Company name"
                     required
                   />
                   <p className="text-xs text-muted-foreground">
@@ -333,7 +333,7 @@ export default function Signup() {
                 <Input
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                  placeholder="e.g. xpol"
+                  placeholder="Username"
                   required
                   readOnly={usernameLocked}
                   disabled={usernameLocked}
