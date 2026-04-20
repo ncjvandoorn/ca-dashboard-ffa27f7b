@@ -244,8 +244,13 @@ const ActiveSF = () => {
       if (!info?.containerId) return false;
       // Year filter — match dippingWeek YY prefix.
       if (year && !(info.dippingWeek || "").startsWith(yearSuffix)) return false;
-      // Only SF: keep rows whose linked order has purpose "Sea Freight".
-      if (onlySF && info.purposeName !== "Sea Freight") return false;
+      // SF toggle: ON = only Sea Freight; OFF = everything BUT Sea Freight
+      // (air freight, long storage, TC services, etc.).
+      if (onlySF) {
+        if (info.purposeName !== "Sea Freight") return false;
+      } else {
+        if (info.purposeName === "Sea Freight") return false;
+      }
       // Only active DL: must have a sensiwatch trip with readings
       if (onlyActiveDL && !t.serialNumber) return false;
       // Only live tracking: must have an enabled VF tracker for this container
