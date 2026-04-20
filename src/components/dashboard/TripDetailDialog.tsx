@@ -255,7 +255,6 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                               <div className="text-muted-foreground">Discharge wait: {arrival.dischargeWaitingMin} min</div>
                             )}
                             {arrival.specificComments && <p className="text-foreground/80 italic">"{arrival.specificComments}"</p>}
-                        {arrival && arrival.specificComments && <p className="text-foreground/80 italic">"{arrival.specificComments}"</p>}
                           </div>
                         )}
                         {(() => {
