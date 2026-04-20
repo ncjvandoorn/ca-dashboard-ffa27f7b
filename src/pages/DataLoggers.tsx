@@ -66,13 +66,23 @@ const TWELVE_WEEKS_MS = 12 * 7 * 24 * 60 * 60 * 1000;
 
 const DataLoggers = () => {
   const navigate = useNavigate();
+  const { isAdmin, roleKey } = useAuth();
+  const canRefresh = isAdmin || roleKey === "user";
+
   const [activeFilters, setActiveFilters] = useState<Set<ExceptionType>>(
     new Set(EXCEPTION_RULES.map((r) => r.key))
   );
   const [last12Weeks, setLast12Weeks] = useState(true);
   const [selectedSerial, setSelectedSerial] = useState<string | null>(null);
 
-  const { data: readings, isLoading: loadingReadings, error } = useAllSensiwatchReadings();
+  // Cached analysis state — loaded from cloud, refreshed on demand only.
+  const [allSeries, setAllSeries] = useState<LoggerSeries[]>([]);
+  const [cachedAt, setCachedAt] = useState<string | null>(null);
+  const [cacheWeekNr, setCacheWeekNr] = useState<number | null>(null);
+  const [loadingCache, setLoadingCache] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const { data: trips } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
   const { data: accounts } = useAccounts();
@@ -119,8 +129,68 @@ const DataLoggers = () => {
     return m;
   }, [servicesOrders, accounts, customerFarms, containers]);
 
-  // Compute exception series once (heavy — only runs when readings change).
-  const allSeries = useMemo(() => buildLoggerSeries(readings), [readings]);
+  // Load latest cached analysis from cloud on mount.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingCache(true);
+      const { data, error: qErr } = await supabase
+        .from("data_loggers_report_cache" as any)
+        .select("analysis, week_nr, created_at")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (qErr) {
+        setError(qErr.message);
+      } else if (data) {
+        const payload = (data as any).analysis as { allSeries?: LoggerSeries[] } | null;
+        setAllSeries(payload?.allSeries || []);
+        setCachedAt((data as any).created_at || null);
+        setCacheWeekNr((data as any).week_nr ?? null);
+      }
+      setLoadingCache(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onRefresh = async () => {
+    if (!canRefresh) return;
+    setRefreshing(true);
+    setError(null);
+    try {
+      const readings = await fetchAllSensiwatchReadings();
+      const series = buildLoggerSeries(readings);
+      // Drop readings of non-flagged loggers — they're never used in the UI
+      // and would inflate the cache payload massively.
+      const trimmed: LoggerSeries[] = series.map((s) =>
+        s.flags.length === 0 ? { ...s, readings: [] } : s,
+      );
+      const weekNr = getCurrentWeekNr();
+      const { error: upErr } = await supabase
+        .from("data_loggers_report_cache" as any)
+        .upsert({ week_nr: weekNr, analysis: { allSeries: trimmed } }, { onConflict: "week_nr" });
+      if (upErr) throw new Error(upErr.message);
+      setAllSeries(trimmed);
+      setCachedAt(new Date().toISOString());
+      setCacheWeekNr(weekNr);
+      toast({
+        title: "Analysis refreshed",
+        description: `Re-analysed ${readings.length.toLocaleString()} readings · ${
+          trimmed.filter((s) => s.flags.length > 0).length
+        } flagged loggers.`,
+      });
+    } catch (err: any) {
+      const msg = err?.message || "Refresh failed";
+      setError(msg);
+      toast({ title: "Refresh failed", description: msg, variant: "destructive" });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
 
   // Filter to loggers that have at least one *currently selected* exception,
   // and (optionally) restrict to the last 12 weeks of activity.
