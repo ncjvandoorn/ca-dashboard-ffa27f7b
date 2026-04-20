@@ -32,3 +32,7 @@ verify_jwt = false
 
 [functions.vesselfinder-track]
 verify_jwt = false
+
+[functions.customer-signup]
+verify_jwt = false
+
