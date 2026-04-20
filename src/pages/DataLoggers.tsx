@@ -423,10 +423,11 @@ const DataLoggers = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Week</TableHead>
+                      <TableHead>Order #</TableHead>
                       <TableHead>Logger</TableHead>
                       <TableHead>Container · Booking</TableHead>
                       <TableHead>Customer · Farm</TableHead>
-                      <TableHead>Week</TableHead>
                       <TableHead>Exceptions</TableHead>
                       <TableHead>Last reading</TableHead>
                     </TableRow>
@@ -434,13 +435,16 @@ const DataLoggers = () => {
                   <TableBody>
                     {flaggedSeries.map((s) => {
                       const repInternal = s.internalTripIds[s.internalTripIds.length - 1] || "";
-                      const info = orderInfo.get(stripLoggerSuffix(repInternal));
+                      const orderNumber = stripLoggerSuffix(repInternal);
+                      const info = orderInfo.get(orderNumber);
                       return (
                         <TableRow
                           key={s.serial}
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => setSelectedSerial(s.serial)}
                         >
+                          <TableCell className="font-mono text-xs">{info?.dippingWeek || "—"}</TableCell>
+                          <TableCell className="font-mono text-xs">{orderNumber || "—"}</TableCell>
                           <TableCell className="font-mono text-xs">{s.serial}</TableCell>
                           <TableCell className="text-xs">
                             <div className="font-mono">{info?.containerNumber || "—"}</div>
@@ -454,7 +458,6 @@ const DataLoggers = () => {
                               <div className="text-[10px] text-muted-foreground">{info.farm}</div>
                             )}
                           </TableCell>
-                          <TableCell className="font-mono text-xs">{info?.dippingWeek || "—"}</TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {s.flags
