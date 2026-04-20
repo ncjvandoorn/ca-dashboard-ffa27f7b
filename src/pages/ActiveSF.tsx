@@ -468,7 +468,7 @@ const ActiveSF = () => {
                         );
                       })()}
                     </TableCell>
-                    {isAdmin && (
+                    {(isAdmin || isCustomer) && (
                       <TableCell className="text-center">
                         {(() => {
                           const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
