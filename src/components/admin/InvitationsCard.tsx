@@ -153,7 +153,7 @@ export const InvitationsCard = () => {
             <div className="space-y-1">
               <Label className="text-xs">Company display name (optional)</Label>
               <Input
-                placeholder="e.g. Xpol"
+                placeholder="Company name"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
               />
@@ -162,7 +162,7 @@ export const InvitationsCard = () => {
           <div className="space-y-1">
             <Label className="text-xs">Login username</Label>
             <Input
-              placeholder="e.g. xpol"
+              placeholder="Username"
               value={usernameInput}
               onChange={(e) => setUsernameInput(e.target.value.toLowerCase())}
             />
