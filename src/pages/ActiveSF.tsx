@@ -73,6 +73,23 @@ type ContainerGroup = {
 type SortField = "tripId" | "tripStatus" | "plannedDepartureTime" | "week";
 type SortDir = "asc" | "desc";
 
+/** Current YYWW (Sat–Fri cycle, week 1 contains Jan 1). */
+function getCurrentWeekNr(): number {
+  const now = new Date();
+  const daysSinceSat = (now.getDay() + 1) % 7;
+  const currentSat = new Date(now);
+  currentSat.setDate(now.getDate() - daysSinceSat);
+  currentSat.setHours(0, 0, 0, 0);
+  const jan1 = new Date(currentSat.getFullYear(), 0, 1);
+  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
+  const week1Sat = new Date(jan1);
+  week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
+  week1Sat.setHours(0, 0, 0, 0);
+  const weekNum = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
+  const year = currentSat.getFullYear() % 100;
+  return year * 100 + weekNum;
+}
+
 const ActiveSF = () => {
   const navigate = useNavigate();
   const { isCustomer, isAdmin, customerAccount } = useAuth();
@@ -85,6 +102,7 @@ const ActiveSF = () => {
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [showHidden, setShowHidden] = useState(false);
   const [onlySF, setOnlySF] = useState(true);
+  const [last8Weeks, setLast8Weeks] = useState(true);
   const [onlyActiveDL, setOnlyActiveDL] = useState(false);
   const [onlyLiveTracking, setOnlyLiveTracking] = useState(false);
   const [year, setYear] = useState<string>("2026");
@@ -250,6 +268,15 @@ const ActiveSF = () => {
         const vf = vfActiveSet.get(info.containerId);
         if (!vf || !vf.enabled) return false;
       }
+      // Last 8 weeks: keep current week, the 7 prior weeks, and any future
+      // weeks. Uses YYWW numeric comparison; rows without a week are excluded.
+      if (last8Weeks) {
+        const wnStr = info.dippingWeek || "";
+        if (!/^\d{4}$/.test(wnStr)) return false;
+        const wn = Number(wnStr);
+        const cur = getCurrentWeekNr();
+        if (wn < cur - 7) return false;
+      }
       return true;
     });
     // Customers: only trips whose linked order belongs to them.
@@ -333,7 +360,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year]);
+  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year, last8Weeks]);
 
   // Map tripId -> VF active tracking info (when available for the trip's container)
   const vfByTrip = useMemo(() => {
@@ -563,6 +590,12 @@ const ActiveSF = () => {
               <Label htmlFor="t-sf" className="flex items-center gap-1.5 text-sm cursor-pointer">
                 <Ship className="h-4 w-4" />
                 SF
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch id="t-8w" checked={last8Weeks} onCheckedChange={setLast8Weeks} />
+              <Label htmlFor="t-8w" className="text-sm cursor-pointer">
+                8 weeks
               </Label>
             </div>
             <div className="flex items-center gap-2">
