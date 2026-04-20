@@ -1,6 +1,9 @@
 import { Fragment } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Check, Sparkles, BarChart3, Ship, Brain, Leaf } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Check, Sparkles, BarChart3, Ship, Brain, Leaf, ArrowRight } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 
