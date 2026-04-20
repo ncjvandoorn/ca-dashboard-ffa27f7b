@@ -52,7 +52,7 @@ const ActiveSF = () => {
   const navigate = useNavigate();
   const { isCustomer, isAdmin, customerAccount } = useAuth();
   const [query, setQuery] = useState("");
-  const [sortField, setSortField] = useState<SortField>("tripId");
+  const [sortField, setSortField] = useState<SortField>("week");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [selectedTrip, setSelectedTrip] = useState<SFTrip | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -62,6 +62,7 @@ const ActiveSF = () => {
   const [onlySF, setOnlySF] = useState(true);
   const [onlyActiveDL, setOnlyActiveDL] = useState(false);
   const [onlyLiveTracking, setOnlyLiveTracking] = useState(false);
+  const [year, setYear] = useState<string>("2026");
 
   const { data: trips, isLoading, error, refetch } = useSensiwatchTrips();
   const { data: servicesOrders } = useServicesOrders();
