@@ -59,7 +59,7 @@ export function AppMenuItems({ onOpenContainers }: AppMenuItemsProps = {}) {
       {can("active_sf") && (
         <DropdownMenuItem onClick={() => navigate("/active-sf")}>
           <Ship className="h-4 w-4 mr-2" />
-          Active SF
+          Active Sea Freight
         </DropdownMenuItem>
       )}
       {can("trials_dashboard") && (
