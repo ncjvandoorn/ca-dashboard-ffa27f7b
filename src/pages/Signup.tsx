@@ -197,8 +197,8 @@ export default function Signup() {
             </div>
             <CardTitle>Awaiting approval</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Thanks <strong>{companyName}</strong>! Your account <strong>{username}</strong> has been created and is
-              pending review by our team. You'll be able to sign in once approved.
+              Thanks <strong>{companyName}</strong>! Your request has been received and is pending review by our team.
+              We'll email <strong>{contactEmail}</strong> with your sign-in username once your account is approved.
             </p>
           </CardHeader>
           <CardContent>
@@ -333,21 +333,9 @@ export default function Signup() {
                 </div>
               </div>
 
-              {!usernameLocked && (
-                <div className="space-y-1.5">
-                  <Label>Username</Label>
-                  <Input
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                    placeholder="Username"
-                    required
-                    autoComplete="username"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {username
-                      ? `Login: ${username}@chrysal.app`
-                      : "Letters, numbers, _ and - only."}
-                  </p>
+              {mode === "public" && (
+                <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+                  Our team will review your request, link you to the right customer account, and assign your login username. You'll receive your sign-in details by email at <strong>{contactEmail || "your contact address"}</strong>.
                 </div>
               )}
 
