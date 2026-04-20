@@ -174,7 +174,6 @@ export const InvitationsCard = () => {
                 <TableRow>
                   <TableHead>Code</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Plan</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
@@ -185,9 +184,6 @@ export const InvitationsCard = () => {
                     <TableCell className="font-mono text-xs">{inv.code}</TableCell>
                     <TableCell className="text-sm">
                       {inv.company_name || customerNameMap.get(inv.customer_account_id) || inv.customer_account_id}
-                    </TableCell>
-                    <TableCell className="text-sm capitalize">
-                      {inv.tier.replace("_", "+")} · {inv.billing_cycle}
                     </TableCell>
                     <TableCell>
                       {inv.used_at ? (
