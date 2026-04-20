@@ -355,7 +355,7 @@ const DataLoggers = () => {
                         }}
                         labelFormatter={(v: string) => (v ? new Date(v).toLocaleString("en-GB") : "")}
                       />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      
                       {plotSeries.map((s) => {
                         const orderNum = stripLoggerSuffix(s.internalTripIds[0] || s.tripIds[0] || "");
                         return (
