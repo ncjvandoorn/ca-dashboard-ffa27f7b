@@ -137,20 +137,28 @@ const ActiveSF = () => {
   // (sensiwatch trips whose internal id doesn't match any order). Each row is
   // a synthetic SFTrip — for orders without a logger, sensor fields are null.
   const allRows = useMemo<SFTrip[]>(() => {
-    // Index sensiwatch trips by stripped internal trip id (= orderNumber)
-    const tripByOrder = new Map<string, SFTrip>();
+    // Index sensiwatch trips by stripped internal trip id (= orderNumber).
+    // One order can have multiple loggers, so this map's value is an array.
+    const tripsByOrder = new Map<string, SFTrip[]>();
     for (const t of trips) {
       const key = stripLoggerSuffix(t.internalTripId);
-      if (key && !tripByOrder.has(key)) tripByOrder.set(key, t);
+      if (!key) continue;
+      if (!tripsByOrder.has(key)) tripsByOrder.set(key, []);
+      tripsByOrder.get(key)!.push(t);
     }
     const rows: SFTrip[] = [];
     const usedTripIds = new Set<string>();
-    // 1) one row per services order
+    // 1) one row per (order × logger). When an order has multiple loggers we
+    //    emit one trip-row per logger so they all surface in the table; the
+    //    container-level grouping below collapses them into one displayed row
+    //    while still letting the popup expose every logger.
     for (const [orderNumber, info] of orderInfo.entries()) {
-      const t = tripByOrder.get(orderNumber);
-      if (t) {
-        usedTripIds.add(t.tripId);
-        rows.push(t);
+      const ts = tripsByOrder.get(orderNumber);
+      if (ts && ts.length) {
+        for (const t of ts) {
+          usedTripIds.add(t.tripId);
+          rows.push(t);
+        }
       } else {
         // Synthetic row for an order with no datalogger trip yet
         rows.push({
