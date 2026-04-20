@@ -8,7 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
   ReferenceLine,
 } from "recharts";
 import { ArrowLeft, Loader2, AlertTriangle, Filter } from "lucide-react";
