@@ -182,10 +182,26 @@ const ActiveSF = () => {
     return rows;
   }, [trips, orderInfo]);
 
+  // Build the list of distinct years available, derived from dippingWeek (YYWW).
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    for (const info of orderInfo.values()) {
+      const yy = (info.dippingWeek || "").slice(0, 2);
+      if (/^\d{2}$/.test(yy)) years.add(`20${yy}`);
+    }
+    // Always include the default year so the dropdown is never empty.
+    years.add("2026");
+    return Array.from(years).sort((a, b) => Number(b) - Number(a));
+  }, [orderInfo]);
+
   const filtered = useMemo(() => {
-    const q = query.toLowerCase();
+    const q = query.toLowerCase().trim();
+    const yearSuffix = year ? year.slice(-2) : "";
     let list = allRows.filter((t) => {
       const info = lookupOrder(t.internalTripId);
+      // Year filter — match dippingWeek YY prefix. Rows with no dippingWeek
+      // are kept only when they're orphans (no order info at all).
+      if (year && info && !(info.dippingWeek || "").startsWith(yearSuffix)) return false;
       // Only SF: keep rows whose linked order has purpose "Sea Freight".
       // Orphan trips (no order) are excluded when this toggle is on.
       if (onlySF && info?.purposeName !== "Sea Freight") return false;
