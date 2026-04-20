@@ -108,6 +108,11 @@ export default function Signup() {
       toast({ title: "Password too short", description: "Minimum 6 characters", variant: "destructive" });
       return;
     }
+    const cleanEmail = contactEmail.trim();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast({ title: "Valid contact email required", variant: "destructive" });
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -120,6 +125,7 @@ export default function Signup() {
               password,
               tier,
               billingCycle,
+              contactEmail: cleanEmail,
             }
           : {
               action: "signup_public",
@@ -128,6 +134,7 @@ export default function Signup() {
               companyName: companyName.trim(),
               tier,
               billingCycle,
+              contactEmail: cleanEmail,
             };
 
       if (mode === "public" && !payload.companyName) {
