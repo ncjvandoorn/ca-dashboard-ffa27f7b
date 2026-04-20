@@ -36,7 +36,7 @@ import {
   useContainers,
 } from "@/hooks/useQualityData";
 import { useSensiwatchTrips } from "@/hooks/useSensiwatchData";
-import { useAllSensiwatchReadings } from "@/hooks/useAllSensiwatchReadings";
+import { fetchAllSensiwatchReadings } from "@/hooks/useAllSensiwatchReadings";
 import {
   buildLoggerSeries,
   EXCEPTION_RULES,
