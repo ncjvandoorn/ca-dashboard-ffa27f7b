@@ -31,9 +31,8 @@ interface PageHeaderActionsProps {
 
 export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderActionsProps) {
   const navigate = useNavigate();
-  const { signOut, isCustomer, loading: authLoading } = useAuth();
-  const { can, loaded: permsLoaded } = usePermissions();
-  const ready = !authLoading && permsLoaded;
+  const { signOut, isCustomer } = useAuth();
+  const { can } = usePermissions();
 
   return (
     <div className="flex items-center gap-2">
@@ -50,49 +49,49 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
-          {ready && can("containers") && (
+          {can("containers") && (
             <DropdownMenuItem onClick={() => navigate("/containers")}>
               <Package className="h-4 w-4 mr-2" />
               Containers
             </DropdownMenuItem>
           )}
-          {ready && can("active_sf") && (
+          {can("active_sf") && (
             <DropdownMenuItem onClick={() => navigate("/active-sf")}>
               <Ship className="h-4 w-4 mr-2" />
               Active SF
             </DropdownMenuItem>
           )}
-          {ready && can("trial_planner") && (
+          {can("trial_planner") && (
             <DropdownMenuItem onClick={() => navigate("/planner")}>
               <CalendarRange className="h-4 w-4 mr-2" />
               Trial Planner
             </DropdownMenuItem>
           )}
-          {ready && can("reporting_check") && (
+          {can("reporting_check") && (
             <DropdownMenuItem onClick={() => navigate("/?check=reporting")}>
               <ClipboardCheck className="h-4 w-4 mr-2" />
               Reporting Check
             </DropdownMenuItem>
           )}
-          {ready && can("crm_activities") && (
+          {can("crm_activities") && (
             <DropdownMenuItem onClick={() => navigate("/crm")}>
               <Users className="h-4 w-4 mr-2" />
               CRM Activities
             </DropdownMenuItem>
           )}
-          {ready && can("trials_dashboard") && (
+          {can("trials_dashboard") && (
             <DropdownMenuItem onClick={() => navigate("/trials")}>
               <FlaskConical className="h-4 w-4 mr-2" />
               Trials Dashboard
             </DropdownMenuItem>
           )}
-          {ready && can("subscription_plans") && (
+          {can("subscription_plans") && (
             <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
               <CreditCard className="h-4 w-4 mr-2" />
               Subscription Plans
             </DropdownMenuItem>
           )}
-          {ready && (isCustomer || can("settings")) && (
+          {(isCustomer || can("settings")) && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/profile")}>
@@ -101,7 +100,7 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
               </DropdownMenuItem>
             </>
           )}
-          {ready && can("settings") && (
+          {can("settings") && (
             <DropdownMenuItem onClick={() => navigate("/admin")}>
               <Settings className="h-4 w-4 mr-2" />
               Settings
