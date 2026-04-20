@@ -183,18 +183,19 @@ export function useVesselFinderActiveSet(enabled: boolean) {
         if (cancelled) return;
         const m = new Map<string, VFActiveInfo>();
         for (const item of res.items || []) {
-          const resp = (item as any).response as VFResponse | null | undefined;
+          const resp = item.response;
           // ETA = "Vessel arrival at final POD" event (code: VAD) on the last schedule stop.
           // We deliberately do NOT take the *last* event of the stop because that is
           // usually a post-arrival gate-out / discharge event, not the ETA itself.
           const lastStop = resp?.schedule?.[resp.schedule.length - 1];
-          const vadEvent = lastStop?.events?.find((e: any) => e?.code === "VAD");
+          const vadEvent = lastStop?.events?.find((e) => e?.code === "VAD");
           const etaDate = vadEvent?.date ?? lastStop?.date ?? resp?.general?.destination?.date ?? null;
           // Prefer vessel AIS timestamp; fallback to general updatedAt or last_polled_at.
           const vesselTs = resp?.general?.currentLocation?.vessel?.aisTimestamp ?? null;
           const generalTs = resp?.general?.updatedAt ?? null;
-          const polledIso = (item as any).last_polled_at as string | null | undefined;
-          const polledTs = polledIso ? Math.floor(new Date(polledIso).getTime() / 1000) : null;
+          const polledTs = item.last_polled_at
+            ? Math.floor(new Date(item.last_polled_at).getTime() / 1000)
+            : null;
           const lastLocSec = vesselTs ?? generalTs ?? polledTs ?? null;
           m.set(item.container_id, {
             status: item.status,
