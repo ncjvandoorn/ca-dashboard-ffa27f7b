@@ -137,6 +137,8 @@ export type VFActiveInfo = {
   destinationDate?: number | null;
   /** Last AIS / location update from VesselFinder (ms since epoch). */
   lastLocationAt?: number | null;
+  /** Full VF response payload — used by the world map to draw routes/vessels. */
+  response?: VFResponse | null;
 };
 
 /** Lists which container_ids have active tracking — for table indicator. */
@@ -171,6 +173,7 @@ export function useVesselFinderActiveSet(enabled: boolean) {
             destinationName: resp?.general?.destination?.name ?? lastStop?.name ?? null,
             destinationDate: etaDate,
             lastLocationAt: lastLocSec ? lastLocSec * 1000 : null,
+            response: resp ?? null,
           });
         }
         setActive(m);
