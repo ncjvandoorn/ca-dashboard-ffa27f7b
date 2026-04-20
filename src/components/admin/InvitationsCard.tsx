@@ -224,7 +224,7 @@ export const InvitationsCard = () => {
                             {copiedId === inv.id ? <Check className="h-4 w-4 text-accent" /> : <Copy className="h-4 w-4" />}
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" onClick={() => remove(inv.id)} className="text-destructive hover:text-destructive" title="Delete">
+                        <Button variant="ghost" size="icon" onClick={() => setPendingDeleteId(inv.id)} className="text-destructive hover:text-destructive" title="Delete">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
