@@ -296,6 +296,23 @@ const DataLoggers = () => {
                 </UITooltip>
               );
             })}
+            <span className="mx-2 h-5 w-px bg-border" />
+            <button
+              onClick={() => setLast12Weeks((v) => !v)}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors"
+              style={{
+                borderColor: last12Weeks ? "hsl(var(--primary))" : "hsl(var(--border))",
+                background: last12Weeks ? "hsl(var(--primary) / 0.12)" : "transparent",
+                color: last12Weeks ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+              }}
+              title="Restrict to loggers active in the last 12 weeks"
+            >
+              <span
+                className="h-2 w-2 rounded-full bg-primary"
+                style={{ opacity: last12Weeks ? 1 : 0.4 }}
+              />
+              <span className="font-medium">Last 12 weeks</span>
+            </button>
           </section>
 
           {/* Status / loading */}
