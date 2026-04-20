@@ -150,6 +150,7 @@ export type Database = {
           billing_cycle: string
           can_see_trials: boolean
           company_name: string | null
+          contact_email: string | null
           created_at: string
           customer_account_id: string
           id: string
@@ -164,6 +165,7 @@ export type Database = {
           billing_cycle?: string
           can_see_trials?: boolean
           company_name?: string | null
+          contact_email?: string | null
           created_at?: string
           customer_account_id: string
           id?: string
@@ -178,6 +180,7 @@ export type Database = {
           billing_cycle?: string
           can_see_trials?: boolean
           company_name?: string | null
+          contact_email?: string | null
           created_at?: string
           customer_account_id?: string
           id?: string
@@ -202,6 +205,7 @@ export type Database = {
           tier: string
           used_at: string | null
           used_by_user_id: string | null
+          username: string | null
         }
         Insert: {
           billing_cycle?: string
@@ -216,6 +220,7 @@ export type Database = {
           tier?: string
           used_at?: string | null
           used_by_user_id?: string | null
+          username?: string | null
         }
         Update: {
           billing_cycle?: string
@@ -230,6 +235,7 @@ export type Database = {
           tier?: string
           used_at?: string | null
           used_by_user_id?: string | null
+          username?: string | null
         }
         Relationships: []
       }
