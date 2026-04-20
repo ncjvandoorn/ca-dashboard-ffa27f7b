@@ -635,117 +635,157 @@ const ActiveSF = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((trip) => {
-                  const info = lookupOrder(trip.internalTripId);
+                {groupedRows.map((g) => {
+                  const repTrip =
+                    g.tripsWithData[0] ||
+                    g.rows.find((r) => r.lastReadingTime) ||
+                    g.rows[0];
+                  const extraOrders = g.orderInfos.length > 1 ? g.orderInfos.length - 1 : 0;
+                  const extraLoggers = g.tripsWithData.length > 1 ? g.tripsWithData.length - 1 : 0;
+                  const groupSel = groupSelectionState(g);
+                  const allHidden = g.rows.every((t) => hiddenIds.has(t.tripId));
+                  const vf = g.containerId ? vfActiveSet.get(g.containerId) : null;
                   return (
-                  <TableRow
-                    key={trip.tripId}
-                    data-state={selectedIds.has(trip.tripId) ? "selected" : undefined}
-                    className="cursor-pointer hover:bg-primary/5 transition-colors"
-                    onClick={() => setSelectedTrip(trip)}
-                  >
-                    <TableCell
-                      className={isAdmin ? "w-20" : "w-10"}
-                      onClick={(e) => e.stopPropagation()}
+                    <TableRow
+                      key={g.key}
+                      data-state={groupSel === true ? "selected" : undefined}
+                      className="cursor-pointer hover:bg-primary/5 transition-colors"
+                      onClick={() => setSelectedGroup(g)}
                     >
-                      <div className="flex items-center gap-1">
-                        <Checkbox
-                          checked={selectedIds.has(trip.tripId)}
-                          onCheckedChange={() => toggleSelected(trip.tripId)}
-                          aria-label={`Select trip ${trip.tripId}`}
-                        />
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                            onClick={(e) => { e.stopPropagation(); toggleHidden(trip.tripId); }}
-                            title={hiddenIds.has(trip.tripId) ? "Unhide row" : "Hide row for everyone"}
-                          >
-                            {hiddenIds.has(trip.tripId) ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-semibold text-sm">
-                      {info?.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs whitespace-nowrap">
-                      {info?.containerNumber || (
-                        <span className="text-muted-foreground normal-case font-sans">
-                          {trip.internalTripId || "—"}
-                        </span>
-                      )}
-                      {(() => {
-                        const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
-                        const fmt = (iso: string | null | undefined) =>
-                          iso
-                            ? new Date(iso).toLocaleString("en-GB", {
-                                day: "2-digit",
-                                month: "short",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : null;
-                        const lastQuality = fmt(trip.lastReadingTime);
-                        const lastLocation =
-                          vf?.enabled && vf.lastLocationAt
-                            ? fmt(new Date(vf.lastLocationAt).toISOString())
-                            : null;
-                        if (!lastQuality && !lastLocation) return null;
-                        return (
-                          <div className="text-[10px] text-muted-foreground font-sans normal-case mt-0.5 leading-tight space-y-0.5">
-                            {lastQuality && <div>Last quality: {lastQuality}</div>}
-                            {lastLocation && <div>Last location: {lastLocation}</div>}
-                          </div>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.dropoffDate ?? null)}</TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{formatShortDate(info?.shippingDate ?? null)}</TableCell>
-                    <TableCell>
-                      <div className="font-medium text-sm">{trip.originName}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-sm">{trip.destinationName || "—"}</div>
-                      {(() => {
-                        const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
-                        if (!vf || !vf.enabled || (!vf.destinationName && !vf.destinationDate)) return null;
-                        return (
-                          <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
-                            {vf.destinationDate && (
-                              <span>ETA {formatShortDate(vf.destinationDate * 1000)}</span>
+                      <TableCell
+                        className={isAdmin ? "w-20" : "w-10"}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-1">
+                          <Checkbox
+                            checked={groupSel}
+                            onCheckedChange={() => toggleGroupSelected(g)}
+                            aria-label={`Select container ${g.containerNumber || g.key}`}
+                          />
+                          {isAdmin && g.rows.length > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Hide/unhide every trip-row in this group
+                                for (const t of g.rows) toggleHidden(t.tripId);
+                              }}
+                              title={allHidden ? "Unhide rows" : "Hide rows for everyone"}
+                            >
+                              {allHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-semibold text-sm">
+                        {g.dippingWeek || <span className="text-xs text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span>
+                            {g.containerNumber || (
+                              <span className="text-muted-foreground normal-case font-sans">
+                                {repTrip?.internalTripId || "—"}
+                              </span>
                             )}
-                            {vf.destinationName && (
-                              <span>{vf.destinationDate ? " · " : ""}{vf.destinationName}</span>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </TableCell>
-                    {(isAdmin || isCustomer) && (
-                      <TableCell className="text-center">
-                        {(() => {
-                          const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
-                          if (!vf || !vf.enabled) {
-                            return <span className="text-muted-foreground/50 text-xs">—</span>;
-                          }
-                          const cls =
-                            vf.status === "success" ? "bg-accent" :
-                            vf.status === "error" ? "bg-destructive" :
-                            "bg-primary animate-pulse";
-                          return (
-                            <span className="inline-flex items-center gap-1.5 text-[10px]">
-                              <span className={`h-2 w-2 rounded-full ${cls}`} />
-                              {vf.status !== "success" && (
-                                <span className="text-muted-foreground capitalize">{vf.status}</span>
-                              )}
+                          </span>
+                          {extraOrders > 0 && (
+                            <span className="rounded bg-secondary text-secondary-foreground px-1.5 py-0.5 text-[10px] font-sans normal-case">
+                              +{extraOrders} order{extraOrders > 1 ? "s" : ""}
                             </span>
+                          )}
+                          {extraLoggers > 0 && (
+                            <span className="rounded bg-primary/10 text-primary px-1.5 py-0.5 text-[10px] font-sans normal-case">
+                              +{extraLoggers} logger{extraLoggers > 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        {(() => {
+                          const fmt = (iso: string | null | undefined) =>
+                            iso
+                              ? new Date(iso).toLocaleString("en-GB", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : null;
+                          // Use the freshest reading across all loggers in the group.
+                          const freshest = g.tripsWithData
+                            .map((t) => t.lastReadingTime)
+                            .filter(Boolean)
+                            .sort()
+                            .pop() as string | undefined;
+                          const lastQuality = fmt(freshest);
+                          const lastLocation =
+                            vf?.enabled && vf.lastLocationAt
+                              ? fmt(new Date(vf.lastLocationAt).toISOString())
+                              : null;
+                          if (!lastQuality && !lastLocation) return null;
+                          return (
+                            <div className="text-[10px] text-muted-foreground font-sans normal-case mt-0.5 leading-tight space-y-0.5">
+                              {lastQuality && <div>Last quality: {lastQuality}</div>}
+                              {lastLocation && <div>Last location: {lastLocation}</div>}
+                            </div>
                           );
                         })()}
                       </TableCell>
-                    )}
-                  </TableRow>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {formatShortDate(g.dropoffDate)}
+                      </TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {formatShortDate(g.shippingDate)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-sm">{repTrip?.originName || "—"}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-sm">{repTrip?.destinationName || "—"}</div>
+                        {(() => {
+                          if (!vf || !vf.enabled || (!vf.destinationName && !vf.destinationDate)) return null;
+                          return (
+                            <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                              {vf.destinationDate && (
+                                <span>ETA {formatShortDate(vf.destinationDate * 1000)}</span>
+                              )}
+                              {vf.destinationName && (
+                                <span>
+                                  {vf.destinationDate ? " · " : ""}
+                                  {vf.destinationName}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </TableCell>
+                      {(isAdmin || isCustomer) && (
+                        <TableCell className="text-center">
+                          {(() => {
+                            if (!vf || !vf.enabled) {
+                              return <span className="text-muted-foreground/50 text-xs">—</span>;
+                            }
+                            const cls =
+                              vf.status === "success"
+                                ? "bg-accent"
+                                : vf.status === "error"
+                                ? "bg-destructive"
+                                : "bg-primary animate-pulse";
+                            return (
+                              <span className="inline-flex items-center gap-1.5 text-[10px]">
+                                <span className={`h-2 w-2 rounded-full ${cls}`} />
+                                {vf.status !== "success" && (
+                                  <span className="text-muted-foreground capitalize">
+                                    {vf.status}
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
+                      )}
+                    </TableRow>
                   );
                 })}
               </TableBody>
@@ -754,11 +794,22 @@ const ActiveSF = () => {
         )}
       </div>
 
-      {/* Detail dialog */}
-      <TripDetailDialog
-        trip={selectedTrip}
-        orderInfo={selectedTrip ? lookupOrder(selectedTrip.internalTripId) : null}
-        onClose={() => setSelectedTrip(null)}
+      {/* Container detail dialog */}
+      <ContainerDetailDialog
+        trips={selectedGroup?.tripsWithData || []}
+        orders={selectedGroup?.orderInfos || []}
+        container={
+          selectedGroup
+            ? {
+                containerId: selectedGroup.containerId,
+                containerNumber: selectedGroup.containerNumber,
+                bookingCode: selectedGroup.bookingCode,
+                dropoffDate: selectedGroup.dropoffDate,
+                shippingDate: selectedGroup.shippingDate,
+              }
+            : null
+        }
+        onClose={() => setSelectedGroup(null)}
       />
 
       {/* Compare-trips dialog */}
