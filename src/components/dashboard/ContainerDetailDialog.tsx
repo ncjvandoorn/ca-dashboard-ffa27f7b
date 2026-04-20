@@ -543,43 +543,44 @@ function CombinedMultigraph({ trips }: { trips: SFTrip[] }) {
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              {serials.map((sn, i) => {
+              {serials.flatMap((sn, i) => {
                 const c = LOGGER_COLORS[i % LOGGER_COLORS.length];
                 const suffix = isMulti ? ` · ${sn}` : "";
-                return (
-                  <g key={sn}>
-                    <Line
-                      yAxisId="left"
-                      type="monotone"
-                      dataKey={`temp_${sn}`}
-                      name={`Temp (°C)${suffix}`}
-                      stroke={c.temp}
-                      strokeWidth={2}
-                      dot={false}
-                      connectNulls
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey={`humidity_${sn}`}
-                      name={`Humidity (%)${suffix}`}
-                      stroke={c.humidity}
-                      strokeWidth={2}
-                      dot={false}
-                      connectNulls
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey={`light_${sn}`}
-                      name={`Light (%)${suffix}`}
-                      stroke={c.light}
-                      strokeWidth={2}
-                      dot={false}
-                      connectNulls
-                    />
-                  </g>
-                );
+                return [
+                  <Line
+                    key={`t-${sn}`}
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey={`temp_${sn}`}
+                    name={`Temp (°C)${suffix}`}
+                    stroke={c.temp}
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls
+                  />,
+                  <Line
+                    key={`h-${sn}`}
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey={`humidity_${sn}`}
+                    name={`Humidity (%)${suffix}`}
+                    stroke={c.humidity}
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls
+                  />,
+                  <Line
+                    key={`l-${sn}`}
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey={`light_${sn}`}
+                    name={`Light (%)${suffix}`}
+                    stroke={c.light}
+                    strokeWidth={2}
+                    dot={false}
+                    connectNulls
+                  />,
+                ];
               })}
             </LineChart>
           </ResponsiveContainer>
