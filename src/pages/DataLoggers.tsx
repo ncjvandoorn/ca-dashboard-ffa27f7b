@@ -356,49 +356,58 @@ const DataLoggers = () => {
                         labelFormatter={(v: string) => (v ? new Date(v).toLocaleString("en-GB") : "")}
                       />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      {plotSeries.map((s) => (
-                        <Line
-                          key={`temp-${s.serial}`}
-                          yAxisId="left"
-                          type="monotone"
-                          dataKey={`temp_${s.serial}`}
-                          name={`${s.serial} · Temp`}
-                          stroke={`hsl(${TEMP_HUE}, 70%, 45%)`}
-                          strokeOpacity={0.85}
-                          strokeWidth={1.5}
-                          dot={false}
-                          connectNulls
-                        />
-                      ))}
-                      {plotSeries.map((s) => (
-                        <Line
-                          key={`hum-${s.serial}`}
-                          yAxisId="right"
-                          type="monotone"
-                          dataKey={`hum_${s.serial}`}
-                          name={`${s.serial} · RH`}
-                          stroke={`hsl(${HUM_HUE}, 70%, 45%)`}
-                          strokeOpacity={0.6}
-                          strokeWidth={1}
-                          dot={false}
-                          connectNulls
-                        />
-                      ))}
-                      {plotSeries.map((s) => (
-                        <Line
-                          key={`light-${s.serial}`}
-                          yAxisId="right"
-                          type="monotone"
-                          dataKey={`light_${s.serial}`}
-                          name={`${s.serial} · Light`}
-                          stroke={`hsl(${LIGHT_HUE}, 80%, 45%)`}
-                          strokeOpacity={0.55}
-                          strokeWidth={1}
-                          strokeDasharray="3 3"
-                          dot={false}
-                          connectNulls
-                        />
-                      ))}
+                      {plotSeries.map((s) => {
+                        const orderNum = stripLoggerSuffix(s.internalTripIds[0] || s.tripIds[0] || "");
+                        return (
+                          <Line
+                            key={`temp-${s.serial}`}
+                            yAxisId="left"
+                            type="monotone"
+                            dataKey={`temp_${s.serial}`}
+                            name={`${orderNum || s.serial} · Temp`}
+                            stroke={`hsl(${TEMP_HUE}, 70%, 45%)`}
+                            strokeOpacity={0.85}
+                            strokeWidth={1.5}
+                            dot={false}
+                            connectNulls
+                          />
+                        );
+                      })}
+                      {plotSeries.map((s) => {
+                        const orderNum = stripLoggerSuffix(s.internalTripIds[0] || s.tripIds[0] || "");
+                        return (
+                          <Line
+                            key={`hum-${s.serial}`}
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey={`hum_${s.serial}`}
+                            name={`${orderNum || s.serial} · RH`}
+                            stroke={`hsl(${HUM_HUE}, 70%, 45%)`}
+                            strokeOpacity={0.6}
+                            strokeWidth={1}
+                            dot={false}
+                            connectNulls
+                          />
+                        );
+                      })}
+                      {plotSeries.map((s) => {
+                        const orderNum = stripLoggerSuffix(s.internalTripIds[0] || s.tripIds[0] || "");
+                        return (
+                          <Line
+                            key={`light-${s.serial}`}
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey={`light_${s.serial}`}
+                            name={`${orderNum || s.serial} · Light`}
+                            stroke={`hsl(${LIGHT_HUE}, 80%, 45%)`}
+                            strokeOpacity={0.55}
+                            strokeWidth={1}
+                            strokeDasharray="3 3"
+                            dot={false}
+                            connectNulls
+                          />
+                        );
+                      })}
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
