@@ -92,7 +92,7 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
               Subscription Plans
             </DropdownMenuItem>
           )}
-          {(isCustomer || can("settings")) && (
+          {ready && (isCustomer || can("settings")) && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate("/profile")}>
@@ -101,7 +101,7 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
               </DropdownMenuItem>
             </>
           )}
-          {can("settings") && (
+          {ready && can("settings") && (
             <DropdownMenuItem onClick={() => navigate("/admin")}>
               <Settings className="h-4 w-4 mr-2" />
               Settings
