@@ -45,7 +45,7 @@ export type SFTrip = {
   lastLocation: string | null;
 };
 
-type SortField = "tripId" | "tripStatus" | "plannedDepartureTime";
+type SortField = "tripId" | "tripStatus" | "plannedDepartureTime" | "week";
 type SortDir = "asc" | "desc";
 
 const ActiveSF = () => {
