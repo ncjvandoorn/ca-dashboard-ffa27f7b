@@ -60,26 +60,42 @@ interface InvokeArgs {
   force?: boolean;
 }
 
-async function invoke(args: InvokeArgs) {
+type VFListItem = {
+  container_id: string;
+  status: string;
+  enabled: boolean;
+  last_polled_at: string | null;
+  container_number_override: string | null;
+  response: VFResponse | null;
+};
+
+type InvokeResult = {
+  tracking?: VFTracking;
+  items?: VFListItem[];
+  vfHttpStatus?: number;
+  cached?: boolean;
+};
+
+const EMPTY_RESULT: InvokeResult = { items: [] };
+
+async function invoke(args: InvokeArgs): Promise<InvokeResult> {
   // Guard: only call the edge function when a real user session exists.
   // Without it the function returns 401 (anon key is not a user JWT).
   const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData?.session) {
-    return { items: [] } as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
-  }
+  if (!sessionData?.session) return EMPTY_RESULT;
+
   const { data, error } = await supabase.functions.invoke("vesselfinder-track", {
     body: args,
   });
   if (error) {
     // Swallow auth/permission errors so they don't blank the page.
-    const msg = String(error.message || "");
-    if (/401|403|Unauthorized|Forbidden/i.test(msg)) {
-      return { items: [] } as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
+    if (/401|403|Unauthorized|Forbidden/i.test(String(error.message || ""))) {
+      return EMPTY_RESULT;
     }
     throw new Error(error.message);
   }
   if (data?.error) throw new Error(data.error);
-  return data as { tracking?: VFTracking; items?: any[]; vfHttpStatus?: number; cached?: boolean };
+  return data as InvokeResult;
 }
 
 /** Fetches single tracking row for a container. Available to admins and customers. */
@@ -167,18 +183,19 @@ export function useVesselFinderActiveSet(enabled: boolean) {
         if (cancelled) return;
         const m = new Map<string, VFActiveInfo>();
         for (const item of res.items || []) {
-          const resp = (item as any).response as VFResponse | null | undefined;
+          const resp = item.response;
           // ETA = "Vessel arrival at final POD" event (code: VAD) on the last schedule stop.
           // We deliberately do NOT take the *last* event of the stop because that is
           // usually a post-arrival gate-out / discharge event, not the ETA itself.
           const lastStop = resp?.schedule?.[resp.schedule.length - 1];
-          const vadEvent = lastStop?.events?.find((e: any) => e?.code === "VAD");
+          const vadEvent = lastStop?.events?.find((e) => e?.code === "VAD");
           const etaDate = vadEvent?.date ?? lastStop?.date ?? resp?.general?.destination?.date ?? null;
           // Prefer vessel AIS timestamp; fallback to general updatedAt or last_polled_at.
           const vesselTs = resp?.general?.currentLocation?.vessel?.aisTimestamp ?? null;
           const generalTs = resp?.general?.updatedAt ?? null;
-          const polledIso = (item as any).last_polled_at as string | null | undefined;
-          const polledTs = polledIso ? Math.floor(new Date(polledIso).getTime() / 1000) : null;
+          const polledTs = item.last_polled_at
+            ? Math.floor(new Date(item.last_polled_at).getTime() / 1000)
+            : null;
           const lastLocSec = vesselTs ?? generalTs ?? polledTs ?? null;
           m.set(item.container_id, {
             status: item.status,
