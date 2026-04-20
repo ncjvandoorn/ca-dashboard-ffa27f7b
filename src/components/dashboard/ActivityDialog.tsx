@@ -105,7 +105,8 @@ function formatDate(timestamp: number | null): string {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export function ActivityDialog({ open, onOpenChange, farmId, farmName, activities, analysis }: ActivityDialogProps) {
+export function ActivityDialog({ open, onOpenChange, farmId, farmName, activities, users, analysis }: ActivityDialogProps) {
+  const userMap = useMemo(() => new Map((users ?? []).map((u) => [u.id, u.name])), [users]);
   const farmActivities = useMemo(() => {
     return activities
       .filter((a) => a.accountId === farmId)
