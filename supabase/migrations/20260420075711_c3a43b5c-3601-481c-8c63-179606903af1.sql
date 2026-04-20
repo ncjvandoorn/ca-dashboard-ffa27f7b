@@ -1,0 +1,2 @@
+ALTER TABLE public.customer_accounts DROP CONSTRAINT IF EXISTS customer_accounts_tier_check;
+ALTER TABLE public.customer_accounts ADD CONSTRAINT customer_accounts_tier_check CHECK (tier = ANY (ARRAY['basic'::text, 'pro'::text, 'pro_plus'::text, 'heavy'::text]));
