@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
@@ -101,6 +101,15 @@ const Login = () => {
               {seeding ? "Initializing..." : "Sign In"}
             </Button>
           </form>
+          <div className="mt-4 pt-4 border-t border-border text-center">
+            <Link
+              to="/subscriptions"
+              className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              View subscription plans
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

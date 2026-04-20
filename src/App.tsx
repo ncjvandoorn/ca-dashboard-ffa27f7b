@@ -8,6 +8,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import type { PermissionKey } from "@/lib/permissions";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
+import Signup from "./pages/Signup.tsx";
+import Profile from "./pages/Profile.tsx";
 import Admin from "./pages/Admin.tsx";
 import Planner from "./pages/Planner.tsx";
 import TrialsDashboard from "./pages/TrialsDashboard.tsx";
@@ -62,13 +64,15 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/planner" element={<PermissionRoute permission="trial_planner"><Planner /></PermissionRoute>} />
             <Route path="/trials" element={<PermissionRoute permission="trials_dashboard"><TrialsDashboard /></PermissionRoute>} />
             <Route path="/report" element={<PermissionRoute permission="all_reports"><AllReports /></PermissionRoute>} />
             <Route path="/active-sf" element={<PermissionRoute permission="active_sf"><ActiveSF /></PermissionRoute>} />
             <Route path="/containers" element={<PermissionRoute permission="containers"><Containers /></PermissionRoute>} />
-            <Route path="/subscriptions" element={<PermissionRoute permission="subscription_plans"><Subscriptions /></PermissionRoute>} />
             <Route path="/crm" element={<PermissionRoute permission="crm_activities"><CRM /></PermissionRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />

@@ -77,6 +77,54 @@ export type Database = {
         }
         Relationships: []
       }
+      container_credits_ledger: {
+        Row: {
+          container_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_account_id: string
+          delta: number
+          id: string
+          note: string | null
+          reason: string
+        }
+        Insert: {
+          container_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_account_id: string
+          delta: number
+          id?: string
+          note?: string | null
+          reason: string
+        }
+        Update: {
+          container_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_account_id?: string
+          delta?: number
+          id?: string
+          note?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "container_credits_ledger_customer_account_id_fkey"
+            columns: ["customer_account_id"]
+            isOneToOne: false
+            referencedRelation: "customer_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "container_credits_ledger_customer_account_id_fkey"
+            columns: ["customer_account_id"]
+            isOneToOne: false
+            referencedRelation: "customer_credit_balance"
+            referencedColumns: ["customer_account_id"]
+          },
+        ]
+      }
       crm_settings: {
         Row: {
           id: string
@@ -97,31 +145,91 @@ export type Database = {
       }
       customer_accounts: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
+          billing_cycle: string
           can_see_trials: boolean
+          company_name: string | null
           created_at: string
           customer_account_id: string
           id: string
+          status: string
           tier: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          billing_cycle?: string
           can_see_trials?: boolean
+          company_name?: string | null
           created_at?: string
           customer_account_id: string
           id?: string
+          status?: string
           tier?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          billing_cycle?: string
           can_see_trials?: boolean
+          company_name?: string | null
           created_at?: string
           customer_account_id?: string
           id?: string
+          status?: string
           tier?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      customer_invitations: {
+        Row: {
+          billing_cycle: string
+          can_see_trials: boolean
+          code: string
+          company_name: string | null
+          created_at: string
+          created_by: string | null
+          customer_account_id: string
+          id: string
+          notes: string | null
+          tier: string
+          used_at: string | null
+          used_by_user_id: string | null
+        }
+        Insert: {
+          billing_cycle?: string
+          can_see_trials?: boolean
+          code: string
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_account_id: string
+          id?: string
+          notes?: string | null
+          tier?: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Update: {
+          billing_cycle?: string
+          can_see_trials?: boolean
+          code?: string
+          company_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_account_id?: string
+          id?: string
+          notes?: string | null
+          tier?: string
+          used_at?: string | null
+          used_by_user_id?: string | null
         }
         Relationships: []
       }
@@ -466,6 +574,17 @@ export type Database = {
       }
     }
     Views: {
+      customer_credit_balance: {
+        Row: {
+          balance: number | null
+          customer_account_id: string | null
+          tier: string | null
+          total_consumed: number | null
+          total_granted: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       sensiwatch_trip_latest: {
         Row: {
           container_number: string | null
@@ -502,6 +621,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      monthly_grant_credits: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user" | "customer"
