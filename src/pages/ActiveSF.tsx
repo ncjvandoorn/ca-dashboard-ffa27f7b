@@ -319,7 +319,7 @@ const ActiveSF = () => {
         {/* World Map */}
         {tripsWithLocation.length > 0 && (
           <div className="rounded-xl border border-border bg-card shadow-sm mb-6 overflow-hidden">
-            <SFWorldMap trips={tripsWithLocation} onSelectTrip={setSelectedTrip} />
+            <SFWorldMap trips={tripsWithLocation} vfByTrip={vfByTrip} onSelectTrip={setSelectedTrip} />
           </div>
         )}
 
