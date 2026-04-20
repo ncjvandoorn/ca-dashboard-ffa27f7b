@@ -22,9 +22,6 @@ interface InvitationDetails {
   code: string;
   customer_account_id: string;
   company_name: string | null;
-  tier: Tier;
-  billing_cycle: Cycle;
-  can_see_trials: boolean;
 }
 
 const fnUrl = (name: string) => `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}`;
