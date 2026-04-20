@@ -327,28 +327,91 @@ const ActiveSF = () => {
     [filtered, vfByTrip]
   );
 
+  // Group filtered rows by container — one displayed row per physical
+  // container. Rows without a containerId (orphan trips) become their own
+  // single-element group keyed by tripId.
+  const groupedRows = useMemo<ContainerGroup[]>(() => {
+    const groups = new Map<string, ContainerGroup>();
+    const order: string[] = [];
+    for (const t of filtered) {
+      const info = lookupOrder(t.internalTripId);
+      const key = info?.containerId || `trip:${t.tripId}`;
+      if (!groups.has(key)) {
+        order.push(key);
+        groups.set(key, {
+          key,
+          containerId: info?.containerId || "",
+          containerNumber: info?.containerNumber || "",
+          bookingCode: info?.bookingCode || "",
+          dippingWeek: info?.dippingWeek || "",
+          dropoffDate: info?.dropoffDate ?? null,
+          shippingDate: info?.shippingDate ?? null,
+          purposeName: info?.purposeName || "",
+          rows: [],
+          orderInfos: [],
+          tripsWithData: [],
+        });
+      }
+      const g = groups.get(key)!;
+      g.rows.push(t);
+      // Track distinct orders linked to this container
+      if (info && !g.orderInfos.find((x) => x?.orderId === info.orderId)) {
+        g.orderInfos.push(info);
+      }
+      // Track trips that have actual sensor data (not synthetic "No Logger" rows)
+      if (t.serialNumber || t.lastReadingTime || t.latitude !== null) {
+        if (!g.tripsWithData.find((x) => x.tripId === t.tripId)) {
+          g.tripsWithData.push(t);
+        }
+      }
+    }
+    return order.map((k) => groups.get(k)!);
+  }, [filtered, lookupOrder]);
+
   // Selected trips, kept in same order as `filtered` for stable display.
   const selectedTrips = useMemo(
     () => filtered.filter((t) => selectedIds.has(t.tripId)),
     [filtered, selectedIds]
   );
 
-  const toggleSelected = (tripId: string) => {
+  // Group-level checkbox state: a group is selected if ALL of its rows are.
+  const groupSelectionState = useCallback(
+    (g: ContainerGroup): boolean | "indeterminate" => {
+      if (!g.rows.length) return false;
+      const sel = g.rows.filter((t) => selectedIds.has(t.tripId)).length;
+      if (sel === 0) return false;
+      if (sel === g.rows.length) return true;
+      return "indeterminate";
+    },
+    [selectedIds]
+  );
+
+  const toggleGroupSelected = (g: ContainerGroup) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(tripId)) next.delete(tripId);
-      else next.add(tripId);
+      const allSelected = g.rows.every((t) => next.has(t.tripId));
+      if (allSelected) {
+        for (const t of g.rows) next.delete(t.tripId);
+      } else {
+        for (const t of g.rows) next.add(t.tripId);
+      }
       return next;
     });
   };
 
-  const allFilteredSelected = filtered.length > 0 && filtered.every((t) => selectedIds.has(t.tripId));
-  const someFilteredSelected = !allFilteredSelected && filtered.some((t) => selectedIds.has(t.tripId));
+  const allFilteredSelected =
+    groupedRows.length > 0 &&
+    groupedRows.every((g) => g.rows.every((t) => selectedIds.has(t.tripId)));
+  const someFilteredSelected =
+    !allFilteredSelected &&
+    groupedRows.some((g) => g.rows.some((t) => selectedIds.has(t.tripId)));
   const toggleSelectAll = () => {
     if (allFilteredSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filtered.map((t) => t.tripId)));
+      const next = new Set<string>();
+      for (const g of groupedRows) for (const t of g.rows) next.add(t.tripId);
+      setSelectedIds(next);
     }
   };
 
