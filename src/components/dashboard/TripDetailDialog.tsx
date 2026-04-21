@@ -119,6 +119,10 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                   latitude: trip.latitude,
                   longitude: trip.longitude,
                 },
+                map: {
+                  points: tripPath?.points.map((p) => ({ lat: p.lat, lon: p.lon, address: p.address })) || [],
+                  destination: tripPath?.destination || null,
+                },
                 readings: readings.map((r) => ({
                   time: r.time, temp: r.temp, humidity: r.humidity, light: r.light,
                 })),
