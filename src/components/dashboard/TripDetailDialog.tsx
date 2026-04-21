@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { SFTrip, SFOrderInfo } from "@/pages/ActiveSF";
-import { useSensiwatchReadings } from "@/hooks/useSensiwatchData";
+import { useSensiwatchReadings, useSensiwatchTripPaths } from "@/hooks/useSensiwatchData";
 import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts, useQualityReports, useUsers } from "@/hooks/useQualityData";
 import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -33,6 +33,8 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
     trip?.serialNumber ?? null,
     trip?.actualDepartureTime ?? null
   );
+  const { paths } = useSensiwatchTripPaths();
+  const tripPath = useMemo(() => paths.find((p) => p.tripId === trip?.tripId) || null, [paths, trip?.tripId]);
 
   const { data: shipperReports } = useShipperReports();
   const { data: shipperArrivals } = useShipperArrivals();
