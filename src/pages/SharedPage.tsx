@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, AlertCircle, ArrowLeft, Bot, ClipboardCheck, FileText, Container as ContainerIcon, GitCompare, CalendarDays } from "lucide-react";
+import { Loader2, AlertCircle, ArrowLeft, Bot, ClipboardCheck, FileText, Container as ContainerIcon, GitCompare, CalendarDays, ChevronDown, ChevronRight, Thermometer, Sun, Droplets, MapPin, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 import { fetchSharedPage, type SharedPageRow } from "@/lib/sharePages";
 import { ExceptionReportBody, type ExceptionAnalysis } from "@/components/dashboard/ExceptionReportBody";
 import { SeasonalityInsightsBody, type SeasonalityAnalysis } from "@/components/dashboard/SeasonalityInsightsBody";
 import { QualityReportBody } from "@/components/dashboard/QualityReportBody";
+import { SharedTripMap } from "@/components/dashboard/SharedTripMap";
+import { Button } from "@/components/ui/button";
 
 export default function SharedPage() {
   const { token } = useParams<{ token: string }>();
@@ -365,17 +368,32 @@ function SharedTripDetail({ payload }: { payload: any }) {
   const t = payload?.trip;
   if (!t) return <Unsupported />;
   const stats = payload?.stats || {};
+  const map = payload?.map;
+  const readings: any[] = payload?.readings || [];
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold">Trip {t.tripId}</h1>
+
+      {map && (map.points?.length || map.destination || (t.latitude != null && t.longitude != null)) && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <SharedTripMap
+            points={map.points || []}
+            destination={map.destination || null}
+            current={t.latitude != null && t.longitude != null
+              ? { lat: t.latitude, lon: t.longitude, label: t.lastLocation }
+              : null}
+          />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <InfoCard title="Most Recent">
-          {t.lastReadingTime && <p className="text-xs text-muted-foreground">{t.lastReadingTime}</p>}
-          {t.lastLocation && <p className="text-xs text-muted-foreground">{t.lastLocation}</p>}
-          <div className="flex gap-6 mt-2 text-sm">
-            <span className="text-destructive font-bold">{t.lastTemp ?? "—"} °C</span>
-            <span className="text-warning font-bold">{t.lastLight ?? "—"} %</span>
-            <span className="text-accent font-bold">{t.lastHumidity ?? "—"} %</span>
+          {t.lastReadingTime && <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{t.lastReadingTime}</p>}
+          {t.lastLocation && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="h-3 w-3" />{t.lastLocation}</p>}
+          <div className="flex gap-6 mt-3">
+            <span className="flex items-center gap-1 text-destructive font-bold"><Thermometer className="h-4 w-4" />{t.lastTemp ?? "—"} °C</span>
+            <span className="flex items-center gap-1 text-warning font-bold"><Sun className="h-4 w-4" />{t.lastLight ?? "—"} %</span>
+            <span className="flex items-center gap-1 text-accent font-bold"><Droplets className="h-4 w-4" />{t.lastHumidity ?? "—"} %</span>
           </div>
         </InfoCard>
         <InfoCard title="Departed from Origin">
@@ -385,6 +403,9 @@ function SharedTripDetail({ payload }: { payload: any }) {
           {t.carrier && <p className="text-xs text-muted-foreground">Carrier: {t.carrier}</p>}
         </InfoCard>
       </div>
+
+      {readings.length > 0 && <Multigraph readings={readings} />}
+
       {(stats.avgTemp || stats.avgHumidity || stats.maxLight) && (
         <div className="grid grid-cols-3 gap-4">
           <Stat label="Avg Temperature" value={stats.avgTemp ?? "—"} />
@@ -392,6 +413,7 @@ function SharedTripDetail({ payload }: { payload: any }) {
           <Stat label="Max Light" value={stats.maxLight ?? "—"} />
         </div>
       )}
+
       {Array.isArray(payload.shipperReports) && payload.shipperReports.length > 0 && (
         <ShipperReportsList reports={payload.shipperReports} />
       )}
@@ -405,6 +427,10 @@ function SharedTripDetail({ payload }: { payload: any }) {
 function SharedContainerDetail({ payload }: { payload: any }) {
   const c = payload?.container;
   if (!c) return <Unsupported />;
+  const trips: any[] = payload?.trips || [];
+  const map = payload?.map;
+  const combined: any[] = payload?.combinedReadings || [];
+  const serials: string[] = payload?.serials || [];
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-2">
@@ -415,19 +441,35 @@ function SharedContainerDetail({ payload }: { payload: any }) {
         <Stat label="Booking" value={c.bookingCode || "—"} />
         <Stat label="Drop-off" value={c.dropoffDate || "—"} />
         <Stat label="Shipping" value={c.shippingDate || "—"} />
-        <Stat label="Loggers" value={String(payload?.trips?.length || 0)} />
+        <Stat label="Loggers" value={String(trips.length)} />
       </div>
-      {Array.isArray(payload.trips) && payload.trips.map((t: any) => (
+
+      {map && (map.points?.length || map.destination || map.current) && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <SharedTripMap
+            points={map.points || []}
+            destination={map.destination || null}
+            current={map.current || null}
+          />
+        </div>
+      )}
+
+      {trips.map((t: any) => (
         <div key={t.tripId} className="rounded-xl border border-border p-4 space-y-2">
           <p className="font-medium text-sm">Trip {t.tripId} {t.serialNumber && <span className="font-mono text-xs text-muted-foreground">({t.serialNumber})</span>}</p>
+          {t.originName && <p className="text-xs text-muted-foreground">Origin: {t.originName} {t.originAddress && `· ${t.originAddress}`}</p>}
+          {t.actualDepartureTime && <p className="text-xs text-muted-foreground">Departure: {t.actualDepartureTime}{t.carrier && ` · ${t.carrier}`}</p>}
           <div className="flex gap-6 text-sm">
-            <span className="text-destructive">{t.lastTemp ?? "—"} °C</span>
-            <span className="text-warning">{t.lastLight ?? "—"} %</span>
-            <span className="text-accent">{t.lastHumidity ?? "—"} %</span>
+            <span className="flex items-center gap-1 text-destructive"><Thermometer className="h-4 w-4" />{t.lastTemp ?? "—"} °C</span>
+            <span className="flex items-center gap-1 text-warning"><Sun className="h-4 w-4" />{t.lastLight ?? "—"} %</span>
+            <span className="flex items-center gap-1 text-accent"><Droplets className="h-4 w-4" />{t.lastHumidity ?? "—"} %</span>
           </div>
           {t.lastReadingTime && <p className="text-xs text-muted-foreground">Last reading: {t.lastReadingTime}</p>}
         </div>
       ))}
+
+      {combined.length > 0 && <CombinedMultigraph data={combined} serials={serials} />}
+
       {Array.isArray(payload.shipperReports) && payload.shipperReports.length > 0 && (
         <ShipperReportsList reports={payload.shipperReports} />
       )}
@@ -476,6 +518,69 @@ function SharedCompareTrips({ payload }: { payload: any }) {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function Multigraph({ readings }: { readings: any[] }) {
+  return (
+    <div className="rounded-xl border border-border p-4">
+      <h3 className="font-semibold text-sm mb-3">Multigraph</h3>
+      <div className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={readings} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={Math.max(0, Math.floor(readings.length / 6))} />
+            <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
+            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
+            <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+            <Legend />
+            <Line yAxisId="left" type="monotone" dataKey="temp" name="Temperature (°C)" stroke="hsl(207, 100%, 35%)" strokeWidth={2} dot={false} />
+            <Line yAxisId="right" type="monotone" dataKey="humidity" name="Humidity (%)" stroke="hsl(90, 67%, 41%)" strokeWidth={2} dot={false} />
+            <Line yAxisId="right" type="monotone" dataKey="light" name="Light (%)" stroke="hsl(38, 92%, 50%)" strokeWidth={2} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+const LOGGER_COLORS = [
+  { temp: "hsl(207, 100%, 35%)", humidity: "hsl(90, 67%, 41%)", light: "hsl(38, 92%, 50%)" },
+  { temp: "hsl(340, 75%, 45%)", humidity: "hsl(170, 70%, 38%)", light: "hsl(20, 90%, 55%)" },
+  { temp: "hsl(265, 65%, 50%)", humidity: "hsl(195, 75%, 42%)", light: "hsl(55, 90%, 50%)" },
+  { temp: "hsl(0, 70%, 45%)", humidity: "hsl(140, 60%, 40%)", light: "hsl(45, 95%, 52%)" },
+];
+
+function CombinedMultigraph({ data, serials }: { data: any[]; serials: string[] }) {
+  const isMulti = serials.length > 1;
+  return (
+    <div className="rounded-xl border border-border p-4">
+      <h3 className="font-semibold text-sm mb-3">
+        Multigraph
+        {isMulti && <span className="ml-2 text-xs font-normal text-muted-foreground">({serials.length} loggers combined)</span>}
+      </h3>
+      <div className="h-[320px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={Math.max(0, Math.floor(data.length / 6))} />
+            <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
+            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
+            <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            {serials.flatMap((sn, i) => {
+              const c = LOGGER_COLORS[i % LOGGER_COLORS.length];
+              const suffix = isMulti ? ` · ${sn}` : "";
+              return [
+                <Line key={`t-${sn}`} yAxisId="left" type="monotone" dataKey={`temp_${sn}`} name={`Temp (°C)${suffix}`} stroke={c.temp} strokeWidth={2} dot={false} connectNulls />,
+                <Line key={`h-${sn}`} yAxisId="right" type="monotone" dataKey={`humidity_${sn}`} name={`Humidity (%)${suffix}`} stroke={c.humidity} strokeWidth={2} dot={false} connectNulls />,
+                <Line key={`l-${sn}`} yAxisId="right" type="monotone" dataKey={`light_${sn}`} name={`Light (%)${suffix}`} stroke={c.light} strokeWidth={2} dot={false} connectNulls />,
+              ];
+            })}
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
@@ -531,34 +636,59 @@ function ShipperReportsList({ reports }: { reports: any[] }) {
 }
 
 function OrdersList({ orders }: { orders: any[] }) {
+  const [expanded, setExpanded] = useState<number | null>(null);
   return (
     <Section title={`Orders & Arrivals (${orders.length})`}>
       <div className="space-y-2">
-        {orders.map((o: any, i: number) => (
-          <div key={i} className="border border-border rounded-md p-3 text-xs space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-mono font-medium">{o.orderNumber}</span>
-              {o.statusName && <span className="text-[10px] text-muted-foreground">{o.statusName}</span>}
-            </div>
-            <div className="text-muted-foreground">Farm: <span className="text-foreground">{o.farmName || "—"}</span></div>
-            <div className="text-muted-foreground">Customer: <span className="text-foreground">{o.customerName || "—"}</span></div>
-            <div className="grid grid-cols-3 gap-1 text-muted-foreground pt-1">
-              <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
-              <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
-              <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
-            </div>
-            {o.arrival && (
-              <div className="mt-2 pt-2 border-t border-border space-y-1">
-                <div className="flex justify-between"><span className="font-medium">Arrival</span><span className="text-muted-foreground">{o.arrival.arrivalDate || "—"}</span></div>
-                {Array.isArray(o.arrival.temps) && o.arrival.temps.length > 0 && (
-                  <div className="text-muted-foreground">Temps: {o.arrival.temps.join(" / ")} °C</div>
-                )}
-                {o.arrival.dischargeWaitingMin != null && <div className="text-muted-foreground">Discharge wait: {o.arrival.dischargeWaitingMin} min</div>}
-                {o.arrival.specificComments && <p className="italic">"{o.arrival.specificComments}"</p>}
+        {orders.map((o: any, i: number) => {
+          const qr = o.qualityReport;
+          const isOpen = expanded === i;
+          return (
+            <div key={i} className="border border-border rounded-md p-3 text-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-medium">{o.orderNumber}</span>
+                {o.statusName && <span className="text-[10px] text-muted-foreground">{o.statusName}</span>}
               </div>
-            )}
-          </div>
-        ))}
+              <div className="text-muted-foreground">Farm: <span className="text-foreground">{o.farmName || "—"}</span></div>
+              <div className="text-muted-foreground">Customer: <span className="text-foreground">{o.customerName || "—"}</span></div>
+              <div className="grid grid-cols-3 gap-1 text-muted-foreground pt-1">
+                <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
+                <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
+                <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
+              </div>
+              {o.arrival && (
+                <div className="mt-2 pt-2 border-t border-border space-y-1">
+                  <div className="flex justify-between"><span className="font-medium">Arrival</span><span className="text-muted-foreground">{o.arrival.arrivalDate || "—"}</span></div>
+                  {Array.isArray(o.arrival.temps) && o.arrival.temps.length > 0 && (
+                    <div className="text-muted-foreground">Temps: {o.arrival.temps.join(" / ")} °C</div>
+                  )}
+                  {o.arrival.dischargeWaitingMin != null && <div className="text-muted-foreground">Discharge wait: {o.arrival.dischargeWaitingMin} min</div>}
+                  {o.arrival.specificComments && <p className="italic">"{o.arrival.specificComments}"</p>}
+                </div>
+              )}
+              {qr && (
+                <div className="mt-2 pt-2 border-t border-border">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs gap-1 text-primary hover:text-primary"
+                    onClick={() => setExpanded(isOpen ? null : i)}
+                  >
+                    {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    <FileText className="h-3.5 w-3.5" />
+                    {isOpen ? "Hide Quality Report" : "Quality Report"}
+                    {qr.report?.weekNr && <span className="text-muted-foreground ml-1">· wk {qr.report.weekNr}</span>}
+                  </Button>
+                  {isOpen && (
+                    <div className="mt-3 rounded-lg bg-muted/20 border border-border p-2">
+                      <QualityReportBody report={qr.report} farmName={qr.farmName || "—"} createdByName={qr.createdByName} />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </Section>
   );

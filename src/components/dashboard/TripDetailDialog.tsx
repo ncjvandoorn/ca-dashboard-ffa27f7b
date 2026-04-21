@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { SFTrip, SFOrderInfo } from "@/pages/ActiveSF";
-import { useSensiwatchReadings } from "@/hooks/useSensiwatchData";
+import { useSensiwatchReadings, useSensiwatchTripPaths } from "@/hooks/useSensiwatchData";
 import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts, useQualityReports, useUsers } from "@/hooks/useQualityData";
 import { Thermometer, Droplets, Sun, MapPin, Clock, Loader2, ChevronDown, ChevronRight, FileText } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -33,6 +33,8 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
     trip?.serialNumber ?? null,
     trip?.actualDepartureTime ?? null
   );
+  const { paths } = useSensiwatchTripPaths();
+  const tripPath = useMemo(() => paths.find((p) => p.tripId === trip?.tripId) || null, [paths, trip?.tripId]);
 
   const { data: shipperReports } = useShipperReports();
   const { data: shipperArrivals } = useShipperArrivals();
@@ -105,6 +107,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                   serialNumber: trip.serialNumber,
                   originName: trip.originName,
                   originAddress: trip.originAddress,
+                  destinationName: trip.destinationName,
                   actualDepartureTime: trip.actualDepartureTime,
                   carrier: trip.carrier,
                   internalTripId: trip.internalTripId,
@@ -113,7 +116,16 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                   lastLight: trip.lastLight,
                   lastLocation: trip.lastLocation,
                   lastReadingTime: trip.lastReadingTime,
+                  latitude: trip.latitude,
+                  longitude: trip.longitude,
                 },
+                map: {
+                  points: tripPath?.points.map((p) => ({ lat: p.lat, lon: p.lon, address: p.address })) || [],
+                  destination: tripPath?.destination || null,
+                },
+                readings: readings.map((r) => ({
+                  time: r.time, temp: r.temp, humidity: r.humidity, light: r.light,
+                })),
                 stats: readings.length > 0 ? {
                   avgTemp: (readings.reduce((s, r) => s + r.temp, 0) / readings.length).toFixed(1) + " °C",
                   avgHumidity: (readings.reduce((s, r) => s + r.humidity, 0) / readings.length).toFixed(1) + " %",
@@ -127,6 +139,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                 })),
                 orders: detailOrders.map((o) => {
                   const arr = detailArrivals.find((x) => x.order.id === o.id)?.arrival;
+                  const qr = o.qualityReportId ? qualityReportMap.get(o.qualityReportId) : null;
                   return {
                     orderNumber: o.orderNumber,
                     statusName: o.statusName,
@@ -140,6 +153,15 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                       temps: [arr.arrivalTemp1, arr.arrivalTemp2, arr.arrivalTemp3].filter((v) => v !== null),
                       dischargeWaitingMin: arr.dischargeWaitingMin,
                       specificComments: arr.specificComments,
+                    } : null,
+                    qualityReport: qr ? {
+                      report: qr,
+                      farmName: accountNameMap.get(qr.farmAccountId) || accountNameMap.get(o.farmAccountId) || "—",
+                      createdByName:
+                        (qr.submittedByUserId && userNameMap.get(qr.submittedByUserId)) ||
+                        (qr.createdByUserId && userNameMap.get(qr.createdByUserId)) ||
+                        (qr.updatedByUserId && userNameMap.get(qr.updatedByUserId)) ||
+                        qr.signoffName || "—",
                     } : null,
                   };
                 }),
