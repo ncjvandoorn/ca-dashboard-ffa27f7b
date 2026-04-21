@@ -101,7 +101,31 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
             Trip {trip.tripId}
             <SharePageButton
               pageType="trip_detail"
-              getPayload={() => ({
+              getPayload={() => {
+                const vfGen = vfTracking?.response?.general;
+                const vfSchedule = vfTracking?.response?.schedule;
+                const vfRoute = (vfTracking?.status === "success" && vfGen) ? {
+                  carrier: vfGen.carrier ?? null,
+                  origin: vfGen.origin ? { lat: vfGen.origin.latitude, lon: vfGen.origin.longitude, name: vfGen.origin.name ?? null } : null,
+                  destination: vfGen.destination ? { lat: vfGen.destination.latitude, lon: vfGen.destination.longitude, name: vfGen.destination.name ?? null } : null,
+                  schedule: (vfSchedule || [])
+                    .filter((s) => typeof s.latitude === "number" && typeof s.longitude === "number")
+                    .map((s) => ({ lat: s.latitude, lon: s.longitude, name: s.name ?? null, country: s.country ?? null })),
+                  vessel: vfGen.currentLocation?.vessel && typeof vfGen.currentLocation.vessel.latitude === "number"
+                    ? { lat: vfGen.currentLocation.vessel.latitude, lon: vfGen.currentLocation.vessel.longitude, name: vfGen.currentLocation.vessel.name ?? null, speed: vfGen.currentLocation.vessel.speed ?? null }
+                    : null,
+                } : null;
+                const vfSummary = (vfTracking?.status === "success" && vfGen) ? {
+                  carrier: vfGen.carrier ?? null,
+                  vesselName: vfGen.currentLocation?.vessel?.name ?? null,
+                  vesselSpeed: vfGen.currentLocation?.vessel?.speed ?? null,
+                  progress: typeof vfGen.progress === "number" ? vfGen.progress : null,
+                  destinationName: vfGen.destination?.name ?? null,
+                  destinationDate: vfGen.destination?.date ?? null,
+                  updatedAt: vfGen.updatedAt ?? null,
+                  portName: vfGen.currentLocation?.port?.name ?? null,
+                } : null;
+                return {
                 trip: {
                   tripId: trip.tripId,
                   serialNumber: trip.serialNumber,
@@ -119,6 +143,8 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                   latitude: trip.latitude,
                   longitude: trip.longitude,
                 },
+                vfRoute,
+                vfSummary,
                 map: {
                   points: tripPath?.points.map((p) => ({ lat: p.lat, lon: p.lon, address: p.address })) || [],
                   destination: tripPath?.destination || null,
@@ -165,7 +191,8 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                     } : null,
                   };
                 }),
-              })}
+              };
+              }}
             />
           </DialogTitle>
         </DialogHeader>
