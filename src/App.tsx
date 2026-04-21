@@ -19,6 +19,7 @@ import ActiveSF from "./pages/ActiveSF.tsx";
 import Containers from "./pages/Containers.tsx";
 import Subscriptions from "./pages/Subscriptions.tsx";
 import CRM from "./pages/CRM.tsx";
+import Customers from "./pages/Customers.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import SharedPage from "./pages/SharedPage.tsx";
 import { Loader2 } from "lucide-react";
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/active-sf" element={<PermissionRoute permission="active_sf"><ActiveSF /></PermissionRoute>} />
             <Route path="/containers" element={<PermissionRoute permission="containers"><Containers /></PermissionRoute>} />
             <Route path="/crm" element={<PermissionRoute permission="crm_activities"><CRM /></PermissionRoute>} />
+            <Route path="/customers" element={<PermissionRoute permission="customers_map"><Customers /></PermissionRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

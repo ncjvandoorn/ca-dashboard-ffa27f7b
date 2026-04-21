@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
   UserCircle,
   Activity,
+  MapPin,
 } from "lucide-react";
 
 interface AppMenuItemsProps {
@@ -100,6 +101,12 @@ export function AppMenuItems({ onOpenContainers }: AppMenuItemsProps = {}) {
         <DropdownMenuItem onClick={() => navigate("/crm")}>
           <Users className="h-4 w-4 mr-2" />
           CRM Activities
+        </DropdownMenuItem>
+      )}
+      {can("customers_map") && (
+        <DropdownMenuItem onClick={() => navigate("/customers")}>
+          <MapPin className="h-4 w-4 mr-2" />
+          Customers Map
         </DropdownMenuItem>
       )}
 
