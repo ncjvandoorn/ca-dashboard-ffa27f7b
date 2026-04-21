@@ -371,12 +371,7 @@ export default function Planner() {
                 </SelectContent>
               </Select>
               <span className="text-xs text-muted-foreground tabular-nums">{filteredTrials.length} trials</span>
-              <div className="ml-auto">
-                <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled={exporting} onClick={() => handleExport(overviewRef, "Trial-Overview")}>
-                  <Download className="h-4 w-4" />
-                  PDF
-                </Button>
-              </div>
+              <div className="ml-auto" />
             </div>
 
             <div ref={overviewRef} className="bg-card rounded-xl shadow-card overflow-hidden">
