@@ -209,17 +209,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
     }
   };
 
-  const chartData = useMemo(() => {
-    if (!analysis) return [];
-    const assessmentMap = new Map(analysis.weeklyAssessment.map((w) => [w.weekNr, w.qualityImpactScore]));
-    const qualityMap = new Map(analysis.averageQualityByWeek.map((w) => [w.weekNr, w.avgQualityRating]));
-    const allWeeks = new Set([...assessmentMap.keys(), ...qualityMap.keys()]);
-    return [...allWeeks].sort((a, b) => a - b).map((week) => ({
-      week,
-      "Weather Impact": assessmentMap.get(week) ?? null,
-      "Avg Quality": qualityMap.get(week) ?? null,
-    }));
-  }, [analysis]);
+  // chart computation lives inside SeasonalityInsightsBody now
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -241,7 +231,16 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
               Seasonality Insights
             </DialogTitle>
             {analysis && !loading && (
-              <ExportPdfButton targetRef={contentRef} filename="seasonality-insights" size="sm" />
+              <div className="flex items-center gap-2">
+                <SharePageButton
+                  pageType="seasonality"
+                  getPayload={() => ({
+                    analysis,
+                    weekRange: { min: weekWindow.min, max: weekWindow.max },
+                  })}
+                />
+                <ExportPdfButton targetRef={contentRef} filename="seasonality-insights" size="sm" />
+              </div>
             )}
           </div>
           <p className="text-sm text-muted-foreground">
