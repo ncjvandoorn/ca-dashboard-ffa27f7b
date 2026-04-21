@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
+import { SharePageButton } from "@/components/SharePageButton";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
@@ -533,7 +533,13 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
           {activeUsers.length} team members
         </Badge>
         {plan && (
-          <ExportPdfButton targetRef={pdfRef} filename="weekly-plan" label="Export PDF" />
+          <SharePageButton
+            pageType="weekly_plan"
+            getPayload={() => ({
+              weekLabel: weekOptions.find((o) => String(o.value) === String(selectedWeek))?.label,
+              plan,
+            })}
+          />
         )}
       </div>
 

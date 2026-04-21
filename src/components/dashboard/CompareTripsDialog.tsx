@@ -6,7 +6,7 @@ import { useShipperReports, useShipperArrivals, useServicesOrders, useAccounts }
 import { Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { SFWorldMap } from "./SFWorldMap";
-import { ExportPdfButton } from "./ExportPdfButton";
+import { SharePageButton } from "@/components/SharePageButton";
 import { useMemo, useRef } from "react";
 
 interface Props {
@@ -119,10 +119,25 @@ export function CompareTripsDialog({ open, trips, lookupOrder, onClose }: Props)
         <DialogHeader>
           <DialogTitle className="text-lg flex items-center justify-between gap-3 pr-8">
             <span>Comparing {trips.length} trip{trips.length !== 1 ? "s" : ""}</span>
-            <ExportPdfButton
-              targetRef={exportRef}
-              filename={`active-sf-compare-${trips.length}-trips`}
-              label="Export PDF"
+            <SharePageButton
+              pageType="compare_trips"
+              getPayload={() => ({
+                trips: tripMeta.map((m) => {
+                  const series = perSerial[m.serial] || [];
+                  const temps = series.map((s: any) => s.temp).filter((v: any) => v != null);
+                  const hums = series.map((s: any) => s.humidity).filter((v: any) => v != null);
+                  return {
+                    tripId: m.trip.tripId,
+                    serialNumber: m.serial,
+                    containerNumber: m.info?.containerNumber,
+                    bookingCode: m.info?.bookingCode,
+                    originName: m.trip.originName,
+                    actualDepartureTime: m.trip.actualDepartureTime,
+                    avgTemp: temps.length ? (temps.reduce((s: number, v: number) => s + v, 0) / temps.length).toFixed(1) + " °C" : null,
+                    avgHumidity: hums.length ? (hums.reduce((s: number, v: number) => s + v, 0) / hums.length).toFixed(1) + " %" : null,
+                  };
+                }),
+              })}
             />
           </DialogTitle>
         </DialogHeader>

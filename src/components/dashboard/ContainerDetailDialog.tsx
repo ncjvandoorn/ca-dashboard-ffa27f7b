@@ -37,7 +37,7 @@ import {
 import { TripPathMap } from "./TripPathMap";
 import { useMemo, useRef, useState } from "react";
 import { VesselTrackingCard } from "./VesselTrackingCard";
-import { ExportPdfButton } from "./ExportPdfButton";
+import { SharePageButton } from "@/components/SharePageButton";
 import { useAuth } from "@/hooks/useAuth";
 import type { VFTracking } from "@/hooks/useVesselFinder";
 import { QualityReportBody } from "./QualityReportBody";
@@ -175,10 +175,48 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
                 {orders.length} orders
               </Badge>
             )}
-            <ExportPdfButton
-              targetRef={exportRef}
-              filename={`active-sf-container-${title}`}
-              label="Export PDF"
+            <SharePageButton
+              pageType="container_detail"
+              getPayload={() => ({
+                container: {
+                  containerNumber: container.containerNumber,
+                  bookingCode: container.bookingCode,
+                  dropoffDate: formatDate(container.dropoffDate),
+                  shippingDate: formatDate(container.shippingDate),
+                },
+                trips: trips.map((t) => ({
+                  tripId: t.tripId,
+                  serialNumber: t.serialNumber,
+                  lastTemp: t.lastTemp,
+                  lastHumidity: t.lastHumidity,
+                  lastLight: t.lastLight,
+                  lastReadingTime: t.lastReadingTime,
+                })),
+                shipperReports: detailReports.map((r) => ({
+                  weekNr: r.weekNr,
+                  stuffingDate: formatDate(r.stuffingDate),
+                  loadingMin: r.loadingMin,
+                  generalComments: r.generalComments,
+                })),
+                orders: detailOrders.map((o) => {
+                  const arr = detailArrivals.find((x) => x.order.id === o.id)?.arrival;
+                  return {
+                    orderNumber: o.orderNumber,
+                    statusName: o.statusName,
+                    farmName: accountNameMap.get(o.farmAccountId) || null,
+                    customerName: accountNameMap.get(o.customerAccountId) || null,
+                    pallets: o.pallets,
+                    forecast: typeof o.forecast === "number" ? o.forecast.toLocaleString("de-DE") : o.forecast,
+                    dippingWeek: o.dippingWeek,
+                    arrival: arr ? {
+                      arrivalDate: formatDate(arr.arrivalDate),
+                      temps: [arr.arrivalTemp1, arr.arrivalTemp2, arr.arrivalTemp3].filter((v) => v !== null),
+                      dischargeWaitingMin: arr.dischargeWaitingMin,
+                      specificComments: arr.specificComments,
+                    } : null,
+                  };
+                }),
+              })}
             />
           </DialogTitle>
         </DialogHeader>
