@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
+import { SharePageButton } from "@/components/SharePageButton";
 import { ClipboardCheck, AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import {
   Dialog,
@@ -148,7 +148,14 @@ export function ReportingCheck({ reports, accounts, users, open: openProp, onOpe
               <ClipboardCheck className="h-5 w-5 text-primary" />
               Reporting Completeness Check
             </DialogTitle>
-            <ExportPdfButton targetRef={contentRef} filename="reporting-check" size="sm" />
+            <SharePageButton
+              pageType="reporting_check"
+              getPayload={() => ({
+                avgOverall,
+                poorFarms,
+                farmCompliance,
+              })}
+            />
           </div>
           <p className="text-sm text-muted-foreground mt-1">
             How consistently are staff filling in quality notes and protocol observations per farm.

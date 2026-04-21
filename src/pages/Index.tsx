@@ -15,9 +15,7 @@ import { AIAgent } from "@/components/dashboard/AIAgent";
 
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { exportElementToPdf } from "@/lib/exportPdf";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -238,15 +236,7 @@ const Index = () => {
     );
   }, [farmReports, users]);
 
-  const handleDashboardExport = useCallback(async () => {
-    if (!dashboardRef.current) return;
-    try {
-      await exportElementToPdf(dashboardRef.current, `dashboard-${farmName}-${selectedYear}`);
-      toast({ title: "PDF exported" });
-    } catch {
-      toast({ title: "Export failed", variant: "destructive" });
-    }
-  }, [farmName, selectedYear]);
+  // PDF export removed in favor of share links.
 
   const intakePh = farmReports.map((r) => r.qrIntakePh);
   const intakeEc = farmReports.map((r) => r.qrIntakeEc);
@@ -405,10 +395,6 @@ const Index = () => {
                   useSharedCache={true}
                 />
               )}
-              <Button variant="outline" size="sm" onClick={handleDashboardExport} className="gap-2">
-                <FileDown className="h-4 w-4" />
-                Export PDF
-              </Button>
             </div>
 
             {/* Farm info strip */}

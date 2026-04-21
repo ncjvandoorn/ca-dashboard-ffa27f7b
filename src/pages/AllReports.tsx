@@ -6,9 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, FileDown, Search } from "lucide-react";
-import { exportElementToPdf } from "@/lib/exportPdf";
-import { toast } from "@/hooks/use-toast";
+import { ArrowLeft, Search } from "lucide-react";
 import { ReportDetailDialog } from "@/components/dashboard/ReportDetailDialog";
 import type { QualityReport } from "@/lib/csvParser";
 import { isVisibleFarmReport } from "@/lib/reportVisibility";
@@ -138,46 +136,7 @@ const AllReports = () => {
     return accounts.filter((account) => ids.has(account.id)).sort((a, b) => a.name.localeCompare(b.name));
   }, [visibleReports, accounts]);
 
-  const handleExport = useCallback(async () => {
-    if (!tableRef.current) return;
-    try {
-      const el = tableRef.current;
-      const prev = el.style.maxHeight;
-      const prevOverflow = el.style.overflow;
-      el.style.maxHeight = "none";
-      el.style.overflow = "visible";
-
-      // Hide columns beyond General Comment (keep first 8 columns: index 0-7)
-      const VISIBLE_COLS = 8;
-      const table = el.querySelector("table");
-      const allRows = table ? table.querySelectorAll("tr") : [];
-      const hiddenCells: HTMLElement[] = [];
-
-      allRows.forEach((row, rowIdx) => {
-        const cells = row.children;
-        let colIdx = 0;
-        for (let i = 0; i < cells.length; i++) {
-          const cell = cells[i] as HTMLElement;
-          const span = parseInt(cell.getAttribute("colspan") || "1", 10);
-          if (colIdx + span > VISIBLE_COLS) {
-            cell.style.display = "none";
-            hiddenCells.push(cell);
-          }
-          colIdx += span;
-        }
-      });
-
-      await exportElementToPdf(el, `all-reports${selectedYear !== "all" ? `-${selectedYear}` : ""}${selectedFarm !== "all" ? `-${accountMap.get(selectedFarm) || "farm"}` : ""}`, { orientation: "l", scale: 2, quality: 0.85 });
-
-      // Restore hidden cells
-      hiddenCells.forEach((cell) => { cell.style.display = ""; });
-      el.style.maxHeight = prev;
-      el.style.overflow = prevOverflow;
-      toast({ title: "PDF exported" });
-    } catch {
-      toast({ title: "Export failed", variant: "destructive" });
-    }
-  }, [selectedYear, selectedFarm, accountMap]);
+  // PDF export removed.
 
   const isLoading = loadingAccounts || loadingReports;
 
@@ -194,10 +153,6 @@ const AllReports = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
-              <FileDown className="h-4 w-4" />
-              Export PDF
-            </Button>
             <PageHeaderActions />
           </div>
         </div>

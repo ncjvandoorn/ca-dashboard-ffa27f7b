@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo, useRef } from "react";
-import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { SharePageButton } from "@/components/SharePageButton";
 import { SeasonalityInsightsBody, type SeasonalityAnalysis } from "@/components/dashboard/SeasonalityInsightsBody";
 import { CloudSun, Loader2, AlertCircle, RefreshCw } from "lucide-react";
@@ -231,16 +230,13 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
               Seasonality Insights
             </DialogTitle>
             {analysis && !loading && (
-              <div className="flex items-center gap-2">
-                <SharePageButton
-                  pageType="seasonality"
-                  getPayload={() => ({
-                    analysis,
-                    weekRange: { min: weekWindow.min, max: weekWindow.max },
-                  })}
-                />
-                <ExportPdfButton targetRef={contentRef} filename="seasonality-insights" size="sm" />
-              </div>
+              <SharePageButton
+                pageType="seasonality"
+                getPayload={() => ({
+                  analysis,
+                  weekRange: { min: weekWindow.min, max: weekWindow.max },
+                })}
+              />
             )}
           </div>
           <p className="text-sm text-muted-foreground">
