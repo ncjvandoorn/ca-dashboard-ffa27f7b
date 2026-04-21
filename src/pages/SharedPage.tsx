@@ -636,34 +636,59 @@ function ShipperReportsList({ reports }: { reports: any[] }) {
 }
 
 function OrdersList({ orders }: { orders: any[] }) {
+  const [expanded, setExpanded] = useState<number | null>(null);
   return (
     <Section title={`Orders & Arrivals (${orders.length})`}>
       <div className="space-y-2">
-        {orders.map((o: any, i: number) => (
-          <div key={i} className="border border-border rounded-md p-3 text-xs space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-mono font-medium">{o.orderNumber}</span>
-              {o.statusName && <span className="text-[10px] text-muted-foreground">{o.statusName}</span>}
-            </div>
-            <div className="text-muted-foreground">Farm: <span className="text-foreground">{o.farmName || "—"}</span></div>
-            <div className="text-muted-foreground">Customer: <span className="text-foreground">{o.customerName || "—"}</span></div>
-            <div className="grid grid-cols-3 gap-1 text-muted-foreground pt-1">
-              <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
-              <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
-              <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
-            </div>
-            {o.arrival && (
-              <div className="mt-2 pt-2 border-t border-border space-y-1">
-                <div className="flex justify-between"><span className="font-medium">Arrival</span><span className="text-muted-foreground">{o.arrival.arrivalDate || "—"}</span></div>
-                {Array.isArray(o.arrival.temps) && o.arrival.temps.length > 0 && (
-                  <div className="text-muted-foreground">Temps: {o.arrival.temps.join(" / ")} °C</div>
-                )}
-                {o.arrival.dischargeWaitingMin != null && <div className="text-muted-foreground">Discharge wait: {o.arrival.dischargeWaitingMin} min</div>}
-                {o.arrival.specificComments && <p className="italic">"{o.arrival.specificComments}"</p>}
+        {orders.map((o: any, i: number) => {
+          const qr = o.qualityReport;
+          const isOpen = expanded === i;
+          return (
+            <div key={i} className="border border-border rounded-md p-3 text-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-medium">{o.orderNumber}</span>
+                {o.statusName && <span className="text-[10px] text-muted-foreground">{o.statusName}</span>}
               </div>
-            )}
-          </div>
-        ))}
+              <div className="text-muted-foreground">Farm: <span className="text-foreground">{o.farmName || "—"}</span></div>
+              <div className="text-muted-foreground">Customer: <span className="text-foreground">{o.customerName || "—"}</span></div>
+              <div className="grid grid-cols-3 gap-1 text-muted-foreground pt-1">
+                <span>Pallets: <span className="text-foreground">{o.pallets ?? "—"}</span></span>
+                <span>Forecast: <span className="text-foreground">{o.forecast ?? "—"}</span></span>
+                <span>Wk: <span className="text-foreground">{o.dippingWeek || "—"}</span></span>
+              </div>
+              {o.arrival && (
+                <div className="mt-2 pt-2 border-t border-border space-y-1">
+                  <div className="flex justify-between"><span className="font-medium">Arrival</span><span className="text-muted-foreground">{o.arrival.arrivalDate || "—"}</span></div>
+                  {Array.isArray(o.arrival.temps) && o.arrival.temps.length > 0 && (
+                    <div className="text-muted-foreground">Temps: {o.arrival.temps.join(" / ")} °C</div>
+                  )}
+                  {o.arrival.dischargeWaitingMin != null && <div className="text-muted-foreground">Discharge wait: {o.arrival.dischargeWaitingMin} min</div>}
+                  {o.arrival.specificComments && <p className="italic">"{o.arrival.specificComments}"</p>}
+                </div>
+              )}
+              {qr && (
+                <div className="mt-2 pt-2 border-t border-border">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs gap-1 text-primary hover:text-primary"
+                    onClick={() => setExpanded(isOpen ? null : i)}
+                  >
+                    {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    <FileText className="h-3.5 w-3.5" />
+                    {isOpen ? "Hide Quality Report" : "Quality Report"}
+                    {qr.report?.weekNr && <span className="text-muted-foreground ml-1">· wk {qr.report.weekNr}</span>}
+                  </Button>
+                  {isOpen && (
+                    <div className="mt-3 rounded-lg bg-muted/20 border border-border p-2">
+                      <QualityReportBody report={qr.report} farmName={qr.farmName || "—"} createdByName={qr.createdByName} />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </Section>
   );
