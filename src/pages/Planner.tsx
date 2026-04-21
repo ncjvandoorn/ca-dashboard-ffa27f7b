@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
+import { CapacityWeeklyChart } from "@/components/dashboard/CapacityWeeklyChart";
 
 const VL_CAPACITY = 376;
 
@@ -220,6 +221,8 @@ export default function Planner() {
                 </Button>
               </div>
             </div>
+
+            <CapacityWeeklyChart rows={capacityRows} />
 
             <div ref={capacityRef} className="bg-card rounded-xl shadow-card overflow-hidden">
               <div className="overflow-auto max-h-[600px]">
