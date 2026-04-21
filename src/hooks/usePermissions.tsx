@@ -38,6 +38,8 @@ async function loadPermissions(): Promise<Record<RoleKey, PermissionMap>> {
     for (const row of data || []) {
       const key = row.role_key as RoleKey;
       if (!result[key]) continue;
+      // Admin is always fully permitted — ignore any stored value.
+      if (key === "admin") continue;
       const stored = (row.permissions || {}) as Partial<PermissionMap>;
       const merged: PermissionMap = { ...ALL_FALSE };
       for (const item of PERMISSION_ITEMS) {
@@ -45,6 +47,8 @@ async function loadPermissions(): Promise<Record<RoleKey, PermissionMap>> {
       }
       result[key] = merged;
     }
+    // Force admin to all-true (covers any newly-added permission keys).
+    result.admin = { ...ALL_TRUE };
     cachedRows = result;
     return result;
   })();
