@@ -370,18 +370,23 @@ function SharedTripDetail({ payload }: { payload: any }) {
   const stats = payload?.stats || {};
   const map = payload?.map;
   const readings: any[] = payload?.readings || [];
+  const vfRoute = payload?.vfRoute || null;
+  const vf = payload?.vfSummary || null;
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold">Trip {t.tripId}</h1>
 
-      {map && (map.points?.length || map.destination || (t.latitude != null && t.longitude != null)) && (
+      {vf && <VFSummaryCard vf={vf} />}
+
+      {(vfRoute || (map && (map.points?.length || map.destination || (t.latitude != null && t.longitude != null)))) && (
         <div className="rounded-xl border border-border overflow-hidden">
           <SharedTripMap
-            points={map.points || []}
-            destination={map.destination || null}
+            points={map?.points || []}
+            destination={map?.destination || null}
             current={t.latitude != null && t.longitude != null
               ? { lat: t.latitude, lon: t.longitude, label: t.lastLocation }
               : null}
+            vfRoute={vfRoute}
           />
         </div>
       )}
