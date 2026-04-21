@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, AlertCircle, ArrowLeft, Bot, ClipboardCheck, FileText, Container as ContainerIcon, GitCompare, CalendarDays } from "lucide-react";
+import { Loader2, AlertCircle, ArrowLeft, Bot, ClipboardCheck, FileText, Container as ContainerIcon, GitCompare, CalendarDays, ChevronDown, ChevronRight, Thermometer, Sun, Droplets, MapPin, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 import { fetchSharedPage, type SharedPageRow } from "@/lib/sharePages";
 import { ExceptionReportBody, type ExceptionAnalysis } from "@/components/dashboard/ExceptionReportBody";
 import { SeasonalityInsightsBody, type SeasonalityAnalysis } from "@/components/dashboard/SeasonalityInsightsBody";
 import { QualityReportBody } from "@/components/dashboard/QualityReportBody";
+import { SharedTripMap } from "@/components/dashboard/SharedTripMap";
+import { Button } from "@/components/ui/button";
 
 export default function SharedPage() {
   const { token } = useParams<{ token: string }>();
