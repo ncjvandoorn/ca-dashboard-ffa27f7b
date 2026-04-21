@@ -42,37 +42,6 @@ function getCurrentWeekNr(): number {
   return year * 100 + weekNum;
 }
 
-interface WeeklyAssessment {
-  weekNr: number;
-  weatherSummary: string;
-  qualityImpactScore: number;
-  keyObservations: string[];
-}
-
-interface PestDisease {
-  name: string;
-  category: "disease" | "pest";
-  severity: "low" | "moderate" | "high";
-  trend: "increasing" | "stable" | "decreasing";
-  weeksObserved: number[];
-  farmsAffected: string[];
-  environmentalDriver: string;
-  notes: string;
-}
-
-interface WeeklyQuality {
-  weekNr: number;
-  avgQualityRating: number;
-}
-
-interface SeasonalityAnalysis {
-  weeklyAssessment: WeeklyAssessment[];
-  pestAndDisease: PestDisease[];
-  seasonalSummary: string;
-  outlook: string;
-  averageQualityByWeek: WeeklyQuality[];
-}
-
 function getSeasonalityWeekWindow(reports: QualityReport[]) {
   const currentWeek = getCurrentWeekNr();
   const uniqueWeeks = Array.from(new Set(reports.map((r) => r.weekNr).filter((w) => w > 0 && w <= currentWeek))).sort((a, b) => a - b);
@@ -116,24 +85,6 @@ function buildAllFarmSummaries(reports: QualityReport[], accounts: Account[], we
     });
   }
   return summaries;
-}
-
-const severityColors: Record<string, string> = {
-  low: "bg-accent/15 text-accent",
-  moderate: "bg-warning/15 text-warning",
-  high: "bg-destructive/15 text-destructive",
-};
-
-function impactColor(score: number) {
-  if (score <= 3) return "text-accent";
-  if (score <= 6) return "text-warning";
-  return "text-destructive";
-}
-
-function impactBg(score: number) {
-  if (score <= 3) return "bg-accent/10";
-  if (score <= 6) return "bg-warning/10";
-  return "bg-destructive/10";
 }
 
 export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: SeasonalityInsightsProps) {
