@@ -96,15 +96,49 @@ Deno.serve(async (req) => {
 
       const email = `${username}@chrysal.app`;
 
+      let userId: string;
       const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
       });
-      if (createErr) return bad(createErr.message);
-      const userId = created.user.id;
 
-      await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "customer" });
+      if (createErr) {
+        // If the auth user already exists from a previous failed signup attempt,
+        // check whether it's orphaned (no customer_accounts row). If so, recycle it
+        // by resetting the password and reusing the same auth user.
+        const msg = (createErr.message || "").toLowerCase();
+        const isDuplicate = msg.includes("already") || msg.includes("registered") || msg.includes("exists");
+        if (!isDuplicate) return bad(createErr.message);
+
+        // find existing auth user by email
+        const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const existing = list?.users?.find((u) => (u.email || "").toLowerCase() === email);
+        if (!existing) return bad("This username is already taken");
+
+        // is it linked to a customer_account?
+        const { data: linked } = await supabaseAdmin
+          .from("customer_accounts")
+          .select("id, status")
+          .eq("user_id", existing.id)
+          .maybeSingle();
+        if (linked) {
+          return bad("This username is already in use. Please contact support if this is your account.");
+        }
+
+        // orphan -> reset password and reuse
+        const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, { password });
+        if (updErr) return bad(updErr.message);
+        userId = existing.id;
+      } else {
+        userId = created!.user.id;
+      }
+
+      // upsert role (ignore duplicate)
+      await supabaseAdmin.from("user_roles").upsert(
+        { user_id: userId, role: "customer" },
+        { onConflict: "user_id,role", ignoreDuplicates: true },
+      );
 
       const { error: caErr } = await supabaseAdmin.from("customer_accounts").insert({
         user_id: userId,
