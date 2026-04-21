@@ -1,0 +1,168 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import chrysalLogo from "@/assets/chrysal-logo.png";
+import { useAccounts } from "@/hooks/useQualityData";
+import { PageHeaderActions } from "@/components/PageHeaderActions";
+import { CustomersMap, type CustomerMarker } from "@/components/dashboard/CustomersMap";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Search, MapPin, Loader2 } from "lucide-react";
+import { bestAddress, geocodeCustomer, isKenyaAccount } from "@/lib/customerGeocode";
+
+export default function Customers() {
+  const navigate = useNavigate();
+  const { data: accounts, isLoading } = useAccounts();
+  const [markers, setMarkers] = useState<CustomerMarker[]>([]);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [search, setSearch] = useState("");
+
+  const kenyaCustomers = useMemo(() => {
+    if (!accounts) return [];
+    return accounts
+      .filter((a) => isKenyaAccount(a.deliveryAddress, a.mainAddress))
+      .map((a) => ({ ...a, address: bestAddress(a.deliveryAddress, a.mainAddress) }));
+  }, [accounts]);
+
+  // Geocode in series (Nominatim asks ≤1 req/s). Cache makes repeat loads instant.
+  useEffect(() => {
+    if (kenyaCustomers.length === 0) return;
+    let cancelled = false;
+    setProgress({ done: 0, total: kenyaCustomers.length });
+    setMarkers([]);
+
+    (async () => {
+      const out: CustomerMarker[] = [];
+      for (let i = 0; i < kenyaCustomers.length; i++) {
+        if (cancelled) return;
+        const c = kenyaCustomers[i];
+        const geo = await geocodeCustomer(c.name, c.address);
+        if (geo && !cancelled) {
+          out.push({
+            id: c.id,
+            name: c.name,
+            address: c.address,
+            lat: geo.lat,
+            lon: geo.lon,
+            source: geo.source,
+          });
+          setMarkers([...out]);
+        }
+        setProgress({ done: i + 1, total: kenyaCustomers.length });
+        // Small delay to be polite to Nominatim. Cached hits are sync so this is rare.
+        await new Promise((r) => setTimeout(r, 50));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [kenyaCustomers]);
+
+  const filteredMarkers = useMemo(() => {
+    if (!search.trim()) return markers;
+    const q = search.toLowerCase();
+    return markers.filter((m) => m.name.toLowerCase().includes(q) || m.address.toLowerCase().includes(q));
+  }, [markers, search]);
+
+  const isGeocoding = progress.total > 0 && progress.done < progress.total;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="chrysal-gradient h-1.5" />
+        <div className="max-w-[1600px] mx-auto px-6 pt-8 space-y-6">
+          <Skeleton className="h-12 w-64" />
+          <Skeleton className="h-[560px] rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="chrysal-gradient h-1.5" />
+      <div className="max-w-[1600px] mx-auto px-6">
+        <header className="sticky top-0 z-10 backdrop-blur-sm py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                aria-label="Go to dashboard"
+                className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0 hover:bg-accent/10 transition-colors cursor-pointer"
+              >
+                <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto max-w-none block shrink-0" />
+              </button>
+              <div>
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">Customers — Kenya</h1>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {kenyaCustomers.length} customers ·{" "}
+                  {isGeocoding ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Locating {progress.done}/{progress.total}…
+                    </span>
+                  ) : (
+                    `${markers.length} mapped`
+                  )}
+                </p>
+              </div>
+            </div>
+            <PageHeaderActions />
+          </div>
+        </header>
+
+        <div className="grid grid-cols-12 gap-6 mb-8">
+          {/* Map */}
+          <div className="col-span-12 lg:col-span-9 bg-card rounded-xl shadow-card p-2">
+            <CustomersMap markers={filteredMarkers} height={620} />
+            <div className="flex items-center gap-4 px-3 py-2 text-xs text-muted-foreground">
+              <LegendDot color="hsl(160, 60%, 40%)" label="Known farm" />
+              <LegendDot color="hsl(210, 70%, 50%)" label="Geocoded address" />
+              <LegendDot color="hsl(35, 85%, 55%)" label="City-level" />
+            </div>
+          </div>
+
+          {/* Sidebar list */}
+          <div className="col-span-12 lg:col-span-3 bg-card rounded-xl shadow-card p-4 flex flex-col">
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search customer…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              {filteredMarkers.length} of {markers.length} shown
+            </p>
+            <div className="overflow-auto max-h-[560px] divide-y divide-border">
+              {filteredMarkers.map((m) => (
+                <div key={m.id} className="py-2.5">
+                  <div className="text-sm font-medium text-foreground">{m.name}</div>
+                  <div className="text-xs text-muted-foreground flex items-start gap-1 mt-0.5">
+                    <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+                    <span>{m.address}</span>
+                  </div>
+                </div>
+              ))}
+              {filteredMarkers.length === 0 && (
+                <p className="text-xs text-muted-foreground py-4 text-center">No customers match.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-block h-2.5 w-2.5 rounded-full border border-white" style={{ background: color }} />
+      {label}
+    </span>
+  );
+}
