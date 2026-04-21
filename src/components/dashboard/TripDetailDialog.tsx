@@ -142,6 +142,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                   lastReadingTime: trip.lastReadingTime,
                   latitude: trip.latitude,
                   longitude: trip.longitude,
+                  isBackfillOnly: trip.isBackfillOnly ?? false,
                 },
                 vfRoute,
                 vfSummary,

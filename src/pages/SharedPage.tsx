@@ -394,7 +394,15 @@ function SharedTripDetail({ payload }: { payload: any }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <InfoCard title="Most Recent">
           {t.lastReadingTime && <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{t.lastReadingTime}</p>}
-          {t.lastLocation && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="h-3 w-3" />{t.lastLocation}</p>}
+          {t.isBackfillOnly && (
+            <div className="mt-2 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5">
+              <p className="text-[11px] text-warning-foreground/90 leading-tight">
+                <span className="font-semibold">Historical data only</span> — no live update since the backfill (last reading: 19 Apr 23:59).
+              </p>
+            </div>
+          )}
+          {t.lastLocation && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-2"><MapPin className="h-3 w-3" />{t.lastLocation}</p>}
+          {t.serialNumber && <p className="text-xs font-mono text-muted-foreground mt-2">({t.serialNumber})</p>}
           <div className="flex gap-6 mt-3">
             <span className="flex items-center gap-1 text-destructive font-bold"><Thermometer className="h-4 w-4" />{t.lastTemp ?? "—"} °C</span>
             <span className="flex items-center gap-1 text-warning font-bold"><Sun className="h-4 w-4" />{t.lastLight ?? "—"} %</span>
@@ -406,6 +414,7 @@ function SharedTripDetail({ payload }: { payload: any }) {
           <p className="text-xs text-muted-foreground">{t.originAddress}</p>
           {t.actualDepartureTime && <p className="text-xs text-muted-foreground mt-1">Actual Departure: {t.actualDepartureTime}</p>}
           {t.carrier && <p className="text-xs text-muted-foreground">Carrier: {t.carrier}</p>}
+          {t.internalTripId && <p className="text-xs text-muted-foreground">Internal: {t.internalTripId}</p>}
         </InfoCard>
       </div>
 
