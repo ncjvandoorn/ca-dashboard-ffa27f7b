@@ -10,7 +10,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TripPathMap } from "./TripPathMap";
 import { useMemo, useRef, useState } from "react";
 import { VesselTrackingCard } from "./VesselTrackingCard";
-import { ExportPdfButton } from "./ExportPdfButton";
+import { SharePageButton } from "@/components/SharePageButton";
 import { useAuth } from "@/hooks/useAuth";
 import type { VFTracking } from "@/hooks/useVesselFinder";
 import { QualityReportBody } from "./QualityReportBody";
@@ -97,10 +97,53 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg pr-8">
             Trip {trip.tripId}
-            <ExportPdfButton
-              targetRef={exportRef}
-              filename={`active-sf-trip-${trip.tripId}`}
-              label="Export PDF"
+            <SharePageButton
+              pageType="trip_detail"
+              getPayload={() => ({
+                trip: {
+                  tripId: trip.tripId,
+                  serialNumber: trip.serialNumber,
+                  originName: trip.originName,
+                  originAddress: trip.originAddress,
+                  actualDepartureTime: trip.actualDepartureTime,
+                  carrier: trip.carrier,
+                  internalTripId: trip.internalTripId,
+                  lastTemp: trip.lastTemp,
+                  lastHumidity: trip.lastHumidity,
+                  lastLight: trip.lastLight,
+                  lastLocation: trip.lastLocation,
+                  lastReadingTime: trip.lastReadingTime,
+                },
+                stats: readings.length > 0 ? {
+                  avgTemp: (readings.reduce((s, r) => s + r.temp, 0) / readings.length).toFixed(1) + " °C",
+                  avgHumidity: (readings.reduce((s, r) => s + r.humidity, 0) / readings.length).toFixed(1) + " %",
+                  maxLight: Math.max(...readings.map((r) => r.light)).toFixed(1) + " %",
+                } : {},
+                shipperReports: detailReports.map((r) => ({
+                  weekNr: r.weekNr,
+                  stuffingDate: formatDate(r.stuffingDate),
+                  loadingMin: r.loadingMin,
+                  generalComments: r.generalComments,
+                })),
+                orders: detailOrders.map((o) => {
+                  const arr = detailArrivals.find((x) => x.order.id === o.id)?.arrival;
+                  return {
+                    orderNumber: o.orderNumber,
+                    statusName: o.statusName,
+                    farmName: accountNameMap.get(o.farmAccountId) || null,
+                    customerName: accountNameMap.get(o.customerAccountId) || null,
+                    pallets: o.pallets,
+                    forecast: typeof o.forecast === "number" ? o.forecast.toLocaleString("de-DE") : o.forecast,
+                    dippingWeek: o.dippingWeek,
+                    arrival: arr ? {
+                      arrivalDate: formatDate(arr.arrivalDate),
+                      temps: [arr.arrivalTemp1, arr.arrivalTemp2, arr.arrivalTemp3].filter((v) => v !== null),
+                      dischargeWaitingMin: arr.dischargeWaitingMin,
+                      specificComments: arr.specificComments,
+                    } : null,
+                  };
+                }),
+              })}
             />
           </DialogTitle>
         </DialogHeader>
