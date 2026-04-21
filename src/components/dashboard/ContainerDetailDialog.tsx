@@ -185,6 +185,31 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
                 const repTripPath = representativeTrip
                   ? paths.find((p) => p.tripId === representativeTrip.tripId)
                   : null;
+                const vfGen = vfTracking?.response?.general;
+                const vfSchedule = vfTracking?.response?.schedule;
+                const vfRoute = (vfTracking?.status === "success" && vfGen) ? {
+                  carrier: vfGen.carrier ?? null,
+                  origin: vfGen.origin ? { lat: vfGen.origin.latitude, lon: vfGen.origin.longitude, name: vfGen.origin.name ?? null } : null,
+                  destination: vfGen.destination ? { lat: vfGen.destination.latitude, lon: vfGen.destination.longitude, name: vfGen.destination.name ?? null } : null,
+                  schedule: (vfSchedule || [])
+                    .filter((s) => typeof s.latitude === "number" && typeof s.longitude === "number")
+                    .map((s) => ({ lat: s.latitude, lon: s.longitude, name: s.name ?? null, country: s.country ?? null })),
+                  vessel: vfGen.currentLocation?.vessel && typeof vfGen.currentLocation.vessel.latitude === "number"
+                    ? { lat: vfGen.currentLocation.vessel.latitude, lon: vfGen.currentLocation.vessel.longitude, name: vfGen.currentLocation.vessel.name ?? null, speed: vfGen.currentLocation.vessel.speed ?? null }
+                    : null,
+                } : null;
+                const vfSummary = (vfTracking?.status === "success" && vfGen) ? {
+                  status: vfTracking.status,
+                  carrier: vfGen.carrier ?? null,
+                  vesselName: vfGen.currentLocation?.vessel?.name ?? null,
+                  vesselSpeed: vfGen.currentLocation?.vessel?.speed ?? null,
+                  progress: typeof vfGen.progress === "number" ? vfGen.progress : null,
+                  destinationName: vfGen.destination?.name ?? null,
+                  destinationDate: vfGen.destination?.date ?? null,
+                  updatedAt: vfGen.updatedAt ?? null,
+                  containerNumber: vfGen.containerNumber ?? null,
+                  portName: vfGen.currentLocation?.port?.name ?? null,
+                } : null;
                 return {
                   container: {
                     containerNumber: container.containerNumber,
@@ -192,6 +217,8 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
                     dropoffDate: formatDate(container.dropoffDate),
                     shippingDate: formatDate(container.shippingDate),
                   },
+                  vfRoute,
+                  vfSummary,
                   trips: trips.map((t) => ({
                     tripId: t.tripId,
                     serialNumber: t.serialNumber,
