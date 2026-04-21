@@ -431,6 +431,8 @@ function SharedContainerDetail({ payload }: { payload: any }) {
   const map = payload?.map;
   const combined: any[] = payload?.combinedReadings || [];
   const serials: string[] = payload?.serials || [];
+  const vfRoute = payload?.vfRoute || null;
+  const vf = payload?.vfSummary || null;
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-2">
@@ -444,12 +446,15 @@ function SharedContainerDetail({ payload }: { payload: any }) {
         <Stat label="Loggers" value={String(trips.length)} />
       </div>
 
-      {map && (map.points?.length || map.destination || map.current) && (
+      {vf && <VFSummaryCard vf={vf} />}
+
+      {(vfRoute || (map && (map.points?.length || map.destination || map.current))) && (
         <div className="rounded-xl border border-border overflow-hidden">
           <SharedTripMap
-            points={map.points || []}
-            destination={map.destination || null}
-            current={map.current || null}
+            points={map?.points || []}
+            destination={map?.destination || null}
+            current={map?.current || null}
+            vfRoute={vfRoute}
           />
         </div>
       )}
@@ -476,6 +481,47 @@ function SharedContainerDetail({ payload }: { payload: any }) {
       {Array.isArray(payload.orders) && payload.orders.length > 0 && (
         <OrdersList orders={payload.orders} />
       )}
+    </div>
+  );
+}
+
+function VFSummaryCard({ vf }: { vf: any }) {
+  const fmt = (sec: number | null) => sec
+    ? new Date(sec * 1000).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+    : "—";
+  return (
+    <div className="rounded-xl border border-border p-4 bg-card space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold text-sm">Active Tracking</span>
+        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-accent/10 text-accent">Live</span>
+      </div>
+      {typeof vf.progress === "number" && (
+        <div>
+          <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+            <span>Progress</span>
+            <span>{vf.progress}%</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="h-full bg-primary" style={{ width: `${vf.progress}%` }} />
+          </div>
+        </div>
+      )}
+      <div className="text-xs space-y-1 pt-1">
+        {vf.carrier && <div className="text-muted-foreground">Carrier: <span className="text-foreground">{vf.carrier}</span></div>}
+        {vf.vesselName && (
+          <div className="text-muted-foreground">
+            Vessel: <span className="text-foreground">{vf.vesselName}</span>
+            {vf.vesselSpeed != null && <span className="text-muted-foreground"> · {vf.vesselSpeed} kn</span>}
+          </div>
+        )}
+        {vf.portName && <div className="text-muted-foreground">At port: <span className="text-foreground">{vf.portName}</span></div>}
+        {vf.destinationName && (
+          <div className="text-muted-foreground">
+            ETA {vf.destinationName}: <span className="text-foreground">{fmt(vf.destinationDate)}</span>
+          </div>
+        )}
+        {vf.updatedAt && <div className="text-[10px] text-muted-foreground pt-1">Updated {fmt(vf.updatedAt)}</div>}
+      </div>
     </div>
   );
 }
