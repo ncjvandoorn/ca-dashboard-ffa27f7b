@@ -1,7 +1,8 @@
 import { useState, useCallback, useMemo, useRef } from "react";
-import { motion } from "framer-motion";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
-import { CloudSun, Loader2, AlertCircle, Info, RefreshCw, Bug, Eye, TrendingUp } from "lucide-react";
+import { SharePageButton } from "@/components/SharePageButton";
+import { SeasonalityInsightsBody, type SeasonalityAnalysis } from "@/components/dashboard/SeasonalityInsightsBody";
+import { CloudSun, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -13,15 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 import type { QualityReport, Account } from "@/lib/csvParser";
 
 interface SeasonalityInsightsProps {
