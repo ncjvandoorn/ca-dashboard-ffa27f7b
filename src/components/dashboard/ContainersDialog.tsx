@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, ArrowUp, ArrowDown, Search, FileDown } from "lucide-react";
+import { Package, ArrowUp, ArrowDown, Search } from "lucide-react";
 import {
   useContainers,
   useServicesOrders,
@@ -15,8 +15,6 @@ import {
   useShipperReports,
   useAccounts,
 } from "@/hooks/useQualityData";
-import { exportElementToPdf } from "@/lib/exportPdf";
-import { toast } from "@/hooks/use-toast";
 
 /** Compute YYWW week number (Sat–Fri cycle, week 1 contains Jan 1) */
 function getWeekNr(ts: number | null): string {
@@ -60,7 +58,6 @@ export function ContainersDialog({ open: controlledOpen, onOpenChange, hideTrigg
   const [selectedWeek, setSelectedWeek] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("shippingDate");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [exporting, setExporting] = useState(false);
   const [detailContainerId, setDetailContainerId] = useState<string | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -188,19 +185,6 @@ export function ContainersDialog({ open: controlledOpen, onOpenChange, hideTrigg
     });
   }, [rows, search, selectedWeek, sortField, sortDir, accountNameMap]);
 
-  const handleExport = async () => {
-    if (!tableRef.current) return;
-    setExporting(true);
-    try {
-      const label = selectedWeek !== "all" ? `wk${selectedWeek}` : "all";
-      await exportElementToPdf(tableRef.current, `containers-${label}`);
-      toast({ title: "PDF exported" });
-    } catch {
-      toast({ title: "Export failed", variant: "destructive" });
-    } finally {
-      setExporting(false);
-    }
-  };
 
   // Detail drawer data
   const detailContainer = detailContainerId ? containers?.find((c) => c.id === detailContainerId) : null;
@@ -252,10 +236,6 @@ export function ContainersDialog({ open: controlledOpen, onOpenChange, hideTrigg
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting} className="gap-1">
-            <FileDown className="h-4 w-4" />
-            PDF
-          </Button>
         </div>
         <div ref={tableRef}>
           <ScrollArea className="h-[60vh]">
