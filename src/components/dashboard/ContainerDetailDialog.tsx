@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { SFTrip, SFOrderInfo } from "@/pages/ActiveSF";
-import { useSensiwatchReadings, useMultiSensiwatchReadings } from "@/hooks/useSensiwatchData";
+import { useSensiwatchReadings, useMultiSensiwatchReadings, useSensiwatchTripPaths } from "@/hooks/useSensiwatchData";
 import {
   useShipperReports,
   useShipperArrivals,
@@ -92,6 +92,10 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
   const { data: users } = useUsers();
   const [expandedReportFor, setExpandedReportFor] = useState<string | null>(null);
   const [activeTripId, setActiveTripId] = useState<string | null>(null);
+  const { paths } = useSensiwatchTripPaths();
+  const { data: combinedReadings } = useMultiSensiwatchReadings(
+    trips.map((t) => t.serialNumber).filter((s): s is string => !!s)
+  );
 
   const qualityReportMap = useMemo(() => {
     const m = new Map<string, NonNullable<typeof qualityReports>[number]>();
@@ -177,46 +181,79 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
             )}
             <SharePageButton
               pageType="container_detail"
-              getPayload={() => ({
-                container: {
-                  containerNumber: container.containerNumber,
-                  bookingCode: container.bookingCode,
-                  dropoffDate: formatDate(container.dropoffDate),
-                  shippingDate: formatDate(container.shippingDate),
-                },
-                trips: trips.map((t) => ({
-                  tripId: t.tripId,
-                  serialNumber: t.serialNumber,
-                  lastTemp: t.lastTemp,
-                  lastHumidity: t.lastHumidity,
-                  lastLight: t.lastLight,
-                  lastReadingTime: t.lastReadingTime,
-                })),
-                shipperReports: detailReports.map((r) => ({
-                  weekNr: r.weekNr,
-                  stuffingDate: formatDate(r.stuffingDate),
-                  loadingMin: r.loadingMin,
-                  generalComments: r.generalComments,
-                })),
-                orders: detailOrders.map((o) => {
-                  const arr = detailArrivals.find((x) => x.order.id === o.id)?.arrival;
-                  return {
-                    orderNumber: o.orderNumber,
-                    statusName: o.statusName,
-                    farmName: accountNameMap.get(o.farmAccountId) || null,
-                    customerName: accountNameMap.get(o.customerAccountId) || null,
-                    pallets: o.pallets,
-                    forecast: typeof o.forecast === "number" ? o.forecast.toLocaleString("de-DE") : o.forecast,
-                    dippingWeek: o.dippingWeek,
-                    arrival: arr ? {
-                      arrivalDate: formatDate(arr.arrivalDate),
-                      temps: [arr.arrivalTemp1, arr.arrivalTemp2, arr.arrivalTemp3].filter((v) => v !== null),
-                      dischargeWaitingMin: arr.dischargeWaitingMin,
-                      specificComments: arr.specificComments,
-                    } : null,
-                  };
-                }),
-              })}
+              getPayload={() => {
+                const repTripPath = representativeTrip
+                  ? paths.find((p) => p.tripId === representativeTrip.tripId)
+                  : null;
+                return {
+                  container: {
+                    containerNumber: container.containerNumber,
+                    bookingCode: container.bookingCode,
+                    dropoffDate: formatDate(container.dropoffDate),
+                    shippingDate: formatDate(container.shippingDate),
+                  },
+                  trips: trips.map((t) => ({
+                    tripId: t.tripId,
+                    serialNumber: t.serialNumber,
+                    originName: t.originName,
+                    originAddress: t.originAddress,
+                    destinationName: t.destinationName,
+                    actualDepartureTime: t.actualDepartureTime,
+                    carrier: t.carrier,
+                    internalTripId: t.internalTripId,
+                    lastTemp: t.lastTemp,
+                    lastHumidity: t.lastHumidity,
+                    lastLight: t.lastLight,
+                    lastReadingTime: t.lastReadingTime,
+                    lastLocation: t.lastLocation,
+                    latitude: t.latitude,
+                    longitude: t.longitude,
+                  })),
+                  map: {
+                    points: repTripPath?.points.map((p) => ({ lat: p.lat, lon: p.lon, address: p.address })) || [],
+                    destination: repTripPath?.destination || null,
+                    current: representativeTrip && representativeTrip.latitude != null && representativeTrip.longitude != null
+                      ? { lat: representativeTrip.latitude, lon: representativeTrip.longitude, label: representativeTrip.lastLocation }
+                      : null,
+                  },
+                  combinedReadings: combinedReadings.map((r) => ({ ...r })),
+                  serials: trips.map((t) => t.serialNumber).filter((s): s is string => !!s),
+                  shipperReports: detailReports.map((r) => ({
+                    weekNr: r.weekNr,
+                    stuffingDate: formatDate(r.stuffingDate),
+                    loadingMin: r.loadingMin,
+                    generalComments: r.generalComments,
+                  })),
+                  orders: detailOrders.map((o) => {
+                    const arr = detailArrivals.find((x) => x.order.id === o.id)?.arrival;
+                    const qr = o.qualityReportId ? qualityReportMap.get(o.qualityReportId) : null;
+                    return {
+                      orderNumber: o.orderNumber,
+                      statusName: o.statusName,
+                      farmName: accountNameMap.get(o.farmAccountId) || null,
+                      customerName: accountNameMap.get(o.customerAccountId) || null,
+                      pallets: o.pallets,
+                      forecast: typeof o.forecast === "number" ? o.forecast.toLocaleString("de-DE") : o.forecast,
+                      dippingWeek: o.dippingWeek,
+                      arrival: arr ? {
+                        arrivalDate: formatDate(arr.arrivalDate),
+                        temps: [arr.arrivalTemp1, arr.arrivalTemp2, arr.arrivalTemp3].filter((v) => v !== null),
+                        dischargeWaitingMin: arr.dischargeWaitingMin,
+                        specificComments: arr.specificComments,
+                      } : null,
+                      qualityReport: qr ? {
+                        report: qr,
+                        farmName: accountNameMap.get(qr.farmAccountId) || accountNameMap.get(o.farmAccountId) || "—",
+                        createdByName:
+                          (qr.submittedByUserId && userNameMap.get(qr.submittedByUserId)) ||
+                          (qr.createdByUserId && userNameMap.get(qr.createdByUserId)) ||
+                          (qr.updatedByUserId && userNameMap.get(qr.updatedByUserId)) ||
+                          qr.signoffName || "—",
+                      } : null,
+                    };
+                  }),
+                };
+              }}
             />
           </DialogTitle>
         </DialogHeader>
