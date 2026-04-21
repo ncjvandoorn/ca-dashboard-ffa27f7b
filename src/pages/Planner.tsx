@@ -15,9 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut, Download, History, CalendarDays, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, Search, Settings, LogOut, History, CalendarDays, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { exportElementToPdf } from "@/lib/exportPdf";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
@@ -49,32 +48,10 @@ export default function Planner() {
   const [cropFilter, setCropFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("vlStart");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
-  const [exporting, setExporting] = useState(false);
   const capacityRef = useRef<HTMLDivElement>(null);
   const overviewRef = useRef<HTMLDivElement>(null);
 
-  const handleExport = async (ref: React.RefObject<HTMLDivElement | null>, name: string) => {
-    if (!ref.current || exporting) return;
-    setExporting(true);
-    try {
-      // Temporarily remove scroll constraints so html2canvas captures all content
-      const scrollContainers = ref.current.querySelectorAll<HTMLElement>('.overflow-auto');
-      const saved: { el: HTMLElement; maxH: string; overflow: string }[] = [];
-      scrollContainers.forEach((el) => {
-        saved.push({ el, maxH: el.style.maxHeight, overflow: el.style.overflow });
-        el.style.maxHeight = 'none';
-        el.style.overflow = 'visible';
-      });
-      await exportElementToPdf(ref.current, name);
-      // Restore scroll constraints
-      saved.forEach(({ el, maxH, overflow }) => {
-        el.style.maxHeight = maxH;
-        el.style.overflow = overflow;
-      });
-    } finally {
-      setExporting(false);
-    }
-  };
+  // PDF export removed.
 
   useEffect(() => {
     loadTrials().then((data) => {

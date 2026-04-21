@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowUp, ArrowDown, Search, FileDown } from "lucide-react";
+import { ArrowUp, ArrowDown, Search } from "lucide-react";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -18,8 +18,6 @@ import {
   useAccounts,
   useShippingLines,
 } from "@/hooks/useQualityData";
-import { exportElementToPdf } from "@/lib/exportPdf";
-import { toast } from "@/hooks/use-toast";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 
 function getWeekNr(ts: number | null): string {
@@ -211,19 +209,7 @@ export default function Containers() {
     });
   }, [rows, search, selectedWeek, sortField, sortDir, accountNameMap]);
 
-  const handleExport = async () => {
-    if (!tableRef.current) return;
-    setExporting(true);
-    try {
-      const label = selectedWeek !== "all" ? `wk${selectedWeek}` : "all";
-      await exportElementToPdf(tableRef.current, `containers-${label}`);
-      toast({ title: "PDF exported" });
-    } catch {
-      toast({ title: "Export failed", variant: "destructive" });
-    } finally {
-      setExporting(false);
-    }
-  };
+  // PDF export removed.
 
   const detailContainer = detailContainerId ? containers?.find((c) => c.id === detailContainerId) : null;
   const detailOrders = detailContainerId ? ordersByContainer.get(detailContainerId) || [] : [];
@@ -271,10 +257,6 @@ export default function Containers() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting} className="gap-1">
-            <FileDown className="h-4 w-4" />
-            PDF
-          </Button>
         </div>
 
         <div ref={tableRef} className="rounded-xl border border-border bg-card">
