@@ -218,10 +218,6 @@ export default function Planner() {
                   <CalendarDays className="h-3.5 w-3.5" />
                   Next 90 days
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1.5 ml-2" disabled={exporting} onClick={() => handleExport(capacityRef, "Capacity-Planner")}>
-                  <Download className="h-3.5 w-3.5" />
-                  PDF
-                </Button>
               </div>
             </div>
 
@@ -375,12 +371,7 @@ export default function Planner() {
                 </SelectContent>
               </Select>
               <span className="text-xs text-muted-foreground tabular-nums">{filteredTrials.length} trials</span>
-              <div className="ml-auto">
-                <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled={exporting} onClick={() => handleExport(overviewRef, "Trial-Overview")}>
-                  <Download className="h-4 w-4" />
-                  PDF
-                </Button>
-              </div>
+              <div className="ml-auto" />
             </div>
 
             <div ref={overviewRef} className="bg-card rounded-xl shadow-card overflow-hidden">
