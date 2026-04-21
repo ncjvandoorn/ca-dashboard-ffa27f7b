@@ -6,6 +6,8 @@ export interface Account {
   name: string;
   publicId: string;
   servicesEnabled: string;
+  mainAddress: string;
+  deliveryAddress: string;
 }
 
 export interface User {
@@ -117,6 +119,8 @@ export async function loadAccounts(): Promise<Account[]> {
     name: row.name || "Unknown",
     publicId: row.publicId || "",
     servicesEnabled: row.servicesEnabled || "",
+    mainAddress: row.mainAddress || "",
+    deliveryAddress: row.deliveryAddress || "",
   }));
 }
 
