@@ -110,7 +110,7 @@ export function SharePageButton({
           <div className="flex items-center gap-2">
             <Input readOnly value={shareUrl ?? ""} onFocus={(e) => e.currentTarget.select()} />
             <Button variant="outline" size="icon" onClick={copyToClipboard}>
-              {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
