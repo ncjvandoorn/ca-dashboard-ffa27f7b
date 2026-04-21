@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
+import { SharePageButton } from "@/components/SharePageButton";
 import { ContainerDetailDialog } from "@/components/dashboard/ContainerDetailDialog";
 import {
   useServicesOrders,
@@ -232,7 +233,33 @@ const DataLoggers = () => {
               </Button>
               <img src={chrysalLogo} alt="Chrysal" className="h-9 w-auto" />
             </div>
-            <PageHeaderActions />
+            <div className="flex items-center gap-2">
+              <SharePageButton
+                pageType="data_loggers"
+                disabled={loadingReadings || flaggedSeries.length === 0}
+                getPayload={() => ({
+                  generatedAt: new Date().toISOString(),
+                  ruleCounts,
+                  flaggedSeries: flaggedSeries.map((s) => {
+                    const repInternal = s.internalTripIds[s.internalTripIds.length - 1] || "";
+                    const orderNumber = stripLoggerSuffix(repInternal);
+                    const info = orderInfo.get(orderNumber);
+                    return {
+                      serial: s.serial,
+                      orderNumber,
+                      week: info?.dippingWeek || "",
+                      containerNumber: info?.containerNumber || "",
+                      bookingCode: info?.bookingCode || "",
+                      customer: info?.customer || "",
+                      farm: info?.farm || "",
+                      lastTime: s.lastTime,
+                      flags: s.flags.map((f) => ({ rule: f.rule, duration: formatDuration(f.durationMs) })),
+                    };
+                  }),
+                })}
+              />
+              <PageHeaderActions />
+            </div>
           </div>
           <div className="container mx-auto px-6 pb-4">
             <div className="flex items-center gap-2">
