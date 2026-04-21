@@ -20,6 +20,7 @@ import Containers from "./pages/Containers.tsx";
 import Subscriptions from "./pages/Subscriptions.tsx";
 import CRM from "./pages/CRM.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import SharedPage from "./pages/SharedPage.tsx";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
+            <Route path="/share/:token" element={<SharedPage />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/planner" element={<PermissionRoute permission="trial_planner"><Planner /></PermissionRoute>} />
