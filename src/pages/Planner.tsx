@@ -218,10 +218,6 @@ export default function Planner() {
                   <CalendarDays className="h-3.5 w-3.5" />
                   Next 90 days
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1.5 ml-2" disabled={exporting} onClick={() => handleExport(capacityRef, "Capacity-Planner")}>
-                  <Download className="h-3.5 w-3.5" />
-                  PDF
-                </Button>
               </div>
             </div>
 
