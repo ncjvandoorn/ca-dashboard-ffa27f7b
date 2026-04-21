@@ -105,6 +105,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                   serialNumber: trip.serialNumber,
                   originName: trip.originName,
                   originAddress: trip.originAddress,
+                  destinationName: trip.destinationName,
                   actualDepartureTime: trip.actualDepartureTime,
                   carrier: trip.carrier,
                   internalTripId: trip.internalTripId,
@@ -113,7 +114,12 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                   lastLight: trip.lastLight,
                   lastLocation: trip.lastLocation,
                   lastReadingTime: trip.lastReadingTime,
+                  latitude: trip.latitude,
+                  longitude: trip.longitude,
                 },
+                readings: readings.map((r) => ({
+                  time: r.time, temp: r.temp, humidity: r.humidity, light: r.light,
+                })),
                 stats: readings.length > 0 ? {
                   avgTemp: (readings.reduce((s, r) => s + r.temp, 0) / readings.length).toFixed(1) + " °C",
                   avgHumidity: (readings.reduce((s, r) => s + r.humidity, 0) / readings.length).toFixed(1) + " %",
@@ -127,6 +133,7 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                 })),
                 orders: detailOrders.map((o) => {
                   const arr = detailArrivals.find((x) => x.order.id === o.id)?.arrival;
+                  const qr = o.qualityReportId ? qualityReportMap.get(o.qualityReportId) : null;
                   return {
                     orderNumber: o.orderNumber,
                     statusName: o.statusName,
@@ -140,6 +147,15 @@ export function TripDetailDialog({ trip, orderInfo, onClose }: Props) {
                       temps: [arr.arrivalTemp1, arr.arrivalTemp2, arr.arrivalTemp3].filter((v) => v !== null),
                       dischargeWaitingMin: arr.dischargeWaitingMin,
                       specificComments: arr.specificComments,
+                    } : null,
+                    qualityReport: qr ? {
+                      report: qr,
+                      farmName: accountNameMap.get(qr.farmAccountId) || accountNameMap.get(o.farmAccountId) || "—",
+                      createdByName:
+                        (qr.submittedByUserId && userNameMap.get(qr.submittedByUserId)) ||
+                        (qr.createdByUserId && userNameMap.get(qr.createdByUserId)) ||
+                        (qr.updatedByUserId && userNameMap.get(qr.updatedByUserId)) ||
+                        qr.signoffName || "—",
                     } : null,
                   };
                 }),
