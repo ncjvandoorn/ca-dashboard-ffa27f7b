@@ -55,37 +55,7 @@ function getCurrentWeekNr(): number {
   return year * 100 + weekNum;
 }
 
-interface AttentionFarm {
-  farmId: string;
-  farmName: string;
-  severity: "critical" | "warning";
-  summary: string;
-  details: string[];
-  affectedMetrics: string[];
-}
-
-interface ImprovedFarm {
-  farmId: string;
-  farmName: string;
-  summary: string;
-  details: string[];
-  improvedMetrics: string[];
-}
-
-interface TopPerformerFarm {
-  farmId: string;
-  farmName: string;
-  summary: string;
-  details: string[];
-  strongMetrics: string[];
-}
-
-interface AIAnalysis {
-  needsAttention: AttentionFarm[];
-  mostImproved: ImprovedFarm[];
-  topPerformers?: TopPerformerFarm[];
-  industryInsight: string;
-}
+type AIAnalysis = ExceptionAnalysis;
 
 interface WeekWindow {
   recentWeeks: number[];
