@@ -367,7 +367,16 @@ export function ExceptionReport({
               AI Exception Report
             </DialogTitle>
             {analysis && !loading && (
-              <ExportPdfButton targetRef={contentRef} filename="exception-report" size="sm" />
+              <div className="flex items-center gap-2">
+                <SharePageButton
+                  pageType="exception_report"
+                  getPayload={() => ({
+                    analysis,
+                    weekRange: { min: weekWindow.minWeek, max: weekWindow.maxWeek },
+                  })}
+                />
+                <ExportPdfButton targetRef={contentRef} filename="exception-report" size="sm" />
+              </div>
             )}
           </div>
           <p className="text-sm text-muted-foreground">
