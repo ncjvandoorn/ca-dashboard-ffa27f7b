@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useMemo } from "react";
-import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
 import { SharePageButton } from "@/components/SharePageButton";
 import { ExceptionReportBody, type ExceptionAnalysis } from "@/components/dashboard/ExceptionReportBody";
 import { Sparkles, Loader2, AlertCircle, RefreshCw } from "lucide-react";
@@ -367,16 +366,13 @@ export function ExceptionReport({
               AI Exception Report
             </DialogTitle>
             {analysis && !loading && (
-              <div className="flex items-center gap-2">
-                <SharePageButton
-                  pageType="exception_report"
-                  getPayload={() => ({
-                    analysis,
-                    weekRange: { min: weekWindow.minWeek, max: weekWindow.maxWeek },
-                  })}
-                />
-                <ExportPdfButton targetRef={contentRef} filename="exception-report" size="sm" />
-              </div>
+              <SharePageButton
+                pageType="exception_report"
+                getPayload={() => ({
+                  analysis,
+                  weekRange: { min: weekWindow.minWeek, max: weekWindow.maxWeek },
+                })}
+              />
             )}
           </div>
           <p className="text-sm text-muted-foreground">
