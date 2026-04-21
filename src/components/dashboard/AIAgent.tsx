@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Send, Loader2, Sparkles, RotateCcw } from "lucide-react";
-import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
+import { SharePageButton } from "@/components/SharePageButton";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -586,7 +586,10 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
                   <RotateCcw className="h-3.5 w-3.5" />
                   Reset
                 </Button>
-                <ExportPdfButton targetRef={chatContentRef} filename="ai-agent-chat" size="sm" />
+                <SharePageButton
+                  pageType="ai_agent"
+                  getPayload={() => ({ messages })}
+                />
               </div>
             )}
           </div>
