@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef, useMemo } from "react";
-import { motion } from "framer-motion";
 import { ExportPdfButton } from "@/components/dashboard/ExportPdfButton";
-import { AlertTriangle, TrendingUp, TrendingDown, ArrowRight, Sparkles, Loader2, AlertCircle, Info, RefreshCw } from "lucide-react";
+import { SharePageButton } from "@/components/SharePageButton";
+import { ExceptionReportBody, type ExceptionAnalysis } from "@/components/dashboard/ExceptionReportBody";
+import { Sparkles, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
