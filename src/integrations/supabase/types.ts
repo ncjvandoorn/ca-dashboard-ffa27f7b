@@ -512,6 +512,39 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_pages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_username: string | null
+          expires_at: string
+          id: string
+          page_type: string
+          payload: Json
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_username?: string | null
+          expires_at: string
+          id?: string
+          page_type: string
+          payload: Json
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_username?: string | null
+          expires_at?: string
+          id?: string
+          page_type?: string
+          payload?: Json
+          token?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
