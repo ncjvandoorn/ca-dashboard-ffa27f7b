@@ -12,3 +12,8 @@ type: feature
 - UI: `/trials` Trials Dashboard — list trials, drill into Vases tab (treatments grouped by cultivar with VL days), Measurements tab (cultivar×treatment×property matrix), Conclusion tab
 - Property labels reference table in `src/hooks/useVaselifeTrials.ts` (PROPERTY_LABELS)
 - Some vase/measurement rows reference header IDs not present in the headers export — stored as stub headers labeled "(missing from export)"
+
+**Data → Table mapping (confirmed by Plantscout source report layout):**
+- **HEADER table** = top trial metadata block (Trial number(s), Harvest date, Initial quality, Transport/Retail/VL phases, Crop, Number of Cultivars/Treatments/Vases) + bottom narrative block (Objective, Specific comments, Conclusion, Recommendations).
+- **VASE table** = (1) the Treatment definitions table (Treatment #, Greenhouse, Post-Harvest treatment, Store phase, Consumer phase, Vase Life days) AND (2) the "Quick overview" matrix at bottom showing per-cultivar × per-treatment vase life days (each row in the quick overview = one vase row).
+- **MEASUREMENT table** = the per-trait observation tables ("Leaf burning", "Leaf yellowing", "Botrytis", etc.) — each row = (cultivar, treatment, property) and the score column stores the LAST observation value (final-day score). Earlier daily observations are not stored — only the latest.
