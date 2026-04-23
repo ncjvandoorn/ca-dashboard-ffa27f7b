@@ -563,6 +563,217 @@ export type Database = {
         }
         Relationships: []
       }
+      vaselife_headers: {
+        Row: {
+          conclusion: string | null
+          created_at: string
+          crop: string | null
+          cultivar_count: number | null
+          customer: string | null
+          farm: string | null
+          freight_type: string | null
+          harvest_date: string | null
+          id: string
+          initial_quality: string | null
+          objective: string | null
+          recommendations: string | null
+          source_date: string | null
+          spec_comments: string | null
+          start_retail: string | null
+          start_seafreight: string | null
+          start_transport: string | null
+          start_vl: string | null
+          stems_per_vase: number | null
+          total_vases: number | null
+          treatment_count: number | null
+          trial_number: string | null
+          updated_at: string
+          vases_per_treatment: number | null
+        }
+        Insert: {
+          conclusion?: string | null
+          created_at?: string
+          crop?: string | null
+          cultivar_count?: number | null
+          customer?: string | null
+          farm?: string | null
+          freight_type?: string | null
+          harvest_date?: string | null
+          id: string
+          initial_quality?: string | null
+          objective?: string | null
+          recommendations?: string | null
+          source_date?: string | null
+          spec_comments?: string | null
+          start_retail?: string | null
+          start_seafreight?: string | null
+          start_transport?: string | null
+          start_vl?: string | null
+          stems_per_vase?: number | null
+          total_vases?: number | null
+          treatment_count?: number | null
+          trial_number?: string | null
+          updated_at?: string
+          vases_per_treatment?: number | null
+        }
+        Update: {
+          conclusion?: string | null
+          created_at?: string
+          crop?: string | null
+          cultivar_count?: number | null
+          customer?: string | null
+          farm?: string | null
+          freight_type?: string | null
+          harvest_date?: string | null
+          id?: string
+          initial_quality?: string | null
+          objective?: string | null
+          recommendations?: string | null
+          source_date?: string | null
+          spec_comments?: string | null
+          start_retail?: string | null
+          start_seafreight?: string | null
+          start_transport?: string | null
+          start_vl?: string | null
+          stems_per_vase?: number | null
+          total_vases?: number | null
+          treatment_count?: number | null
+          trial_number?: string | null
+          updated_at?: string
+          vases_per_treatment?: number | null
+        }
+        Relationships: []
+      }
+      vaselife_measurements: {
+        Row: {
+          created_at: string
+          cultivar: string | null
+          id_cultivar: string | null
+          id_header: string
+          id_line: string
+          id_line_property: string
+          id_property: string | null
+          observation_count: number | null
+          observation_days: number | null
+          property_name: string | null
+          score: number | null
+          source_date: string | null
+          treatment_no: number | null
+        }
+        Insert: {
+          created_at?: string
+          cultivar?: string | null
+          id_cultivar?: string | null
+          id_header: string
+          id_line: string
+          id_line_property: string
+          id_property?: string | null
+          observation_count?: number | null
+          observation_days?: number | null
+          property_name?: string | null
+          score?: number | null
+          source_date?: string | null
+          treatment_no?: number | null
+        }
+        Update: {
+          created_at?: string
+          cultivar?: string | null
+          id_cultivar?: string | null
+          id_header?: string
+          id_line?: string
+          id_line_property?: string
+          id_property?: string | null
+          observation_count?: number | null
+          observation_days?: number | null
+          property_name?: string | null
+          score?: number | null
+          source_date?: string | null
+          treatment_no?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaselife_measurements_id_header_fkey"
+            columns: ["id_header"]
+            isOneToOne: false
+            referencedRelation: "vaselife_headers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vaselife_vases: {
+        Row: {
+          bot_percentage: number | null
+          climate_room: string | null
+          consumer_phase: string | null
+          created_at: string
+          cultivar: string | null
+          flo_percentage: number | null
+          flv_days: number | null
+          id_cultivar: string | null
+          id_dipping: string | null
+          id_greenhouse: string | null
+          id_header: string
+          id_line: string
+          id_pulsing: string | null
+          post_harvest: string | null
+          source_date: string | null
+          store_phase: string | null
+          treatment_name: string | null
+          treatment_no: number | null
+          vase_count: number | null
+        }
+        Insert: {
+          bot_percentage?: number | null
+          climate_room?: string | null
+          consumer_phase?: string | null
+          created_at?: string
+          cultivar?: string | null
+          flo_percentage?: number | null
+          flv_days?: number | null
+          id_cultivar?: string | null
+          id_dipping?: string | null
+          id_greenhouse?: string | null
+          id_header: string
+          id_line: string
+          id_pulsing?: string | null
+          post_harvest?: string | null
+          source_date?: string | null
+          store_phase?: string | null
+          treatment_name?: string | null
+          treatment_no?: number | null
+          vase_count?: number | null
+        }
+        Update: {
+          bot_percentage?: number | null
+          climate_room?: string | null
+          consumer_phase?: string | null
+          created_at?: string
+          cultivar?: string | null
+          flo_percentage?: number | null
+          flv_days?: number | null
+          id_cultivar?: string | null
+          id_dipping?: string | null
+          id_greenhouse?: string | null
+          id_header?: string
+          id_line?: string
+          id_pulsing?: string | null
+          post_harvest?: string | null
+          source_date?: string | null
+          store_phase?: string | null
+          treatment_name?: string | null
+          treatment_no?: number | null
+          vase_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaselife_vases_id_header_fkey"
+            columns: ["id_header"]
+            isOneToOne: false
+            referencedRelation: "vaselife_headers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vesselfinder_tracking: {
         Row: {
           container_id: string
