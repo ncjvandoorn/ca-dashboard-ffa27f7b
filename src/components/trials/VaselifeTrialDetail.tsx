@@ -94,20 +94,39 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange }: Props) {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Top metadata */}
+        {/* Top metadata — mirrors Plantscout report header block */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs border border-border rounded-md p-3 bg-muted/30">
           <div>
-            <div className="text-muted-foreground">Harvest</div>
+            <div className="text-muted-foreground">Harvest date</div>
             <div className="font-medium">{fmtDate(trial.harvest_date)}</div>
           </div>
           <div>
-            <div className="text-muted-foreground">VL Start</div>
+            <div className="text-muted-foreground">Initial quality</div>
+            <div className="font-medium">{trial.initial_quality || "—"}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Transport phase</div>
+            <div className="font-medium">{fmtDate(trial.start_transport)}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Retail/Store phase</div>
+            <div className="font-medium">{fmtDate(trial.start_retail)}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Start VL trial</div>
             <div className="font-medium">{fmtDate(trial.start_vl)}</div>
           </div>
           <div>
             <div className="text-muted-foreground">Cultivars × Treatments</div>
             <div className="font-medium">
               {trial.cultivar_count ?? "—"} × {trial.treatment_count ?? "—"}
+            </div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Vases / treatment</div>
+            <div className="font-medium">
+              {trial.vases_per_treatment ?? "—"}
+              {trial.stems_per_vase ? ` · ${trial.stems_per_vase} stems` : ""}
             </div>
           </div>
           <div>
