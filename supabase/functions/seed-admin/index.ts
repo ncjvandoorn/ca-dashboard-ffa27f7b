@@ -18,8 +18,9 @@ Deno.serve(async (req) => {
     );
 
     const users = [
-      { email: "admin@chrysal.app", password: "CA@2026" },
-      { email: "chrysal@chrysal.app", password: "CA@2026" },
+      { email: "admin@chrysal.app", password: "CA@2026", role: "admin" as const },
+      { email: "chrysal@chrysal.app", password: "CA@2026", role: "user" as const },
+      { email: "ta@chrysal.app", password: "TA@2026###", role: "ta" as const },
     ];
 
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
@@ -46,11 +47,22 @@ Deno.serve(async (req) => {
     for (const u of users) {
       const existing = refreshed?.users?.find((e) => e.email === u.email);
       if (existing) {
-        results.push(`${u.email} already exists`);
+        // Ensure role row exists for this user
+        const { data: roleRow } = await supabaseAdmin
+          .from("user_roles")
+          .select("id, role")
+          .eq("user_id", existing.id)
+          .maybeSingle();
+        if (!roleRow) {
+          await supabaseAdmin.from("user_roles").insert({ user_id: existing.id, role: u.role });
+          results.push(`${u.email} role ${u.role} attached`);
+        } else {
+          results.push(`${u.email} already exists`);
+        }
         continue;
       }
 
-      const { error } = await supabaseAdmin.auth.admin.createUser({
+      const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
         email: u.email,
         password: u.password,
         email_confirm: true,
@@ -59,6 +71,9 @@ Deno.serve(async (req) => {
       if (error) {
         results.push(`${u.email} error: ${error.message}`);
       } else {
+        if (created?.user?.id) {
+          await supabaseAdmin.from("user_roles").insert({ user_id: created.user.id, role: u.role });
+        }
         results.push(`${u.email} created`);
       }
     }

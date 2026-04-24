@@ -24,6 +24,7 @@ async function loadPermissions(): Promise<Record<RoleKey, PermissionMap>> {
     const result: Record<RoleKey, PermissionMap> = {
       admin: { ...ALL_TRUE },
       user: { ...ALL_TRUE, settings: false },
+      ta: { ...ALL_TRUE, settings: false },
       customer_basic: { ...ALL_FALSE, all_reports: true, subscription_plans: true, data_loggers: false },
       customer_pro: {
         ...ALL_FALSE,

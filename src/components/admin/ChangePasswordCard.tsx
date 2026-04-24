@@ -17,6 +17,10 @@ export const ChangePasswordCard = () => {
   const [chrysalConfirm, setChrysalConfirm] = useState("");
   const [chrysalLoading, setChrysalLoading] = useState(false);
 
+  const [taPassword, setTaPassword] = useState("");
+  const [taConfirm, setTaConfirm] = useState("");
+  const [taLoading, setTaLoading] = useState(false);
+
   const { changePassword } = useAuth();
   const { toast } = useToast();
 
@@ -82,6 +86,44 @@ export const ChangePasswordCard = () => {
     }
   };
 
+  const handleChangeTaPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (taPassword.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    if (taPassword !== taConfirm) {
+      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+    setTaLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          action: "reset_password_by_email",
+          email: "ta@chrysal.app",
+          password: taPassword,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast({ title: "Success", description: "TA password updated successfully" });
+      setTaPassword("");
+      setTaConfirm("");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: "Error", description: msg, variant: "destructive" });
+    } finally {
+      setTaLoading(false);
+    }
+  };
+
   return (
     <Card className="mb-8">
       <CardHeader>
@@ -91,12 +133,12 @@ export const ChangePasswordCard = () => {
           </div>
           <div>
             <CardTitle className="text-lg">Change Password</CardTitle>
-            <CardDescription>Update the Admin or shared Chrysal account password</CardDescription>
+            <CardDescription>Update the Admin, shared Chrysal or TA account password</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Admin password */}
           <form onSubmit={handleChangePassword} className="space-y-4 border border-border rounded-lg p-4">
             <p className="text-sm font-medium">Admin password</p>
@@ -156,6 +198,37 @@ export const ChangePasswordCard = () => {
             <Button type="submit" disabled={chrysalLoading} className="gap-2" variant="secondary">
               {chrysalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               Update Chrysal Password
+            </Button>
+          </form>
+
+          {/* TA password */}
+          <form onSubmit={handleChangeTaPassword} className="space-y-4 border border-border rounded-lg p-4">
+            <p className="text-sm font-medium">TA password</p>
+            <div className="space-y-2">
+              <Label htmlFor="ta-password">New Password</Label>
+              <Input
+                id="ta-password"
+                type="password"
+                value={taPassword}
+                onChange={(e) => setTaPassword(e.target.value)}
+                placeholder="Enter new password"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ta-confirm">Confirm Password</Label>
+              <Input
+                id="ta-confirm"
+                type="password"
+                value={taConfirm}
+                onChange={(e) => setTaConfirm(e.target.value)}
+                placeholder="Confirm new password"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={taLoading} className="gap-2" variant="secondary">
+              {taLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Update TA Password
             </Button>
           </form>
         </div>

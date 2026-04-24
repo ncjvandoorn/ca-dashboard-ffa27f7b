@@ -15,7 +15,7 @@ export type PermissionKey =
   | "customers_map"
   | "settings";
 
-export type RoleKey = "admin" | "user" | "customer_basic" | "customer_pro";
+export type RoleKey = "admin" | "user" | "ta" | "customer_basic" | "customer_pro";
 
 export interface PermissionItem {
   key: PermissionKey;
@@ -43,6 +43,7 @@ export const PERMISSION_ITEMS: PermissionItem[] = [
 export const ROLE_COLUMNS: { key: RoleKey; label: string }[] = [
   { key: "admin", label: "Admin" },
   { key: "user", label: "Chrysal" },
+  { key: "ta", label: "TA" },
   { key: "customer_basic", label: "Customer · Basic" },
   { key: "customer_pro", label: "Customer · Pro/Pro+/Heavy" },
 ];
