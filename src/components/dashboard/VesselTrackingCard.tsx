@@ -10,8 +10,13 @@ import { VesselTrackingDetailsSheet } from "./VesselTrackingDetailsSheet";
 interface Props {
   containerId: string | null;
   defaultContainerNumber: string | null;
+  /** True for the admin role — full management. */
   isAdmin: boolean;
+  /** True for the customer role — locked override, single CTA, credit flow. */
   isCustomer?: boolean;
+  /** True for Chrysal/TA staff — same edit/refresh/disable rights as admin
+   *  but they should not see customer-specific credit messaging. */
+  isInternalStaff?: boolean;
   onTrackingChange?: (t: VFTracking | null) => void;
 }
 
@@ -22,8 +27,10 @@ function fmtDate(ts?: number | null) {
   });
 }
 
-export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmin, isCustomer = false, onTrackingChange }: Props) {
-  const canAccess = isAdmin || isCustomer;
+export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmin, isCustomer = false, isInternalStaff = false, onTrackingChange }: Props) {
+  // Admin and internal staff have identical tracking management rights.
+  const canManage = isAdmin || isInternalStaff;
+  const canAccess = canManage || isCustomer;
   const { tracking, loading, error, enable, disable } = useVesselFinderTracking(containerId, canAccess);
   const [override, setOverride] = useState("");
   const [sealine, setSealine] = useState("");
@@ -57,7 +64,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
   const isActive = !!tracking?.enabled && tracking.status !== "error";
   // Customer locked number: prefer the already-linked override (so Refresh hits the same container), else the order default.
   const customerLockedNumber = (tracking?.container_number_override || defaultContainerNumber || "").trim();
-  const effectiveNumber = isAdmin ? override.trim() : customerLockedNumber;
+  const effectiveNumber = canManage ? override.trim() : customerLockedNumber;
 
   const handleSubmit = async (force = false) => {
     if (!effectiveNumber) {
@@ -67,7 +74,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
     setSubmitting(true);
     setActionError(null);
     try {
-      await enable(effectiveNumber, isAdmin ? (sealine.trim() || null) : null, force);
+      await enable(effectiveNumber, canManage ? (sealine.trim() || null) : null, force);
     } catch (e: any) {
       setActionError(e?.message || "Failed");
     } finally {
@@ -77,7 +84,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
 
   const handleToggle = async (next: boolean) => {
     if (!next) {
-      if (!isAdmin) return; // customers cannot disable
+      if (!canManage) return; // customers cannot disable
       await disable();
     } else {
       await handleSubmit(false);
@@ -110,7 +117,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
         <Ship className="h-4 w-4 text-primary" />
         <span className="font-semibold text-sm">Active Tracking</span>
         <StatusBadge />
-        {isAdmin && (
+        {canManage && (
           <div className="ml-auto flex items-center gap-2">
             <Label htmlFor="vf-toggle" className="text-xs text-muted-foreground">Enable</Label>
             <Switch
@@ -142,18 +149,18 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
         <div>
           <Label className="text-[10px] uppercase text-muted-foreground flex items-center gap-1">
             Container #
-            {!isAdmin && <Lock className="h-2.5 w-2.5" />}
+            {!canManage && <Lock className="h-2.5 w-2.5" />}
           </Label>
           <Input
-            value={isAdmin ? override : customerLockedNumber}
-            onChange={(e) => isAdmin && setOverride(e.target.value.toUpperCase())}
+            value={canManage ? override : customerLockedNumber}
+            onChange={(e) => canManage && setOverride(e.target.value.toUpperCase())}
             placeholder="e.g. MMAU1432549"
             className="h-8 text-xs font-mono mt-1"
-            readOnly={!isAdmin}
-            disabled={!isAdmin}
+            readOnly={!canManage}
+            disabled={!canManage}
           />
         </div>
-        {isAdmin && (
+        {canManage && (
           <div>
             <Label className="text-[10px] uppercase text-muted-foreground">Carrier SCAC (optional)</Label>
             <Input
@@ -165,7 +172,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
           </div>
         )}
         <div className="flex items-center gap-2 pt-1">
-          {isAdmin ? (
+          {canManage ? (
             <>
               <Button
                 size="sm"

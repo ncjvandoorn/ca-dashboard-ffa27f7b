@@ -65,10 +65,15 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", userId)
       .maybeSingle();
-    const role = roleRow?.role as "admin" | "user" | "customer" | undefined;
+    const role = roleRow?.role as "admin" | "user" | "ta" | "customer" | undefined;
     const isAdmin = role === "admin";
     const isCustomer = role === "customer";
-    if (!isAdmin && !isCustomer) return json({ error: "Forbidden" }, 403);
+    // Chrysal staff and TA share admin's full editing capability — they
+    // can override container numbers, set sealine, force refresh and disable
+    // tracking. They never consume customer credits.
+    const isInternalStaff = role === "user" || role === "ta";
+    const canManage = isAdmin || isInternalStaff;
+    if (!canManage && !isCustomer) return json({ error: "Forbidden" }, 403);
 
     // Customer account (uuid + tier) for credit operations
     let customerAccountUuid: string | null = null;
@@ -99,7 +104,7 @@ Deno.serve(async (req) => {
 
     if (action === "disable") {
       // Customers cannot disable (would orphan the credit they paid)
-      if (!isAdmin) return json({ error: "Only admins can disable tracking" }, 403);
+      if (!canManage) return json({ error: "Only internal staff can disable tracking" }, 403);
       const { error } = await admin
         .from("vesselfinder_tracking")
         .update({ enabled: false })
@@ -132,13 +137,14 @@ Deno.serve(async (req) => {
 
       // Customers may NOT override container number once a row exists with a different number.
       // They also cannot pass a custom sealine (auto-detect only).
-      const sealine = isCustomer ? null : sealineInput;
+      // Internal staff (admin / user / ta) have the same edit rights.
+      const sealine = canManage ? sealineInput : null;
       if (isCustomer && existing && existing.container_number_override && existing.container_number_override !== containerNumber) {
         return json({ error: "Container number cannot be changed" }, 403);
       }
 
       // Customers cannot force-refresh and cannot bypass cache aggressively.
-      const force = isAdmin ? !!body.force : false;
+      const force = canManage ? !!body.force : false;
 
       // Cache: skip API call if last_polled_at < 60s ago AND not force
       const now = Date.now();
