@@ -112,7 +112,10 @@ const ActiveSF = () => {
   const { data: accounts } = useAccounts();
   const { data: customerFarms } = useCustomerFarms();
   const { data: containers } = useContainers();
-  const vfActiveSet = useVesselFinderActiveSet(isAdmin || isCustomer);
+  // VesselFinder data is shown to every signed-in role (admin, user/Chrysal,
+  // ta, customer). Only the override controls inside the dialog stay
+  // restricted by role.
+  const vfActiveSet = useVesselFinderActiveSet(true);
 
   // Load hidden trip IDs (visible to all authenticated users)
   const loadHidden = useCallback(async () => {
