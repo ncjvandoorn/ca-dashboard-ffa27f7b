@@ -43,6 +43,7 @@ export const PERMISSION_ITEMS: PermissionItem[] = [
 export const ROLE_COLUMNS: { key: RoleKey; label: string }[] = [
   { key: "admin", label: "Admin" },
   { key: "user", label: "Chrysal" },
+  { key: "ta", label: "TA" },
   { key: "customer_basic", label: "Customer · Basic" },
   { key: "customer_pro", label: "Customer · Pro/Pro+/Heavy" },
 ];
