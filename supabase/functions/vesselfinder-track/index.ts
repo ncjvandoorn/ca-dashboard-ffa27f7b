@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
 
     if (action === "disable") {
       // Customers cannot disable (would orphan the credit they paid)
-      if (!isAdmin) return json({ error: "Only admins can disable tracking" }, 403);
+      if (!canManage) return json({ error: "Only internal staff can disable tracking" }, 403);
       const { error } = await admin
         .from("vesselfinder_tracking")
         .update({ enabled: false })
