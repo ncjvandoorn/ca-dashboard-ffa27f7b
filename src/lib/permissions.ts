@@ -15,7 +15,7 @@ export type PermissionKey =
   | "customers_map"
   | "settings";
 
-export type RoleKey = "admin" | "user" | "customer_basic" | "customer_pro";
+export type RoleKey = "admin" | "user" | "ta" | "customer_basic" | "customer_pro";
 
 export interface PermissionItem {
   key: PermissionKey;
