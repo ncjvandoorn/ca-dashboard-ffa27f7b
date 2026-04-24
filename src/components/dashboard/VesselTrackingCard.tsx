@@ -10,8 +10,13 @@ import { VesselTrackingDetailsSheet } from "./VesselTrackingDetailsSheet";
 interface Props {
   containerId: string | null;
   defaultContainerNumber: string | null;
+  /** True for the admin role — full management. */
   isAdmin: boolean;
+  /** True for the customer role — locked override, single CTA, credit flow. */
   isCustomer?: boolean;
+  /** True for Chrysal/TA staff — same edit/refresh/disable rights as admin
+   *  but they should not see customer-specific credit messaging. */
+  isInternalStaff?: boolean;
   onTrackingChange?: (t: VFTracking | null) => void;
 }
 
@@ -22,8 +27,10 @@ function fmtDate(ts?: number | null) {
   });
 }
 
-export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmin, isCustomer = false, onTrackingChange }: Props) {
-  const canAccess = isAdmin || isCustomer;
+export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmin, isCustomer = false, isInternalStaff = false, onTrackingChange }: Props) {
+  // Admin and internal staff have identical tracking management rights.
+  const canManage = isAdmin || isInternalStaff;
+  const canAccess = canManage || isCustomer;
   const { tracking, loading, error, enable, disable } = useVesselFinderTracking(containerId, canAccess);
   const [override, setOverride] = useState("");
   const [sealine, setSealine] = useState("");
