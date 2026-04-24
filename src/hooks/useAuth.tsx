@@ -2,9 +2,9 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "admin" | "user" | "customer";
+type AppRole = "admin" | "user" | "ta" | "customer";
 type CustomerTier = "basic" | "pro" | "pro_plus" | "heavy";
-type RoleKey = "admin" | "user" | "customer_basic" | "customer_pro";
+type RoleKey = "admin" | "user" | "ta" | "customer_basic" | "customer_pro";
 
 interface CustomerAccountInfo {
   customerAccountId: string;
