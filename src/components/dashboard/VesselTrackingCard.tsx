@@ -117,7 +117,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
         <Ship className="h-4 w-4 text-primary" />
         <span className="font-semibold text-sm">Active Tracking</span>
         <StatusBadge />
-        {isAdmin && (
+        {canManage && (
           <div className="ml-auto flex items-center gap-2">
             <Label htmlFor="vf-toggle" className="text-xs text-muted-foreground">Enable</Label>
             <Switch
@@ -149,18 +149,18 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
         <div>
           <Label className="text-[10px] uppercase text-muted-foreground flex items-center gap-1">
             Container #
-            {!isAdmin && <Lock className="h-2.5 w-2.5" />}
+            {!canManage && <Lock className="h-2.5 w-2.5" />}
           </Label>
           <Input
-            value={isAdmin ? override : customerLockedNumber}
-            onChange={(e) => isAdmin && setOverride(e.target.value.toUpperCase())}
+            value={canManage ? override : customerLockedNumber}
+            onChange={(e) => canManage && setOverride(e.target.value.toUpperCase())}
             placeholder="e.g. MMAU1432549"
             className="h-8 text-xs font-mono mt-1"
-            readOnly={!isAdmin}
-            disabled={!isAdmin}
+            readOnly={!canManage}
+            disabled={!canManage}
           />
         </div>
-        {isAdmin && (
+        {canManage && (
           <div>
             <Label className="text-[10px] uppercase text-muted-foreground">Carrier SCAC (optional)</Label>
             <Input
@@ -172,7 +172,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
           </div>
         )}
         <div className="flex items-center gap-2 pt-1">
-          {isAdmin ? (
+          {canManage ? (
             <>
               <Button
                 size="sm"
