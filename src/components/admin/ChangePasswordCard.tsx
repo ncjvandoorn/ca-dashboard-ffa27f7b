@@ -86,6 +86,44 @@ export const ChangePasswordCard = () => {
     }
   };
 
+  const handleChangeTaPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (taPassword.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    if (taPassword !== taConfirm) {
+      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+    setTaLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(manageCustomerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          action: "reset_password_by_email",
+          email: "ta@chrysal.app",
+          password: taPassword,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast({ title: "Success", description: "TA password updated successfully" });
+      setTaPassword("");
+      setTaConfirm("");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: "Error", description: msg, variant: "destructive" });
+    } finally {
+      setTaLoading(false);
+    }
+  };
+
   return (
     <Card className="mb-8">
       <CardHeader>
