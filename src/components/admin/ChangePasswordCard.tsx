@@ -17,6 +17,10 @@ export const ChangePasswordCard = () => {
   const [chrysalConfirm, setChrysalConfirm] = useState("");
   const [chrysalLoading, setChrysalLoading] = useState(false);
 
+  const [taPassword, setTaPassword] = useState("");
+  const [taConfirm, setTaConfirm] = useState("");
+  const [taLoading, setTaLoading] = useState(false);
+
   const { changePassword } = useAuth();
   const { toast } = useToast();
 
