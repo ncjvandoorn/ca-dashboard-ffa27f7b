@@ -22,11 +22,11 @@ const Admin = () => {
           <PageHeaderActions />
         </div>
 
+        <PlantscoutSyncCard />
+        <DataFilesCard />
         <PendingApprovalsCard />
         <CustomerAccountsCard />
         <InvitationsCard />
-        <DataFilesCard />
-        <PlantscoutSyncCard />
         <AIInstructionsCard />
         <AILearningsCard />
         <CrmUserFilterCard />
