@@ -18,8 +18,9 @@ Deno.serve(async (req) => {
     );
 
     const users = [
-      { email: "admin@chrysal.app", password: "CA@2026" },
-      { email: "chrysal@chrysal.app", password: "CA@2026" },
+      { email: "admin@chrysal.app", password: "CA@2026", role: "admin" as const },
+      { email: "chrysal@chrysal.app", password: "CA@2026", role: "user" as const },
+      { email: "ta@chrysal.app", password: "TA@2026###", role: "ta" as const },
     ];
 
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
