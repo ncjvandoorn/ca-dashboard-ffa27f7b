@@ -294,18 +294,18 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
             <SummaryStat label="Loggers" value={String(trips.length)} />
           </div>
 
-          {/* Vessel tracking — always container-level */}
-          {(isAdmin || isCustomer) && (
-            <div data-pdf-section>
-              <VesselTrackingCard
-                containerId={containerId || null}
-                defaultContainerNumber={container.containerNumber || null}
-                isAdmin={isAdmin}
-                isCustomer={isCustomer}
-                onTrackingChange={setVfTracking}
-              />
-            </div>
-          )}
+          {/* Vessel tracking — visible to everyone signed in. Edit rights:
+              admin + Chrysal/TA staff (full); customers locked to defaults. */}
+          <div data-pdf-section>
+            <VesselTrackingCard
+              containerId={containerId || null}
+              defaultContainerNumber={container.containerNumber || null}
+              isAdmin={isAdmin}
+              isCustomer={isCustomer}
+              isInternalStaff={!isAdmin && !isCustomer}
+              onTrackingChange={setVfTracking}
+            />
+          </div>
 
           {/* Per-trip section — tabs when there's more than one logger.
               The multigraph is rendered ONCE below at container scope so all
