@@ -65,10 +65,15 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", userId)
       .maybeSingle();
-    const role = roleRow?.role as "admin" | "user" | "customer" | undefined;
+    const role = roleRow?.role as "admin" | "user" | "ta" | "customer" | undefined;
     const isAdmin = role === "admin";
     const isCustomer = role === "customer";
-    if (!isAdmin && !isCustomer) return json({ error: "Forbidden" }, 403);
+    // Chrysal staff and TA share admin's full editing capability — they
+    // can override container numbers, set sealine, force refresh and disable
+    // tracking. They never consume customer credits.
+    const isInternalStaff = role === "user" || role === "ta";
+    const canManage = isAdmin || isInternalStaff;
+    if (!canManage && !isCustomer) return json({ error: "Forbidden" }, 403);
 
     // Customer account (uuid + tier) for credit operations
     let customerAccountUuid: string | null = null;
