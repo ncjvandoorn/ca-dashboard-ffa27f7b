@@ -200,6 +200,37 @@ export const ChangePasswordCard = () => {
               Update Chrysal Password
             </Button>
           </form>
+
+          {/* TA password */}
+          <form onSubmit={handleChangeTaPassword} className="space-y-4 border border-border rounded-lg p-4">
+            <p className="text-sm font-medium">TA password</p>
+            <div className="space-y-2">
+              <Label htmlFor="ta-password">New Password</Label>
+              <Input
+                id="ta-password"
+                type="password"
+                value={taPassword}
+                onChange={(e) => setTaPassword(e.target.value)}
+                placeholder="Enter new password"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ta-confirm">Confirm Password</Label>
+              <Input
+                id="ta-confirm"
+                type="password"
+                value={taConfirm}
+                onChange={(e) => setTaConfirm(e.target.value)}
+                placeholder="Confirm new password"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={taLoading} className="gap-2" variant="secondary">
+              {taLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Update TA Password
+            </Button>
+          </form>
         </div>
       </CardContent>
     </Card>
