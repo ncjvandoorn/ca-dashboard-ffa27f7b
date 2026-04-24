@@ -26,6 +26,7 @@ const Admin = () => {
         <CustomerAccountsCard />
         <InvitationsCard />
         <DataFilesCard />
+        <PlantscoutSyncCard />
         <AIInstructionsCard />
         <AILearningsCard />
         <CrmUserFilterCard />
