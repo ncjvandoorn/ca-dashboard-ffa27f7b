@@ -133,12 +133,12 @@ export const ChangePasswordCard = () => {
           </div>
           <div>
             <CardTitle className="text-lg">Change Password</CardTitle>
-            <CardDescription>Update the Admin or shared Chrysal account password</CardDescription>
+            <CardDescription>Update the Admin, shared Chrysal or TA account password</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Admin password */}
           <form onSubmit={handleChangePassword} className="space-y-4 border border-border rounded-lg p-4">
             <p className="text-sm font-medium">Admin password</p>
