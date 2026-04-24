@@ -16,7 +16,7 @@ import DataLoggers from "./pages/DataLoggers.tsx";
 import TrialsDashboard from "./pages/TrialsDashboard.tsx";
 import AllReports from "./pages/AllReports.tsx";
 import ActiveSF from "./pages/ActiveSF.tsx";
-import Containers from "./pages/Containers.tsx";
+
 import Subscriptions from "./pages/Subscriptions.tsx";
 import CRM from "./pages/CRM.tsx";
 import Customers from "./pages/Customers.tsx";
@@ -77,7 +77,7 @@ const App = () => (
             <Route path="/trials" element={<PermissionRoute permission="trials_dashboard"><TrialsDashboard /></PermissionRoute>} />
             <Route path="/report" element={<PermissionRoute permission="all_reports"><AllReports /></PermissionRoute>} />
             <Route path="/active-sf" element={<PermissionRoute permission="active_sf"><ActiveSF /></PermissionRoute>} />
-            <Route path="/containers" element={<PermissionRoute permission="containers"><Containers /></PermissionRoute>} />
+            
             <Route path="/crm" element={<PermissionRoute permission="crm_activities"><CRM /></PermissionRoute>} />
             <Route path="/customers" element={<PermissionRoute permission="customers_map"><Customers /></PermissionRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />

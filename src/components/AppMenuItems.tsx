@@ -10,7 +10,6 @@ import {
   LogOut,
   FlaskConical,
   CalendarRange,
-  Package,
   Ship,
   CreditCard,
   Users,
@@ -20,44 +19,27 @@ import {
   MapPin,
 } from "lucide-react";
 
-interface AppMenuItemsProps {
-  /**
-   * Optional override for the Containers entry. When provided, clicking
-   * "Containers" calls this handler instead of navigating to /containers.
-   * Used by the dashboard which opens Containers in a dialog.
-   */
-  onOpenContainers?: () => void;
-}
-
 /**
  * Shared menu items used by both the dashboard ControlBar and the
  * PageHeaderActions menu on every other page. Single source of truth so
  * the two menus never drift apart.
  *
  * Order:
- *   Customer-facing links (Containers, Active SF, Trials Dashboard, Subscription Plans)
+ *   Customer-facing links (Active SF, Trials Dashboard, Subscription Plans)
  *   ─── separator ───
- *   Internal tools (Trial Planner, Reporting Check, CRM Activities)
+ *   Internal tools (Trial Planner, Data Loggers, Reporting Check, CRM, Customers Map)
  *   ─── separator ───
  *   My Profile / Settings
  *   ─── separator ───
  *   Logout
  */
-export function AppMenuItems({ onOpenContainers }: AppMenuItemsProps = {}) {
+export function AppMenuItems() {
   const navigate = useNavigate();
   const { signOut, isCustomer } = useAuth();
   const { can } = usePermissions();
 
   return (
     <>
-      {can("containers") && (
-        <DropdownMenuItem
-          onClick={onOpenContainers ? onOpenContainers : () => navigate("/containers")}
-        >
-          <Package className="h-4 w-4 mr-2" />
-          Containers
-        </DropdownMenuItem>
-      )}
       {can("active_sf") && (
         <DropdownMenuItem onClick={() => navigate("/active-sf")}>
           <Ship className="h-4 w-4 mr-2" />
