@@ -334,7 +334,6 @@ const Index = () => {
                   setSelectedFarmId("");
                 }
               }}
-              onOpenContainers={can("containers") ? () => navigate("/containers") : undefined}
             />
 
             {/* Action buttons row */}

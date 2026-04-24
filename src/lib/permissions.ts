@@ -5,7 +5,6 @@ export type PermissionKey =
   | "reporting_check"
   | "seasonality_insights"
   | "exception_report"
-  | "containers"
   | "active_sf"
   | "trial_planner"
   | "data_loggers"
@@ -28,7 +27,6 @@ export const PERMISSION_ITEMS: PermissionItem[] = [
   { key: "all_reports", label: "All Reports", group: "Dashboard buttons" },
   { key: "seasonality_insights", label: "Seasonality Insights", group: "Dashboard buttons" },
   { key: "exception_report", label: "Exception Report", group: "Dashboard buttons" },
-  { key: "containers", label: "Containers", group: "Menu items" },
   { key: "active_sf", label: "Active SF", group: "Menu items" },
   { key: "trial_planner", label: "Trial Planner", group: "Menu items" },
   { key: "data_loggers", label: "Data Loggers", group: "Menu items" },
