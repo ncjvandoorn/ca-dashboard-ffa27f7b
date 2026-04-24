@@ -26,7 +26,7 @@ interface ControlBarProps {
   customerFarms: CustomerFarm[];
   selectedCustomerId: string;
   onCustomerChange: (id: string) => void;
-  onOpenContainers?: () => void;
+  
 }
 
 function SearchableDropdown({
@@ -141,7 +141,6 @@ export function ControlBar({
   customerFarms,
   selectedCustomerId,
   onCustomerChange,
-  onOpenContainers,
 }: ControlBarProps) {
   const navigate = useNavigate();
   const { isCustomer } = useAuth();
@@ -246,7 +245,7 @@ export function ControlBar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-popover">
-              <AppMenuItems onOpenContainers={onOpenContainers} />
+              <AppMenuItems />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
