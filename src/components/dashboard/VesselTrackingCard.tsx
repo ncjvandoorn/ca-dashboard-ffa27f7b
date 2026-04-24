@@ -64,7 +64,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
   const isActive = !!tracking?.enabled && tracking.status !== "error";
   // Customer locked number: prefer the already-linked override (so Refresh hits the same container), else the order default.
   const customerLockedNumber = (tracking?.container_number_override || defaultContainerNumber || "").trim();
-  const effectiveNumber = isAdmin ? override.trim() : customerLockedNumber;
+  const effectiveNumber = canManage ? override.trim() : customerLockedNumber;
 
   const handleSubmit = async (force = false) => {
     if (!effectiveNumber) {
@@ -74,7 +74,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
     setSubmitting(true);
     setActionError(null);
     try {
-      await enable(effectiveNumber, isAdmin ? (sealine.trim() || null) : null, force);
+      await enable(effectiveNumber, canManage ? (sealine.trim() || null) : null, force);
     } catch (e: any) {
       setActionError(e?.message || "Failed");
     } finally {
@@ -84,7 +84,7 @@ export function VesselTrackingCard({ containerId, defaultContainerNumber, isAdmi
 
   const handleToggle = async (next: boolean) => {
     if (!next) {
-      if (!isAdmin) return; // customers cannot disable
+      if (!canManage) return; // customers cannot disable
       await disable();
     } else {
       await handleSubmit(false);
