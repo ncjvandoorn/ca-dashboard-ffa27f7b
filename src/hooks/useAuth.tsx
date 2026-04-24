@@ -134,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   let roleKey: RoleKey | null = null;
   if (role === "admin") roleKey = "admin";
   else if (role === "user") roleKey = "user";
+  else if (role === "ta") roleKey = "ta";
   else if (role === "customer") {
     roleKey = customerAccount?.tier === "basic" ? "customer_basic" : "customer_pro";
   }
