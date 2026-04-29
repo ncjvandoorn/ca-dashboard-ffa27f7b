@@ -12,6 +12,7 @@ import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights"
 import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
 import { AIAgent } from "@/components/dashboard/AIAgent";
+import { LastUploadFooter } from "@/components/dashboard/LastUploadFooter";
 
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -498,6 +499,7 @@ const Index = () => {
             </div>
           </div>
         )}
+        <LastUploadFooter />
       </div>
     </div>
   );
