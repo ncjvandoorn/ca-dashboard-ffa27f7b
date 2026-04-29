@@ -5,6 +5,13 @@ import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -16,35 +23,120 @@ import { Card } from "@/components/ui/card";
 import chrysalLogo from "@/assets/chrysal-logo.png";
 import { useVaselifeHeaders, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
 import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
+import { useAuth } from "@/hooks/useAuth";
+import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
 
 function fmtDate(d: string | null): string {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function norm(s: string | null | undefined): string {
+  return (s || "").trim().toLowerCase();
+}
+
+const ALL = "__all__";
+
 export default function TrialsDashboard() {
   const { data: trials = [], isLoading } = useVaselifeHeaders();
+  const { isCustomer, customerAccount } = useAuth();
+  const { data: accounts = [] } = useAccounts();
+  const { data: customerFarms = [] } = useCustomerFarms();
+
   const [search, setSearch] = useState("");
+  const [customerFilter, setCustomerFilter] = useState<string>(ALL);
+  const [farmFilter, setFarmFilter] = useState<string>(ALL);
   const [selected, setSelected] = useState<VaselifeHeader | null>(null);
+
+  /**
+   * For customers: restrict to trials whose `customer` name matches their
+   * customer-account name OR whose `farm` matches a linked farm name (with
+   * consent = "1"). Trial header stores names (not IDs), so we match by name.
+   */
+  const customerScopedTrials = useMemo(() => {
+    if (!isCustomer || !customerAccount) return trials;
+
+    const myAccount = accounts.find((a) => a.id === customerAccount.customerAccountId);
+    const myCustomerName = norm(myAccount?.name);
+
+    const linkedFarmNames = new Set<string>();
+    for (const cf of customerFarms) {
+      if (cf.customerAccountId !== customerAccount.customerAccountId) continue;
+      if (cf.deletedAt) continue;
+      if (cf.farmAccountConsent !== "1") continue;
+      const farm = accounts.find((a) => a.id === cf.farmAccountId);
+      if (farm) linkedFarmNames.add(norm(farm.name));
+    }
+
+    return trials.filter(
+      (t) =>
+        (myCustomerName && norm(t.customer) === myCustomerName) ||
+        linkedFarmNames.has(norm(t.farm)),
+    );
+  }, [trials, isCustomer, customerAccount, accounts, customerFarms]);
+
+  /** Distinct customers / farms present in the (scoped) trial set */
+  const customerOptions = useMemo(() => {
+    const set = new Set<string>();
+    customerScopedTrials.forEach((t) => t.customer && set.add(t.customer));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [customerScopedTrials]);
+
+  const farmOptions = useMemo(() => {
+    const set = new Set<string>();
+    customerScopedTrials
+      .filter((t) => customerFilter === ALL || t.customer === customerFilter)
+      .forEach((t) => t.farm && set.add(t.farm));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [customerScopedTrials, customerFilter]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return trials;
-    return trials.filter(
-      (t) =>
-        (t.trial_number || "").toLowerCase().includes(q) ||
-        (t.farm || "").toLowerCase().includes(q) ||
-        (t.customer || "").toLowerCase().includes(q) ||
-        (t.crop || "").toLowerCase().includes(q),
-    );
-  }, [trials, search]);
+    return customerScopedTrials.filter((t) => {
+      if (customerFilter !== ALL && t.customer !== customerFilter) return false;
+      if (farmFilter !== ALL && t.farm !== farmFilter) return false;
+      if (!q) return true;
+      // Search across every meaningful trial field
+      const haystack = [
+        t.trial_number,
+        t.farm,
+        t.customer,
+        t.crop,
+        t.freight_type,
+        t.initial_quality,
+        t.objective,
+        t.spec_comments,
+        t.conclusion,
+        t.recommendations,
+        t.harvest_date,
+        t.start_seafreight,
+        t.start_transport,
+        t.start_retail,
+        t.start_vl,
+        t.cultivar_count != null ? String(t.cultivar_count) : "",
+        t.treatment_count != null ? String(t.treatment_count) : "",
+        t.total_vases != null ? String(t.total_vases) : "",
+        t.stems_per_vase != null ? String(t.stems_per_vase) : "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [customerScopedTrials, search, customerFilter, farmFilter]);
 
   const stats = useMemo(() => {
-    const farms = new Set(trials.map((t) => t.farm).filter(Boolean));
-    const crops = new Set(trials.map((t) => t.crop).filter(Boolean));
-    const totalVases = trials.reduce((s, t) => s + (t.total_vases || 0), 0);
-    return { trials: trials.length, farms: farms.size, crops: crops.size, totalVases };
-  }, [trials]);
+    const farms = new Set(filtered.map((t) => t.farm).filter(Boolean));
+    const crops = new Set(filtered.map((t) => t.crop).filter(Boolean));
+    const totalVases = filtered.reduce((s, t) => s + (t.total_vases || 0), 0);
+    return { trials: filtered.length, farms: farms.size, crops: crops.size, totalVases };
+  }, [filtered]);
+
+  const resetFilters = () => {
+    setSearch("");
+    setCustomerFilter(ALL);
+    setFarmFilter(ALL);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -91,20 +183,68 @@ export default function TrialsDashboard() {
         <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 border border-border rounded-md px-3 py-2">
           <Database className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
           <p>
-            Data sourced from the <strong>Plantscout Vaselife API</strong> (initial seed: headers, vases &
-            measurements). Once the live API endpoint is available, this dashboard will update automatically.
+            Data sourced from the <strong>Plantscout Vaselife API</strong> (headers, vases &
+            measurements). {isCustomer && "Showing only trials linked to your customer account and farms."}
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search trial, farm, customer, crop..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+        {/* Search + filters */}
+        <div className="flex flex-col md:flex-row gap-3 md:items-center">
+          <div className="relative flex-1 min-w-0 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search anything: trial, farm, customer, crop, comments…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {!isCustomer && (
+            <Select
+              value={customerFilter}
+              onValueChange={(v) => {
+                setCustomerFilter(v);
+                setFarmFilter(ALL);
+              }}
+            >
+              <SelectTrigger className="w-full md:w-[220px]">
+                <SelectValue placeholder="All customers" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All customers</SelectItem>
+                {customerOptions.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Select value={farmFilter} onValueChange={setFarmFilter}>
+            <SelectTrigger className="w-full md:w-[220px]">
+              <SelectValue placeholder="All farms" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>All farms</SelectItem>
+              {farmOptions.map((f) => (
+                <SelectItem key={f} value={f}>
+                  {f}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {(search || customerFilter !== ALL || farmFilter !== ALL) && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="text-xs text-muted-foreground hover:text-foreground underline self-center"
+            >
+              Reset
+            </button>
+          )}
         </div>
 
         {/* Trials table */}
@@ -114,7 +254,11 @@ export default function TrialsDashboard() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : filtered.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-12">No trials match.</p>
+            <p className="text-center text-sm text-muted-foreground py-12">
+              {customerScopedTrials.length === 0 && isCustomer
+                ? "No trials are linked to your account yet."
+                : "No trials match the current filters."}
+            </p>
           ) : (
             <Table>
               <TableHeader>
