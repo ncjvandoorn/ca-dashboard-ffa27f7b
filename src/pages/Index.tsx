@@ -499,6 +499,7 @@ const Index = () => {
             </div>
           </div>
         )}
+        <LastUploadFooter />
       </div>
     </div>
   );
