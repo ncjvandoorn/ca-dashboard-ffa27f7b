@@ -16,18 +16,22 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Beaker, FlaskConical, Sprout } from "lucide-react";
+import { Loader2, Beaker, FlaskConical, Sprout, ClipboardList } from "lucide-react";
 import {
   useVaselifeVases,
   useVaselifeMeasurements,
   PROPERTY_LABELS,
   type VaselifeHeader,
 } from "@/hooks/useVaselifeTrials";
+import type { Trial } from "@/lib/trialsParser";
+import type { TrialLinkInfo } from "@/lib/trialLinkage";
 
 interface Props {
   trial: VaselifeHeader | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  plannerMatches?: Trial[];
+  linkInfo?: TrialLinkInfo;
 }
 
 function fmtDate(d: string | null): string {
