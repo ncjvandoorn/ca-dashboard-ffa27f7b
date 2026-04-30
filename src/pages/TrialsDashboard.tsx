@@ -45,6 +45,7 @@ export default function TrialsDashboard() {
   const { isCustomer, customerAccount } = useAuth();
   const { data: accounts = [] } = useAccounts();
   const { data: customerFarms = [] } = useCustomerFarms();
+  const { data: planner = [] } = usePlannerTrials();
 
   const [search, setSearch] = useState("");
   const [customerFilter, setCustomerFilter] = useState<string>(ALL);
