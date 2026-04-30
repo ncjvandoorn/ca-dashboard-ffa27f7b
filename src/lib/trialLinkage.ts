@@ -54,11 +54,16 @@ export function computeTrialLink(
 
   // Match against both `trialNumber` and `trialReference` — the user-facing
   // ID (e.g. "CA01030") may live in either column depending on the source sheet.
-  const plannerMatches = planner.filter(
-    (p) =>
-      trialNumSet.has(norm(p.trialNumber)) ||
-      trialNumSet.has(norm(p.trialReference)),
-  );
+  // Also expand planner-side values in case they contain ranges like "CA01032 - CA01034".
+  const plannerMatches = planner.filter((p) => {
+    const candidates = [
+      ...expandTrialNumbers(p.trialNumber).map(norm),
+      ...expandTrialNumbers(p.trialReference).map(norm),
+      norm(p.trialNumber),
+      norm(p.trialReference),
+    ];
+    return candidates.some((c) => c && trialNumSet.has(c));
+  });
   const hasPlannerLink = plannerMatches.length > 0;
 
   const customerLinked = !!header.customer && accountNames.has(norm(header.customer));
