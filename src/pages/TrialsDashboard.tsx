@@ -348,9 +348,11 @@ export default function TrialsDashboard() {
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(t.harvest_date)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(t.start_vl)}</TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
+            </TooltipProvider>
           )}
         </Card>
       </main>
