@@ -3,7 +3,7 @@ import type { SFTrip } from "@/pages/ActiveSF";
 import type { VFActiveInfo } from "@/hooks/useVesselFinder";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { seaRoute } from "searoute-ts";
+import { buildSeaRouteLatLngs } from "@/lib/seaRouting";
 
 interface Props {
   trips: SFTrip[];
