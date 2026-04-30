@@ -25,6 +25,9 @@ import { useVaselifeHeaders, type VaselifeHeader } from "@/hooks/useVaselifeTria
 import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
+import { usePlannerTrials } from "@/hooks/usePlannerTrials";
+import { computeTrialLink, type LinkStatus } from "@/lib/trialLinkage";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function fmtDate(d: string | null): string {
   if (!d) return "—";
