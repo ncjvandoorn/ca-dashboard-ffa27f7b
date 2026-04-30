@@ -100,15 +100,15 @@ export function TripPathMap({ trip, height = 280, vfTracking }: Props) {
       bounds.push([trip.latitude, trip.longitude]);
     }
 
-    // Dotted line from current location to destination
+    // Dotted line from current location to destination — routed via sea
     if (path?.destination && trip.latitude != null && trip.longitude != null) {
-      const dotted = L.polyline(
-        [
-          [trip.latitude, trip.longitude],
-          [path.destination.lat, path.destination.lon],
-        ],
-        { color: COLOR_DESTINATION, weight: 2, opacity: 0.7, dashArray: "6, 8" }
-      );
+      const seaPts = buildSeaRouteLatLngs([
+        [trip.latitude, trip.longitude],
+        [path.destination.lat, path.destination.lon],
+      ]);
+      const dotted = L.polyline(seaPts, {
+        color: COLOR_DESTINATION, weight: 2, opacity: 0.7, dashArray: "6, 8",
+      });
       group.addLayer(dotted);
 
       const destIcon = L.divIcon({
