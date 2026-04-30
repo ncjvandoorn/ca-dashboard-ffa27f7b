@@ -155,6 +155,14 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <Beaker className="h-3.5 w-3.5" /> Measurements ({measurements.length})
             </TabsTrigger>
             <TabsTrigger value="conclusion">Conclusion</TabsTrigger>
+            <TabsTrigger value="details" className="gap-1.5">
+              <ClipboardList className="h-3.5 w-3.5" /> Details
+              {plannerMatches.length > 0 && (
+                <span className="ml-1 text-[10px] bg-primary/15 text-primary rounded px-1">
+                  {plannerMatches.length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="vases">
