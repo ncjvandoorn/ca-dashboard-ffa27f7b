@@ -361,6 +361,8 @@ export default function TrialsDashboard() {
         trial={selected}
         open={!!selected}
         onOpenChange={(o) => !o && setSelected(null)}
+        plannerMatches={selected ? linkByHeaderId.get(selected.id)?.plannerMatches ?? [] : []}
+        linkInfo={selected ? linkByHeaderId.get(selected.id) : undefined}
       />
     </div>
   );
