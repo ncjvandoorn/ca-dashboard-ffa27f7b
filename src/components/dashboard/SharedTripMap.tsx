@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { seaRoute } from "searoute-ts";
+import { buildSeaRouteLatLngs } from "@/lib/seaRouting";
 
 export type SharedMapPoint = { lat: number; lon: number; address?: string | null };
 export type SharedMapDestination = { lat: number; lon: number; name: string };
