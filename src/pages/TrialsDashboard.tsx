@@ -129,6 +129,22 @@ export default function TrialsDashboard() {
     });
   }, [customerScopedTrials, search, customerFilter, farmFilter]);
 
+  /** Set of all account names (customers + farms) for matching */
+  const accountNameSet = useMemo(() => {
+    const s = new Set<string>();
+    accounts.forEach((a) => a.name && s.add(a.name.trim().toLowerCase()));
+    return s;
+  }, [accounts]);
+
+  /** Per-trial link info, keyed by header id */
+  const linkByHeaderId = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof computeTrialLink>>();
+    for (const t of customerScopedTrials) {
+      map.set(t.id, computeTrialLink(t, planner, accountNameSet));
+    }
+    return map;
+  }, [customerScopedTrials, planner, accountNameSet]);
+
   const stats = useMemo(() => {
     const farms = new Set(filtered.map((t) => t.farm).filter(Boolean));
     const crops = new Set(filtered.map((t) => t.crop).filter(Boolean));
