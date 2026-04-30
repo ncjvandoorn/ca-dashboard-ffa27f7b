@@ -233,7 +233,7 @@ export function ControlBar({
           </button>
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-foreground">Chrysal Intelligence</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Integrated quality, cold chain & sea freight intelligence platform</p>
+            <p className="text-sm text-muted-foreground mt-0.5">One app for tracking & insights in quality performance, cold chain management and sea freight shipments</p>
           </div>
         </div>
 
