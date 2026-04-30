@@ -280,10 +280,12 @@ export default function TrialsDashboard() {
                 : "No trials match the current filters."}
             </p>
           ) : (
+            <TooltipProvider delayDuration={150}>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Trial</TableHead>
+                  <TableHead className="w-16 text-center">Linked</TableHead>
                   <TableHead>Farm</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Crop</TableHead>
@@ -296,7 +298,14 @@ export default function TrialsDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((t) => (
+                {filtered.map((t) => {
+                  const link = linkByHeaderId.get(t.id);
+                  const dotColor: Record<LinkStatus, string> = {
+                    green: "bg-emerald-500",
+                    yellow: "bg-amber-400",
+                    red: "bg-rose-500",
+                  };
+                  return (
                   <TableRow
                     key={t.id}
                     className="cursor-pointer hover:bg-muted/40"
@@ -305,6 +314,26 @@ export default function TrialsDashboard() {
                     <TableCell className="font-medium text-sm">
                       {t.trial_number || (
                         <span className="text-muted-foreground italic">unnamed</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      {link && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className={`inline-block h-3 w-3 rounded-full ring-2 ring-background ${dotColor[link.status]}`}
+                              aria-label={`Link status: ${link.status}`}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs">
+                            <div className="space-y-1 text-xs">
+                              <div className="font-semibold mb-1">Link status</div>
+                              {link.notes.map((n, i) => (
+                                <div key={i}>{n}</div>
+                              ))}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </TableCell>
                     <TableCell className="text-sm">{t.farm || "—"}</TableCell>
