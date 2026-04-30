@@ -26,30 +26,6 @@ interface Props {
 const COLOR_VESSEL = "hsl(210, 80%, 35%)";
 const COLOR_VF_PORT = "hsl(28, 90%, 50%)";
 
-function buildSeaRouteLatLngs(points: [number, number][]): [number, number][] {
-  if (points.length < 2) return points;
-  const out: [number, number][] = [];
-  for (let i = 0; i < points.length - 1; i++) {
-    const [aLat, aLon] = points[i];
-    const [bLat, bLon] = points[i + 1];
-    try {
-      const origin = { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [aLon, aLat] } };
-      const dest = { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [bLon, bLat] } };
-      const route = seaRoute(origin as any, dest as any);
-      const coords = (route?.geometry?.coordinates || []) as [number, number][];
-      if (coords.length >= 2) {
-        const seg = coords.map(([lon, lat]) => [lat, lon] as [number, number]);
-        if (out.length && seg.length) seg.shift();
-        out.push(...seg);
-        continue;
-      }
-    } catch { /* fall back */ }
-    if (!out.length) out.push([aLat, aLon]);
-    out.push([bLat, bLon]);
-  }
-  return out;
-}
-
 /** Lightweight static map for shared snapshots — no live data hooks. */
 export function SharedTripMap({ points = [], current = null, destination = null, vfRoute = null, height = 340 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
