@@ -118,7 +118,11 @@ export function SharedTripMap({ points = [], current = null, destination = null,
     }
 
     if (!vfRoute && destination && current) {
-      L.polyline([[current.lat, current.lon], [destination.lat, destination.lon]], {
+      const seaPts = buildSeaRouteLatLngs([
+        [current.lat, current.lon],
+        [destination.lat, destination.lon],
+      ]);
+      L.polyline(seaPts, {
         color: DEST, weight: 2, opacity: 0.7, dashArray: "6, 8",
       }).addTo(map);
     }
