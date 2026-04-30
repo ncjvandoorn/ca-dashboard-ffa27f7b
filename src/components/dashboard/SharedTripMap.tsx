@@ -90,7 +90,8 @@ export function SharedTripMap({ points = [], current = null, destination = null,
     // ---- Sensor track (only when no VF route, to avoid a noisy map) ----
     if (!vfRoute) {
       if (points.length > 1) {
-        L.polyline(points.map((p) => [p.lat, p.lon] as [number, number]), {
+        const seaPts = buildSeaRouteLatLngs(points.map((p) => [p.lat, p.lon] as [number, number]));
+        L.polyline(seaPts, {
           color: PASSED, weight: 3, opacity: 0.9,
         }).addTo(map);
       }
