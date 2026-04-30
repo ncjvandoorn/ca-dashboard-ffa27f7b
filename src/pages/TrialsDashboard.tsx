@@ -25,6 +25,9 @@ import { useVaselifeHeaders, type VaselifeHeader } from "@/hooks/useVaselifeTria
 import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
+import { usePlannerTrials } from "@/hooks/usePlannerTrials";
+import { computeTrialLink, type LinkStatus } from "@/lib/trialLinkage";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function fmtDate(d: string | null): string {
   if (!d) return "—";
@@ -42,6 +45,7 @@ export default function TrialsDashboard() {
   const { isCustomer, customerAccount } = useAuth();
   const { data: accounts = [] } = useAccounts();
   const { data: customerFarms = [] } = useCustomerFarms();
+  const { data: planner = [] } = usePlannerTrials();
 
   const [search, setSearch] = useState("");
   const [customerFilter, setCustomerFilter] = useState<string>(ALL);
@@ -124,6 +128,22 @@ export default function TrialsDashboard() {
       return haystack.includes(q);
     });
   }, [customerScopedTrials, search, customerFilter, farmFilter]);
+
+  /** Set of all account names (customers + farms) for matching */
+  const accountNameSet = useMemo(() => {
+    const s = new Set<string>();
+    accounts.forEach((a) => a.name && s.add(a.name.trim().toLowerCase()));
+    return s;
+  }, [accounts]);
+
+  /** Per-trial link info, keyed by header id */
+  const linkByHeaderId = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof computeTrialLink>>();
+    for (const t of customerScopedTrials) {
+      map.set(t.id, computeTrialLink(t, planner, accountNameSet));
+    }
+    return map;
+  }, [customerScopedTrials, planner, accountNameSet]);
 
   const stats = useMemo(() => {
     const farms = new Set(filtered.map((t) => t.farm).filter(Boolean));
@@ -260,10 +280,12 @@ export default function TrialsDashboard() {
                 : "No trials match the current filters."}
             </p>
           ) : (
+            <TooltipProvider delayDuration={150}>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Trial</TableHead>
+                  <TableHead className="w-16 text-center">Linked</TableHead>
                   <TableHead>Farm</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Crop</TableHead>
@@ -276,7 +298,14 @@ export default function TrialsDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((t) => (
+                {filtered.map((t) => {
+                  const link = linkByHeaderId.get(t.id);
+                  const dotColor: Record<LinkStatus, string> = {
+                    green: "bg-emerald-500",
+                    yellow: "bg-amber-400",
+                    red: "bg-rose-500",
+                  };
+                  return (
                   <TableRow
                     key={t.id}
                     className="cursor-pointer hover:bg-muted/40"
@@ -285,6 +314,26 @@ export default function TrialsDashboard() {
                     <TableCell className="font-medium text-sm">
                       {t.trial_number || (
                         <span className="text-muted-foreground italic">unnamed</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                      {link && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className={`inline-block h-3 w-3 rounded-full ring-2 ring-background ${dotColor[link.status]}`}
+                              aria-label={`Link status: ${link.status}`}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs">
+                            <div className="space-y-1 text-xs">
+                              <div className="font-semibold mb-1">Link status</div>
+                              {link.notes.map((n, i) => (
+                                <div key={i}>{n}</div>
+                              ))}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </TableCell>
                     <TableCell className="text-sm">{t.farm || "—"}</TableCell>
@@ -299,9 +348,11 @@ export default function TrialsDashboard() {
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(t.harvest_date)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(t.start_vl)}</TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
+            </TooltipProvider>
           )}
         </Card>
       </main>
@@ -310,6 +361,8 @@ export default function TrialsDashboard() {
         trial={selected}
         open={!!selected}
         onOpenChange={(o) => !o && setSelected(null)}
+        plannerMatches={selected ? linkByHeaderId.get(selected.id)?.plannerMatches ?? [] : []}
+        linkInfo={selected ? linkByHeaderId.get(selected.id) : undefined}
       />
     </div>
   );

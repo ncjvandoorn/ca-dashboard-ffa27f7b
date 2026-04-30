@@ -16,18 +16,22 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Beaker, FlaskConical, Sprout } from "lucide-react";
+import { Loader2, Beaker, FlaskConical, Sprout, ClipboardList } from "lucide-react";
 import {
   useVaselifeVases,
   useVaselifeMeasurements,
   PROPERTY_LABELS,
   type VaselifeHeader,
 } from "@/hooks/useVaselifeTrials";
+import type { Trial } from "@/lib/trialsParser";
+import type { TrialLinkInfo } from "@/lib/trialLinkage";
 
 interface Props {
   trial: VaselifeHeader | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  plannerMatches?: Trial[];
+  linkInfo?: TrialLinkInfo;
 }
 
 function fmtDate(d: string | null): string {
@@ -35,7 +39,7 @@ function fmtDate(d: string | null): string {
   return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export function VaselifeTrialDetail({ trial, open, onOpenChange }: Props) {
+export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches = [], linkInfo }: Props) {
   const { data: vases = [], isLoading: vasesLoading } = useVaselifeVases(trial?.id);
   const { data: measurements = [], isLoading: measLoading } = useVaselifeMeasurements(trial?.id);
 
@@ -151,6 +155,14 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange }: Props) {
               <Beaker className="h-3.5 w-3.5" /> Measurements ({measurements.length})
             </TabsTrigger>
             <TabsTrigger value="conclusion">Conclusion</TabsTrigger>
+            <TabsTrigger value="details" className="gap-1.5">
+              <ClipboardList className="h-3.5 w-3.5" /> Details
+              {plannerMatches.length > 0 && (
+                <span className="ml-1 text-[10px] bg-primary/15 text-primary rounded px-1">
+                  {plannerMatches.length}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="vases">
@@ -271,6 +283,75 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange }: Props) {
             )}
             {!trial.spec_comments && !trial.conclusion && !trial.recommendations && (
               <p className="text-sm text-muted-foreground py-6 text-center">No conclusions yet.</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="details" className="space-y-4">
+            {linkInfo && (
+              <div className="border border-border rounded-md p-3 bg-muted/30 space-y-1">
+                <h3 className="text-sm font-semibold mb-1">Link status</h3>
+                {linkInfo.notes.map((n, i) => (
+                  <div key={i} className="text-xs text-muted-foreground">{n}</div>
+                ))}
+                {linkInfo.trialNumbersInHeader.length > 0 && (
+                  <div className="text-[11px] text-muted-foreground pt-1">
+                    Expanded trial numbers from this header:{" "}
+                    <span className="font-mono">{linkInfo.trialNumbersInHeader.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {plannerMatches.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                No matching trials found in Trials Planning for{" "}
+                <span className="font-mono">{trial.trial_number || "—"}</span>.
+              </p>
+            ) : (
+              <div className="border border-border rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Trial #</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Farm</TableHead>
+                      <TableHead>Crop / Variety</TableHead>
+                      <TableHead>Harvest</TableHead>
+                      <TableHead>Start</TableHead>
+                      <TableHead className="text-right">CA</TableHead>
+                      <TableHead>VL Start</TableHead>
+                      <TableHead>VL End</TableHead>
+                      <TableHead className="text-right">Bunches</TableHead>
+                      <TableHead className="text-right">Boxes</TableHead>
+                      <TableHead>CA Chamber</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {plannerMatches.map((p) => (
+                      <TableRow key={p.trialNumber + p.trialReference}>
+                        <TableCell className="font-medium text-xs">{p.trialNumber}</TableCell>
+                        <TableCell className="text-xs"><Badge variant="outline">{p.trialType}</Badge></TableCell>
+                        <TableCell className="text-xs">{p.trialClient || "—"}</TableCell>
+                        <TableCell className="text-xs">{p.customer || "—"}</TableCell>
+                        <TableCell className="text-xs">{p.farm || "—"}</TableCell>
+                        <TableCell className="text-xs">
+                          {[p.flowerCrop, p.variety].filter(Boolean).join(" / ") || "—"}
+                        </TableCell>
+                        <TableCell className="text-xs">{fmtDate(p.harvestDate)}</TableCell>
+                        <TableCell className="text-xs">{fmtDate(p.startDate)}</TableCell>
+                        <TableCell className="text-right text-xs">{p.caDuration || "—"}</TableCell>
+                        <TableCell className="text-xs">{fmtDate(p.vlStart)}</TableCell>
+                        <TableCell className="text-xs">{fmtDate(p.vlEnd)}</TableCell>
+                        <TableCell className="text-right text-xs">{p.bunches || "—"}</TableCell>
+                        <TableCell className="text-right text-xs">{p.boxes || "—"}</TableCell>
+                        <TableCell className="text-xs">{p.caChamber || "—"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </TabsContent>
         </Tabs>
