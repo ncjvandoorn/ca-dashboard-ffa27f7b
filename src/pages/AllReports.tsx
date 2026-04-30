@@ -213,10 +213,10 @@ const AllReports = () => {
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
                     {/* Identity */}
-                    <th className="sticky left-0 bg-muted/30 z-10 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Week</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Farm</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Created By</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Created</th>
+                    <th className="sticky left-0 bg-muted/30 z-10 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Week</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Farm</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Created By</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Created</th>
                     {/* General */}
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap border-l border-border">Quality Rating</th>
                     
@@ -224,44 +224,44 @@ const AllReports = () => {
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Protocol Changes</th>
                     <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">General Comment</th>
                     {/* Intake */}
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap border-l border-border">Head Size</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Stem Length</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Dipping Stand</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Using Nets</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">pH (Intake)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">EC (Intake)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Water Quality (Intake)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Treatment (Intake)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Temp °C (Intake)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Humidity % (Intake)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-accent-foreground whitespace-nowrap">Hours (Intake)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap border-l border-border">Head Size</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Stem Length</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Dipping Stand</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Using Nets</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">pH (Intake)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">EC (Intake)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Water Quality (Intake)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Treatment (Intake)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Temp °C (Intake)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Humidity % (Intake)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Hours (Intake)</th>
                     {/* Export */}
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap border-l border-border">pH (Export)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">EC (Export)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Water Quality (Export)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Treatment (Export)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Temp °C (Export)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Humidity % (Export)</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Hours (Export)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap border-l border-border">pH (Export)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">EC (Export)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Water Quality (Export)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Treatment (Export)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Temp °C (Export)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Humidity % (Export)</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Hours (Export)</th>
                     {/* Packhouse */}
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap border-l border-border">Processing Speed</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap border-l border-border">Processing Speed</th>
                     {/* Dispatch */}
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap border-l border-border">Packing Quality</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Pack Rate</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Liner Used</th>
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">Truck Type</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap border-l border-border">Packing Quality</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Pack Rate</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Liner Used</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap">Truck Type</th>
                     {/* Sign-off */}
-                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap border-l border-border">Sign-off</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-primary whitespace-nowrap border-l border-border">Sign-off</th>
                   </tr>
                   {/* Section header row */}
                   <tr className="border-b border-border bg-muted/10">
-                    <th colSpan={4} className="sticky left-0 bg-muted/10 z-10 px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground"></th>
+                    <th colSpan={4} className="sticky left-0 bg-muted/10 z-10 px-3 py-1 text-[10px] font-bold uppercase text-primary"></th>
                     <th colSpan={4} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">General</th>
-                    <th colSpan={11} className="px-3 py-1 text-[10px] font-bold uppercase text-accent-foreground border-l border-border">Intake Area & Cold Store</th>
-                    <th colSpan={7} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border">Export Cold Store</th>
-                    <th colSpan={1} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border">Packhouse</th>
-                    <th colSpan={4} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border">Dispatch</th>
-                    <th colSpan={1} className="px-3 py-1 text-[10px] font-bold uppercase text-muted-foreground border-l border-border"></th>
+                    <th colSpan={11} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">Intake Area & Cold Store</th>
+                    <th colSpan={7} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">Export Cold Store</th>
+                    <th colSpan={1} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">Packhouse</th>
+                    <th colSpan={4} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border">Dispatch</th>
+                    <th colSpan={1} className="px-3 py-1 text-[10px] font-bold uppercase text-primary border-l border-border"></th>
                   </tr>
                 </thead>
                 <tbody>
