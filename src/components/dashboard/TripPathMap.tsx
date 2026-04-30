@@ -52,12 +52,12 @@ export function TripPathMap({ trip, height = 280, vfTracking }: Props) {
     const path = paths.find((p) => p.tripId === trip.tripId);
     const bounds: [number, number][] = [];
 
-    // Solid green line through visited points
+    // Solid green line through visited points — routed via sea
     if (path && path.points.length > 1) {
-      const line = L.polyline(
-        path.points.map((p) => [p.lat, p.lon] as [number, number]),
-        { color: COLOR_PASSED, weight: 3, opacity: 0.9 }
+      const seaPts = buildSeaRouteLatLngs(
+        path.points.map((p) => [p.lat, p.lon] as [number, number])
       );
+      const line = L.polyline(seaPts, { color: COLOR_PASSED, weight: 3, opacity: 0.9 });
       group.addLayer(line);
     }
 
