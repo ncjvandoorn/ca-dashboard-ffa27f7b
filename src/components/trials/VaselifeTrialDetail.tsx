@@ -331,7 +331,14 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                   <TableBody>
                     {plannerMatches.map((p) => (
                       <TableRow key={p.trialNumber + p.trialReference}>
-                        <TableCell className="font-medium text-xs">{p.trialNumber}</TableCell>
+                        <TableCell className="font-medium text-xs">
+                          {p.trialReference || p.trialNumber}
+                          {p.trialReference && p.trialNumber && p.trialReference !== p.trialNumber && (
+                            <div className="text-[10px] text-muted-foreground font-normal">
+                              {p.trialNumber}
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell className="text-xs"><Badge variant="outline">{p.trialType}</Badge></TableCell>
                         <TableCell className="text-xs">{p.trialClient || "—"}</TableCell>
                         <TableCell className="text-xs">{p.customer || "—"}</TableCell>

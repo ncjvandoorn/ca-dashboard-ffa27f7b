@@ -142,8 +142,6 @@ export default function TrialsDashboard() {
     for (const t of customerScopedTrials) {
       map.set(t.id, computeTrialLink(t, planner, accountNameSet));
     }
-    // eslint-disable-next-line no-console
-    console.log("[TrialsLink] planner rows:", planner.length, "sample numbers:", planner.slice(0, 5).map((p) => p.trialNumber));
     return map;
   }, [customerScopedTrials, planner, accountNameSet]);
 

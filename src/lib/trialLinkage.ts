@@ -52,7 +52,13 @@ export function computeTrialLink(
   const trialNums = expandTrialNumbers(header.trial_number);
   const trialNumSet = new Set(trialNums.map(norm));
 
-  const plannerMatches = planner.filter((p) => trialNumSet.has(norm(p.trialNumber)));
+  // Match against both `trialNumber` and `trialReference` — the user-facing
+  // ID (e.g. "CA01030") may live in either column depending on the source sheet.
+  const plannerMatches = planner.filter(
+    (p) =>
+      trialNumSet.has(norm(p.trialNumber)) ||
+      trialNumSet.has(norm(p.trialReference)),
+  );
   const hasPlannerLink = plannerMatches.length > 0;
 
   const customerLinked = !!header.customer && accountNames.has(norm(header.customer));
