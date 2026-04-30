@@ -285,6 +285,75 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <p className="text-sm text-muted-foreground py-6 text-center">No conclusions yet.</p>
             )}
           </TabsContent>
+
+          <TabsContent value="details" className="space-y-4">
+            {linkInfo && (
+              <div className="border border-border rounded-md p-3 bg-muted/30 space-y-1">
+                <h3 className="text-sm font-semibold mb-1">Link status</h3>
+                {linkInfo.notes.map((n, i) => (
+                  <div key={i} className="text-xs text-muted-foreground">{n}</div>
+                ))}
+                {linkInfo.trialNumbersInHeader.length > 0 && (
+                  <div className="text-[11px] text-muted-foreground pt-1">
+                    Expanded trial numbers from this header:{" "}
+                    <span className="font-mono">{linkInfo.trialNumbersInHeader.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {plannerMatches.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                No matching trials found in Trials Planning for{" "}
+                <span className="font-mono">{trial.trial_number || "—"}</span>.
+              </p>
+            ) : (
+              <div className="border border-border rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Trial #</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Farm</TableHead>
+                      <TableHead>Crop / Variety</TableHead>
+                      <TableHead>Harvest</TableHead>
+                      <TableHead>Start</TableHead>
+                      <TableHead className="text-right">CA</TableHead>
+                      <TableHead>VL Start</TableHead>
+                      <TableHead>VL End</TableHead>
+                      <TableHead className="text-right">Bunches</TableHead>
+                      <TableHead className="text-right">Boxes</TableHead>
+                      <TableHead>CA Chamber</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {plannerMatches.map((p) => (
+                      <TableRow key={p.trialNumber + p.trialReference}>
+                        <TableCell className="font-medium text-xs">{p.trialNumber}</TableCell>
+                        <TableCell className="text-xs"><Badge variant="outline">{p.trialType}</Badge></TableCell>
+                        <TableCell className="text-xs">{p.trialClient || "—"}</TableCell>
+                        <TableCell className="text-xs">{p.customer || "—"}</TableCell>
+                        <TableCell className="text-xs">{p.farm || "—"}</TableCell>
+                        <TableCell className="text-xs">
+                          {[p.flowerCrop, p.variety].filter(Boolean).join(" / ") || "—"}
+                        </TableCell>
+                        <TableCell className="text-xs">{fmtDate(p.harvestDate)}</TableCell>
+                        <TableCell className="text-xs">{fmtDate(p.startDate)}</TableCell>
+                        <TableCell className="text-right text-xs">{p.caDuration || "—"}</TableCell>
+                        <TableCell className="text-xs">{fmtDate(p.vlStart)}</TableCell>
+                        <TableCell className="text-xs">{fmtDate(p.vlEnd)}</TableCell>
+                        <TableCell className="text-right text-xs">{p.bunches || "—"}</TableCell>
+                        <TableCell className="text-right text-xs">{p.boxes || "—"}</TableCell>
+                        <TableCell className="text-xs">{p.caChamber || "—"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
