@@ -202,14 +202,14 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
               </div>
             )}
 
-            {/* Activity Timeline */}
+            {/* Activity Timeline (with Trial results merged in chronological order) */}
             <div>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
-                Activity Timeline ({farmActivities.length})
+                Activity Timeline ({timeline.length})
               </h4>
 
-              {farmActivities.length === 0 ? (
+              {timeline.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-6 text-center">
                   No activities recorded for this farm.
                 </p>
@@ -219,7 +219,45 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                   <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
 
                   <div className="space-y-0">
-                    {farmActivities.slice(0, 50).map((activity, i) => {
+                    {timeline.slice(0, 80).map((item, i) => {
+                      if (item.kind === "trial") {
+                        const trial = item.trial;
+                        return (
+                          <motion.button
+                            key={`trial-${trial.id}`}
+                            type="button"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.02 }}
+                            onClick={() => setSelectedTrial(trial)}
+                            className="relative w-full text-left flex items-start gap-3 py-2.5 pl-0 hover:bg-primary/5 rounded-md transition-colors"
+                          >
+                            <div className="z-10 mt-1 w-[31px] flex justify-center shrink-0">
+                              <div className="w-2.5 h-2.5 rounded-full border-2 bg-primary border-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                <FlaskConical className="h-3.5 w-3.5 text-primary shrink-0" />
+                                <span className="text-sm font-medium text-foreground truncate">
+                                  Trial {trial.trial_number || trial.id.slice(0, 8)} concluded
+                                </span>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">
+                                  Trial result
+                                </Badge>
+                              </div>
+                              {trial.recommendations && (
+                                <p className="text-xs text-muted-foreground line-clamp-2 ml-[22px]">
+                                  {trial.recommendations}
+                                </p>
+                              )}
+                              <p className="text-[11px] text-muted-foreground/60 ml-[22px] mt-0.5">
+                                {formatDate(item.date)} · Click to view trial details
+                              </p>
+                            </div>
+                          </motion.button>
+                        );
+                      }
+                      const activity = item.activity;
                       const Icon = typeIcon[activity.type] || ClipboardList;
                       const colorClass = statusColor[activity.status] || statusColor["To Do"];
 
@@ -266,9 +304,9 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                     })}
                   </div>
 
-                  {farmActivities.length > 50 && (
+                  {timeline.length > 80 && (
                     <p className="text-xs text-muted-foreground text-center pt-2">
-                      Showing 50 of {farmActivities.length} activities
+                      Showing 80 of {timeline.length} items
                     </p>
                   )}
                 </div>
@@ -277,6 +315,13 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
           </div>
         </ScrollArea>
       </DialogContent>
+      {selectedTrial && (
+        <VaselifeTrialDetail
+          trial={selectedTrial}
+          open={!!selectedTrial}
+          onOpenChange={(o) => { if (!o) setSelectedTrial(null); }}
+        />
+      )}
     </Dialog>
   );
 }
