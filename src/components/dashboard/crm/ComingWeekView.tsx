@@ -235,6 +235,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
   const { data: trials = [] } = useVaselifeHeaders();
+  const [selectedTrial, setSelectedTrial] = useState<VaselifeHeader | null>(null);
 
   useEffect(() => {
     let active = true;
