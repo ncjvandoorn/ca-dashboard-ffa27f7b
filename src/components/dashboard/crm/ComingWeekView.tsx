@@ -637,7 +637,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       const followupHits = keywords.length === 0 ? 0 : farmActivities
         .filter((a) => {
           const aDate = a.completedAt || a.createdAt || 0;
-          if (trialStartMs && aDate < trialStartMs) return false;
+          if (concludedMs && aDate <= concludedMs) return false;
           const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
           return keywords.some((k) => hay.includes(k));
         })
