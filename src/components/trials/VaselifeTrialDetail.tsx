@@ -329,49 +329,97 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
-            ) : measurementMatrix.rows.length === 0 ? (
+            ) : measurementMatrix.rows.length === 0 && measurementMatrix.treatmentAverageRows.length === 0 ? (
               <p className="text-sm text-muted-foreground py-6 text-center">No measurements recorded.</p>
             ) : (
-              <div className="border border-border rounded-md overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cultivar</TableHead>
-                      <TableHead className="w-12">T#</TableHead>
-                      {measurementMatrix.props.map((p) => (
-                        <TableHead key={p} className="text-center text-xs" title={PROPERTY_LABELS[p] || p}>
-                          {p}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {measurementMatrix.rows.map((r, i) => (
-                      <TableRow key={i} className={r.isAverage ? "bg-primary/10 font-semibold border-b-2 border-primary/40" : ""}>
-                        <TableCell className="text-xs font-medium">
-                          {r.isAverage ? (
-                            <span className="text-primary uppercase tracking-wide">★ {r.cultivar}</span>
-                          ) : (
-                            r.cultivar
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs font-mono">{r.treatmentNo}</TableCell>
-                        {measurementMatrix.props.map((p) => (
-                          <TableCell key={p} className={`text-center text-xs ${r.isAverage ? "text-primary" : ""}`}>
-                            {r.scores[p] != null ? r.scores[p] : "—"}
-                          </TableCell>
+              <div className="space-y-4">
+                {/* Treatment averages — headline comparison */}
+                {measurementMatrix.treatmentAverageRows.length > 0 && (
+                  <div className="border-2 border-primary/60 rounded-md overflow-x-auto bg-primary/5 ring-1 ring-primary/20">
+                    <div className="bg-primary/15 text-primary px-3 py-2 flex items-center gap-2 flex-wrap">
+                      <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">
+                        ★ Treatment averages
+                      </Badge>
+                      <span className="text-sm font-bold uppercase tracking-wide">
+                        Per-treatment scores (averaged across cultivars)
+                      </span>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">T#</TableHead>
+                          <TableHead>Treatment</TableHead>
+                          {measurementMatrix.props.map((p) => (
+                            <TableHead key={p} className="text-center text-xs" title={PROPERTY_LABELS[p] || p}>
+                              {p}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {measurementMatrix.treatmentAverageRows.map((r) => (
+                          <TableRow key={r.treatmentNo} className="bg-primary/5">
+                            <TableCell className="text-xs font-mono font-bold text-primary">
+                              {r.treatmentNo}
+                            </TableCell>
+                            <TableCell className="text-xs font-medium">
+                              <div className="line-clamp-2">
+                                {treatmentNameByNo.get(r.treatmentNo) || "—"}
+                              </div>
+                            </TableCell>
+                            {measurementMatrix.props.map((p) => (
+                              <TableCell key={p} className="text-center text-xs font-semibold text-primary">
+                                {r.scores[p] != null ? r.scores[p] : "—"}
+                              </TableCell>
+                            ))}
+                          </TableRow>
                         ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <div className="px-3 py-2 text-[11px] text-muted-foreground border-t border-border bg-muted/20 flex flex-wrap gap-x-3 gap-y-1">
-                  {measurementMatrix.props.map((p) => (
-                    <span key={p}>
-                      <span className="font-mono">{p}</span> = {PROPERTY_LABELS[p] || "?"}
-                    </span>
-                  ))}
-                </div>
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Per-cultivar × treatment breakdown */}
+                {measurementMatrix.rows.length > 0 && (
+                  <div className="border border-border rounded-md overflow-x-auto">
+                    <div className="px-3 py-2 text-xs font-semibold bg-muted/40 border-b border-border">
+                      Per cultivar × treatment
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cultivar</TableHead>
+                          <TableHead className="w-12">T#</TableHead>
+                          {measurementMatrix.props.map((p) => (
+                            <TableHead key={p} className="text-center text-xs" title={PROPERTY_LABELS[p] || p}>
+                              {p}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {measurementMatrix.rows.map((r, i) => (
+                          <TableRow key={i}>
+                            <TableCell className="text-xs font-medium">{r.cultivar}</TableCell>
+                            <TableCell className="text-xs font-mono">{r.treatmentNo}</TableCell>
+                            {measurementMatrix.props.map((p) => (
+                              <TableCell key={p} className="text-center text-xs">
+                                {r.scores[p] != null ? r.scores[p] : "—"}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <div className="px-3 py-2 text-[11px] text-muted-foreground border-t border-border bg-muted/20 flex flex-wrap gap-x-3 gap-y-1">
+                      {measurementMatrix.props.map((p) => (
+                        <span key={p}>
+                          <span className="font-mono">{p}</span> = {PROPERTY_LABELS[p] || "?"}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>
