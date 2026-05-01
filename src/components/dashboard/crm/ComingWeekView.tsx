@@ -292,8 +292,11 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (!rec) continue;
       if (/repeat/i.test(rec)) continue;
       if (!t.farm) continue;
-      const trialStartMs = t.start_vl ? Date.parse(t.start_vl) : (t.harvest_date ? Date.parse(t.harvest_date) : 0);
       const trialDate = concludedByTrial.get(t.id) || t.start_vl || t.harvest_date || null;
+      // For "passed follow-ups" we only count activity AFTER the trial concluded.
+      // Activities during the trial setup/run are part of the trial itself, not follow-up.
+      const concludedMs = trialDate ? Date.parse(trialDate) : 0;
+      if (!concludedMs) continue;
       const farmNameNorm = t.farm.toLowerCase();
       const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
       // Only mine the recommendation text — that's where the actionable
@@ -311,7 +314,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       });
       const hits = farmActivities.filter((a) => {
         const aDate = a.completedAt || a.createdAt || 0;
-        if (trialStartMs && aDate < trialStartMs) return false;
+        if (aDate <= concludedMs) return false;
         const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
         // Require a distinctive product token to appear — generic words don't count.
         return distinctiveKw.some((k) => hay.includes(k));
