@@ -10,7 +10,8 @@ export type SharePageType =
   | "compare_trips"
   | "quality_report"
   | "trip_detail"
-  | "container_detail";
+  | "container_detail"
+  | "vaselife_report";
 
 export const SHARE_TTL_DAYS = 7;
 
