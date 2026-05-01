@@ -25,8 +25,8 @@ import {
   useVaselifeMeasurements,
   type VaselifeHeader,
 } from "@/hooks/useVaselifeTrials";
-import { getPropertyMeta, diffTreatmentNames } from "@/lib/vaselifeProperties";
-import { PropertyHeader, ScoreChip, ScoreScaleLegend } from "./VaselifeScoreUi";
+import { getPropertyMeta, diffTreatmentNames, scoreToneClasses, type ScoreTone } from "@/lib/vaselifeProperties";
+import { PropertyHeader, ScoreChip, ScoreScaleLegend, ToneBadge } from "./VaselifeScoreUi";
 import type { Trial } from "@/lib/trialsParser";
 import type { TrialLinkInfo } from "@/lib/trialLinkage";
 
