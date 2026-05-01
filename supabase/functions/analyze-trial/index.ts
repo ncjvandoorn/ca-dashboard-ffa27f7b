@@ -126,13 +126,23 @@ Scoring: most properties 1-5 where 5 = best. Exceptions: FLO neutral, CVW damage
 
 Write a SHORT, scannable commentary that complements the team's conclusion with property-level nuance.
 
-STRICT FORMAT (markdown, nothing else):
-**Verdict:** one sentence — does the data support the team's conclusion?
-**Nuance:** 2-4 short bullets with concrete trade-offs, secondary winners, or weak spots. Cite property codes (e.g. FLC, LFQ) with treatment numbers and averaged scores in parentheses, e.g. "T2 better on flower colour (FLC 4.12 vs T1 4.00)".
-**Bottom line:** one sentence.
+STRICT FORMAT — output exactly these three sections, each separated by a blank line, with the bold label on its own line followed by the content on the next line(s):
+
+**Verdict**
+
+One sentence: does the data support the team's conclusion?
+
+**Nuance**
+
+- 2-4 short bullets with trade-offs, secondary winners, or weak spots.
+- Cite property codes with treatment numbers and averaged scores in parentheses, e.g. "T2 better on flower colour (FLC 4.12 vs T1 4.00)".
+
+**Bottom line**
+
+One sentence.
 
 Hard rules:
-- Maximum ~120 words total. No headings beyond the three bold labels above. No preamble like "Senior Scientist Analysis".
+- Maximum ~120 words total. No other headings. No preamble like "Senior Scientist Analysis".
 - If there is no meaningful extra insight beyond the team's conclusion, say so plainly under Nuance — never fabricate.
 ${instr?.instructions ? `\nGlobal instructions:\n${instr.instructions}` : ""}`;
 
