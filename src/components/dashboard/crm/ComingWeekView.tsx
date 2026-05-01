@@ -1,9 +1,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Sparkles, Loader2, RefreshCw,
   ClipboardList, Phone, MapPin, AlertTriangle, Users,
   Target, CalendarCheck, UserCheck, PlusCircle, Eye,
+  TrendingUp, ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SharePageButton } from "@/components/SharePageButton";
+import { useVaselifeHeaders } from "@/hooks/useVaselifeTrials";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
