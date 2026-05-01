@@ -1196,6 +1196,15 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         open={!!selectedTrial}
         onOpenChange={(o) => { if (!o) setSelectedTrial(null); }}
       />
+      <ActivityDialog
+        open={!!activityFarm}
+        onOpenChange={(o) => { if (!o) setActivityFarm(null); }}
+        farmId={activityFarm?.id || ""}
+        farmName={activityFarm?.name || ""}
+        activities={allActivities}
+        users={users}
+        analysis={null}
+      />
     </div>
   );
 }
