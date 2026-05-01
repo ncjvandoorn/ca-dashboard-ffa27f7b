@@ -131,6 +131,15 @@ interface WeeklyPlan {
   suggestedNewActivities: { type: string; subject: string; farmName: string; suggestedUser: string; suggestedDay?: string; reason: string; priority: "critical" | "high" | "medium" }[];
   farmsWithoutCoverage: { farmId: string; farmName: string; lastActivityDate: string; qualityStatus: string; recommendation: string }[];
   weeklyFocus: string;
+  commercialFollowups?: {
+    trialId: string;
+    trialNumber: string;
+    farmName: string;
+    customer?: string;
+    keyProduct: string;
+    trialDate: string;
+    reason: string;
+  }[];
 }
 
 const typeIcon: Record<string, typeof ClipboardList> = {
