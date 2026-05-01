@@ -1,11 +1,20 @@
 /**
  * Plantscout vase-life property metadata.
- * Score scale is 0–5 across all properties.
+ *
+ * IMPORTANT — Plantscout scoring convention (verified against the live
+ * vaselife_measurements data):
+ *   • All quality / damage properties are scored on a 0–5 scale where
+ *     5 = perfect / no problem and 1 = unacceptable / severe problem.
+ *   • This is true even for properties named "… Damage" / "Botrytis" — the
+ *     score answers "how clean is it?" not "how much damage is there?".
+ *   • The only true damage-direction property is CVW (Cultivar Write-off),
+ *     which counts write-offs (high = bad).
+ *   • FLO (Flower Opening) is context-dependent on the retail target stage.
  *
  * `direction`:
- *  - "quality"  : higher is better (5 = perfect, 1 = unacceptable)
- *  - "damage"   : lower is better  (0 = none, 5 = severe)  — Botrytis, write-off, abnormality, damage
- *  - "neutral"  : context-dependent (FLO — opening stage)
+ *  - "quality" : higher is better (5 = perfect / clean / healthy)
+ *  - "damage"  : lower is better  (CVW only)
+ *  - "neutral" : context-dependent (FLO)
  */
 export type PropDirection = "quality" | "damage" | "neutral";
 
@@ -34,21 +43,21 @@ export const PROPERTY_META: Record<string, PropertyMeta> = {
   FLD: {
     code: "FLD",
     label: "Flower Damage",
-    direction: "damage",
+    direction: "quality",
     description:
-      "Mechanical / physiological damage to the flower (bruising, shatter, petal loss). 0 = none, 5 = severe.",
+      "Condition of the flower (bruising, shatter, petal loss). 5 = pristine, 1 = severely damaged.",
   },
   FLA: {
     code: "FLA",
     label: "Flower Abnormality",
-    direction: "damage",
-    description: "Malformation of the flower. 0 = normal, 5 = strongly abnormal.",
+    direction: "quality",
+    description: "Form of the flower. 5 = normal shape, 1 = strongly abnormal.",
   },
   STD: {
     code: "STD",
     label: "Stem Damage",
     direction: "quality",
-    description: "Condition of the stem. 5 = clean, 1 = heavily damaged.",
+    description: "Condition of the stem. 5 = clean / undamaged, 1 = heavily damaged.",
   },
   STB: {
     code: "STB",
@@ -89,21 +98,23 @@ export const PROPERTY_META: Record<string, PropertyMeta> = {
   BTR: {
     code: "BTR",
     label: "Botrytis (flower)",
-    direction: "damage",
-    description: "Severity of Botrytis on flowers. 0 = none, 5 = severe infection.",
+    direction: "quality",
+    description:
+      "Botrytis status on flowers. 5 = clean / no Botrytis, 1 = severe infection.",
   },
   BLF: {
     code: "BLF",
     label: "Botrytis (leaf)",
-    direction: "damage",
-    description: "Severity of Botrytis on foliage. 0 = none, 5 = severe infection.",
+    direction: "quality",
+    description:
+      "Botrytis status on foliage. 5 = clean / no Botrytis, 1 = severe infection.",
   },
   CVW: {
     code: "CVW",
     label: "Cultivar Write-off",
     direction: "damage",
     description:
-      "Share of vases scored unacceptable for this cultivar/treatment. Higher = more write-off.",
+      "Share of vases scored unacceptable for this cultivar/treatment. 0 = none written off, 5 = all written off.",
   },
 };
 

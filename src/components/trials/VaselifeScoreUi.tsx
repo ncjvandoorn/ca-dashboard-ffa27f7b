@@ -81,9 +81,10 @@ export function ScoreScaleLegend() {
   return (
     <div className="text-[10px] text-muted-foreground border-t border-border pt-2 mt-2 leading-relaxed">
       <span className="font-semibold uppercase tracking-wide mr-1">Scale 0–5:</span>
-      For <em>quality</em> properties (colour, leaves, stems): 5 = perfect, 1 = unacceptable.
-      For <em>damage</em> properties (Botrytis, write-off, abnormality): 0 = none, 5 = severe.
-      Flower Opening (FLO) is context-dependent on the retail stage.
+      Plantscout scores almost every property on a "5 = best" scale —
+      5 = perfect / clean / no Botrytis, 1 = unacceptable / severe.
+      Exceptions: <strong>FLO</strong> (Flower Opening) is context-dependent on the retail stage,
+      and <strong>CVW</strong> (Cultivar Write-off) is the one true damage metric (high = more write-off).
     </div>
   );
 }
