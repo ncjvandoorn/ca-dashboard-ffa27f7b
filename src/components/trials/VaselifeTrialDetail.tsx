@@ -399,7 +399,7 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <TabsList>
               <TabsTrigger value="vases" className="gap-1.5">
-                <Sprout className="h-3.5 w-3.5" /> Vases ({vases.length})
+                <Sprout className="h-3.5 w-3.5" /> Vases ({derivedVaseCount || vases.length})
               </TabsTrigger>
               <TabsTrigger value="measurements" className="gap-1.5">
                 <Beaker className="h-3.5 w-3.5" /> Measurements ({measurements.length})
