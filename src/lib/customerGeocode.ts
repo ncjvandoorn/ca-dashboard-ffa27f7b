@@ -191,10 +191,16 @@ export async function geocodeCustomer(
   return result;
 }
 
-/** Filter for accounts whose delivery (or main) address ends in Kenya. */
+/** Filter for accounts whose delivery (or main) address is in East Africa. */
+const EAST_AFRICA_RE = /\b(kenya|uganda|tanzania|rwanda|ethiopia|burundi|south\s*sudan)\b/i;
+export function isEastAfricaAccount(addr1: string, addr2: string): boolean {
+  const a = `${addr1} ${addr2}`;
+  return EAST_AFRICA_RE.test(a);
+}
+
+/** @deprecated use isEastAfricaAccount */
 export function isKenyaAccount(addr1: string, addr2: string): boolean {
-  const a = `${addr1} ${addr2}`.toLowerCase();
-  return /\bkenya\b/.test(a);
+  return isEastAfricaAccount(addr1, addr2);
 }
 
 /** Pick the best address for a customer (delivery preferred, fall back to main). */
