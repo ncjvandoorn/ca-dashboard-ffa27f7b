@@ -313,7 +313,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       });
     }
     return out.sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
-  }, [trials, allActivities, accounts]);
+  }, [trials, allActivities, accounts, concludedByTrial]);
 
   useEffect(() => {
     let active = true;
