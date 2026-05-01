@@ -609,9 +609,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (/repeat/i.test(rec)) continue;
       if (!t.farm) continue;
 
-      const trialStartMs = t.start_vl ? Date.parse(t.start_vl) : (t.harvest_date ? Date.parse(t.harvest_date) : 0);
       const trialDate = concludedByTrial.get(t.id) || t.start_vl || t.harvest_date || null;
       const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
+      const concludedMs = trialDateMs;
       const farmName = t.farm;
       const farmNameNorm = farmName.toLowerCase();
 
