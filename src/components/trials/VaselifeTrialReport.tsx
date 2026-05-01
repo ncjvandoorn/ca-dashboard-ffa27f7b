@@ -307,16 +307,19 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {treatmentAverages.map((v) => {
+                    {treatmentAverages.map((v, idx) => {
                       const meas =
                         v.treatment_no != null ? avgMeasByTreatment.get(v.treatment_no) : undefined;
+                      const diffName = treatmentNameDiff.diffs[idx] || v.treatment_name || "—";
                       return (
                         <TableRow key={v.id_line}>
                           <TableCell className="text-xs font-mono font-bold text-primary">
                             {v.treatment_no}
                           </TableCell>
                           <TableCell className="text-xs">
-                            <div className="line-clamp-2">{v.treatment_name || "—"}</div>
+                            <div className="line-clamp-2" title={v.treatment_name || undefined}>
+                              {diffName}
+                            </div>
                           </TableCell>
                           <TableCell className="text-right text-xs font-semibold tabular-nums">
                             {v.flv_days != null ? Number(v.flv_days).toFixed(1) : "—"}
