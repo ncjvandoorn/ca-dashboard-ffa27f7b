@@ -237,6 +237,64 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
   const { data: trials = [] } = useVaselifeHeaders();
   const [selectedTrial, setSelectedTrial] = useState<VaselifeHeader | null>(null);
+  const [passedOpen, setPassedOpen] = useState(false);
+
+  // Commercial trials that DO have post-trial CRM follow-up — for review.
+  const passedFollowups = useMemo(() => {
+    const STOP = new Set(["the","and","for","with","this","that","from","have","has","was","were","will","not","but","you","our","are","any","all","into","per","its","use","one","two","they","them","very","good","more","also","than","then","over","under","very","like","when","what"]);
+    const extractKw = (text: string): string[] => {
+      const tokens = (text.toLowerCase().match(/[a-z0-9][a-z0-9\-+/]{2,}/g) || [])
+        .filter((t) => !STOP.has(t) && !/^\d+$/.test(t));
+      return Array.from(new Set(tokens));
+    };
+    const out: Array<{
+      trialId: string; trialNumber: string; farmName: string; customer?: string;
+      trialDate: string | null; keyProduct: string;
+      activities: Array<{ date: string | null; subject: string; description: string; type: string }>;
+    }> = [];
+    for (const t of trials) {
+      const rec = (t.recommendations || "").trim();
+      if (!rec) continue;
+      if (/repeat/i.test(rec)) continue;
+      if (!t.farm) continue;
+      const trialDate = t.start_vl || t.harvest_date || t.source_date || null;
+      const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
+      const farmNameNorm = t.farm.toLowerCase();
+      const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
+      const keywords = extractKw(`${rec} ${t.conclusion || ""}`);
+      const farmActivities = allActivities.filter((a) => {
+        if (a.accountId && farmAccountId) return a.accountId === farmAccountId;
+        const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
+        return hay.includes(farmNameNorm);
+      });
+      const hits = farmActivities.filter((a) => {
+        const aDate = a.completedAt || a.createdAt || 0;
+        if (trialDateMs && aDate < trialDateMs) return false;
+        const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
+        return keywords.some((k) => hay.includes(k));
+      });
+      if (hits.length === 0) continue;
+      const keyProduct = keywords.find((k) => /^(gvb|avb|svb|chrysal|clear|professional|rva|bulb|cvb)/i.test(k)) || keywords[0] || "product";
+      out.push({
+        trialId: t.id,
+        trialNumber: t.trial_number || t.id.slice(0, 8),
+        farmName: t.farm,
+        customer: t.customer || undefined,
+        trialDate,
+        keyProduct,
+        activities: hits
+          .sort((a, b) => (b.completedAt || b.createdAt || 0) - (a.completedAt || a.createdAt || 0))
+          .slice(0, 5)
+          .map((a) => ({
+            date: a.completedAt ? new Date(a.completedAt).toISOString() : (a.createdAt ? new Date(a.createdAt).toISOString() : null),
+            subject: a.subject || "",
+            description: a.description || "",
+            type: a.type || "",
+          })),
+      });
+    }
+    return out.sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
+  }, [trials, allActivities, accounts]);
 
   useEffect(() => {
     let active = true;
