@@ -758,3 +758,34 @@ function OrdersList({ orders }: { orders: any[] }) {
     </Section>
   );
 }
+
+function SharedVaselifeReport({ payload }: { payload: any }) {
+  const trial = payload?.trial;
+  const vases = payload?.vases ?? [];
+  const measurements = payload?.measurements ?? [];
+  if (!trial) {
+    return (
+      <div className="max-w-md mx-auto mt-12 text-center">
+        <p className="text-sm text-muted-foreground">No trial data in this snapshot.</p>
+      </div>
+    );
+  }
+  const reportCode =
+    trial.trial_number ||
+    (trial.start_vl ? String(trial.start_vl).replace(/-/g, "").slice(0, 8) : String(trial.id || "").slice(0, 8));
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center gap-2 mb-1">
+        <FileText className="h-5 w-5 text-primary" />
+        <h1 className="text-2xl font-semibold">Vase Life Report</h1>
+        <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
+          {reportCode}
+        </span>
+      </div>
+      <p className="text-sm text-muted-foreground mb-6">
+        {trial.crop || "—"}{trial.customer ? ` · ${trial.customer}` : ""}{trial.farm ? ` · ${trial.farm}` : ""}
+      </p>
+      <VaselifeTrialReportBody trial={trial} vases={vases} measurements={measurements} />
+    </div>
+  );
+}
