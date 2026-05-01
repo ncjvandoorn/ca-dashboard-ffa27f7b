@@ -14,6 +14,10 @@ interface CustomerScope {
   allowedFarmIds: string[];      // farm account ids the user may see
   allowedOrderIds: string[];     // services-order ids the user may see
   customerAccountId?: string;    // if customer
+  // Lower-cased name lists used to scope Plantscout trial data, since
+  // vaselife_headers stores customer/farm as free-text names, not ids.
+  allowedCustomerNames?: string[];
+  allowedFarmNames?: string[];
 }
 
 interface AIRequestBody {
@@ -33,6 +37,10 @@ interface AIRequestBody {
   rawActivities?: any[];
   logisticsData?: any[];
   sfTracking?: any[];
+  // Plantscout vaselife trial data (full datasets — server filters per scope)
+  vaselifeHeaders?: any[];
+  vaselifeVases?: any[];
+  vaselifeMeasurements?: any[];
   // customer scoping (server applies to every tool)
   customerScope?: CustomerScope;
 }
