@@ -893,7 +893,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                             ),
                           });
                         }
-                        items.sort((a, b) => a.date - b.date);
+                        items.sort((a, b) => b.date - a.date);
                         return items.map((it) => it.node);
                       })()}
                     </div>
