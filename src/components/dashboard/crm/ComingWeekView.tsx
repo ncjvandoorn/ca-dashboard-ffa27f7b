@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SharePageButton } from "@/components/SharePageButton";
-import { useVaselifeHeaders } from "@/hooks/useVaselifeTrials";
+import { useVaselifeHeaders, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
+import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
