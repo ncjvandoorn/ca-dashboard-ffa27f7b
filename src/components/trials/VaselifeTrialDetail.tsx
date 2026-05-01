@@ -475,7 +475,9 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                           return (
                             <TableRow key={t.id_line} className="bg-primary/5">
                               <TableCell className="font-mono text-xs font-semibold text-primary">
-                                {t.treatment_no}
+                                {(t as any).merged_treatment_nos?.length > 1
+                                  ? (t as any).merged_treatment_nos.join("/")
+                                  : t.treatment_no}
                               </TableCell>
                               <TableCell className="text-xs">
                                 <div
