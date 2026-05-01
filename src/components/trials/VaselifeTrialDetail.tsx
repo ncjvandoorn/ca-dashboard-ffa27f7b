@@ -351,8 +351,8 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                           <TableHead className="w-12">T#</TableHead>
                           <TableHead>Treatment</TableHead>
                           {measurementMatrix.props.map((p) => (
-                            <TableHead key={p} className="text-center text-xs" title={PROPERTY_LABELS[p] || p}>
-                              {p}
+                            <TableHead key={p} className="text-center text-xs">
+                              <PropertyHeader code={p} />
                             </TableHead>
                           ))}
                         </TableRow>
@@ -369,8 +369,8 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                               </div>
                             </TableCell>
                             {measurementMatrix.props.map((p) => (
-                              <TableCell key={p} className="text-center text-xs font-semibold text-primary">
-                                {r.scores[p] != null ? r.scores[p] : "—"}
+                              <TableCell key={p} className="text-center">
+                                <ScoreChip code={p} score={r.scores[p]} bold />
                               </TableCell>
                             ))}
                           </TableRow>
@@ -392,8 +392,8 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                           <TableHead>Cultivar</TableHead>
                           <TableHead className="w-12">T#</TableHead>
                           {measurementMatrix.props.map((p) => (
-                            <TableHead key={p} className="text-center text-xs" title={PROPERTY_LABELS[p] || p}>
-                              {p}
+                            <TableHead key={p} className="text-center text-xs">
+                              <PropertyHeader code={p} />
                             </TableHead>
                           ))}
                         </TableRow>
@@ -404,20 +404,30 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                             <TableCell className="text-xs font-medium">{r.cultivar}</TableCell>
                             <TableCell className="text-xs font-mono">{r.treatmentNo}</TableCell>
                             {measurementMatrix.props.map((p) => (
-                              <TableCell key={p} className="text-center text-xs">
-                                {r.scores[p] != null ? r.scores[p] : "—"}
+                              <TableCell key={p} className="text-center">
+                                <ScoreChip code={p} score={r.scores[p]} />
                               </TableCell>
                             ))}
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                    <div className="px-3 py-2 text-[11px] text-muted-foreground border-t border-border bg-muted/20 flex flex-wrap gap-x-3 gap-y-1">
-                      {measurementMatrix.props.map((p) => (
-                        <span key={p}>
-                          <span className="font-mono">{p}</span> = {PROPERTY_LABELS[p] || "?"}
-                        </span>
-                      ))}
+                    <div className="px-3 py-2 text-[11px] border-t border-border bg-muted/20 space-y-1">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-0.5">
+                        {measurementMatrix.props.map((p) => {
+                          const meta = getPropertyMeta(p);
+                          return (
+                            <div key={p} className="flex gap-1.5 text-foreground/80">
+                              <span className="font-mono font-semibold shrink-0">{p}</span>
+                              <span className="shrink-0">— {meta.label}</span>
+                              <span className="text-muted-foreground truncate" title={meta.description}>
+                                · {meta.description}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <ScoreScaleLegend />
                     </div>
                   </div>
                 )}
