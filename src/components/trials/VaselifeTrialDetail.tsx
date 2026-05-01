@@ -364,7 +364,7 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <TabsTrigger value="measurements" className="gap-1.5">
                 <Beaker className="h-3.5 w-3.5" /> Measurements ({measurements.length})
               </TabsTrigger>
-              <TabsTrigger value="conclusion">Conclusion</TabsTrigger>
+              <TabsTrigger value="conclusion">Conclusion &amp; Recommendation</TabsTrigger>
               <TabsTrigger value="details" className="gap-1.5">
                 <ClipboardList className="h-3.5 w-3.5" /> Details
                 {plannerMatches.length > 0 && (
