@@ -538,7 +538,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .slice(0, 25);
 
     return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr: plannerWeekNr, weekDates, commercialFollowupCandidates };
-  }, [allActivities, reports, activeUsers, userMap, accountMap, users, referenceNow, resolvedCurrentWeek]);
+  }, [allActivities, reports, activeUsers, userMap, accountMap, users, accounts, trials, referenceNow, resolvedCurrentWeek]);
 
   const runAnalysis = useCallback(async () => {
     setLoading(true);
