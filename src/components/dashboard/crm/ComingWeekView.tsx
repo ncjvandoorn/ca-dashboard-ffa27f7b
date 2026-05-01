@@ -636,6 +636,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       // Find activities for this farm (match by accountMap name — trial.farm
       // is a free-text name from Plantscout, so we match against account names).
       const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
+      // Skip trials whose farm cannot be linked to a real CRM Account —
+      // free-text substring matching produces phantom follow-ups.
+      if (!farmAccountId) continue;
 
       // Distinctive product keywords from the recommendation only — those
       // are the actionable terms a sales follow-up would mention.
@@ -643,12 +646,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       const distinctiveKeywords = allKeywords.filter(isDistinctive);
       const keywords = distinctiveKeywords;
 
-      const farmActivities = allActivities.filter((a) => {
-        if (a.accountId && farmAccountId) return a.accountId === farmAccountId;
-        // Fallback: match by farm name appearing in subject/description
-        const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
-        return hay.includes(farmNameNorm);
-      });
+      const farmActivities = allActivities.filter((a) => a.accountId === farmAccountId);
 
       // If we have no distinctive keywords, treat as 0 hits → keeps trial in
       // the "needs follow-up" list (safer than spuriously matching generic words).
