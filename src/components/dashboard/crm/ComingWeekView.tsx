@@ -314,7 +314,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       });
       const hits = farmActivities.filter((a) => {
         const aDate = a.completedAt || a.createdAt || 0;
-        if (trialStartMs && aDate < trialStartMs) return false;
+        if (aDate <= concludedMs) return false;
         const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
         // Require a distinctive product token to appear — generic words don't count.
         return distinctiveKw.some((k) => hay.includes(k));
