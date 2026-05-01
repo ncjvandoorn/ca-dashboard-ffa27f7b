@@ -148,6 +148,10 @@ function SharedRenderer({ row }: { row: SharedPageRow }) {
     return <SharedCompareTrips payload={payload} />;
   }
 
+  if (row.page_type === "vaselife_report") {
+    return <SharedVaselifeReport payload={payload} />;
+  }
+
   return <Unsupported />;
 }
 
