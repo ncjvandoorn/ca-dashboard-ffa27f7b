@@ -316,6 +316,11 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (!concludedMs) continue;
       const farmNameNorm = t.farm.toLowerCase();
       const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
+      // Hard requirement: the trial's farm must map to a real Account in the
+      // CRM. Without that link, any "matches" against free-text subject/
+      // description fields are unreliable (different farms can share tokens
+      // like "Kariki" or "EMF" and produce phantom follow-ups). Skip entirely.
+      if (!farmAccountId) continue;
       // Only mine the recommendation text — that's where the actionable
       // product name lives. The conclusion often repeats generic vocabulary.
       const allKw = extractKw(rec);
@@ -324,11 +329,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       // we'd just generate false positives.
       if (distinctiveKw.length === 0) continue;
 
-      const farmActivities = allActivities.filter((a) => {
-        if (a.accountId && farmAccountId) return a.accountId === farmAccountId;
-        const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
-        return hay.includes(farmNameNorm);
-      });
+      const farmActivities = allActivities.filter((a) => a.accountId === farmAccountId);
       const hits = farmActivities.filter((a) => {
         const aDate = a.completedAt || a.createdAt || 0;
         if (aDate <= concludedMs) return false;
