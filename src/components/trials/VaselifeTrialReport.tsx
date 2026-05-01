@@ -9,15 +9,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, FlaskConical, Sprout, Beaker, CheckCircle2 } from "lucide-react";
+import { Loader2, FileText, FlaskConical, Sprout, Beaker, CheckCircle2, Star } from "lucide-react";
 import {
   useVaselifeVases,
   useVaselifeMeasurements,
-  PROPERTY_LABELS,
   type VaselifeHeader,
   type VaselifeVase,
-  type VaselifeMeasurement,
 } from "@/hooks/useVaselifeTrials";
+import {
+  getPropertyMeta,
+  getCropHeadlineKpis,
+  formatDeltaDays,
+} from "@/lib/vaselifeProperties";
+import {
+  PropertyHeader,
+  ScoreChip,
+  ToneBadge,
+  ScoreScaleLegend,
+} from "./VaselifeScoreUi";
 
 interface Props {
   trial: VaselifeHeader | null;
@@ -47,14 +56,23 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
   const { data: vases = [], isLoading: vasesLoading } = useVaselifeVases(trial?.id);
   const { data: measurements = [], isLoading: measLoading } = useVaselifeMeasurements(trial?.id);
 
-  // Properties actually measured in this trial (crop-specific subset)
-  const tripProperties = useMemo(() => {
-    const set = new Set<string>();
+  // Properties actually measured in this trial (crop-specific subset),
+  // plus an observation-count map used to pick fallback headline KPIs.
+  const { tripProperties, propCounts } = useMemo(() => {
+    const counts = new Map<string, number>();
     for (const m of measurements) {
-      if (m.property_name) set.add(m.property_name);
+      if (!m.property_name) continue;
+      counts.set(m.property_name, (counts.get(m.property_name) || 0) + 1);
     }
-    return Array.from(set).sort();
+    const props = Array.from(counts.keys()).sort();
+    return { tripProperties: props, propCounts: counts };
   }, [measurements]);
+
+  // Headline KPIs ordered by per-crop importance (falls back to top-by-count)
+  const headlineKpis = useMemo(
+    () => getCropHeadlineKpis(trial?.crop, tripProperties, propCounts),
+    [trial?.crop, tripProperties, propCounts],
+  );
 
   // Index measurements by (cultivar|treatment_no) -> property -> score
   const measByVase = useMemo(() => {
@@ -96,6 +114,15 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
     }
     return m;
   }, [treatmentAverages, measByVase]);
+
+  // Control treatment = lowest treatment_no in the averages set (typically water/no-treatment).
+  const controlTreatment = useMemo(() => {
+    if (treatmentAverages.length === 0) return null;
+    return treatmentAverages.reduce((acc, v) =>
+      (v.treatment_no ?? 99) < (acc.treatment_no ?? 99) ? v : acc,
+    treatmentAverages[0]);
+  }, [treatmentAverages]);
+  const controlVlDays = controlTreatment?.flv_days ?? null;
 
 
   if (!trial) return null;
@@ -160,11 +187,11 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
             </div>
           </section>
 
-          {/* TREATMENT AVERAGES — the headline comparison (the point of the trial) */}
-          {treatmentAverages.length > 0 && (
+          {/* HEADLINE KPI CARD — vase life + per-crop priority metrics with Δ vs control */}
+          {treatmentAverages.length > 0 && headlineKpis.length > 0 && (
             <section>
               <h3 className="text-xs uppercase tracking-wide text-primary font-bold mb-2 flex items-center gap-1.5">
-                <FlaskConical className="h-3.5 w-3.5" /> Treatment averages — comparison across cultivars
+                <Star className="h-3.5 w-3.5 fill-primary" /> Headline results — what matters most for {trial.crop || "this crop"}
               </h3>
               <div className="border-2 border-primary/60 rounded-md overflow-x-auto bg-primary/5 ring-1 ring-primary/20">
                 <Table>
@@ -173,34 +200,52 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                       <TableHead className="w-12 text-xs">T#</TableHead>
                       <TableHead className="text-xs">Treatment</TableHead>
                       <TableHead className="text-right text-xs w-20">VL days</TableHead>
-                      <TableHead className="text-right text-xs w-20">FVL %</TableHead>
-                      <TableHead className="text-right text-xs w-20">Bot %</TableHead>
-                      {tripProperties.map((p) => (
-                        <TableHead key={p} className="text-center text-[11px]" title={PROPERTY_LABELS[p] || p}>
-                          {p}
+                      <TableHead className="text-right text-xs w-20">Δ vs ctrl</TableHead>
+                      {headlineKpis.map((p) => (
+                        <TableHead key={p} className="text-center text-[11px]">
+                          <PropertyHeader code={p} full />
                         </TableHead>
                       ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {treatmentAverages.map((v) => {
-                      const meas = v.treatment_no != null ? avgMeasByTreatment.get(v.treatment_no) : undefined;
+                      const meas =
+                        v.treatment_no != null ? avgMeasByTreatment.get(v.treatment_no) : undefined;
+                      const isControl = controlTreatment?.id_line === v.id_line;
+                      const delta =
+                        controlVlDays != null && v.flv_days != null
+                          ? Number(v.flv_days) - Number(controlVlDays)
+                          : null;
+                      const d = formatDeltaDays(delta);
                       return (
                         <TableRow key={v.id_line} className="bg-primary/5">
                           <TableCell className="text-xs font-mono font-bold text-primary">
                             {v.treatment_no}
                           </TableCell>
                           <TableCell className="text-xs font-medium">
-                            <div className="line-clamp-2">{v.treatment_name || "—"}</div>
+                            <div className="flex items-start gap-1.5">
+                              <span className="line-clamp-2">{v.treatment_name || "—"}</span>
+                              {isControl && (
+                                <Badge variant="outline" className="text-[9px] shrink-0 mt-0.5">
+                                  control
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
-                          <TableCell className="text-right text-xs font-bold text-primary">
-                            {v.flv_days != null ? v.flv_days.toFixed(1) : "—"}
+                          <TableCell className="text-right text-xs font-bold text-primary tabular-nums">
+                            {v.flv_days != null ? Number(v.flv_days).toFixed(1) : "—"}
                           </TableCell>
-                          <TableCell className="text-right text-xs">{v.flo_percentage ?? "—"}</TableCell>
-                          <TableCell className="text-right text-xs">{v.bot_percentage ?? "—"}</TableCell>
-                          {tripProperties.map((p) => (
-                            <TableCell key={p} className="text-center text-xs font-semibold text-primary">
-                              {meas?.get(p) != null ? meas!.get(p) : "—"}
+                          <TableCell className="text-right text-xs">
+                            {isControl ? (
+                              <span className="text-muted-foreground">—</span>
+                            ) : (
+                              <ToneBadge tone={d.tone}>{d.text}</ToneBadge>
+                            )}
+                          </TableCell>
+                          {headlineKpis.map((p) => (
+                            <TableCell key={p} className="text-center">
+                              <ScoreChip code={p} score={meas?.get(p) ?? null} bold />
                             </TableCell>
                           ))}
                         </TableRow>
@@ -209,16 +254,81 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                   </TableBody>
                 </Table>
               </div>
-              {tripProperties.length > 0 && (
-                <div className="mt-2 px-3 py-1.5 text-[11px] text-muted-foreground border border-border rounded-md bg-muted/20 flex flex-wrap gap-x-3 gap-y-1">
-                  <span className="font-semibold uppercase tracking-wide">Legend:</span>
-                  {tripProperties.map((p) => (
-                    <span key={p}>
-                      <span className="font-mono">{p}</span> = {PROPERTY_LABELS[p] || "?"}
-                    </span>
-                  ))}
+              <div className="mt-1.5 text-[10px] text-muted-foreground">
+                Δ shows extra vase-life days vs the control (lowest treatment number).
+                Hover any property code for the full definition.
+              </div>
+            </section>
+          )}
+
+          {/* TREATMENT AVERAGES — full breakdown across every measured property */}
+          {treatmentAverages.length > 0 && tripProperties.length > 0 && (
+            <section>
+              <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
+                <FlaskConical className="h-3.5 w-3.5" /> All measured properties — per treatment
+              </h3>
+              <div className="border border-border rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 text-xs">T#</TableHead>
+                      <TableHead className="text-xs">Treatment</TableHead>
+                      <TableHead className="text-right text-xs w-16">VL d</TableHead>
+                      <TableHead className="text-right text-xs w-16">FVL %</TableHead>
+                      <TableHead className="text-right text-xs w-16">Bot %</TableHead>
+                      {tripProperties.map((p) => (
+                        <TableHead key={p} className="text-center text-[11px]">
+                          <PropertyHeader code={p} />
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {treatmentAverages.map((v) => {
+                      const meas =
+                        v.treatment_no != null ? avgMeasByTreatment.get(v.treatment_no) : undefined;
+                      return (
+                        <TableRow key={v.id_line}>
+                          <TableCell className="text-xs font-mono font-bold text-primary">
+                            {v.treatment_no}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            <div className="line-clamp-2">{v.treatment_name || "—"}</div>
+                          </TableCell>
+                          <TableCell className="text-right text-xs font-semibold tabular-nums">
+                            {v.flv_days != null ? Number(v.flv_days).toFixed(1) : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-xs tabular-nums">
+                            {v.flo_percentage ?? "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-xs tabular-nums">
+                            {v.bot_percentage ?? "—"}
+                          </TableCell>
+                          {tripProperties.map((p) => (
+                            <TableCell key={p} className="text-center">
+                              <ScoreChip code={p} score={meas?.get(p) ?? null} />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="mt-2 px-3 py-2 text-[11px] border border-border rounded-md bg-muted/20 space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
+                  {tripProperties.map((p) => {
+                    const meta = getPropertyMeta(p);
+                    return (
+                      <div key={p} className="flex gap-1.5">
+                        <span className="font-mono font-semibold text-foreground/80 shrink-0">{p}</span>
+                        <span className="text-foreground/80 shrink-0">— {meta.label}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+                <ScoreScaleLegend />
+              </div>
             </section>
           )}
 
@@ -342,16 +452,23 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
               </div>
             )}
             {tripProperties.length > 0 && (
-              <div className="mt-3 px-3 py-2 text-[11px] text-muted-foreground border border-border rounded-md bg-muted/20 flex flex-wrap gap-x-3 gap-y-1">
-                <span className="font-semibold uppercase tracking-wide">
-                  Property legend ({trial.crop || "this crop"}):
-                </span>
-                {tripProperties.map((p) => (
-                  <span key={p}>
-                    <span className="font-mono">{p}</span> ={" "}
-                    {PROPERTY_LABELS[p] || "?"}
-                  </span>
-                ))}
+              <div className="mt-3 px-3 py-2 text-[11px] border border-border rounded-md bg-muted/20 space-y-1.5">
+                <div className="font-semibold uppercase tracking-wide text-muted-foreground">
+                  Property legend ({trial.crop || "this crop"})
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-0.5">
+                  {tripProperties.map((p) => {
+                    const meta = getPropertyMeta(p);
+                    return (
+                      <div key={p} className="flex gap-1.5 text-foreground/80">
+                        <span className="font-mono font-semibold shrink-0">{p}</span>
+                        <span className="shrink-0">— {meta.label}:</span>
+                        <span className="text-muted-foreground">{meta.description}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <ScoreScaleLegend />
               </div>
             )}
           </section>
@@ -519,48 +636,44 @@ function VaseDetailCard({
           </div>
         </div>
 
-        {/* Measurements — crop-specific properties */}
-        {properties.length > 0 && (
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
-              Measurements (final observation)
-            </div>
-            <div className="border border-border rounded-md overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {properties.map((p) => (
-                      <TableHead
-                        key={p}
-                        className="text-center text-[11px]"
-                        title={PROPERTY_LABELS[p] || p}
-                      >
-                        {p}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    {properties.map((p) => {
-                      const score = measurements.get(p);
-                      return (
-                        <TableCell
-                          key={p}
-                          className={`text-center text-xs ${
-                            isAvg ? "text-primary font-semibold" : ""
-                          }`}
-                        >
-                          {score != null ? score : "—"}
+        {/* Measurements — crop-specific properties (only those with data for this vase) */}
+        {(() => {
+          const vaseProps = properties.filter((p) => measurements.get(p) != null);
+          if (vaseProps.length === 0) return null;
+          return (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
+                Measurements (final observation)
+              </div>
+              <div className="border border-border rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {vaseProps.map((p) => (
+                        <TableHead key={p} className="text-center text-[11px]">
+                          <PropertyHeader code={p} />
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      {vaseProps.map((p) => (
+                        <TableCell key={p} className="text-center">
+                          <ScoreChip
+                            code={p}
+                            score={measurements.get(p) ?? null}
+                            bold={isAvg}
+                          />
                         </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                </TableBody>
-              </Table>
+                      ))}
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
