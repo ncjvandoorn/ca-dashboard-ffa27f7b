@@ -115,3 +115,43 @@ export function useVaselifeMeasurements(headerId: string | undefined) {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+/** Fetch ALL rows from a Supabase table by paging past the 1000-row default. */
+async function fetchAllPaged<T>(
+  table: "vaselife_vases" | "vaselife_measurements",
+  pageSize = 1000,
+): Promise<T[]> {
+  const out: T[] = [];
+  let from = 0;
+  // Hard safety cap to avoid runaway loops
+  for (let i = 0; i < 50; i++) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = (data || []) as T[];
+    out.push(...rows);
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+  return out;
+}
+
+/** Fetch every vase row across all trials — used for cross-trial search and AI agent. */
+export function useAllVaselifeVases() {
+  return useQuery({
+    queryKey: ["vaselife-vases-all"],
+    queryFn: () => fetchAllPaged<VaselifeVase>("vaselife_vases"),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** Fetch every measurement row across all trials — used for cross-trial search and AI agent. */
+export function useAllVaselifeMeasurements() {
+  return useQuery({
+    queryKey: ["vaselife-measurements-all"],
+    queryFn: () => fetchAllPaged<VaselifeMeasurement>("vaselife_measurements"),
+    staleTime: 5 * 60 * 1000,
+  });
+}

@@ -23,6 +23,8 @@ interface CustomerScope {
   allowedFarmIds: string[];
   allowedOrderIds: string[];
   customerAccountId?: string;
+  allowedCustomerNames?: string[];
+  allowedFarmNames?: string[];
 }
 
 interface AIAgentProps {
@@ -37,6 +39,9 @@ interface AIAgentProps {
   shipperArrivals?: ShipperArrival[];
   shipperReports?: ShipperReport[];
   sfTrips?: SFTrip[];
+  vaselifeHeaders?: any[];
+  vaselifeVases?: any[];
+  vaselifeMeasurements?: any[];
   customerScope?: CustomerScope;
 }
 
@@ -179,7 +184,7 @@ function buildFarmDataContext(reports: QualityReport[], accounts: Account[], use
   return summaries;
 }
 
-export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis, containers, servicesOrders, shipperArrivals, shipperReports, sfTrips, customerScope }: AIAgentProps) {
+export function AIAgent({ reports, accounts, activities, users, exceptionAnalysis, seasonalityAnalysis, containers, servicesOrders, shipperArrivals, shipperReports, sfTrips, vaselifeHeaders, vaselifeVases, vaselifeMeasurements, customerScope }: AIAgentProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -443,6 +448,9 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             rawActivities: rawActivitiesForAI,
             logisticsData,
             sfTracking,
+            vaselifeHeaders: vaselifeHeaders || [],
+            vaselifeVases: vaselifeVases || [],
+            vaselifeMeasurements: vaselifeMeasurements || [],
             customerScope: customerScope || null,
           }),
         });
@@ -552,7 +560,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
         setIsLoading(false);
       }
     },
-    [messages, isLoading, farmData, rawActivitiesForAI, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, farmIndex, containerIndex, tripIndex, logisticsData, sfTracking, customerScope]
+    [messages, isLoading, farmData, rawActivitiesForAI, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, farmIndex, containerIndex, tripIndex, logisticsData, sfTracking, vaselifeHeaders, vaselifeVases, vaselifeMeasurements, customerScope]
   );
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import chrysalLogo from "@/assets/chrysal-logo.png";
-import { useVaselifeHeaders, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
+import { useVaselifeHeaders, useAllVaselifeVases, useAllVaselifeMeasurements, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
+import { PROPERTY_META } from "@/lib/vaselifeProperties";
 import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
@@ -42,6 +43,8 @@ const ALL = "__all__";
 
 export default function TrialsDashboard() {
   const { data: trials = [], isLoading } = useVaselifeHeaders();
+  const { data: allVases = [] } = useAllVaselifeVases();
+  const { data: allMeasurements = [] } = useAllVaselifeMeasurements();
   const { isCustomer, customerAccount } = useAuth();
   const { data: accounts = [] } = useAccounts();
   const { data: customerFarms = [] } = useCustomerFarms();
@@ -94,13 +97,52 @@ export default function TrialsDashboard() {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [customerScopedTrials, customerFilter]);
 
+  /**
+   * Build an extra search index per header containing cultivar names, treatment
+   * names, post-harvest / store / consumer phase strings, and measured property
+   * names + labels — so users can search by variety, treatment, "botrytis",
+   * "leaf yellowing", etc., not just header fields.
+   */
+  const extraSearchByHeaderId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const v of allVases) {
+      const parts = [
+        v.cultivar,
+        v.treatment_name,
+        v.post_harvest,
+        v.store_phase,
+        v.consumer_phase,
+        v.climate_room,
+        v.id_greenhouse,
+        v.id_dipping,
+        v.id_pulsing,
+        v.treatment_no != null ? `treatment ${v.treatment_no}` : "",
+      ].filter(Boolean).join(" ");
+      if (!parts) continue;
+      map.set(v.id_header, ((map.get(v.id_header) || "") + " " + parts).toLowerCase());
+    }
+    for (const m of allMeasurements) {
+      const meta = m.property_name ? PROPERTY_META[m.property_name] : undefined;
+      const parts = [
+        m.cultivar,
+        m.property_name,
+        meta?.label,
+        meta?.description,
+      ].filter(Boolean).join(" ");
+      if (!parts) continue;
+      map.set(m.id_header, ((map.get(m.id_header) || "") + " " + parts).toLowerCase());
+    }
+    return map;
+  }, [allVases, allMeasurements]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return customerScopedTrials.filter((t) => {
       if (customerFilter !== ALL && t.customer !== customerFilter) return false;
       if (farmFilter !== ALL && t.farm !== farmFilter) return false;
       if (!q) return true;
-      // Search across every meaningful trial field
+      // Search across every meaningful trial field, plus cross-trial vase &
+      // measurement metadata (cultivars, treatments, properties, etc.)
       const haystack = [
         t.trial_number,
         t.farm,
@@ -125,9 +167,10 @@ export default function TrialsDashboard() {
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
-      return haystack.includes(q);
+      const extra = extraSearchByHeaderId.get(t.id) || "";
+      return haystack.includes(q) || extra.includes(q);
     });
-  }, [customerScopedTrials, search, customerFilter, farmFilter]);
+  }, [customerScopedTrials, search, customerFilter, farmFilter, extraSearchByHeaderId]);
 
   /** Set of all account names (customers + farms) for matching */
   const accountNameSet = useMemo(() => {
@@ -213,7 +256,7 @@ export default function TrialsDashboard() {
           <div className="relative flex-1 min-w-0 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search anything: trial, farm, customer, crop, comments…"
+              placeholder="Search anything: trial, farm, cultivar, treatment, property, comments…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"

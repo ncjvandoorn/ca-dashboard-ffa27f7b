@@ -12,6 +12,7 @@ import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights"
 import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
 import { AIAgent } from "@/components/dashboard/AIAgent";
+import { useVaselifeHeaders, useAllVaselifeVases, useAllVaselifeMeasurements } from "@/hooks/useVaselifeTrials";
 import { LastUploadFooter } from "@/components/dashboard/LastUploadFooter";
 
 
@@ -62,6 +63,9 @@ const Index = () => {
   const { data: shipperArrivals } = useShipperArrivals();
   const { data: shipperReports } = useShipperReports();
   const { data: sfTrips } = useSensiwatchTrips();
+  const { data: vaselifeHeaders } = useVaselifeHeaders();
+  const { data: vaselifeVases } = useAllVaselifeVases();
+  const { data: vaselifeMeasurements } = useAllVaselifeMeasurements();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
@@ -166,19 +170,37 @@ const Index = () => {
   }, [activities, visibleFarmIds]);
 
   // Customer scope passed to the AI agent so the server can enforce access.
+  // Includes lower-cased customer + farm NAMES used to scope Plantscout trial
+  // data (which stores names, not ids). Trials whose names don't match are
+  // never returned to the AI for customer users.
   const aiCustomerScope = useMemo(() => {
     if (!isCustomer || !customerAccount) return undefined;
     const allowedFarmIds = visibleFarmIds ? Array.from(visibleFarmIds) : [];
     const allowedOrderIds = (servicesOrders || [])
       .filter((o) => o.customerAccountId === customerAccount.customerAccountId)
       .map((o) => o.id);
+
+    const accountById = new Map((accounts || []).map((a) => [a.id, a.name]));
+    const myAccount = (accounts || []).find(
+      (a) => a.id === customerAccount.customerAccountId,
+    );
+    const allowedCustomerNames = myAccount?.name
+      ? [myAccount.name.trim().toLowerCase()]
+      : [];
+    const allowedFarmNames = allowedFarmIds
+      .map((id) => accountById.get(id))
+      .filter((n): n is string => !!n)
+      .map((n) => n.trim().toLowerCase());
+
     return {
       isCustomer: true,
       allowedFarmIds,
       allowedOrderIds,
       customerAccountId: customerAccount.customerAccountId,
+      allowedCustomerNames,
+      allowedFarmNames,
     };
-  }, [isCustomer, customerAccount, visibleFarmIds, servicesOrders]);
+  }, [isCustomer, customerAccount, visibleFarmIds, servicesOrders, accounts]);
 
   const visibleReports = useMemo(() => {
     return scopedReports.filter(isVisibleFarmReport);
@@ -352,6 +374,9 @@ const Index = () => {
                   shipperArrivals={isCustomer ? [] : (shipperArrivals || [])}
                   shipperReports={isCustomer ? [] : (shipperReports || [])}
                   sfTrips={isCustomer ? [] : (sfTrips || [])}
+                  vaselifeHeaders={vaselifeHeaders || []}
+                  vaselifeVases={vaselifeVases || []}
+                  vaselifeMeasurements={vaselifeMeasurements || []}
                   customerScope={aiCustomerScope}
                 />
               )}

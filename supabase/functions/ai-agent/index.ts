@@ -14,6 +14,10 @@ interface CustomerScope {
   allowedFarmIds: string[];      // farm account ids the user may see
   allowedOrderIds: string[];     // services-order ids the user may see
   customerAccountId?: string;    // if customer
+  // Lower-cased name lists used to scope Plantscout trial data, since
+  // vaselife_headers stores customer/farm as free-text names, not ids.
+  allowedCustomerNames?: string[];
+  allowedFarmNames?: string[];
 }
 
 interface AIRequestBody {
@@ -33,6 +37,10 @@ interface AIRequestBody {
   rawActivities?: any[];
   logisticsData?: any[];
   sfTracking?: any[];
+  // Plantscout vaselife trial data (full datasets — server filters per scope)
+  vaselifeHeaders?: any[];
+  vaselifeVases?: any[];
+  vaselifeMeasurements?: any[];
   // customer scoping (server applies to every tool)
   customerScope?: CustomerScope;
 }
@@ -98,7 +106,34 @@ interface ToolContext {
   logisticsData: any[];
   sfTracking: any[];
   weeklyPlans: any[];
+  vaselifeHeaders: any[];
+  vaselifeVases: any[];
+  vaselifeMeasurements: any[];
   scope?: CustomerScope;
+}
+
+const norm = (s: any) => (typeof s === "string" ? s.trim().toLowerCase() : "");
+
+/**
+ * Whether a Plantscout trial header is visible to the current user.
+ * For internal users: always true. For customers: ONLY visible if either:
+ *   - the trial's customer name matches the user's customer account name, OR
+ *   - the trial's farm name matches a farm the customer has consent for.
+ * If neither match, the trial is completely invisible — never returned, never
+ * mentioned, never substituted with a similar one.
+ */
+function isTrialVisible(header: any, scope?: CustomerScope): boolean {
+  if (!scope?.isCustomer) return true;
+  const allowedCust = new Set((scope.allowedCustomerNames || []).map(norm));
+  const allowedFarms = new Set((scope.allowedFarmNames || []).map(norm));
+  const c = norm(header.customer);
+  const f = norm(header.farm);
+  return (!!c && allowedCust.has(c)) || (!!f && allowedFarms.has(f));
+}
+
+function scopedTrials(ctx: ToolContext): any[] {
+  if (!ctx.scope?.isCustomer) return ctx.vaselifeHeaders;
+  return ctx.vaselifeHeaders.filter((h) => isTrialVisible(h, ctx.scope));
 }
 
 function executeTool(name: string, args: any, ctx: ToolContext): any {
@@ -220,6 +255,91 @@ function executeTool(name: string, args: any, ctx: ToolContext): any {
       if (!plan) return { error: `No weekly plan for week ${weekNr}` };
       return plan;
     }
+
+    // ------------------------------------------------------------------
+    // PLANTSCOUT VASELIFE TRIALS
+    // ------------------------------------------------------------------
+    case "list_trials": {
+      const limit = Math.min(args.limit || 50, 200);
+      const list = scopedTrials(ctx);
+      return list.slice(0, limit).map((h: any) => ({
+        id: h.id,
+        trial_number: h.trial_number,
+        farm: h.farm,
+        customer: h.customer,
+        crop: h.crop,
+        harvest_date: h.harvest_date,
+        cultivar_count: h.cultivar_count,
+        treatment_count: h.treatment_count,
+        total_vases: h.total_vases,
+      }));
+    }
+
+    case "get_trial": {
+      const trialId = args.trialId;
+      const trialNumber = norm(args.trialNumber);
+      const list = scopedTrials(ctx);
+      const header = list.find(
+        (h: any) => h.id === trialId || (trialNumber && norm(h.trial_number) === trialNumber),
+      );
+      if (!header) {
+        if (ctx.scope?.isCustomer) {
+          return { error: `You do not have access to trial "${args.trialNumber || trialId}". It is either not linked to your customer account / consented farms or does not exist. Do NOT suggest a similar trial.` };
+        }
+        return { error: `Trial not found: ${args.trialNumber || trialId}` };
+      }
+      const vases = ctx.vaselifeVases.filter((v: any) => v.id_header === header.id);
+      const measurements = ctx.vaselifeMeasurements.filter((m: any) => m.id_header === header.id);
+      return { header, vases, measurements };
+    }
+
+    case "search_trials": {
+      const q = norm(args.query);
+      const limit = Math.min(args.limit || 30, 100);
+      if (!q) return { error: "query is required" };
+      const list = scopedTrials(ctx);
+      // Build per-header search text from header + vases + measurements
+      const vasesByHeader = new Map<string, any[]>();
+      for (const v of ctx.vaselifeVases) {
+        const arr = vasesByHeader.get(v.id_header) || [];
+        arr.push(v);
+        vasesByHeader.set(v.id_header, arr);
+      }
+      const measByHeader = new Map<string, any[]>();
+      for (const m of ctx.vaselifeMeasurements) {
+        const arr = measByHeader.get(m.id_header) || [];
+        arr.push(m);
+        measByHeader.set(m.id_header, arr);
+      }
+      const matches: any[] = [];
+      for (const h of list) {
+        const headerText = [
+          h.trial_number, h.farm, h.customer, h.crop, h.freight_type,
+          h.initial_quality, h.objective, h.spec_comments, h.conclusion,
+          h.recommendations,
+        ].filter(Boolean).join(" ").toLowerCase();
+        const vaseText = (vasesByHeader.get(h.id) || []).map((v) => [
+          v.cultivar, v.treatment_name, v.post_harvest, v.store_phase,
+          v.consumer_phase, v.climate_room,
+        ].filter(Boolean).join(" ")).join(" ").toLowerCase();
+        const measText = (measByHeader.get(h.id) || []).map((m) => [
+          m.cultivar, m.property_name,
+        ].filter(Boolean).join(" ")).join(" ").toLowerCase();
+        if (headerText.includes(q) || vaseText.includes(q) || measText.includes(q)) {
+          matches.push({
+            id: h.id,
+            trial_number: h.trial_number,
+            farm: h.farm,
+            customer: h.customer,
+            crop: h.crop,
+            harvest_date: h.harvest_date,
+          });
+          if (matches.length >= limit) break;
+        }
+      }
+      return { count: matches.length, trials: matches };
+    }
+
 
     default:
       return { error: `Unknown tool: ${name}` };
@@ -347,6 +467,49 @@ const TOOLS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "list_trials",
+      description: "List Plantscout vaselife trials the user has access to. Returns lightweight summaries (trial number, farm, customer, crop, harvest date, counts).",
+      parameters: {
+        type: "object",
+        properties: { limit: { type: "number" } },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_trial",
+      description: "Fetch full details of one Plantscout vaselife trial: header (objective, conclusion, recommendations, dates), all vases (cultivar × treatment with VL days, botrytis %, flower-opening %), and all measurements (per-property final scores). Provide trialId or trialNumber.",
+      parameters: {
+        type: "object",
+        properties: {
+          trialId: { type: "string" },
+          trialNumber: { type: "string" },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_trials",
+      description: "Free-text search across trial headers, cultivar names, treatment names, and measured properties (e.g. 'botrytis', 'leaf yellowing', a specific cultivar). Returns matching trial summaries.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string" },
+          limit: { type: "number" },
+        },
+        required: ["query"],
+        additionalProperties: false,
+      },
+    },
+  },
 ];
 
 // ============================================================================
@@ -354,14 +517,15 @@ const TOOLS = [
 // ============================================================================
 function buildSystemPrompt(adminInstructions: string, aiLearnings: string, scope?: CustomerScope): string {
   const scopeNote = scope?.isCustomer
-    ? `\n\n**ACCESS SCOPE — CUSTOMER USER**: This user is a customer and ONLY has access to ${scope.allowedFarmIds.length} consented farms and ${scope.allowedOrderIds.length} services orders. All tools automatically filter to this scope.
+    ? `\n\n**ACCESS SCOPE — CUSTOMER USER**: This user is a customer and ONLY has access to ${scope.allowedFarmIds.length} consented farms and ${scope.allowedOrderIds.length} services orders. Plantscout vaselife trials are filtered to those whose customer or farm name matches this scope. All tools automatically filter to this scope.
 
 CRITICAL CUSTOMER RULES — VIOLATING THESE IS A SEVERE FAILURE:
-1. NEVER mention, list, or describe any farm, customer, order, container, or trip outside this scope.
-2. NEVER fuzzy-match or substitute one farm for another. If the user asks about "AAA Growers Simba Farm" and that exact farm is not in their scope, you MUST refuse — even if a different farm with a similar name (e.g. "Simbi Roses") IS in their scope. Treat similar names as DIFFERENT farms.
-3. If a tool returns an access-denied error, respond plainly: "You do not have access to information about [exact name they asked]." Do NOT offer alternatives, do NOT mention which farms they CAN access unless they explicitly ask "what farms can I see".
-4. NEVER infer, assume, or state that any farm is "part of", "belongs to", "affiliated with", or "in the same group as" any other farm, customer, or organisation — even if names share words (e.g. "AAA Growers X" and "AAA Growers Y"). Group/parent relationships only exist if explicitly present in tool results. If not in the data, do not mention any grouping.
-5. If unsure whether the user's farm is in scope, call list_farms() first to verify.`
+1. NEVER mention, list, or describe any farm, customer, order, container, trip, or Plantscout trial outside this scope.
+2. NEVER fuzzy-match or substitute one farm/trial for another. If the user asks about "AAA Growers Simba Farm" and that exact farm is not in their scope, you MUST refuse — even if a different farm with a similar name (e.g. "Simbi Roses") IS in their scope. Treat similar names as DIFFERENT entities.
+3. If a tool returns an access-denied error, respond plainly: "You do not have access to information about [exact name they asked]." Do NOT offer alternatives, do NOT mention which farms/trials they CAN access unless they explicitly ask.
+4. NEVER infer, assume, or state that any farm/trial is "part of", "belongs to", "affiliated with", or "in the same group as" any other farm, customer, or organisation — even if names share words. Group/parent relationships only exist if explicitly present in tool results. If not in the data, do not mention any grouping.
+5. If a Plantscout trial's farm or customer is not linked to a known account in the user's scope, that trial is invisible — never reveal it exists.
+6. If unsure whether a farm or trial is in scope, call list_farms() or list_trials() first to verify.`
     : "";
 
   return `You are a strict, factual data analyst for Chrysal's cut flower post-harvest quality monitoring system. You have TOOLS to fetch data on demand — use them instead of making things up.
@@ -377,6 +541,7 @@ YOUR CORE IDENTITY: methodical, precise, repetitive by design. Same question + s
 - For a specific container/booking/temperature chain → call get_container(containerNumber).
 - For live vessel/temperature/location → call list_sf_trips() or get_sf_trip(tripId).
 - For "what did the planner say in week X" → call get_weekly_plan(weekNr).
+- For Plantscout vaselife trials (vase life days, botrytis, flower opening, per-cultivar/treatment scoring, trial conclusions/recommendations) → call list_trials(), get_trial(trialNumber), or search_trials(query) (e.g. "botrytis", a cultivar, a treatment).
 - Discover available farms with list_farms() if you don't know names.
 - Call MULTIPLE tools in parallel when independent (e.g. quality + activities for same farm).
 
@@ -420,6 +585,9 @@ serve(async (req) => {
       rawActivities = [],
       logisticsData = [],
       sfTracking = [],
+      vaselifeHeaders = [],
+      vaselifeVases = [],
+      vaselifeMeasurements = [],
       customerScope,
     } = body;
 
@@ -479,10 +647,37 @@ serve(async (req) => {
       const summaries = weeklyPlans.map((p: any) => ({ week_nr: p.week_nr, created_at: p.created_at }));
       contextParts.push(`**AVAILABLE WEEKLY PLANS (call get_weekly_plan(weekNr) for content):**\n${JSON.stringify(summaries)}`);
     }
+    // Plantscout vaselife trial index — pre-scoped per customer
+    if (vaselifeHeaders?.length) {
+      const visibleTrials = customerScope?.isCustomer
+        ? vaselifeHeaders.filter((h: any) => isTrialVisible(h, customerScope))
+        : vaselifeHeaders;
+      if (visibleTrials.length) {
+        const trialIdx = visibleTrials.map((h: any) => ({
+          id: h.id,
+          trial_number: h.trial_number,
+          farm: h.farm,
+          customer: h.customer,
+          crop: h.crop,
+          harvest_date: h.harvest_date,
+        }));
+        contextParts.push(`**PLANTSCOUT TRIAL INDEX (call get_trial(trialNumber) for full details, search_trials(query) for cultivar / treatment / property search):**\n${JSON.stringify(trialIdx)}`);
+      }
+    }
 
     const userContextMessage = contextParts.join("\n\n---\n\n") || "No pre-computed context available.";
 
-    const ctx: ToolContext = { farmData, rawActivities, logisticsData, sfTracking, weeklyPlans, scope: customerScope };
+    const ctx: ToolContext = {
+      farmData,
+      rawActivities,
+      logisticsData,
+      sfTracking,
+      weeklyPlans,
+      vaselifeHeaders,
+      vaselifeVases,
+      vaselifeMeasurements,
+      scope: customerScope,
+    };
 
     // Conversation state for the agentic loop
     const allMessages: any[] = [
