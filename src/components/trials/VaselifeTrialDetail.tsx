@@ -225,33 +225,68 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
-            ) : cultivars.length === 0 ? (
+            ) : cultivars.length === 0 && treatmentAverages.length === 0 ? (
               <p className="text-sm text-muted-foreground py-6 text-center">No vase data.</p>
             ) : (
               <div className="space-y-5">
-                {cultivars.map(({ cultivar, treatments, isAverage }) => (
-                  <div
-                    key={cultivar}
-                    className={
-                      isAverage
-                        ? "border-2 border-primary/60 rounded-md overflow-hidden bg-primary/5 ring-1 ring-primary/20"
-                        : "border border-border rounded-md overflow-hidden"
-                    }
-                  >
-                    <div
-                      className={
-                        isAverage
-                          ? "bg-primary/15 text-primary px-3 py-2 text-sm font-bold uppercase tracking-wide flex items-center gap-2"
-                          : "bg-muted/40 px-3 py-2 text-sm font-semibold"
-                      }
-                    >
-                      {isAverage && (
-                        <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">
-                          Average across cultivars
-                        </Badge>
-                      )}
-                      <span>{cultivar}</span>
-                      <span className={isAverage ? "text-xs font-normal text-primary/70" : "ml-2 text-xs font-normal text-muted-foreground"}>
+                {/* Treatment averages — the headline comparison */}
+                {treatmentAverages.length > 0 && (
+                  <div className="border-2 border-primary/60 rounded-md overflow-hidden bg-primary/5 ring-1 ring-primary/20">
+                    <div className="bg-primary/15 text-primary px-3 py-2 flex items-center gap-2 flex-wrap">
+                      <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">
+                        ★ Treatment averages
+                      </Badge>
+                      <span className="text-sm font-bold uppercase tracking-wide">
+                        Comparison across all cultivars
+                      </span>
+                      <span className="text-xs font-normal text-primary/70 ml-auto">
+                        {treatmentAverages.length} treatment
+                        {treatmentAverages.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">T#</TableHead>
+                          <TableHead>Treatment</TableHead>
+                          <TableHead className="w-20 text-right">VL days</TableHead>
+                          <TableHead className="w-20 text-right">Bot %</TableHead>
+                          <TableHead className="w-20 text-right">Flo %</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {treatmentAverages.map((t) => (
+                          <TableRow key={t.id_line} className="bg-primary/5">
+                            <TableCell className="font-mono text-xs font-semibold text-primary">
+                              {t.treatment_no}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              <div className="line-clamp-2 font-medium">
+                                {t.treatment_name || "—"}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right text-xs font-bold text-primary">
+                              {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
+                            </TableCell>
+                            <TableCell className="text-right text-xs">
+                              {t.bot_percentage ?? "—"}
+                            </TableCell>
+                            <TableCell className="text-right text-xs">
+                              {t.flo_percentage ?? "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Per-cultivar breakdown */}
+                {cultivars.map(({ cultivar, treatments }) => (
+                  <div key={cultivar} className="border border-border rounded-md overflow-hidden">
+                    <div className="bg-muted/40 px-3 py-2 text-sm font-semibold">
+                      {cultivar}
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
                         ({treatments.length} treatment{treatments.length === 1 ? "" : "s"})
                       </span>
                     </div>
