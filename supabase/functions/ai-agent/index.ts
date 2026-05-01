@@ -467,6 +467,49 @@ const TOOLS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "list_trials",
+      description: "List Plantscout vaselife trials the user has access to. Returns lightweight summaries (trial number, farm, customer, crop, harvest date, counts).",
+      parameters: {
+        type: "object",
+        properties: { limit: { type: "number" } },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_trial",
+      description: "Fetch full details of one Plantscout vaselife trial: header (objective, conclusion, recommendations, dates), all vases (cultivar × treatment with VL days, botrytis %, flower-opening %), and all measurements (per-property final scores). Provide trialId or trialNumber.",
+      parameters: {
+        type: "object",
+        properties: {
+          trialId: { type: "string" },
+          trialNumber: { type: "string" },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_trials",
+      description: "Free-text search across trial headers, cultivar names, treatment names, and measured properties (e.g. 'botrytis', 'leaf yellowing', a specific cultivar). Returns matching trial summaries.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string" },
+          limit: { type: "number" },
+        },
+        required: ["query"],
+        additionalProperties: false,
+      },
+    },
+  },
 ];
 
 // ============================================================================
