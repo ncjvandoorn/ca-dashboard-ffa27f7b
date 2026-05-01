@@ -43,6 +43,8 @@ const ALL = "__all__";
 
 export default function TrialsDashboard() {
   const { data: trials = [], isLoading } = useVaselifeHeaders();
+  const { data: allVases = [] } = useAllVaselifeVases();
+  const { data: allMeasurements = [] } = useAllVaselifeMeasurements();
   const { isCustomer, customerAccount } = useAuth();
   const { data: accounts = [] } = useAccounts();
   const { data: customerFarms = [] } = useCustomerFarms();
