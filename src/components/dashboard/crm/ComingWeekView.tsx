@@ -1135,7 +1135,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                       <span className="font-medium text-xs">{a.activitySubject}</span>
                       <Badge variant="outline" className="text-[10px] text-warning border-warning/30">{a.daysOverdue}d overdue</Badge>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{a.farmName} · {a.assignedUser}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <button type="button" onClick={() => openFarmActivity(a.farmName)} className="text-primary hover:underline">{a.farmName}</button>
+                      {" · "}{a.assignedUser}
+                    </p>
                     <p className="text-[11px] text-muted-foreground italic">{a.recommendation}</p>
                   </div>
                 ))}
