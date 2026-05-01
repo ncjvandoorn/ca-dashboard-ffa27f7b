@@ -14,8 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SharePageButton } from "@/components/SharePageButton";
-import { useVaselifeHeaders, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
+import { useVaselifeHeaders, useAllVaselifeMeasurements, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
 import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
+import { computeConcludedDate } from "@/lib/trialConcluded";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
@@ -236,6 +237,23 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
   const { data: trials = [] } = useVaselifeHeaders();
+  const { data: allMeasurements = [] } = useAllVaselifeMeasurements();
+  const concludedByTrial = useMemo(() => {
+    const byHeader = new Map<string, number>();
+    for (const m of allMeasurements) {
+      const d = m.observation_days;
+      if (typeof d !== "number" || !Number.isFinite(d)) continue;
+      const cur = byHeader.get(m.id_header) ?? 0;
+      if (d > cur) byHeader.set(m.id_header, d);
+    }
+    const out = new Map<string, string | null>();
+    for (const t of trials) {
+      const maxDays = byHeader.get(t.id) ?? 0;
+      const ms: { observation_days: number | null }[] = maxDays > 0 ? [{ observation_days: maxDays }] : [];
+      out.set(t.id, computeConcludedDate(t, ms));
+    }
+    return out;
+  }, [trials, allMeasurements]);
   const [selectedTrial, setSelectedTrial] = useState<VaselifeHeader | null>(null);
   const [passedOpen, setPassedOpen] = useState(false);
 
@@ -258,7 +276,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (/repeat/i.test(rec)) continue;
       if (!t.farm) continue;
       const trialStartMs = t.start_vl ? Date.parse(t.start_vl) : (t.harvest_date ? Date.parse(t.harvest_date) : 0);
-      const trialDate = t.source_date || t.start_vl || t.harvest_date || null;
+      const trialDate = concludedByTrial.get(t.id) || t.start_vl || t.harvest_date || null;
       const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
       const farmNameNorm = t.farm.toLowerCase();
       const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
@@ -295,7 +313,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       });
     }
     return out.sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
-  }, [trials, allActivities, accounts]);
+  }, [trials, allActivities, accounts, concludedByTrial]);
 
   useEffect(() => {
     let active = true;
@@ -552,7 +570,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (!t.farm) continue;
 
       const trialStartMs = t.start_vl ? Date.parse(t.start_vl) : (t.harvest_date ? Date.parse(t.harvest_date) : 0);
-      const trialDate = t.source_date || t.start_vl || t.harvest_date || null;
+      const trialDate = concludedByTrial.get(t.id) || t.start_vl || t.harvest_date || null;
       const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
       const farmName = t.farm;
       const farmNameNorm = farmName.toLowerCase();
@@ -601,7 +619,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .slice(0, 25);
 
     return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr: plannerWeekNr, weekDates, commercialFollowupCandidates };
-  }, [allActivities, reports, activeUsers, userMap, accountMap, users, accounts, trials, referenceNow, resolvedCurrentWeek]);
+  }, [allActivities, reports, activeUsers, userMap, accountMap, users, accounts, trials, referenceNow, resolvedCurrentWeek, concludedByTrial]);
 
   const runAnalysis = useCallback(async () => {
     setLoading(true);
