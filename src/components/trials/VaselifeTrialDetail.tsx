@@ -307,6 +307,13 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           </section>
         )}
 
+        {trial.conclusion && (
+          <section className="space-y-1 mt-3">
+            <h3 className="text-sm font-semibold">Conclusion</h3>
+            <p className="text-sm text-muted-foreground whitespace-pre-line">{trial.conclusion}</p>
+          </section>
+        )}
+
         {/* AI analysis section */}
         <section className="mt-3 border border-primary/30 rounded-md bg-primary/5">
           <div className="flex items-center justify-between gap-2 px-3 py-2">
