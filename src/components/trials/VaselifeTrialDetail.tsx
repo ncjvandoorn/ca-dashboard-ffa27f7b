@@ -43,6 +43,45 @@ function fmtDate(d: string | null): string {
   return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+/** Tone for vase-life days (more is better). */
+function vlDaysTone(v: number | null | undefined): ScoreTone {
+  if (v == null) return "neutral";
+  if (v >= 7) return "good";
+  if (v >= 5) return "warn";
+  return "bad";
+}
+/** Tone for Botrytis % (damage — lower is better). */
+function botPctTone(v: number | null | undefined): ScoreTone {
+  if (v == null) return "neutral";
+  if (v <= 5) return "good";
+  if (v <= 20) return "warn";
+  return "bad";
+}
+/** Tone for Flower-opening % / FVL % (quality — higher is better). */
+function floPctTone(v: number | null | undefined): ScoreTone {
+  if (v == null) return "neutral";
+  if (v >= 75) return "good";
+  if (v >= 50) return "warn";
+  return "bad";
+}
+function MetricChip({
+  tone,
+  children,
+}: {
+  tone: ScoreTone;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center justify-center min-w-[36px] px-1.5 py-0.5 rounded text-[11px] font-semibold tabular-nums ${scoreToneClasses(
+        tone,
+      )}`}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches = [], linkInfo }: Props) {
   const { data: vases = [], isLoading: vasesLoading } = useVaselifeVases(trial?.id);
   const { data: measurements = [], isLoading: measLoading } = useVaselifeMeasurements(trial?.id);
