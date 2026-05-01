@@ -21,13 +21,14 @@ export function CustomersMap({ markers, height = 560, onSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
+  const didInitialFitRef = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     const map = L.map(containerRef.current, {
-      center: [-0.5, 36.8], // central Kenya
+      center: [-0.5, 37.5], // central Kenya
       zoom: 7,
-      minZoom: 3,
+      minZoom: 2,
       maxZoom: 16,
       scrollWheelZoom: true,
       worldCopyJump: true,
@@ -60,7 +61,7 @@ export function CustomersMap({ markers, height = 560, onSelect }: Props) {
       city: "hsl(35, 85%, 55%)",
     };
 
-    const bounds: [number, number][] = [];
+    const kenyaBounds: [number, number][] = [];
     for (const m of markers) {
       const color = colorBySource[m.source ?? "nominatim"] ?? "hsl(210, 70%, 50%)";
       const marker = L.circleMarker([m.lat, m.lon], {
@@ -75,11 +76,16 @@ export function CustomersMap({ markers, height = 560, onSelect }: Props) {
         { direction: "top", offset: [0, -4] },
       );
       if (onSelect) marker.on("click", () => onSelect(m));
-      bounds.push([m.lat, m.lon]);
+      // Kenya bounding box (roughly): lat -5..5, lon 33.5..42
+      if (m.lat >= -5 && m.lat <= 5.5 && m.lon >= 33.5 && m.lon <= 42) {
+        kenyaBounds.push([m.lat, m.lon]);
+      }
     }
 
-    if (bounds.length > 0) {
-      mapRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 9 });
+    // Fit to Kenya markers ONCE on initial load. Afterward respect the user's zoom/pan.
+    if (!didInitialFitRef.current && kenyaBounds.length > 0) {
+      mapRef.current.fitBounds(kenyaBounds, { padding: [40, 40], maxZoom: 9 });
+      didInitialFitRef.current = true;
     }
   }, [markers, onSelect]);
 
