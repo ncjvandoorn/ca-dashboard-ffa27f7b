@@ -270,7 +270,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       });
       const hits = farmActivities.filter((a) => {
         const aDate = a.completedAt || a.createdAt || 0;
-        if (trialDateMs && aDate < trialDateMs) return false;
+        if (trialStartMs && aDate < trialStartMs) return false;
         const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
         return keywords.some((k) => hay.includes(k));
       });
