@@ -815,6 +815,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                       {c.customer && (
                         <Badge variant="outline" className="text-[10px]">{c.customer}</Badge>
                       )}
+                      <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
                       <Badge variant="secondary" className="text-[10px]">
                         {c.keyProduct}
                       </Badge>
@@ -862,13 +863,24 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                     className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3"
                   >
                     <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <button type="button" onClick={() => openFarmActivity(p.farmName)} className="font-semibold text-sm text-primary hover:underline">{p.farmName}</button>
-                        {p.customer && (
-                          <Badge variant="outline" className="text-[10px]">{p.customer}</Badge>
-                        )}
-                        <Badge variant="secondary" className="text-[10px]">{p.keyProduct}</Badge>
-                      </div>
+                    {(() => {
+                      const headerTrial = trials.find((x) => x.id === p.trialId || (x.trial_number || "").toLowerCase() === (p.trialNumber || "").toLowerCase());
+                      const isRepeat = /repeat/i.test(headerTrial?.recommendations || "");
+                      return (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button type="button" onClick={() => openFarmActivity(p.farmName)} className="font-semibold text-sm text-primary hover:underline">{p.farmName}</button>
+                          {p.customer && (
+                            <Badge variant="outline" className="text-[10px]">{p.customer}</Badge>
+                          )}
+                          {isRepeat ? (
+                            <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
+                          )}
+                          <Badge variant="secondary" className="text-[10px]">{p.keyProduct}</Badge>
+                        </div>
+                      );
+                    })()}
                       <div className="flex items-center gap-1.5">
                         {p.trialDate && (
                           <span className="text-[10px] text-muted-foreground">
@@ -932,6 +944,11 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                                     {new Date(p.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                                   </span>
                                   <Badge variant="outline" className="text-[9px] py-0 border-primary/50 text-primary">Trial result</Badge>
+                                  {/repeat/i.test(trial?.recommendations || "") ? (
+                                    <Badge variant="outline" className="text-[9px] py-0 border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[9px] py-0 border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
+                                  )}
                                   <span className="font-medium">Trial {p.trialNumber} concluded</span>
                                 </div>
                                 {trial?.recommendations && (

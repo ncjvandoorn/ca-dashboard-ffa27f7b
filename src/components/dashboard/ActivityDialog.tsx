@@ -244,6 +244,11 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">
                                   Trial result
                                 </Badge>
+                                {/repeat/i.test(trial.recommendations || "") ? (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
+                                )}
                               </div>
                               {trial.recommendations && (
                                 <p className="text-xs text-muted-foreground line-clamp-2 ml-[22px]">
