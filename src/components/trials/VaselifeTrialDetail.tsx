@@ -388,23 +388,27 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {measurementMatrix.treatmentAverageRows.map((r) => (
-                          <TableRow key={r.treatmentNo} className="bg-primary/5">
-                            <TableCell className="text-xs font-mono font-bold text-primary">
-                              {r.treatmentNo}
-                            </TableCell>
-                            <TableCell className="text-xs font-medium">
-                              <div className="line-clamp-2">
-                                {treatmentNameByNo.get(r.treatmentNo) || "—"}
-                              </div>
-                            </TableCell>
-                            {measurementMatrix.props.map((p) => (
-                              <TableCell key={p} className="text-center">
-                                <ScoreChip code={p} score={r.scores[p]} bold />
+                        {measurementMatrix.treatmentAverageRows.map((r, idx) => {
+                          const fullName = treatmentNameByNo.get(r.treatmentNo) || "";
+                          const diffName = measTreatmentDiff.diffs[idx] || fullName || "—";
+                          return (
+                            <TableRow key={r.treatmentNo} className="bg-primary/5">
+                              <TableCell className="text-xs font-mono font-bold text-primary">
+                                {r.treatmentNo}
                               </TableCell>
-                            ))}
-                          </TableRow>
-                        ))}
+                              <TableCell className="text-xs font-medium">
+                                <div className="line-clamp-2" title={fullName || undefined}>
+                                  {diffName}
+                                </div>
+                              </TableCell>
+                              {measurementMatrix.props.map((p) => (
+                                <TableCell key={p} className="text-center">
+                                  <ScoreChip code={p} score={r.scores[p]} bold />
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
