@@ -920,6 +920,11 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         </div>
       )}
       </div>
+      <VaselifeTrialDetail
+        trial={selectedTrial}
+        open={!!selectedTrial}
+        onOpenChange={(o) => { if (!o) setSelectedTrial(null); }}
+      />
     </div>
   );
 }
