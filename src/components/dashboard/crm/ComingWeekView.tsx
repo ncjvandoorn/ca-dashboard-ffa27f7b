@@ -256,7 +256,23 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     return out;
   }, [trials, allMeasurements]);
   const [selectedTrial, setSelectedTrial] = useState<VaselifeHeader | null>(null);
+  const [activityFarm, setActivityFarm] = useState<{ id: string; name: string } | null>(null);
   const [passedOpen, setPassedOpen] = useState(false);
+
+  // Resolve a free-text farm name (from trials/AI) to an Account id, then open ActivityDialog.
+  const openFarmActivity = useCallback((farmName: string | null | undefined, knownId?: string | null) => {
+    if (!farmName && !knownId) return;
+    let id = knownId || "";
+    if (!id && farmName) {
+      const norm = farmName.trim().toLowerCase();
+      id = accounts.find((a) => a.name?.toLowerCase() === norm)?.id || "";
+    }
+    if (!id) {
+      toast({ title: "Farm not found", description: `No matching account for "${farmName}"`, variant: "destructive" });
+      return;
+    }
+    setActivityFarm({ id, name: farmName || accountMap.get(id) || "Farm" });
+  }, [accounts, accountMap]);
 
   // Commercial trials that DO have post-trial CRM follow-up — for review.
   const passedFollowups = useMemo(() => {
