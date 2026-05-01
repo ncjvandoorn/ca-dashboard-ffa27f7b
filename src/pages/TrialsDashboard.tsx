@@ -305,6 +305,14 @@ export default function TrialsDashboard() {
                     yellow: "bg-amber-400",
                     red: "bg-rose-500",
                   };
+                  // If only the farm link is missing, downgrade the dot to a softer yellow
+                  const farmOnlyMissing =
+                    link && !link.farmLinked && link.hasPlannerLink && link.customerLinked;
+                  const dotClass = farmOnlyMissing
+                    ? "bg-yellow-300"
+                    : link
+                      ? dotColor[link.status]
+                      : "";
                   return (
                   <TableRow
                     key={t.id}
