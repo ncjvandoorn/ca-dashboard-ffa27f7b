@@ -448,6 +448,9 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
             rawActivities: rawActivitiesForAI,
             logisticsData,
             sfTracking,
+            vaselifeHeaders: vaselifeHeaders || [],
+            vaselifeVases: vaselifeVases || [],
+            vaselifeMeasurements: vaselifeMeasurements || [],
             customerScope: customerScope || null,
           }),
         });
