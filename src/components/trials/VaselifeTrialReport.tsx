@@ -9,15 +9,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, FlaskConical, Sprout, Beaker, CheckCircle2 } from "lucide-react";
+import { Loader2, FileText, FlaskConical, Sprout, Beaker, CheckCircle2, Star } from "lucide-react";
 import {
   useVaselifeVases,
   useVaselifeMeasurements,
-  PROPERTY_LABELS,
   type VaselifeHeader,
   type VaselifeVase,
-  type VaselifeMeasurement,
 } from "@/hooks/useVaselifeTrials";
+import {
+  PROPERTY_LABELS,
+  getPropertyMeta,
+  getCropHeadlineKpis,
+  formatDeltaDays,
+  scoreTone,
+} from "@/lib/vaselifeProperties";
+import {
+  PropertyHeader,
+  ScoreChip,
+  ToneBadge,
+  ScoreScaleLegend,
+} from "./VaselifeScoreUi";
 
 interface Props {
   trial: VaselifeHeader | null;
