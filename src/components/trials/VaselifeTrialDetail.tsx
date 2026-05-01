@@ -414,6 +414,12 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      <VaselifeTrialReport
+        trial={trial}
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+      />
     </Dialog>
   );
 }
