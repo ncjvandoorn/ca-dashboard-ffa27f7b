@@ -10,6 +10,7 @@ import { ExceptionReportBody, type ExceptionAnalysis } from "@/components/dashbo
 import { SeasonalityInsightsBody, type SeasonalityAnalysis } from "@/components/dashboard/SeasonalityInsightsBody";
 import { QualityReportBody } from "@/components/dashboard/QualityReportBody";
 import { SharedTripMap } from "@/components/dashboard/SharedTripMap";
+import { VaselifeTrialReportBody } from "@/components/trials/VaselifeTrialReportBody";
 import { Button } from "@/components/ui/button";
 
 export default function SharedPage() {
