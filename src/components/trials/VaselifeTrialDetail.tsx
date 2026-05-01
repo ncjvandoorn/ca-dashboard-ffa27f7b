@@ -78,38 +78,53 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
     return { cultivars, treatmentAverages };
   }, [vases]);
 
-  // Build measurement matrix split into:
-  //  - treatmentAverageRows: one row per treatment_no (from Plantscout's Average cultivar)
-  //  - rows: per (cultivar, treatment) for the regular cultivars
+  // Build measurement matrix.
+  // Source data only stores property scores per real cultivar+treatment, NOT
+  // against a synthetic "Average" cultivar — so we compute per-treatment
+  // averages ourselves by averaging every real cultivar's score.
   const measurementMatrix = useMemo(() => {
     const propsSet = new Set<string>();
     const rowMap = new Map<string, Record<string, number | null>>();
+    // Per-treatment running sums for averaging
+    const tSums = new Map<number, Map<string, { sum: number; n: number }>>();
     for (const m of measurements) {
       if (!m.property_name) continue;
       propsSet.add(m.property_name);
       const key = `${m.cultivar || "?"}|${m.treatment_no || 0}`;
       if (!rowMap.has(key)) rowMap.set(key, {});
       rowMap.get(key)![m.property_name] = m.score ?? null;
+      // Aggregate (skip pre-aggregated Average rows if any ever appear)
+      if (
+        m.treatment_no != null &&
+        m.score != null &&
+        !isAverageName(m.cultivar || "")
+      ) {
+        if (!tSums.has(m.treatment_no)) tSums.set(m.treatment_no, new Map());
+        const propMap = tSums.get(m.treatment_no)!;
+        const cur = propMap.get(m.property_name) || { sum: 0, n: 0 };
+        cur.sum += Number(m.score);
+        cur.n += 1;
+        propMap.set(m.property_name, cur);
+      }
     }
     const props = Array.from(propsSet).sort();
-    const all = Array.from(rowMap.entries()).map(([key, scores]) => {
-      const [cultivar, tn] = key.split("|");
-      return {
-        cultivar,
-        treatmentNo: parseInt(tn),
-        scores,
-        isAverage: isAverageName(cultivar),
-      };
-    });
-    const treatmentAverageRows = all
-      .filter((r) => r.isAverage)
-      .sort((a, b) => a.treatmentNo - b.treatmentNo);
-    const rows = all
-      .filter((r) => !r.isAverage)
+    const rows = Array.from(rowMap.entries())
+      .map(([key, scores]) => {
+        const [cultivar, tn] = key.split("|");
+        return { cultivar, treatmentNo: parseInt(tn), scores };
+      })
+      .filter((r) => !isAverageName(r.cultivar))
       .sort(
         (a, b) =>
           a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo,
       );
+    const treatmentAverageRows = Array.from(tSums.entries())
+      .map(([treatmentNo, propMap]) => {
+        const scores: Record<string, number | null> = {};
+        for (const [p, { sum, n }] of propMap) scores[p] = n > 0 ? sum / n : null;
+        return { cultivar: "Average", treatmentNo, scores, isAverage: true };
+      })
+      .sort((a, b) => a.treatmentNo - b.treatmentNo);
     return { props, rows, treatmentAverageRows };
   }, [measurements]);
 

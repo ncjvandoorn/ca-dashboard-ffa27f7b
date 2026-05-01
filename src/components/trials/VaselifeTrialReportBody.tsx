@@ -96,16 +96,34 @@ export function VaselifeTrialReportBody({
     return { treatmentAverages: avgs, cultivarVases: culti };
   }, [vases]);
 
+  // Per-treatment property averages, computed across ALL real cultivars
+  // (the source data only stores property scores per cultivar+treatment, not
+  // against a synthetic "Average" cultivar — so we aggregate ourselves).
   const avgMeasByTreatment = useMemo(() => {
-    const m = new Map<number, Map<string, number | null>>();
-    for (const v of treatmentAverages) {
-      if (v.treatment_no == null) continue;
-      const key = `${(v.cultivar || "").toLowerCase()}|${v.treatment_no}`;
-      const props = measByVase.get(key);
-      if (props) m.set(v.treatment_no, props);
+    const sums = new Map<number, Map<string, { sum: number; n: number }>>();
+    for (const m of measurements) {
+      if (m.treatment_no == null || !m.property_name) continue;
+      if (m.score == null) continue;
+      // Skip any pre-aggregated "Average" cultivar rows if they ever appear,
+      // to avoid double-counting.
+      if (isAverageName(m.cultivar)) continue;
+      if (!sums.has(m.treatment_no)) sums.set(m.treatment_no, new Map());
+      const propMap = sums.get(m.treatment_no)!;
+      const cur = propMap.get(m.property_name) || { sum: 0, n: 0 };
+      cur.sum += Number(m.score);
+      cur.n += 1;
+      propMap.set(m.property_name, cur);
     }
-    return m;
-  }, [treatmentAverages, measByVase]);
+    const out = new Map<number, Map<string, number | null>>();
+    for (const [t, propMap] of sums) {
+      const avgMap = new Map<string, number | null>();
+      for (const [p, { sum, n }] of propMap) {
+        avgMap.set(p, n > 0 ? sum / n : null);
+      }
+      out.set(t, avgMap);
+    }
+    return out;
+  }, [measurements]);
 
   const controlTreatment = useMemo(() => {
     if (treatmentAverages.length === 0) return null;
