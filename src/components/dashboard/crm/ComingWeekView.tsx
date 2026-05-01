@@ -1157,7 +1157,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                 {plan.farmsWithoutCoverage.map((f, i) => (
                   <div key={i} className="rounded-lg border border-border p-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{f.farmName}</span>
+                      <button type="button" onClick={() => openFarmActivity(f.farmName, f.farmId)} className="font-medium text-sm text-primary hover:underline">{f.farmName}</button>
                       <span className="text-[10px] text-muted-foreground">Last: {f.lastActivityDate}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">{f.qualityStatus}</p>
