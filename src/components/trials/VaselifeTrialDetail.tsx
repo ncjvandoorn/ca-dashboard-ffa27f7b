@@ -49,28 +49,37 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
 
   const isAverageName = (s: string) => /^\s*(average|avg|gemiddelde|mean)\b/i.test(s || "");
 
-  // Build cultivar -> treatments grouping
-  const cultivars = useMemo(() => {
+  // Split vases into per-cultivar groups and per-treatment averages.
+  // Plantscout already provides "Average" rows per treatment_no — we surface
+  // those as a dedicated treatment-comparison section instead of treating
+  // "Average" as just another cultivar.
+  const { cultivars, treatmentAverages } = useMemo(() => {
     const grouped = new Map<string, typeof vases>();
+    const avgRows: typeof vases = [];
     for (const v of vases) {
+      if (isAverageName(v.cultivar)) {
+        avgRows.push(v);
+        continue;
+      }
       const key = v.cultivar || "Unknown";
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(v);
     }
-    return Array.from(grouped.entries())
+    const cultivars = Array.from(grouped.entries())
       .map(([cultivar, items]) => ({
         cultivar,
-        isAverage: isAverageName(cultivar),
         treatments: items.sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0)),
       }))
-      .sort((a, b) => {
-        if (a.isAverage && !b.isAverage) return -1;
-        if (!a.isAverage && b.isAverage) return 1;
-        return a.cultivar.localeCompare(b.cultivar);
-      });
+      .sort((a, b) => a.cultivar.localeCompare(b.cultivar));
+    const treatmentAverages = avgRows.sort(
+      (a, b) => (a.treatment_no || 0) - (b.treatment_no || 0),
+    );
+    return { cultivars, treatmentAverages };
   }, [vases]);
 
-  // Build measurement matrix: row per (cultivar, treatment), column per property
+  // Build measurement matrix split into:
+  //  - treatmentAverageRows: one row per treatment_no (from Plantscout's Average cultivar)
+  //  - rows: per (cultivar, treatment) for the regular cultivars
   const measurementMatrix = useMemo(() => {
     const propsSet = new Set<string>();
     const rowMap = new Map<string, Record<string, number | null>>();
@@ -82,18 +91,37 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
       rowMap.get(key)![m.property_name] = m.score ?? null;
     }
     const props = Array.from(propsSet).sort();
-    const rows = Array.from(rowMap.entries())
-      .map(([key, scores]) => {
-        const [cultivar, tn] = key.split("|");
-        return { cultivar, treatmentNo: parseInt(tn), scores, isAverage: isAverageName(cultivar) };
-      })
-      .sort((a, b) => {
-        if (a.isAverage && !b.isAverage) return -1;
-        if (!a.isAverage && b.isAverage) return 1;
-        return a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo;
-      });
-    return { props, rows };
+    const all = Array.from(rowMap.entries()).map(([key, scores]) => {
+      const [cultivar, tn] = key.split("|");
+      return {
+        cultivar,
+        treatmentNo: parseInt(tn),
+        scores,
+        isAverage: isAverageName(cultivar),
+      };
+    });
+    const treatmentAverageRows = all
+      .filter((r) => r.isAverage)
+      .sort((a, b) => a.treatmentNo - b.treatmentNo);
+    const rows = all
+      .filter((r) => !r.isAverage)
+      .sort(
+        (a, b) =>
+          a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo,
+      );
+    return { props, rows, treatmentAverageRows };
   }, [measurements]);
+
+  // Look up the treatment_name for a given treatment_no (from any cultivar row)
+  const treatmentNameByNo = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const v of vases) {
+      if (v.treatment_no != null && v.treatment_name && !m.has(v.treatment_no)) {
+        m.set(v.treatment_no, v.treatment_name);
+      }
+    }
+    return m;
+  }, [vases]);
 
   if (!trial) return null;
 
@@ -197,33 +225,68 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
-            ) : cultivars.length === 0 ? (
+            ) : cultivars.length === 0 && treatmentAverages.length === 0 ? (
               <p className="text-sm text-muted-foreground py-6 text-center">No vase data.</p>
             ) : (
               <div className="space-y-5">
-                {cultivars.map(({ cultivar, treatments, isAverage }) => (
-                  <div
-                    key={cultivar}
-                    className={
-                      isAverage
-                        ? "border-2 border-primary/60 rounded-md overflow-hidden bg-primary/5 ring-1 ring-primary/20"
-                        : "border border-border rounded-md overflow-hidden"
-                    }
-                  >
-                    <div
-                      className={
-                        isAverage
-                          ? "bg-primary/15 text-primary px-3 py-2 text-sm font-bold uppercase tracking-wide flex items-center gap-2"
-                          : "bg-muted/40 px-3 py-2 text-sm font-semibold"
-                      }
-                    >
-                      {isAverage && (
-                        <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">
-                          Average across cultivars
-                        </Badge>
-                      )}
-                      <span>{cultivar}</span>
-                      <span className={isAverage ? "text-xs font-normal text-primary/70" : "ml-2 text-xs font-normal text-muted-foreground"}>
+                {/* Treatment averages — the headline comparison */}
+                {treatmentAverages.length > 0 && (
+                  <div className="border-2 border-primary/60 rounded-md overflow-hidden bg-primary/5 ring-1 ring-primary/20">
+                    <div className="bg-primary/15 text-primary px-3 py-2 flex items-center gap-2 flex-wrap">
+                      <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">
+                        ★ Treatment averages
+                      </Badge>
+                      <span className="text-sm font-bold uppercase tracking-wide">
+                        Comparison across all cultivars
+                      </span>
+                      <span className="text-xs font-normal text-primary/70 ml-auto">
+                        {treatmentAverages.length} treatment
+                        {treatmentAverages.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">T#</TableHead>
+                          <TableHead>Treatment</TableHead>
+                          <TableHead className="w-20 text-right">VL days</TableHead>
+                          <TableHead className="w-20 text-right">Bot %</TableHead>
+                          <TableHead className="w-20 text-right">Flo %</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {treatmentAverages.map((t) => (
+                          <TableRow key={t.id_line} className="bg-primary/5">
+                            <TableCell className="font-mono text-xs font-semibold text-primary">
+                              {t.treatment_no}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              <div className="line-clamp-2 font-medium">
+                                {t.treatment_name || "—"}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right text-xs font-bold text-primary">
+                              {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
+                            </TableCell>
+                            <TableCell className="text-right text-xs">
+                              {t.bot_percentage ?? "—"}
+                            </TableCell>
+                            <TableCell className="text-right text-xs">
+                              {t.flo_percentage ?? "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Per-cultivar breakdown */}
+                {cultivars.map(({ cultivar, treatments }) => (
+                  <div key={cultivar} className="border border-border rounded-md overflow-hidden">
+                    <div className="bg-muted/40 px-3 py-2 text-sm font-semibold">
+                      {cultivar}
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
                         ({treatments.length} treatment{treatments.length === 1 ? "" : "s"})
                       </span>
                     </div>
@@ -266,49 +329,97 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
-            ) : measurementMatrix.rows.length === 0 ? (
+            ) : measurementMatrix.rows.length === 0 && measurementMatrix.treatmentAverageRows.length === 0 ? (
               <p className="text-sm text-muted-foreground py-6 text-center">No measurements recorded.</p>
             ) : (
-              <div className="border border-border rounded-md overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cultivar</TableHead>
-                      <TableHead className="w-12">T#</TableHead>
-                      {measurementMatrix.props.map((p) => (
-                        <TableHead key={p} className="text-center text-xs" title={PROPERTY_LABELS[p] || p}>
-                          {p}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {measurementMatrix.rows.map((r, i) => (
-                      <TableRow key={i} className={r.isAverage ? "bg-primary/10 font-semibold border-b-2 border-primary/40" : ""}>
-                        <TableCell className="text-xs font-medium">
-                          {r.isAverage ? (
-                            <span className="text-primary uppercase tracking-wide">★ {r.cultivar}</span>
-                          ) : (
-                            r.cultivar
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs font-mono">{r.treatmentNo}</TableCell>
-                        {measurementMatrix.props.map((p) => (
-                          <TableCell key={p} className={`text-center text-xs ${r.isAverage ? "text-primary" : ""}`}>
-                            {r.scores[p] != null ? r.scores[p] : "—"}
-                          </TableCell>
+              <div className="space-y-4">
+                {/* Treatment averages — headline comparison */}
+                {measurementMatrix.treatmentAverageRows.length > 0 && (
+                  <div className="border-2 border-primary/60 rounded-md overflow-x-auto bg-primary/5 ring-1 ring-primary/20">
+                    <div className="bg-primary/15 text-primary px-3 py-2 flex items-center gap-2 flex-wrap">
+                      <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">
+                        ★ Treatment averages
+                      </Badge>
+                      <span className="text-sm font-bold uppercase tracking-wide">
+                        Per-treatment scores (averaged across cultivars)
+                      </span>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">T#</TableHead>
+                          <TableHead>Treatment</TableHead>
+                          {measurementMatrix.props.map((p) => (
+                            <TableHead key={p} className="text-center text-xs" title={PROPERTY_LABELS[p] || p}>
+                              {p}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {measurementMatrix.treatmentAverageRows.map((r) => (
+                          <TableRow key={r.treatmentNo} className="bg-primary/5">
+                            <TableCell className="text-xs font-mono font-bold text-primary">
+                              {r.treatmentNo}
+                            </TableCell>
+                            <TableCell className="text-xs font-medium">
+                              <div className="line-clamp-2">
+                                {treatmentNameByNo.get(r.treatmentNo) || "—"}
+                              </div>
+                            </TableCell>
+                            {measurementMatrix.props.map((p) => (
+                              <TableCell key={p} className="text-center text-xs font-semibold text-primary">
+                                {r.scores[p] != null ? r.scores[p] : "—"}
+                              </TableCell>
+                            ))}
+                          </TableRow>
                         ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <div className="px-3 py-2 text-[11px] text-muted-foreground border-t border-border bg-muted/20 flex flex-wrap gap-x-3 gap-y-1">
-                  {measurementMatrix.props.map((p) => (
-                    <span key={p}>
-                      <span className="font-mono">{p}</span> = {PROPERTY_LABELS[p] || "?"}
-                    </span>
-                  ))}
-                </div>
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Per-cultivar × treatment breakdown */}
+                {measurementMatrix.rows.length > 0 && (
+                  <div className="border border-border rounded-md overflow-x-auto">
+                    <div className="px-3 py-2 text-xs font-semibold bg-muted/40 border-b border-border">
+                      Per cultivar × treatment
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cultivar</TableHead>
+                          <TableHead className="w-12">T#</TableHead>
+                          {measurementMatrix.props.map((p) => (
+                            <TableHead key={p} className="text-center text-xs" title={PROPERTY_LABELS[p] || p}>
+                              {p}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {measurementMatrix.rows.map((r, i) => (
+                          <TableRow key={i}>
+                            <TableCell className="text-xs font-medium">{r.cultivar}</TableCell>
+                            <TableCell className="text-xs font-mono">{r.treatmentNo}</TableCell>
+                            {measurementMatrix.props.map((p) => (
+                              <TableCell key={p} className="text-center text-xs">
+                                {r.scores[p] != null ? r.scores[p] : "—"}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <div className="px-3 py-2 text-[11px] text-muted-foreground border-t border-border bg-muted/20 flex flex-wrap gap-x-3 gap-y-1">
+                      {measurementMatrix.props.map((p) => (
+                        <span key={p}>
+                          <span className="font-mono">{p}</span> = {PROPERTY_LABELS[p] || "?"}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>
