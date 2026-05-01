@@ -337,7 +337,7 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
             </Button>
           </div>
           {aiAnalysis && (
-            <div className="px-3 pb-3 pt-1 border-t border-primary/20 prose prose-sm max-w-none dark:prose-invert text-sm">
+            <div className="px-3 pb-3 pt-2 border-t border-primary/20 text-sm leading-relaxed text-foreground/90 [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:space-y-1 [&>ul]:my-2 [&_strong]:font-semibold [&_strong]:text-foreground [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-muted [&_code]:text-[0.85em]">
               <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
             </div>
           )}
