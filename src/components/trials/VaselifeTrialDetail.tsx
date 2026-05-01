@@ -162,23 +162,35 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
         )}
 
         <Tabs defaultValue="vases" className="mt-4">
-          <TabsList>
-            <TabsTrigger value="vases" className="gap-1.5">
-              <Sprout className="h-3.5 w-3.5" /> Vases ({vases.length})
-            </TabsTrigger>
-            <TabsTrigger value="measurements" className="gap-1.5">
-              <Beaker className="h-3.5 w-3.5" /> Measurements ({measurements.length})
-            </TabsTrigger>
-            <TabsTrigger value="conclusion">Conclusion</TabsTrigger>
-            <TabsTrigger value="details" className="gap-1.5">
-              <ClipboardList className="h-3.5 w-3.5" /> Details
-              {plannerMatches.length > 0 && (
-                <span className="ml-1 text-[10px] bg-primary/15 text-primary rounded px-1">
-                  {plannerMatches.length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <TabsList>
+              <TabsTrigger value="vases" className="gap-1.5">
+                <Sprout className="h-3.5 w-3.5" /> Vases ({vases.length})
+              </TabsTrigger>
+              <TabsTrigger value="measurements" className="gap-1.5">
+                <Beaker className="h-3.5 w-3.5" /> Measurements ({measurements.length})
+              </TabsTrigger>
+              <TabsTrigger value="conclusion">Conclusion</TabsTrigger>
+              <TabsTrigger value="details" className="gap-1.5">
+                <ClipboardList className="h-3.5 w-3.5" /> Details
+                {plannerMatches.length > 0 && (
+                  <span className="ml-1 text-[10px] bg-primary/15 text-primary rounded px-1">
+                    {plannerMatches.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => setReportOpen(true)}
+              className="gap-1.5"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Report
+            </Button>
+          </div>
+
 
           <TabsContent value="vases">
             {vasesLoading ? (
