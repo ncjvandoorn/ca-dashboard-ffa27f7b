@@ -632,6 +632,57 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       </div>
 
       <div className="space-y-6">
+      {/* Commercial trial follow-ups — sales opportunities with no recent CRM mention */}
+      {plan?.commercialFollowups && plan.commercialFollowups.length > 0 && (
+        <div data-pdf-section>
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-accent" />
+            Commercial Trial Follow-ups ({plan.commercialFollowups.length})
+            <span className="text-[10px] font-normal normal-case text-muted-foreground/80">
+              · Successful trials with no sales follow-up yet
+            </span>
+          </h4>
+          <div className="space-y-2">
+            {plan.commercialFollowups.map((c, i) => (
+              <motion.div
+                key={c.trialId || i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="rounded-lg border border-accent/30 bg-accent/5 p-3"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">{c.farmName}</span>
+                    {c.customer && (
+                      <Badge variant="outline" className="text-[10px]">{c.customer}</Badge>
+                    )}
+                    <Badge variant="secondary" className="text-[10px]">
+                      {c.keyProduct}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {c.trialDate && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(c.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                      </span>
+                    )}
+                    <Link
+                      to={`/trials?trial=${encodeURIComponent(c.trialId)}`}
+                      className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                    >
+                      Trial {c.trialNumber}
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </div>
+                <p className="text-xs text-foreground/90">{c.reason}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Open tasks overview */}
       <div>
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
