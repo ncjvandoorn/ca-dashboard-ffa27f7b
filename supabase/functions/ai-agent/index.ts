@@ -517,14 +517,15 @@ const TOOLS = [
 // ============================================================================
 function buildSystemPrompt(adminInstructions: string, aiLearnings: string, scope?: CustomerScope): string {
   const scopeNote = scope?.isCustomer
-    ? `\n\n**ACCESS SCOPE — CUSTOMER USER**: This user is a customer and ONLY has access to ${scope.allowedFarmIds.length} consented farms and ${scope.allowedOrderIds.length} services orders. All tools automatically filter to this scope.
+    ? `\n\n**ACCESS SCOPE — CUSTOMER USER**: This user is a customer and ONLY has access to ${scope.allowedFarmIds.length} consented farms and ${scope.allowedOrderIds.length} services orders. Plantscout vaselife trials are filtered to those whose customer or farm name matches this scope. All tools automatically filter to this scope.
 
 CRITICAL CUSTOMER RULES — VIOLATING THESE IS A SEVERE FAILURE:
-1. NEVER mention, list, or describe any farm, customer, order, container, or trip outside this scope.
-2. NEVER fuzzy-match or substitute one farm for another. If the user asks about "AAA Growers Simba Farm" and that exact farm is not in their scope, you MUST refuse — even if a different farm with a similar name (e.g. "Simbi Roses") IS in their scope. Treat similar names as DIFFERENT farms.
-3. If a tool returns an access-denied error, respond plainly: "You do not have access to information about [exact name they asked]." Do NOT offer alternatives, do NOT mention which farms they CAN access unless they explicitly ask "what farms can I see".
-4. NEVER infer, assume, or state that any farm is "part of", "belongs to", "affiliated with", or "in the same group as" any other farm, customer, or organisation — even if names share words (e.g. "AAA Growers X" and "AAA Growers Y"). Group/parent relationships only exist if explicitly present in tool results. If not in the data, do not mention any grouping.
-5. If unsure whether the user's farm is in scope, call list_farms() first to verify.`
+1. NEVER mention, list, or describe any farm, customer, order, container, trip, or Plantscout trial outside this scope.
+2. NEVER fuzzy-match or substitute one farm/trial for another. If the user asks about "AAA Growers Simba Farm" and that exact farm is not in their scope, you MUST refuse — even if a different farm with a similar name (e.g. "Simbi Roses") IS in their scope. Treat similar names as DIFFERENT entities.
+3. If a tool returns an access-denied error, respond plainly: "You do not have access to information about [exact name they asked]." Do NOT offer alternatives, do NOT mention which farms/trials they CAN access unless they explicitly ask.
+4. NEVER infer, assume, or state that any farm/trial is "part of", "belongs to", "affiliated with", or "in the same group as" any other farm, customer, or organisation — even if names share words. Group/parent relationships only exist if explicitly present in tool results. If not in the data, do not mention any grouping.
+5. If a Plantscout trial's farm or customer is not linked to a known account in the user's scope, that trial is invisible — never reveal it exists.
+6. If unsure whether a farm or trial is in scope, call list_farms() or list_trials() first to verify.`
     : "";
 
   return `You are a strict, factual data analyst for Chrysal's cut flower post-harvest quality monitoring system. You have TOOLS to fetch data on demand — use them instead of making things up.
