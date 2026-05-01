@@ -89,6 +89,51 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
   const { data: vases = [], isLoading: vasesLoading } = useVaselifeVases(trial?.id);
   const { data: measurements = [], isLoading: measLoading } = useVaselifeMeasurements(trial?.id);
   const [reportOpen, setReportOpen] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [aiUpdatedAt, setAiUpdatedAt] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    setAiAnalysis(null);
+    setAiUpdatedAt(null);
+    if (!trial?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("vaselife_trial_ai_analysis")
+        .select("analysis, updated_at")
+        .eq("header_id", trial.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      setAiAnalysis(data.analysis);
+      setAiUpdatedAt(data.updated_at);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [trial?.id]);
+
+  const runAiAnalysis = async (refresh: boolean) => {
+    if (!trial?.id) return;
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-trial", {
+        body: { headerId: trial.id, refresh },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAiAnalysis(data.analysis);
+      setAiUpdatedAt(data.updated_at || new Date().toISOString());
+    } catch (e: any) {
+      toast({
+        title: "AI analysis failed",
+        description: e?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const isAverageName = (s: string) => /^\s*(average|avg|gemiddelde|mean)\b/i.test(s || "");
 
