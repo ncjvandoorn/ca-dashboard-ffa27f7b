@@ -374,6 +374,9 @@ const Index = () => {
                   shipperArrivals={isCustomer ? [] : (shipperArrivals || [])}
                   shipperReports={isCustomer ? [] : (shipperReports || [])}
                   sfTrips={isCustomer ? [] : (sfTrips || [])}
+                  vaselifeHeaders={vaselifeHeaders || []}
+                  vaselifeVases={vaselifeVases || []}
+                  vaselifeMeasurements={vaselifeMeasurements || []}
                   customerScope={aiCustomerScope}
                 />
               )}
