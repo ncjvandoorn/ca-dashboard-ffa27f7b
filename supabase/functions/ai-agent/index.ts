@@ -647,10 +647,37 @@ serve(async (req) => {
       const summaries = weeklyPlans.map((p: any) => ({ week_nr: p.week_nr, created_at: p.created_at }));
       contextParts.push(`**AVAILABLE WEEKLY PLANS (call get_weekly_plan(weekNr) for content):**\n${JSON.stringify(summaries)}`);
     }
+    // Plantscout vaselife trial index — pre-scoped per customer
+    if (vaselifeHeaders?.length) {
+      const visibleTrials = customerScope?.isCustomer
+        ? vaselifeHeaders.filter((h: any) => isTrialVisible(h, customerScope))
+        : vaselifeHeaders;
+      if (visibleTrials.length) {
+        const trialIdx = visibleTrials.map((h: any) => ({
+          id: h.id,
+          trial_number: h.trial_number,
+          farm: h.farm,
+          customer: h.customer,
+          crop: h.crop,
+          harvest_date: h.harvest_date,
+        }));
+        contextParts.push(`**PLANTSCOUT TRIAL INDEX (call get_trial(trialNumber) for full details, search_trials(query) for cultivar / treatment / property search):**\n${JSON.stringify(trialIdx)}`);
+      }
+    }
 
     const userContextMessage = contextParts.join("\n\n---\n\n") || "No pre-computed context available.";
 
-    const ctx: ToolContext = { farmData, rawActivities, logisticsData, sfTracking, weeklyPlans, scope: customerScope };
+    const ctx: ToolContext = {
+      farmData,
+      rawActivities,
+      logisticsData,
+      sfTracking,
+      weeklyPlans,
+      vaselifeHeaders,
+      vaselifeVases,
+      vaselifeMeasurements,
+      scope: customerScope,
+    };
 
     // Conversation state for the agentic loop
     const allMessages: any[] = [
