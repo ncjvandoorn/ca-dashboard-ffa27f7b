@@ -864,7 +864,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                   >
                     <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm">{p.farmName}</span>
+                        <button type="button" onClick={() => openFarmActivity(p.farmName)} className="font-semibold text-sm text-primary hover:underline">{p.farmName}</button>
                         {p.customer && (
                           <Badge variant="outline" className="text-[10px]">{p.customer}</Badge>
                         )}
