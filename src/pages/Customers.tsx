@@ -1,20 +1,27 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import chrysalLogo from "@/assets/chrysal-logo.png";
-import { useAccounts } from "@/hooks/useQualityData";
+import { useAccounts, useActivities, useUsers } from "@/hooks/useQualityData";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { CustomersMap, type CustomerMarker } from "@/components/dashboard/CustomersMap";
+import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Loader2 } from "lucide-react";
-import { bestAddress, geocodeCustomer, isKenyaAccount } from "@/lib/customerGeocode";
+import { Button } from "@/components/ui/button";
+import { Search, MapPin, Loader2, RefreshCw } from "lucide-react";
+import { bestAddress, geocodeCustomer, isKenyaAccount, preloadCloudCache } from "@/lib/customerGeocode";
 
 export default function Customers() {
   const navigate = useNavigate();
   const { data: accounts, isLoading } = useAccounts();
+  const { data: activities = [] } = useActivities();
+  const { data: users = [] } = useUsers();
   const [markers, setMarkers] = useState<CustomerMarker[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [search, setSearch] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [forceRefresh, setForceRefresh] = useState(false);
+  const [activeFarm, setActiveFarm] = useState<{ id: string; name: string } | null>(null);
 
   const kenyaCustomers = useMemo(() => {
     if (!accounts) return [];
@@ -23,7 +30,7 @@ export default function Customers() {
       .map((a) => ({ ...a, address: bestAddress(a.deliveryAddress, a.mainAddress) }));
   }, [accounts]);
 
-  // Geocode in series (Nominatim asks ≤1 req/s). Cache makes repeat loads instant.
+  // Geocode in series (Nominatim asks ≤1 req/s). Cloud + local cache make repeats instant.
   useEffect(() => {
     if (kenyaCustomers.length === 0) return;
     let cancelled = false;
@@ -31,11 +38,15 @@ export default function Customers() {
     setMarkers([]);
 
     (async () => {
+      // Preload cloud cache once so cached entries resolve synchronously.
+      await preloadCloudCache();
+      if (cancelled) return;
+
       const out: CustomerMarker[] = [];
       for (let i = 0; i < kenyaCustomers.length; i++) {
         if (cancelled) return;
         const c = kenyaCustomers[i];
-        const geo = await geocodeCustomer(c.name, c.address);
+        const geo = await geocodeCustomer(c.name, c.address, forceRefresh);
         if (geo && !cancelled) {
           out.push({
             id: c.id,
@@ -48,15 +59,15 @@ export default function Customers() {
           setMarkers([...out]);
         }
         setProgress({ done: i + 1, total: kenyaCustomers.length });
-        // Small delay to be polite to Nominatim. Cached hits are sync so this is rare.
         await new Promise((r) => setTimeout(r, 50));
       }
+      if (!cancelled) setForceRefresh(false);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [kenyaCustomers]);
+  }, [kenyaCustomers, refreshKey, forceRefresh]);
 
   const filteredMarkers = useMemo(() => {
     if (!search.trim()) return markers;
@@ -65,6 +76,15 @@ export default function Customers() {
   }, [markers, search]);
 
   const isGeocoding = progress.total > 0 && progress.done < progress.total;
+
+  const handleSelect = useCallback((m: CustomerMarker) => {
+    setActiveFarm({ id: m.id, name: m.name });
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    setForceRefresh(true);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   if (isLoading) {
     return (
@@ -108,14 +128,28 @@ export default function Customers() {
                 </p>
               </div>
             </div>
-            <PageHeaderActions />
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isGeocoding}
+                className="gap-1.5"
+                title="Re-geocode all customers and update the cloud cache"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isGeocoding ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+              <PageHeaderActions />
+            </div>
           </div>
         </header>
 
         <div className="grid grid-cols-12 gap-6 mb-8">
           {/* Map */}
           <div className="col-span-12 lg:col-span-9 bg-card rounded-xl shadow-card p-2">
-            <CustomersMap markers={filteredMarkers} height={620} />
+            <CustomersMap markers={filteredMarkers} height={620} onSelect={handleSelect} />
             <div className="flex items-center gap-4 px-3 py-2 text-xs text-muted-foreground">
               <LegendDot color="hsl(160, 60%, 40%)" label="Known farm" />
               <LegendDot color="hsl(210, 70%, 50%)" label="Geocoded address" />
@@ -139,13 +173,18 @@ export default function Customers() {
             </p>
             <div className="overflow-auto max-h-[560px] divide-y divide-border">
               {filteredMarkers.map((m) => (
-                <div key={m.id} className="py-2.5">
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => handleSelect(m)}
+                  className="py-2.5 w-full text-left hover:bg-accent/5 px-2 -mx-2 rounded transition-colors"
+                >
                   <div className="text-sm font-medium text-foreground">{m.name}</div>
                   <div className="text-xs text-muted-foreground flex items-start gap-1 mt-0.5">
                     <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
                     <span>{m.address}</span>
                   </div>
-                </div>
+                </button>
               ))}
               {filteredMarkers.length === 0 && (
                 <p className="text-xs text-muted-foreground py-4 text-center">No customers match.</p>
@@ -154,6 +193,16 @@ export default function Customers() {
           </div>
         </div>
       </div>
+
+      <ActivityDialog
+        open={!!activeFarm}
+        onOpenChange={(o) => { if (!o) setActiveFarm(null); }}
+        farmId={activeFarm?.id || ""}
+        farmName={activeFarm?.name || ""}
+        activities={activities}
+        users={users}
+        analysis={null}
+      />
     </div>
   );
 }
