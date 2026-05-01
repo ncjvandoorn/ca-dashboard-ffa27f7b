@@ -551,7 +551,8 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (/repeat/i.test(rec)) continue;
       if (!t.farm) continue;
 
-      const trialDate = t.start_vl || t.harvest_date || t.source_date || null;
+      const trialStartMs = t.start_vl ? Date.parse(t.start_vl) : (t.harvest_date ? Date.parse(t.harvest_date) : 0);
+      const trialDate = t.source_date || t.start_vl || t.harvest_date || null;
       const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
       const farmName = t.farm;
       const farmNameNorm = farmName.toLowerCase();
@@ -574,7 +575,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       const followupHits = farmActivities
         .filter((a) => {
           const aDate = a.completedAt || a.createdAt || 0;
-          if (trialDateMs && aDate < trialDateMs) return false;
+          if (trialStartMs && aDate < trialStartMs) return false;
           const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
           return keywords.some((k) => hay.includes(k));
         })
