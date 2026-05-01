@@ -932,6 +932,11 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                                     {new Date(p.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                                   </span>
                                   <Badge variant="outline" className="text-[9px] py-0 border-primary/50 text-primary">Trial result</Badge>
+                                  {/repeat/i.test(trial?.recommendations || "") ? (
+                                    <Badge variant="outline" className="text-[9px] py-0 border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[9px] py-0 border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
+                                  )}
                                   <span className="font-medium">Trial {p.trialNumber} concluded</span>
                                 </div>
                                 {trial?.recommendations && (
