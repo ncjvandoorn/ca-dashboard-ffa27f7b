@@ -607,7 +607,7 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                       <TableBody>
                         {treatments.map((t) => (
                           <TableRow key={t.id_line}>
-                            <TableCell className="font-mono text-xs">{t.treatment_no}</TableCell>
+                            <TableCell className="font-mono text-xs">{(t as any).display_no ?? t.treatment_no}</TableCell>
                             <TableCell className="text-xs">
                               <div className="line-clamp-2">{t.treatment_name || "—"}</div>
                             </TableCell>
