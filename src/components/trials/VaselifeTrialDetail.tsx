@@ -25,7 +25,7 @@ import {
   useVaselifeMeasurements,
   type VaselifeHeader,
 } from "@/hooks/useVaselifeTrials";
-import { PROPERTY_LABELS, getPropertyMeta } from "@/lib/vaselifeProperties";
+import { getPropertyMeta } from "@/lib/vaselifeProperties";
 import { PropertyHeader, ScoreChip, ScoreScaleLegend } from "./VaselifeScoreUi";
 import type { Trial } from "@/lib/trialsParser";
 import type { TrialLinkInfo } from "@/lib/trialLinkage";
