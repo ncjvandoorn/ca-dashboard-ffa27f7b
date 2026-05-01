@@ -1,8 +1,10 @@
 // Geocoding helpers for the Customers map.
-// Uses Nominatim (OpenStreetMap) for unknown addresses, with localStorage caching.
+// Primary cache: Supabase (shared across users). Fallback: localStorage.
+// Uses Nominatim (OpenStreetMap) for unknown addresses.
 // Plus Codes (Open Location Codes) embedded in CSV addresses don't geocode via
 // Nominatim, so we strip them and fall back to the place + country part.
 
+import { supabase } from "@/integrations/supabase/client";
 import { DESTINATION_COORDS } from "./destinationGeocodes";
 
 export interface GeoResult {
@@ -21,7 +23,7 @@ interface CacheEntry {
   ts: number;
 }
 
-function loadCache(): Record<string, CacheEntry> {
+function loadLocalCache(): Record<string, CacheEntry> {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     return raw ? JSON.parse(raw) : {};
@@ -30,7 +32,7 @@ function loadCache(): Record<string, CacheEntry> {
   }
 }
 
-function saveCache(cache: Record<string, CacheEntry>) {
+function saveLocalCache(cache: Record<string, CacheEntry>) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
   } catch {
@@ -38,34 +40,77 @@ function saveCache(cache: Record<string, CacheEntry>) {
   }
 }
 
+/** In-memory snapshot of the cloud cache, populated by preloadCloudCache(). */
+let cloudCache: Record<string, CacheEntry> = {};
+
+/**
+ * Load the entire cloud geocode cache once per page session.
+ * Call this before iterating over customers — it makes subsequent geocodes synchronous for cached entries.
+ */
+export async function preloadCloudCache(): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from("customer_geocode_cache")
+      .select("address_key, lat, lon, source, updated_at");
+    if (error || !data) return;
+    const next: Record<string, CacheEntry> = {};
+    for (const row of data) {
+      next[row.address_key] = {
+        lat: row.lat,
+        lon: row.lon,
+        source: (row.source as GeoResult["source"]) ?? undefined,
+        ts: row.updated_at ? Date.parse(row.updated_at) : Date.now(),
+      };
+    }
+    cloudCache = next;
+  } catch {
+    // network failure → fall back to local cache only
+  }
+}
+
+async function writeCloudCache(addressKey: string, nameHint: string, entry: CacheEntry) {
+  cloudCache[addressKey] = entry;
+  try {
+    await supabase
+      .from("customer_geocode_cache")
+      .upsert(
+        {
+          address_key: addressKey,
+          name_hint: nameHint,
+          lat: entry.lat,
+          lon: entry.lon,
+          source: entry.source ?? null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "address_key" },
+      );
+  } catch {
+    // ignore — local cache already updated
+  }
+}
+
 /**
  * Strip a Plus Code (e.g. "59FC+XQ5", "39X4 +V7P") from the start of an address.
- * Plus Codes are 4–8 chars before a "+" then a few chars after.
  */
 function stripPlusCode(addr: string): string {
-  // Remove leading plus codes like `"59FC XQ5,` or `"4C69 +J48,` or `59FC+XQ5,`
   let s = addr.trim().replace(/^"+/, "");
   s = s.replace(/^[A-Z0-9]{2,8}\s*\+?\s*[A-Z0-9]{2,4}\s*,\s*/i, "");
   return s.trim();
 }
 
-/** Best-effort city/country extraction from a comma-separated address. */
 function cityCountryOnly(addr: string): string {
   const parts = stripPlusCode(addr)
     .split(",")
     .map((p) => p.trim())
     .filter(Boolean);
   if (parts.length === 0) return addr;
-  // Take the last 2 parts (city + country) when possible
   return parts.slice(-2).join(", ");
 }
 
 async function nominatim(query: string): Promise<{ lat: number; lon: number } | null> {
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
-    const res = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) return null;
     const data = (await res.json()) as Array<{ lat: string; lon: string }>;
     if (!data || data.length === 0) return null;
@@ -78,33 +123,51 @@ async function nominatim(query: string): Promise<{ lat: number; lon: number } | 
   }
 }
 
-/** Geocode an account by name + delivery address. Uses cache. */
-export async function geocodeCustomer(name: string, address: string): Promise<GeoResult | null> {
+/**
+ * Geocode an account by name + delivery address.
+ * Lookup order: known → cloud cache → local cache → Nominatim.
+ * When forceRefresh is true, the cache is bypassed and the result re-written.
+ */
+export async function geocodeCustomer(
+  name: string,
+  address: string,
+  forceRefresh = false,
+): Promise<GeoResult | null> {
   // 1. Hardcoded known customer destinations.
   const known = DESTINATION_COORDS[name];
   if (known) return { ...known, source: "known" };
 
   if (!address) return null;
 
-  const cache = loadCache();
   const cacheKey = address.trim().toLowerCase();
-  const hit = cache[cacheKey];
-  if (hit) {
-    if (hit.lat != null && hit.lon != null) {
-      return { lat: hit.lat, lon: hit.lon, source: hit.source ?? "nominatim" };
+
+  if (!forceRefresh) {
+    // 2a. Cloud cache (preloaded)
+    const cloudHit = cloudCache[cacheKey];
+    if (cloudHit) {
+      if (cloudHit.lat != null && cloudHit.lon != null) {
+        return { lat: cloudHit.lat, lon: cloudHit.lon, source: cloudHit.source ?? "nominatim" };
+      }
+      if (Date.now() - cloudHit.ts < NEG_TTL) return null;
     }
-    // Negative cache: respect TTL
-    if (Date.now() - hit.ts < NEG_TTL) return null;
+    // 2b. Local cache fallback
+    const local = loadLocalCache();
+    const localHit = local[cacheKey];
+    if (localHit) {
+      if (localHit.lat != null && localHit.lon != null) {
+        return { lat: localHit.lat, lon: localHit.lon, source: localHit.source ?? "nominatim" };
+      }
+      if (Date.now() - localHit.ts < NEG_TTL) return null;
+    }
   }
 
-  // 2. Try cleaned address (plus code stripped) on Nominatim.
+  // 3. Try cleaned address on Nominatim, then fall back to city + country.
   let result: GeoResult | null = null;
   const cleaned = stripPlusCode(address);
   let geo = await nominatim(cleaned);
   if (geo) {
     result = { ...geo, source: "nominatim" };
   } else {
-    // 3. Fall back to city + country only.
     const cc = cityCountryOnly(address);
     if (cc && cc !== cleaned) {
       geo = await nominatim(cc);
@@ -112,13 +175,19 @@ export async function geocodeCustomer(name: string, address: string): Promise<Ge
     }
   }
 
-  cache[cacheKey] = {
+  const entry: CacheEntry = {
     lat: result?.lat ?? null,
     lon: result?.lon ?? null,
     source: result?.source,
     ts: Date.now(),
   };
-  saveCache(cache);
+
+  // Persist locally and to cloud.
+  const local = loadLocalCache();
+  local[cacheKey] = entry;
+  saveLocalCache(local);
+  await writeCloudCache(cacheKey, name, entry);
+
   return result;
 }
 
