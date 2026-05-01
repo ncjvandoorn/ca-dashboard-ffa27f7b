@@ -191,6 +191,36 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_geocode_cache: {
+        Row: {
+          address_key: string
+          created_at: string
+          lat: number | null
+          lon: number | null
+          name_hint: string | null
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_key: string
+          created_at?: string
+          lat?: number | null
+          lon?: number | null
+          name_hint?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_key?: string
+          created_at?: string
+          lat?: number | null
+          lon?: number | null
+          name_hint?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_invitations: {
         Row: {
           billing_cycle: string
