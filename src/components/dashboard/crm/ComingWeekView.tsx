@@ -585,15 +585,18 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     //
     // This is a coarse pre-filter — the AI then makes the final call.
     const STOP_WORDS = new Set([
-      "the","and","for","with","from","this","that","have","been","were","was","will","into","over","than","then","also","such","very","more","most","some","each","other","their","them","they","there","these","those","when","what","who","how","why","may","can","not","but","are","you","your","our","its","use","used","using","good","best","better","trial","trials","treatment","treatments","result","results","conclusion","recommendation","recommendations","commercial","customer","farm","cultivar","cultivars","vase","vases","day","days","week","weeks","year","years","mar","apr","may","jun","jul","aug","sep","oct","nov","dec","jan","feb",
+      "the","and","for","with","from","this","that","have","been","were","was","will","into","over","than","then","also","such","very","more","most","some","each","other","their","them","they","there","these","those","when","what","who","how","why","may","can","not","but","are","you","your","our","its","use","used","using","good","best","better",
+      "trial","trials","test","tests","testing","commercial","repeat","control","treatment","treatments","recommend","recommended","recommendation","recommendations","conclusion","conclusions","observation","observations","result","results","performance","quality","superior","preferred","preferable","reliable","alternative","option","options","value","extended","shelf","life","vase","customer","customers","farm","farms","standard","spray","rose","roses","flower","flowers","stem","stems","variety","varieties","cultivar","cultivars","crop","crops","day","days","week","weeks","year","years","season","botrytis","disease","mildew","powdery","application","applications","applied","apply","follow","followup","action","visit","visits","report","reports","note","notes","field","greenhouse","grower","growers","client","clients","sales","market","product","products","dose","dosage","rate","rates","mls","percent","percentage","mar","apr","may","jun","jul","aug","sep","oct","nov","dec","jan","feb",
     ]);
     const extractKeywords = (text: string | null | undefined): string[] => {
       if (!text) return [];
-      // Pull tokens of length >=3, lowercase, dedup, drop stop-words.
-      const tokens = (text.toLowerCase().match(/[a-z0-9][a-z0-9\-+/]{2,}/g) || [])
-        .filter((t) => !STOP_WORDS.has(t) && !/^\d+$/.test(t));
+      const tokens = (text.toLowerCase().match(/[a-z][a-z0-9\-+/]{3,}/g) || [])
+        .filter((t) => !STOP_WORDS.has(t) && !/^\d+$/.test(t) && t.length >= 4);
       return Array.from(new Set(tokens));
     };
+    const BRAND_RX = /^(gvb|avb|svb|cvb|chrysal|professional|clear|rva|bulb|botreat|vident|gatten|rosedip|rose-dip|rose_dip|supreme|finalin|ethybloc|ethylene|opti|rosa|pf|pfn|pfnl)/i;
+    const isDistinctive = (kw: string): boolean =>
+      BRAND_RX.test(kw) || /\d/.test(kw) || /[-+/]/.test(kw);
 
     const commercialTrials: any[] = [];
     for (const t of trials) {
@@ -613,8 +616,11 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       // is a free-text name from Plantscout, so we match against account names).
       const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
 
-      // Keywords from recommendation/conclusion that we want to find evidence of.
-      const keywords = extractKeywords(`${rec} ${t.conclusion || ""}`);
+      // Distinctive product keywords from the recommendation only — those
+      // are the actionable terms a sales follow-up would mention.
+      const allKeywords = extractKeywords(rec);
+      const distinctiveKeywords = allKeywords.filter(isDistinctive);
+      const keywords = distinctiveKeywords;
 
       const farmActivities = allActivities.filter((a) => {
         if (a.accountId && farmAccountId) return a.accountId === farmAccountId;
@@ -623,8 +629,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         return hay.includes(farmNameNorm);
       });
 
-      // Has there been any post-trial activity mentioning one of the trial keywords?
-      const followupHits = farmActivities
+      // If we have no distinctive keywords, treat as 0 hits → keeps trial in
+      // the "needs follow-up" list (safer than spuriously matching generic words).
+      const followupHits = keywords.length === 0 ? 0 : farmActivities
         .filter((a) => {
           const aDate = a.completedAt || a.createdAt || 0;
           if (trialStartMs && aDate < trialStartMs) return false;
