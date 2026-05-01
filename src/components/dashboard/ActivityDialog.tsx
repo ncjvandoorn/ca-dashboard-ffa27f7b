@@ -110,11 +110,56 @@ function formatDate(timestamp: number | null): string {
 
 export function ActivityDialog({ open, onOpenChange, farmId, farmName, activities, users, analysis }: ActivityDialogProps) {
   const userMap = useMemo(() => new Map((users ?? []).map((u) => [u.id, u.name])), [users]);
+  const { data: trials = [] } = useVaselifeHeaders();
+  const { data: allMeasurements = [] } = useAllVaselifeMeasurements();
+  const [selectedTrial, setSelectedTrial] = useState<VaselifeHeader | null>(null);
+
   const farmActivities = useMemo(() => {
     return activities
       .filter((a) => a.accountId === farmId)
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }, [activities, farmId]);
+
+  // Trials matched to this farm (by name) with computed conclusion date.
+  const farmTrials = useMemo(() => {
+    if (!farmName) return [] as Array<{ trial: VaselifeHeader; concludedAt: number; concludedDate: string }>;
+    const norm = farmName.trim().toLowerCase();
+    const measByHeader = new Map<string, number>();
+    for (const m of allMeasurements) {
+      const d = m.observation_days;
+      if (typeof d !== "number" || !Number.isFinite(d)) continue;
+      const cur = measByHeader.get(m.id_header) ?? 0;
+      if (d > cur) measByHeader.set(m.id_header, d);
+    }
+    const out: Array<{ trial: VaselifeHeader; concludedAt: number; concludedDate: string }> = [];
+    for (const t of trials) {
+      if (!t.farm || t.farm.trim().toLowerCase() !== norm) continue;
+      const maxDays = measByHeader.get(t.id) ?? 0;
+      const ms = maxDays > 0 ? [{ observation_days: maxDays }] : [];
+      const concludedDate = computeConcludedDate(t, ms);
+      if (!concludedDate) continue;
+      const ts = Date.parse(concludedDate);
+      if (Number.isNaN(ts)) continue;
+      out.push({ trial: t, concludedAt: ts, concludedDate });
+    }
+    return out;
+  }, [trials, allMeasurements, farmName]);
+
+  // Merged chronological timeline: activities + trial-result markers.
+  type TimelineItem =
+    | { kind: "activity"; date: number; activity: Activity }
+    | { kind: "trial"; date: number; trial: VaselifeHeader; concludedDate: string };
+  const timeline = useMemo<TimelineItem[]>(() => {
+    const items: TimelineItem[] = [];
+    for (const a of farmActivities) {
+      items.push({ kind: "activity", date: a.startsAt || a.createdAt || 0, activity: a });
+    }
+    for (const ft of farmTrials) {
+      items.push({ kind: "trial", date: ft.concludedAt, trial: ft.trial, concludedDate: ft.concludedDate });
+    }
+    items.sort((a, b) => b.date - a.date);
+    return items;
+  }, [farmActivities, farmTrials]);
 
   const suggestedActions = useMemo(
     () => generateSuggestedActions(analysis, farmId),
