@@ -218,7 +218,7 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {treatmentAverages.map((v) => {
+                    {treatmentAverages.map((v, idx) => {
                       const meas =
                         v.treatment_no != null ? avgMeasByTreatment.get(v.treatment_no) : undefined;
                       const isControl = controlTreatment?.id_line === v.id_line;
@@ -227,6 +227,7 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                           ? Number(v.flv_days) - Number(controlVlDays)
                           : null;
                       const d = formatDeltaDays(delta);
+                      const diffName = treatmentNameDiff.diffs[idx] || v.treatment_name || "—";
                       return (
                         <TableRow key={v.id_line} className="bg-primary/5">
                           <TableCell className="text-xs font-mono font-bold text-primary">
@@ -234,7 +235,12 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                           </TableCell>
                           <TableCell className="text-xs font-medium">
                             <div className="flex items-start gap-1.5">
-                              <span className="line-clamp-2">{v.treatment_name || "—"}</span>
+                              <span
+                                className="line-clamp-2"
+                                title={v.treatment_name || undefined}
+                              >
+                                {diffName}
+                              </span>
                               {isControl && (
                                 <Badge variant="outline" className="text-[9px] shrink-0 mt-0.5">
                                   control
