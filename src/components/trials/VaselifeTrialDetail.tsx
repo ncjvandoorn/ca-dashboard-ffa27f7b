@@ -1,4 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
+import { VaselifeTrialReport } from "./VaselifeTrialReport";
 import {
   Dialog,
   DialogContent,
