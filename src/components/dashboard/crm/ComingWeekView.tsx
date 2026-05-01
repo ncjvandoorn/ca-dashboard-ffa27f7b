@@ -17,6 +17,7 @@ import { SharePageButton } from "@/components/SharePageButton";
 import { useVaselifeHeaders, useAllVaselifeMeasurements, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
 import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 import { computeConcludedDate } from "@/lib/trialConcluded";
+import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
