@@ -349,14 +349,20 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                                   {diffName}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right text-xs font-bold text-primary">
-                                {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
+                              <TableCell className="text-right text-xs">
+                                <MetricChip tone={vlDaysTone(t.flv_days)}>
+                                  {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
+                                </MetricChip>
                               </TableCell>
                               <TableCell className="text-right text-xs">
-                                {t.bot_percentage ?? "—"}
+                                <MetricChip tone={botPctTone(t.bot_percentage)}>
+                                  {t.bot_percentage ?? "—"}
+                                </MetricChip>
                               </TableCell>
                               <TableCell className="text-right text-xs">
-                                {t.flo_percentage ?? "—"}
+                                <MetricChip tone={floPctTone(t.flo_percentage)}>
+                                  {t.flo_percentage ?? "—"}
+                                </MetricChip>
                               </TableCell>
                             </TableRow>
                           );
