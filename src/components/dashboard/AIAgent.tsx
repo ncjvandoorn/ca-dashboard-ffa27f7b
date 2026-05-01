@@ -560,7 +560,7 @@ export function AIAgent({ reports, accounts, activities, users, exceptionAnalysi
         setIsLoading(false);
       }
     },
-    [messages, isLoading, farmData, rawActivitiesForAI, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, farmIndex, containerIndex, tripIndex, logisticsData, sfTracking, customerScope]
+    [messages, isLoading, farmData, rawActivitiesForAI, staffSummary, activitySummary, exceptionAnalysis, seasonalityAnalysis, weeklyPlans, farmIndex, containerIndex, tripIndex, logisticsData, sfTracking, vaselifeHeaders, vaselifeVases, vaselifeMeasurements, customerScope]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
