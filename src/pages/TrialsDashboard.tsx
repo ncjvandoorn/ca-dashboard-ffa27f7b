@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
 import { usePlannerTrials } from "@/hooks/usePlannerTrials";
 import { computeTrialLink, type LinkStatus } from "@/lib/trialLinkage";
+import { computeConcludedDate } from "@/lib/trialConcluded";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function fmtDate(d: string | null): string {
@@ -147,9 +148,26 @@ export default function TrialsDashboard() {
     return map;
   }, [allVases, allMeasurements]);
 
+  const concludedByTrial = useMemo(() => {
+    const byHeader = new Map<string, number>();
+    for (const m of allMeasurements) {
+      const d = m.observation_days;
+      if (typeof d !== "number" || !Number.isFinite(d)) continue;
+      const cur = byHeader.get(m.id_header) ?? 0;
+      if (d > cur) byHeader.set(m.id_header, d);
+    }
+    const out = new Map<string, string | null>();
+    for (const t of customerScopedTrials) {
+      const maxDays = byHeader.get(t.id) ?? 0;
+      const ms: { observation_days: number | null }[] = maxDays > 0 ? [{ observation_days: maxDays }] : [];
+      out.set(t.id, computeConcludedDate(t, ms));
+    }
+    return out;
+  }, [customerScopedTrials, allMeasurements]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return customerScopedTrials.filter((t) => {
+    const list = customerScopedTrials.filter((t) => {
       if (customerFilter !== ALL && t.customer !== customerFilter) return false;
       if (farmFilter !== ALL && t.farm !== farmFilter) return false;
       if (!q) return true;
@@ -182,7 +200,13 @@ export default function TrialsDashboard() {
       const extra = extraSearchByHeaderId.get(t.id) || "";
       return haystack.includes(q) || extra.includes(q);
     });
-  }, [customerScopedTrials, search, customerFilter, farmFilter, extraSearchByHeaderId]);
+    // Sort by Trial concluded date, descending (most recent first)
+    return list.sort((a, b) => {
+      const da = concludedByTrial.get(a.id) || "";
+      const db = concludedByTrial.get(b.id) || "";
+      return db.localeCompare(da);
+    });
+  }, [customerScopedTrials, search, customerFilter, farmFilter, extraSearchByHeaderId, concludedByTrial]);
 
   /** Set of all account names (customers + farms) for matching */
   const accountNameSet = useMemo(() => {
@@ -339,7 +363,7 @@ export default function TrialsDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>VL Start</TableHead>
+                  <TableHead>Concluded</TableHead>
                   <TableHead>Trial</TableHead>
                   <TableHead className="w-16 text-center">Linked</TableHead>
                   <TableHead>Farm</TableHead>
@@ -373,7 +397,7 @@ export default function TrialsDashboard() {
                     className="cursor-pointer hover:bg-muted/40"
                     onClick={() => setSelected(t)}
                   >
-                    <TableCell className="text-xs text-muted-foreground">{fmtDate(t.start_vl)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{fmtDate(concludedByTrial.get(t.id) ?? null)}</TableCell>
                     <TableCell className="font-medium text-sm">
                       {t.trial_number || (
                         <span className="text-muted-foreground italic">unnamed</span>
