@@ -307,6 +307,47 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           </section>
         )}
 
+        {/* AI analysis section */}
+        <section className="mt-3 border border-primary/30 rounded-md bg-primary/5">
+          <div className="flex items-center justify-between gap-2 px-3 py-2">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Sparkles className="h-4 w-4 text-primary" />
+              AI analysis
+              {aiUpdatedAt && (
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  · updated {new Date(aiUpdatedAt).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
+            </div>
+            <Button
+              size="sm"
+              variant={aiAnalysis ? "outline" : "default"}
+              onClick={() => runAiAnalysis(!!aiAnalysis)}
+              disabled={aiLoading}
+              className="gap-1.5"
+            >
+              {aiLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : aiAnalysis ? (
+                <RefreshCw className="h-3.5 w-3.5" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              {aiLoading ? "Analysing…" : aiAnalysis ? "Refresh analysis" : "AI analysis"}
+            </Button>
+          </div>
+          {aiAnalysis && (
+            <div className="px-3 pb-3 pt-1 border-t border-primary/20 prose prose-sm max-w-none dark:prose-invert text-sm">
+              <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+            </div>
+          )}
+          {!aiAnalysis && !aiLoading && (
+            <div className="px-3 pb-3 text-xs text-muted-foreground">
+              Click the button to generate an AI-powered analysis that complements the team's conclusion with property-level insights.
+            </div>
+          )}
+        </section>
+
         <Tabs defaultValue="vases" className="mt-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <TabsList>
