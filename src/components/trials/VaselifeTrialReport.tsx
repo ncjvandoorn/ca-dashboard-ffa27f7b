@@ -58,14 +58,23 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
   const { data: vases = [], isLoading: vasesLoading } = useVaselifeVases(trial?.id);
   const { data: measurements = [], isLoading: measLoading } = useVaselifeMeasurements(trial?.id);
 
-  // Properties actually measured in this trial (crop-specific subset)
-  const tripProperties = useMemo(() => {
-    const set = new Set<string>();
+  // Properties actually measured in this trial (crop-specific subset),
+  // plus an observation-count map used to pick fallback headline KPIs.
+  const { tripProperties, propCounts } = useMemo(() => {
+    const counts = new Map<string, number>();
     for (const m of measurements) {
-      if (m.property_name) set.add(m.property_name);
+      if (!m.property_name) continue;
+      counts.set(m.property_name, (counts.get(m.property_name) || 0) + 1);
     }
-    return Array.from(set).sort();
+    const props = Array.from(counts.keys()).sort();
+    return { tripProperties: props, propCounts: counts };
   }, [measurements]);
+
+  // Headline KPIs ordered by per-crop importance (falls back to top-by-count)
+  const headlineKpis = useMemo(
+    () => getCropHeadlineKpis(trial?.crop, tripProperties, propCounts),
+    [trial?.crop, tripProperties, propCounts],
+  );
 
   // Index measurements by (cultivar|treatment_no) -> property -> score
   const measByVase = useMemo(() => {
@@ -107,6 +116,15 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
     }
     return m;
   }, [treatmentAverages, measByVase]);
+
+  // Control treatment = lowest treatment_no in the averages set (typically water/no-treatment).
+  const controlTreatment = useMemo(() => {
+    if (treatmentAverages.length === 0) return null;
+    return treatmentAverages.reduce((acc, v) =>
+      (v.treatment_no ?? 99) < (acc.treatment_no ?? 99) ? v : acc,
+    treatmentAverages[0]);
+  }, [treatmentAverages]);
+  const controlVlDays = controlTreatment?.flv_days ?? null;
 
 
   if (!trial) return null;
