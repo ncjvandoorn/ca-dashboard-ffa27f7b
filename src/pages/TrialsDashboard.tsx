@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { FlaskConical, Loader2, Search, Database } from "lucide-react";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { Input } from "@/components/ui/input";
