@@ -170,19 +170,37 @@ const Index = () => {
   }, [activities, visibleFarmIds]);
 
   // Customer scope passed to the AI agent so the server can enforce access.
+  // Includes lower-cased customer + farm NAMES used to scope Plantscout trial
+  // data (which stores names, not ids). Trials whose names don't match are
+  // never returned to the AI for customer users.
   const aiCustomerScope = useMemo(() => {
     if (!isCustomer || !customerAccount) return undefined;
     const allowedFarmIds = visibleFarmIds ? Array.from(visibleFarmIds) : [];
     const allowedOrderIds = (servicesOrders || [])
       .filter((o) => o.customerAccountId === customerAccount.customerAccountId)
       .map((o) => o.id);
+
+    const accountById = new Map((accounts || []).map((a) => [a.id, a.name]));
+    const myAccount = (accounts || []).find(
+      (a) => a.id === customerAccount.customerAccountId,
+    );
+    const allowedCustomerNames = myAccount?.name
+      ? [myAccount.name.trim().toLowerCase()]
+      : [];
+    const allowedFarmNames = allowedFarmIds
+      .map((id) => accountById.get(id))
+      .filter((n): n is string => !!n)
+      .map((n) => n.trim().toLowerCase());
+
     return {
       isCustomer: true,
       allowedFarmIds,
       allowedOrderIds,
       customerAccountId: customerAccount.customerAccountId,
+      allowedCustomerNames,
+      allowedFarmNames,
     };
-  }, [isCustomer, customerAccount, visibleFarmIds, servicesOrders]);
+  }, [isCustomer, customerAccount, visibleFarmIds, servicesOrders, accounts]);
 
   const visibleReports = useMemo(() => {
     return scopedReports.filter(isVisibleFarmReport);
