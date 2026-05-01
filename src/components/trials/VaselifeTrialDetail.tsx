@@ -1,6 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, Sparkles, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import { VaselifeTrialReport } from "./VaselifeTrialReport";
 import {
   Dialog,
@@ -86,6 +89,51 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
   const { data: vases = [], isLoading: vasesLoading } = useVaselifeVases(trial?.id);
   const { data: measurements = [], isLoading: measLoading } = useVaselifeMeasurements(trial?.id);
   const [reportOpen, setReportOpen] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [aiUpdatedAt, setAiUpdatedAt] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    setAiAnalysis(null);
+    setAiUpdatedAt(null);
+    if (!trial?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("vaselife_trial_ai_analysis")
+        .select("analysis, updated_at")
+        .eq("header_id", trial.id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      setAiAnalysis(data.analysis);
+      setAiUpdatedAt(data.updated_at);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [trial?.id]);
+
+  const runAiAnalysis = async (refresh: boolean) => {
+    if (!trial?.id) return;
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-trial", {
+        body: { headerId: trial.id, refresh },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAiAnalysis(data.analysis);
+      setAiUpdatedAt(data.updated_at || new Date().toISOString());
+    } catch (e: any) {
+      toast({
+        title: "AI analysis failed",
+        description: e?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const isAverageName = (s: string) => /^\s*(average|avg|gemiddelde|mean)\b/i.test(s || "");
 
@@ -258,6 +306,47 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
             <p className="text-sm text-muted-foreground whitespace-pre-line">{trial.objective}</p>
           </section>
         )}
+
+        {/* AI analysis section */}
+        <section className="mt-3 border border-primary/30 rounded-md bg-primary/5">
+          <div className="flex items-center justify-between gap-2 px-3 py-2">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Sparkles className="h-4 w-4 text-primary" />
+              AI analysis
+              {aiUpdatedAt && (
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  · updated {new Date(aiUpdatedAt).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
+            </div>
+            <Button
+              size="sm"
+              variant={aiAnalysis ? "outline" : "default"}
+              onClick={() => runAiAnalysis(!!aiAnalysis)}
+              disabled={aiLoading}
+              className="gap-1.5"
+            >
+              {aiLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : aiAnalysis ? (
+                <RefreshCw className="h-3.5 w-3.5" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              {aiLoading ? "Analysing…" : aiAnalysis ? "Refresh analysis" : "AI analysis"}
+            </Button>
+          </div>
+          {aiAnalysis && (
+            <div className="px-3 pb-3 pt-1 border-t border-primary/20 prose prose-sm max-w-none dark:prose-invert text-sm">
+              <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+            </div>
+          )}
+          {!aiAnalysis && !aiLoading && (
+            <div className="px-3 pb-3 text-xs text-muted-foreground">
+              Click the button to generate an AI-powered analysis that complements the team's conclusion with property-level insights.
+            </div>
+          )}
+        </section>
 
         <Tabs defaultValue="vases" className="mt-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">

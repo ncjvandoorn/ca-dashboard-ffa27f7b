@@ -700,6 +700,36 @@ export type Database = {
           },
         ]
       }
+      vaselife_trial_ai_analysis: {
+        Row: {
+          analysis: string
+          created_at: string
+          created_by: string | null
+          header_id: string
+          id: string
+          model: string | null
+          updated_at: string
+        }
+        Insert: {
+          analysis: string
+          created_at?: string
+          created_by?: string | null
+          header_id: string
+          id?: string
+          model?: string | null
+          updated_at?: string
+        }
+        Update: {
+          analysis?: string
+          created_at?: string
+          created_by?: string | null
+          header_id?: string
+          id?: string
+          model?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vaselife_vases: {
         Row: {
           bot_percentage: number | null
