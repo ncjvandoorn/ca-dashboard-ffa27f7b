@@ -5,8 +5,9 @@ import {
   ArrowLeft, Sparkles, Loader2, RefreshCw,
   ClipboardList, Phone, MapPin, AlertTriangle, Users,
   Target, CalendarCheck, UserCheck, PlusCircle, Eye,
-  TrendingUp, ExternalLink,
+  TrendingUp, ExternalLink, ChevronDown,
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
