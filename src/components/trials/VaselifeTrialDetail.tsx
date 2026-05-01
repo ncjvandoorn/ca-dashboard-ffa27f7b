@@ -376,12 +376,6 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               );
             })()}
           </DialogDescription>
-          <DialogDescription className="flex flex-wrap gap-2 items-center pt-1">
-            {trial.farm && <Badge variant="secondary">{trial.farm}</Badge>}
-            {trial.customer && <Badge variant="outline">{trial.customer}</Badge>}
-            {trial.crop && <Badge variant="outline">{trial.crop}</Badge>}
-            {trial.freight_type && <Badge variant="outline">{trial.freight_type}</Badge>}
-          </DialogDescription>
         </DialogHeader>
 
         {/* Top metadata — mirrors Plantscout report header block */}
