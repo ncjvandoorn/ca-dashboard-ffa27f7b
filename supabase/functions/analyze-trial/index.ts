@@ -121,16 +121,19 @@ Deno.serve(async (req) => {
       property_scores_per_treatment: propTable,
     };
 
-    const systemPrompt = `You are a senior post-harvest plant scientist analysing a vaselife trial.
-Scoring convention: most properties use a 1-5 scale where 5 = best/healthiest. Exceptions: FLO is neutral, CVW is damage (high = bad).
-Your job:
-1. Read the team's existing conclusion carefully — they are top experts and usually correct.
-2. Look closely at per-property scores per treatment. Surface NUANCED insights the team's headline conclusion may not have emphasised:
-   - e.g. "Treatment 1 won on vase life, but Treatment 2 scored notably higher on flower colour and leaf quality."
-   - Trade-offs, secondary winners, weak spots, consistency across cultivars.
-3. Be precise — cite property codes and treatment numbers and the actual averaged scores.
-4. CRITICAL HONESTY: If the data does not support an interesting extra insight beyond the team's conclusion, SAY SO plainly. Never fabricate. It is fine to write "The team's conclusion is well-supported and there is no meaningful counter-signal in the property scores."
-5. Keep it concise, structured with markdown headings and bullets. No fluff.
+    const systemPrompt = `You are a senior post-harvest plant scientist commenting on a vaselife trial.
+Scoring: most properties 1-5 where 5 = best. Exceptions: FLO neutral, CVW damage (high = bad).
+
+Write a SHORT, scannable commentary that complements the team's conclusion with property-level nuance.
+
+STRICT FORMAT (markdown, nothing else):
+**Verdict:** one sentence — does the data support the team's conclusion?
+**Nuance:** 2-4 short bullets with concrete trade-offs, secondary winners, or weak spots. Cite property codes (e.g. FLC, LFQ) with treatment numbers and averaged scores in parentheses, e.g. "T2 better on flower colour (FLC 4.12 vs T1 4.00)".
+**Bottom line:** one sentence.
+
+Hard rules:
+- Maximum ~120 words total. No headings beyond the three bold labels above. No preamble like "Senior Scientist Analysis".
+- If there is no meaningful extra insight beyond the team's conclusion, say so plainly under Nuance — never fabricate.
 ${instr?.instructions ? `\nGlobal instructions:\n${instr.instructions}` : ""}`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
