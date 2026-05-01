@@ -137,11 +137,26 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
 
   const isAverageName = (s: string) => /^\s*(average|avg|gemiddelde|mean)\b/i.test(s || "");
 
+  /**
+   * Normalise a treatment name for duplicate detection.
+   * Plantscout sometimes stores the same treatment multiple times with
+   * trivial spacing differences (e.g. "AVB  @5mL/L" vs "AVB @5mL/L",
+   * or "@2mL/L+" vs "@2mL/L +"). These should collapse to one treatment.
+   */
+  const normaliseTreatmentName = (s: string | null | undefined) =>
+    (s || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/\s*\|\s*/g, "|")
+      .replace(/\s*([+/@])\s*/g, "$1")
+      .trim();
+
   // Split vases into per-cultivar groups and per-treatment averages.
   // Plantscout already provides "Average" rows per treatment_no — we surface
   // those as a dedicated treatment-comparison section instead of treating
   // "Average" as just another cultivar.
-  const { cultivars, treatmentAverages } = useMemo(() => {
+  // We also collapse duplicate treatments that differ only by whitespace.
+  const { cultivars, treatmentAverages, derivedVaseCount } = useMemo(() => {
     const grouped = new Map<string, typeof vases>();
     const avgRows: typeof vases = [];
     for (const v of vases) {
@@ -159,10 +174,30 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
         treatments: items.sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0)),
       }))
       .sort((a, b) => a.cultivar.localeCompare(b.cultivar));
-    const treatmentAverages = avgRows.sort(
+
+    // Merge duplicate average rows by normalised treatment name.
+    const sortedAvg = [...avgRows].sort(
       (a, b) => (a.treatment_no || 0) - (b.treatment_no || 0),
     );
-    return { cultivars, treatmentAverages };
+    const mergedMap = new Map<string, typeof avgRows[number] & { merged_treatment_nos: number[] }>();
+    for (const r of sortedAvg) {
+      const key = normaliseTreatmentName(r.treatment_name) || `__t${r.treatment_no}`;
+      const existing = mergedMap.get(key);
+      if (!existing) {
+        mergedMap.set(key, { ...r, merged_treatment_nos: r.treatment_no != null ? [r.treatment_no] : [] });
+      } else if (r.treatment_no != null) {
+        existing.merged_treatment_nos.push(r.treatment_no);
+      }
+    }
+    const treatmentAverages = Array.from(mergedMap.values());
+
+    // Real vase count = sum of vase_count on non-average rows
+    // (or row count fallback when vase_count is missing/zero everywhere).
+    const realRows = vases.filter((v) => !isAverageName(v.cultivar));
+    const sumVaseCount = realRows.reduce((s, v) => s + (v.vase_count || 0), 0);
+    const derivedVaseCount = sumVaseCount > 0 ? sumVaseCount : realRows.length;
+
+    return { cultivars, treatmentAverages, derivedVaseCount };
   }, [vases]);
 
   // Build measurement matrix.
@@ -284,7 +319,10 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           <div>
             <div className="text-muted-foreground">Cultivars × Treatments</div>
             <div className="font-medium">
-              {trial.cultivar_count ?? "—"} × {trial.treatment_count ?? "—"}
+              {trial.cultivar_count ?? "—"} ×{" "}
+              {treatmentAverages.length > 0
+                ? treatmentAverages.length
+                : (trial.treatment_count ?? "—")}
             </div>
           </div>
           <div>
@@ -296,7 +334,9 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           </div>
           <div>
             <div className="text-muted-foreground">Total vases</div>
-            <div className="font-medium">{trial.total_vases ?? "—"}</div>
+            <div className="font-medium">
+              {derivedVaseCount > 0 ? derivedVaseCount : (trial.total_vases ?? "—")}
+            </div>
           </div>
         </div>
 
@@ -359,7 +399,7 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <TabsList>
               <TabsTrigger value="vases" className="gap-1.5">
-                <Sprout className="h-3.5 w-3.5" /> Vases ({vases.length})
+                <Sprout className="h-3.5 w-3.5" /> Vases ({derivedVaseCount || vases.length})
               </TabsTrigger>
               <TabsTrigger value="measurements" className="gap-1.5">
                 <Beaker className="h-3.5 w-3.5" /> Measurements ({measurements.length})
@@ -435,7 +475,9 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                           return (
                             <TableRow key={t.id_line} className="bg-primary/5">
                               <TableCell className="font-mono text-xs font-semibold text-primary">
-                                {t.treatment_no}
+                                {(t as any).merged_treatment_nos?.length > 1
+                                  ? (t as any).merged_treatment_nos.join("/")
+                                  : t.treatment_no}
                               </TableCell>
                               <TableCell className="text-xs">
                                 <div
