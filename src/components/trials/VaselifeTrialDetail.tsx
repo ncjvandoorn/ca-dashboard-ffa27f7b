@@ -43,6 +43,8 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
   const { data: vases = [], isLoading: vasesLoading } = useVaselifeVases(trial?.id);
   const { data: measurements = [], isLoading: measLoading } = useVaselifeMeasurements(trial?.id);
 
+  const isAverageName = (s: string) => /^\s*(average|avg|gemiddelde|mean)\b/i.test(s || "");
+
   // Build cultivar -> treatments grouping
   const cultivars = useMemo(() => {
     const grouped = new Map<string, typeof vases>();
@@ -51,10 +53,17 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(v);
     }
-    return Array.from(grouped.entries()).map(([cultivar, items]) => ({
-      cultivar,
-      treatments: items.sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0)),
-    }));
+    return Array.from(grouped.entries())
+      .map(([cultivar, items]) => ({
+        cultivar,
+        isAverage: isAverageName(cultivar),
+        treatments: items.sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0)),
+      }))
+      .sort((a, b) => {
+        if (a.isAverage && !b.isAverage) return -1;
+        if (!a.isAverage && b.isAverage) return 1;
+        return a.cultivar.localeCompare(b.cultivar);
+      });
   }, [vases]);
 
   // Build measurement matrix: row per (cultivar, treatment), column per property
@@ -72,11 +81,13 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
     const rows = Array.from(rowMap.entries())
       .map(([key, scores]) => {
         const [cultivar, tn] = key.split("|");
-        return { cultivar, treatmentNo: parseInt(tn), scores };
+        return { cultivar, treatmentNo: parseInt(tn), scores, isAverage: isAverageName(cultivar) };
       })
-      .sort((a, b) =>
-        a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo
-      );
+      .sort((a, b) => {
+        if (a.isAverage && !b.isAverage) return -1;
+        if (!a.isAverage && b.isAverage) return 1;
+        return a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo;
+      });
     return { props, rows };
   }, [measurements]);
 
@@ -174,11 +185,29 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <p className="text-sm text-muted-foreground py-6 text-center">No vase data.</p>
             ) : (
               <div className="space-y-5">
-                {cultivars.map(({ cultivar, treatments }) => (
-                  <div key={cultivar} className="border border-border rounded-md overflow-hidden">
-                    <div className="bg-muted/40 px-3 py-2 text-sm font-semibold">
-                      {cultivar}
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {cultivars.map(({ cultivar, treatments, isAverage }) => (
+                  <div
+                    key={cultivar}
+                    className={
+                      isAverage
+                        ? "border-2 border-primary/60 rounded-md overflow-hidden bg-primary/5 ring-1 ring-primary/20"
+                        : "border border-border rounded-md overflow-hidden"
+                    }
+                  >
+                    <div
+                      className={
+                        isAverage
+                          ? "bg-primary/15 text-primary px-3 py-2 text-sm font-bold uppercase tracking-wide flex items-center gap-2"
+                          : "bg-muted/40 px-3 py-2 text-sm font-semibold"
+                      }
+                    >
+                      {isAverage && (
+                        <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">
+                          Average across cultivars
+                        </Badge>
+                      )}
+                      <span>{cultivar}</span>
+                      <span className={isAverage ? "text-xs font-normal text-primary/70" : "ml-2 text-xs font-normal text-muted-foreground"}>
                         ({treatments.length} treatment{treatments.length === 1 ? "" : "s"})
                       </span>
                     </div>
@@ -239,11 +268,17 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                   </TableHeader>
                   <TableBody>
                     {measurementMatrix.rows.map((r, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="text-xs font-medium">{r.cultivar}</TableCell>
+                      <TableRow key={i} className={r.isAverage ? "bg-primary/10 font-semibold border-b-2 border-primary/40" : ""}>
+                        <TableCell className="text-xs font-medium">
+                          {r.isAverage ? (
+                            <span className="text-primary uppercase tracking-wide">★ {r.cultivar}</span>
+                          ) : (
+                            r.cultivar
+                          )}
+                        </TableCell>
                         <TableCell className="text-xs font-mono">{r.treatmentNo}</TableCell>
                         {measurementMatrix.props.map((p) => (
-                          <TableCell key={p} className="text-center text-xs">
+                          <TableCell key={p} className={`text-center text-xs ${r.isAverage ? "text-primary" : ""}`}>
                             {r.scores[p] != null ? r.scores[p] : "—"}
                           </TableCell>
                         ))}
