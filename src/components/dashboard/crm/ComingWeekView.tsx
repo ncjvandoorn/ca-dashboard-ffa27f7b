@@ -972,7 +972,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-xs leading-tight line-clamp-1">{a.subject || "Untitled"}</p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    {farmName && <span className="text-[10px] text-muted-foreground">{farmName}</span>}
+                    {farmName && (
+                      <button type="button" onClick={() => openFarmActivity(farmName, a.accountId)} className="text-[10px] text-primary hover:underline">{farmName}</button>
+                    )}
                     {assignedName && <Badge variant="secondary" className="text-[9px] px-1 py-0">{assignedName.split(" ")[0]}</Badge>}
                     {daysOld !== null && daysOld > 14 && (
                       <Badge variant="outline" className="text-[9px] px-1 py-0 text-warning border-warning/30">
