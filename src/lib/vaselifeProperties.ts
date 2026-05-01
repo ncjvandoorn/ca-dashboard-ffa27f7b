@@ -214,3 +214,47 @@ export function formatDeltaDays(delta: number | null): {
     tone: delta > 0 ? "good" : "bad",
   };
 }
+
+/**
+ * Treatment names in Plantscout are pipe-separated tokens that describe each
+ * trial phase (e.g. greenhouse | dipping | post-harvest | store | consumer).
+ * When comparing treatments side-by-side, the phases that are identical
+ * across all treatments are noise — what the reader cares about is the part
+ * that actually changes between treatments.
+ *
+ * `diffTreatmentNames` returns, for each input name, only the tokens that
+ * differ from at least one other treatment. Tokens shared by every treatment
+ * are dropped. Returns the original name if the diff would be empty (e.g.
+ * single treatment, or all identical).
+ */
+export function diffTreatmentNames(names: (string | null | undefined)[]): {
+  diffs: string[];
+  shared: string[];
+} {
+  const split = names.map((n) =>
+    (n || "")
+      .split("|")
+      .map((t) => t.trim())
+      .filter(Boolean),
+  );
+  if (split.length <= 1) {
+    return { diffs: names.map((n) => n || ""), shared: [] };
+  }
+  const maxLen = Math.max(...split.map((s) => s.length));
+  const sharedIdx = new Set<number>();
+  const shared: string[] = [];
+  for (let i = 0; i < maxLen; i++) {
+    const first = split[0][i];
+    if (first == null) continue;
+    if (split.every((s) => s[i] === first)) {
+      sharedIdx.add(i);
+      shared.push(first);
+    }
+  }
+  const diffs = split.map((tokens, idx) => {
+    const kept = tokens.filter((_, i) => !sharedIdx.has(i));
+    if (kept.length === 0) return names[idx] || ""; // fully identical → fall back
+    return kept.join(" | ");
+  });
+  return { diffs, shared };
+}

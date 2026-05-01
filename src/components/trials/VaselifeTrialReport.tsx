@@ -20,6 +20,7 @@ import {
   getPropertyMeta,
   getCropHeadlineKpis,
   formatDeltaDays,
+  diffTreatmentNames,
 } from "@/lib/vaselifeProperties";
 import {
   PropertyHeader,
@@ -124,6 +125,14 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
   }, [treatmentAverages]);
   const controlVlDays = controlTreatment?.flv_days ?? null;
 
+  // For the treatment-averages tables, show only the parts of the treatment
+  // name that differ between treatments. The shared prefix/suffix is collapsed
+  // to a single line above the table to keep context without repeating it.
+  const treatmentNameDiff = useMemo(
+    () => diffTreatmentNames(treatmentAverages.map((t) => t.treatment_name)),
+    [treatmentAverages],
+  );
+
 
   if (!trial) return null;
 
@@ -193,6 +202,14 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
               <h3 className="text-xs uppercase tracking-wide text-primary font-bold mb-2 flex items-center gap-1.5">
                 <Star className="h-3.5 w-3.5 fill-primary" /> Headline results — what matters most for {trial.crop || "this crop"}
               </h3>
+              {treatmentNameDiff.shared.length > 0 && (
+                <div className="mb-2 px-3 py-1.5 text-[11px] border border-border rounded-md bg-muted/30 text-muted-foreground">
+                  <span className="font-semibold uppercase tracking-wide text-foreground/70 mr-1">
+                    Shared across all treatments:
+                  </span>
+                  {treatmentNameDiff.shared.join(" · ")}
+                </div>
+              )}
               <div className="border-2 border-primary/60 rounded-md overflow-x-auto bg-primary/5 ring-1 ring-primary/20">
                 <Table>
                   <TableHeader>
@@ -209,7 +226,7 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {treatmentAverages.map((v) => {
+                    {treatmentAverages.map((v, idx) => {
                       const meas =
                         v.treatment_no != null ? avgMeasByTreatment.get(v.treatment_no) : undefined;
                       const isControl = controlTreatment?.id_line === v.id_line;
@@ -218,6 +235,7 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                           ? Number(v.flv_days) - Number(controlVlDays)
                           : null;
                       const d = formatDeltaDays(delta);
+                      const diffName = treatmentNameDiff.diffs[idx] || v.treatment_name || "—";
                       return (
                         <TableRow key={v.id_line} className="bg-primary/5">
                           <TableCell className="text-xs font-mono font-bold text-primary">
@@ -225,7 +243,12 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                           </TableCell>
                           <TableCell className="text-xs font-medium">
                             <div className="flex items-start gap-1.5">
-                              <span className="line-clamp-2">{v.treatment_name || "—"}</span>
+                              <span
+                                className="line-clamp-2"
+                                title={v.treatment_name || undefined}
+                              >
+                                {diffName}
+                              </span>
                               {isControl && (
                                 <Badge variant="outline" className="text-[9px] shrink-0 mt-0.5">
                                   control
@@ -284,16 +307,19 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {treatmentAverages.map((v) => {
+                    {treatmentAverages.map((v, idx) => {
                       const meas =
                         v.treatment_no != null ? avgMeasByTreatment.get(v.treatment_no) : undefined;
+                      const diffName = treatmentNameDiff.diffs[idx] || v.treatment_name || "—";
                       return (
                         <TableRow key={v.id_line}>
                           <TableCell className="text-xs font-mono font-bold text-primary">
                             {v.treatment_no}
                           </TableCell>
                           <TableCell className="text-xs">
-                            <div className="line-clamp-2">{v.treatment_name || "—"}</div>
+                            <div className="line-clamp-2" title={v.treatment_name || undefined}>
+                              {diffName}
+                            </div>
                           </TableCell>
                           <TableCell className="text-right text-xs font-semibold tabular-nums">
                             {v.flv_days != null ? Number(v.flv_days).toFixed(1) : "—"}
