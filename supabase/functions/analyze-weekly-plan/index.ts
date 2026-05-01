@@ -112,6 +112,9 @@ ${JSON.stringify(qualitySummary)}
 UNCOVERED FARMS (have quality reports but zero open activities):
 ${JSON.stringify(uncoveredFarms)}
 
+COMMERCIAL TRIAL CANDIDATES (Vase-Life trials with Next Step = Commercial AND no follow-up CRM activity yet on that farm mentioning the trial's product/keywords):
+${JSON.stringify(commercialFollowupCandidates || [])}
+
 Create the full Mon–Fri plan. Focus on what matters MOST.`;
 
     const requestBody = JSON.stringify({
