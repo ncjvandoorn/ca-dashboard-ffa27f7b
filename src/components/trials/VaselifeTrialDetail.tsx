@@ -81,11 +81,13 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
     const rows = Array.from(rowMap.entries())
       .map(([key, scores]) => {
         const [cultivar, tn] = key.split("|");
-        return { cultivar, treatmentNo: parseInt(tn), scores };
+        return { cultivar, treatmentNo: parseInt(tn), scores, isAverage: isAverageName(cultivar) };
       })
-      .sort((a, b) =>
-        a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo
-      );
+      .sort((a, b) => {
+        if (a.isAverage && !b.isAverage) return -1;
+        if (!a.isAverage && b.isAverage) return 1;
+        return a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo;
+      });
     return { props, rows };
   }, [measurements]);
 
