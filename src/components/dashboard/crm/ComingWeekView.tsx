@@ -259,16 +259,33 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
   // Commercial trials that DO have post-trial CRM follow-up — for review.
   const passedFollowups = useMemo(() => {
-    const STOP = new Set(["the","and","for","with","this","that","from","have","has","was","were","will","not","but","you","our","are","any","all","into","per","its","use","one","two","they","them","very","good","more","also","than","then","over","under","very","like","when","what"]);
+    // Aggressive stop-list: drop generic flower/trial/farm vocabulary so we
+    // only match on truly distinctive product/treatment names.
+    const STOP = new Set([
+      "the","and","for","with","this","that","from","have","has","was","were","will","not","but","you","our","are","any","all","into","per","its","use","one","two","they","them","very","good","more","also","than","then","over","under","like","when","what","which","while","where","there","their","these","those","been","being","both","each","other","some","such","only","just","much","many","most","same","than","upon","still","after","before","during","because",
+      // domain-generic
+      "trial","trials","test","tests","testing","commercial","repeat","control","treatment","treatments","recommend","recommended","recommendation","recommendations","conclusion","conclusions","observation","observations","result","results","performance","performed","performs","quality","good","better","best","superior","preferred","preferable","reliable","alternative","option","options","value","extended","shelf","life","vase","life","customer","customers","farm","farms","standard","spray","rose","roses","flower","flowers","stem","stems","variety","varieties","cultivar","cultivars","crop","crops","day","days","week","weeks","year","years","season","seasonal","botrytis","disease","control","mildew","powdery","application","applications","applied","apply","applying","follow","followup","follow-up","action","visit","visits","report","reports","note","notes","field","greenhouse","grower","growers","client","clients","sales","market","marketing","product","products","dose","dosage","rate","rates","mls","mlsl","mils","ppm","percent","percentage",
+    ]);
     const extractKw = (text: string): string[] => {
-      const tokens = (text.toLowerCase().match(/[a-z0-9][a-z0-9\-+/]{2,}/g) || [])
-        .filter((t) => !STOP.has(t) && !/^\d+$/.test(t));
+      const tokens = (text.toLowerCase().match(/[a-z][a-z0-9\-+/]{3,}/g) || [])
+        .filter((t) => !STOP.has(t) && !/^\d+$/.test(t) && t.length >= 4);
       return Array.from(new Set(tokens));
     };
+    // Heuristic: a "distinctive product/brand" looks like a brand-ish token —
+    // contains a digit, a slash, or a capital letter run, OR matches a known
+    // Chrysal/competitor brand stem.
+    const BRAND_RX = /^(gvb|avb|svb|cvb|chrysal|professional|clear|rva|bulb|botreat|vident|gatten|rosedip|rose-dip|rose_dip|supreme|t-bag|finalin|ethybloc|ethylene|opti|rosa|t-bag|pf|pfn|pfnl)/i;
+    const isDistinctive = (kw: string): boolean => {
+      if (BRAND_RX.test(kw)) return true;
+      if (/\d/.test(kw)) return true; // contains a digit, e.g. "5ec", "p2", "gvb1"
+      if (/[-+/]/.test(kw)) return true; // hyphen/slash typical of product names
+      return false;
+    };
+
     const out: Array<{
       trialId: string; trialNumber: string; farmName: string; customer?: string;
       trialDate: string | null; keyProduct: string;
-      activities: Array<{ date: string | null; subject: string; description: string; type: string }>;
+      activities: Array<{ id: string; date: string | null; subject: string; description: string; type: string }>;
     }> = [];
     for (const t of trials) {
       const rec = (t.recommendations || "").trim();
@@ -277,10 +294,16 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (!t.farm) continue;
       const trialStartMs = t.start_vl ? Date.parse(t.start_vl) : (t.harvest_date ? Date.parse(t.harvest_date) : 0);
       const trialDate = concludedByTrial.get(t.id) || t.start_vl || t.harvest_date || null;
-      const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
       const farmNameNorm = t.farm.toLowerCase();
       const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
-      const keywords = extractKw(`${rec} ${t.conclusion || ""}`);
+      // Only mine the recommendation text — that's where the actionable
+      // product name lives. The conclusion often repeats generic vocabulary.
+      const allKw = extractKw(rec);
+      const distinctiveKw = allKw.filter(isDistinctive);
+      // If no distinctive product token can be found, don't try to match —
+      // we'd just generate false positives.
+      if (distinctiveKw.length === 0) continue;
+
       const farmActivities = allActivities.filter((a) => {
         if (a.accountId && farmAccountId) return a.accountId === farmAccountId;
         const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
@@ -290,10 +313,23 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         const aDate = a.completedAt || a.createdAt || 0;
         if (trialStartMs && aDate < trialStartMs) return false;
         const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
-        return keywords.some((k) => hay.includes(k));
+        // Require a distinctive product token to appear — generic words don't count.
+        return distinctiveKw.some((k) => hay.includes(k));
       });
       if (hits.length === 0) continue;
-      const keyProduct = keywords.find((k) => /^(gvb|avb|svb|chrysal|clear|professional|rva|bulb|cvb)/i.test(k)) || keywords[0] || "product";
+
+      // Dedupe near-identical activities by normalized subject+description.
+      const seen = new Set<string>();
+      const uniqueHits = hits
+        .sort((a, b) => (b.completedAt || b.createdAt || 0) - (a.completedAt || a.createdAt || 0))
+        .filter((a) => {
+          const sig = `${(a.subject || "").trim().toLowerCase()}|${(a.description || "").trim().toLowerCase().slice(0, 200)}`;
+          if (seen.has(sig)) return false;
+          seen.add(sig);
+          return true;
+        });
+
+      const keyProduct = distinctiveKw[0] || "product";
       out.push({
         trialId: t.id,
         trialNumber: t.trial_number || t.id.slice(0, 8),
@@ -301,15 +337,13 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         customer: t.customer || undefined,
         trialDate,
         keyProduct,
-        activities: hits
-          .sort((a, b) => (b.completedAt || b.createdAt || 0) - (a.completedAt || a.createdAt || 0))
-          .slice(0, 5)
-          .map((a) => ({
-            date: a.completedAt ? new Date(a.completedAt).toISOString() : (a.createdAt ? new Date(a.createdAt).toISOString() : null),
-            subject: a.subject || "",
-            description: a.description || "",
-            type: a.type || "",
-          })),
+        activities: uniqueHits.slice(0, 5).map((a) => ({
+          id: a.id,
+          date: a.completedAt ? new Date(a.completedAt).toISOString() : (a.createdAt ? new Date(a.createdAt).toISOString() : null),
+          subject: a.subject || "",
+          description: a.description || "",
+          type: a.type || "",
+        })),
       });
     }
     return out.sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
