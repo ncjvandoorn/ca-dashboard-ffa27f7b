@@ -454,16 +454,23 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
               </div>
             )}
             {tripProperties.length > 0 && (
-              <div className="mt-3 px-3 py-2 text-[11px] text-muted-foreground border border-border rounded-md bg-muted/20 flex flex-wrap gap-x-3 gap-y-1">
-                <span className="font-semibold uppercase tracking-wide">
-                  Property legend ({trial.crop || "this crop"}):
-                </span>
-                {tripProperties.map((p) => (
-                  <span key={p}>
-                    <span className="font-mono">{p}</span> ={" "}
-                    {PROPERTY_LABELS[p] || "?"}
-                  </span>
-                ))}
+              <div className="mt-3 px-3 py-2 text-[11px] border border-border rounded-md bg-muted/20 space-y-1.5">
+                <div className="font-semibold uppercase tracking-wide text-muted-foreground">
+                  Property legend ({trial.crop || "this crop"})
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-0.5">
+                  {tripProperties.map((p) => {
+                    const meta = getPropertyMeta(p);
+                    return (
+                      <div key={p} className="flex gap-1.5 text-foreground/80">
+                        <span className="font-mono font-semibold shrink-0">{p}</span>
+                        <span className="shrink-0">— {meta.label}:</span>
+                        <span className="text-muted-foreground">{meta.description}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <ScoreScaleLegend />
               </div>
             )}
           </section>
