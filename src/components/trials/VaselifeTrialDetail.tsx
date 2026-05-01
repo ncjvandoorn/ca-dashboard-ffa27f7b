@@ -319,7 +319,10 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           <div>
             <div className="text-muted-foreground">Cultivars × Treatments</div>
             <div className="font-medium">
-              {trial.cultivar_count ?? "—"} × {trial.treatment_count ?? "—"}
+              {trial.cultivar_count ?? "—"} ×{" "}
+              {treatmentAverages.length > 0
+                ? treatmentAverages.length
+                : (trial.treatment_count ?? "—")}
             </div>
           </div>
           <div>
@@ -331,7 +334,9 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           </div>
           <div>
             <div className="text-muted-foreground">Total vases</div>
-            <div className="font-medium">{trial.total_vases ?? "—"}</div>
+            <div className="font-medium">
+              {derivedVaseCount > 0 ? derivedVaseCount : (trial.total_vases ?? "—")}
+            </div>
           </div>
         </div>
 
