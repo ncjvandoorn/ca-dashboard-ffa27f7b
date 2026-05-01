@@ -68,18 +68,35 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
     return map;
   }, [measurements]);
 
-  // Order vases — Average first, then alphabetical by cultivar, then treatment_no
-  const orderedVases = useMemo(() => {
-    return [...vases].sort((a, b) => {
-      const aAvg = isAverageName(a.cultivar);
-      const bAvg = isAverageName(b.cultivar);
-      if (aAvg && !bAvg) return -1;
-      if (!aAvg && bAvg) return 1;
+  // Split: per-treatment averages vs real per-cultivar vases
+  const { treatmentAverages, cultivarVases } = useMemo(() => {
+    const avgs: typeof vases = [];
+    const culti: typeof vases = [];
+    for (const v of vases) {
+      if (isAverageName(v.cultivar)) avgs.push(v);
+      else culti.push(v);
+    }
+    avgs.sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0));
+    culti.sort((a, b) => {
       const c = (a.cultivar || "").localeCompare(b.cultivar || "");
       if (c !== 0) return c;
       return (a.treatment_no || 0) - (b.treatment_no || 0);
     });
+    return { treatmentAverages: avgs, cultivarVases: culti };
   }, [vases]);
+
+  // Lookup measurements for the per-treatment-average row by treatment_no
+  const avgMeasByTreatment = useMemo(() => {
+    const m = new Map<number, Map<string, number | null>>();
+    for (const v of treatmentAverages) {
+      if (v.treatment_no == null) continue;
+      const key = `${(v.cultivar || "").toLowerCase()}|${v.treatment_no}`;
+      const props = measByVase.get(key);
+      if (props) m.set(v.treatment_no, props);
+    }
+    return m;
+  }, [treatmentAverages, measByVase]);
+
 
   if (!trial) return null;
 
