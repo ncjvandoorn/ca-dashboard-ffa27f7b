@@ -25,8 +25,8 @@ import {
   useVaselifeMeasurements,
   type VaselifeHeader,
 } from "@/hooks/useVaselifeTrials";
-import { getPropertyMeta, diffTreatmentNames } from "@/lib/vaselifeProperties";
-import { PropertyHeader, ScoreChip, ScoreScaleLegend } from "./VaselifeScoreUi";
+import { getPropertyMeta, diffTreatmentNames, scoreToneClasses, type ScoreTone } from "@/lib/vaselifeProperties";
+import { PropertyHeader, ScoreChip, ScoreScaleLegend, ToneBadge } from "./VaselifeScoreUi";
 import type { Trial } from "@/lib/trialsParser";
 import type { TrialLinkInfo } from "@/lib/trialLinkage";
 
@@ -41,6 +41,45 @@ interface Props {
 function fmtDate(d: string | null): string {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+/** Tone for vase-life days (more is better). */
+function vlDaysTone(v: number | null | undefined): ScoreTone {
+  if (v == null) return "neutral";
+  if (v >= 7) return "good";
+  if (v >= 5) return "warn";
+  return "bad";
+}
+/** Tone for Botrytis % (damage — lower is better). */
+function botPctTone(v: number | null | undefined): ScoreTone {
+  if (v == null) return "neutral";
+  if (v <= 5) return "good";
+  if (v <= 20) return "warn";
+  return "bad";
+}
+/** Tone for Flower-opening % / FVL % (quality — higher is better). */
+function floPctTone(v: number | null | undefined): ScoreTone {
+  if (v == null) return "neutral";
+  if (v >= 75) return "good";
+  if (v >= 50) return "warn";
+  return "bad";
+}
+function MetricChip({
+  tone,
+  children,
+}: {
+  tone: ScoreTone;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center justify-center min-w-[36px] px-1.5 py-0.5 rounded text-[11px] font-semibold tabular-nums ${scoreToneClasses(
+        tone,
+      )}`}
+    >
+      {children}
+    </span>
+  );
 }
 
 export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches = [], linkInfo }: Props) {
@@ -310,14 +349,20 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                                   {diffName}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right text-xs font-bold text-primary">
-                                {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
+                              <TableCell className="text-right text-xs">
+                                <MetricChip tone={vlDaysTone(t.flv_days)}>
+                                  {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
+                                </MetricChip>
                               </TableCell>
                               <TableCell className="text-right text-xs">
-                                {t.bot_percentage ?? "—"}
+                                <MetricChip tone={botPctTone(t.bot_percentage)}>
+                                  {t.bot_percentage ?? "—"}
+                                </MetricChip>
                               </TableCell>
                               <TableCell className="text-right text-xs">
-                                {t.flo_percentage ?? "—"}
+                                <MetricChip tone={floPctTone(t.flo_percentage)}>
+                                  {t.flo_percentage ?? "—"}
+                                </MetricChip>
                               </TableCell>
                             </TableRow>
                           );
@@ -355,11 +400,21 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                               <div className="line-clamp-2">{t.treatment_name || "—"}</div>
                             </TableCell>
                             <TableCell className="text-right text-xs">{t.vase_count ?? "—"}</TableCell>
-                            <TableCell className="text-right text-xs font-semibold">
-                              {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
+                            <TableCell className="text-right text-xs">
+                              <MetricChip tone={vlDaysTone(t.flv_days)}>
+                                {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
+                              </MetricChip>
                             </TableCell>
-                            <TableCell className="text-right text-xs">{t.bot_percentage ?? "—"}</TableCell>
-                            <TableCell className="text-right text-xs">{t.flo_percentage ?? "—"}</TableCell>
+                            <TableCell className="text-right text-xs">
+                              <MetricChip tone={botPctTone(t.bot_percentage)}>
+                                {t.bot_percentage ?? "—"}
+                              </MetricChip>
+                            </TableCell>
+                            <TableCell className="text-right text-xs">
+                              <MetricChip tone={floPctTone(t.flo_percentage)}>
+                                {t.flo_percentage ?? "—"}
+                              </MetricChip>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
