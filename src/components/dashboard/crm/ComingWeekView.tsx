@@ -1031,7 +1031,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                     className={`rounded-lg border p-3 ${priorityStyle[v.priority]}`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-sm">{v.farmName}</span>
+                      <button type="button" onClick={() => openFarmActivity(v.farmName, v.farmId)} className="font-semibold text-sm text-primary hover:underline">{v.farmName}</button>
                       <div className="flex items-center gap-1.5">
                         {v.suggestedDay && <Badge variant="secondary" className="text-[10px]">{v.suggestedDay}</Badge>}
                         <Badge variant="outline" className="text-[10px] uppercase">{v.priority}</Badge>
