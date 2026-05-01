@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { FlaskConical, Loader2, Search, Database } from "lucide-react";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,18 @@ export default function TrialsDashboard() {
   const [customerFilter, setCustomerFilter] = useState<string>(ALL);
   const [farmFilter, setFarmFilter] = useState<string>(ALL);
   const [selected, setSelected] = useState<VaselifeHeader | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep-link: open a specific trial via ?trial=<id> or ?trial=<trial_number>
+  useEffect(() => {
+    const want = searchParams.get("trial");
+    if (!want || trials.length === 0) return;
+    const match = trials.find(
+      (t) => t.id === want || (t.trial_number || "").toLowerCase() === want.toLowerCase(),
+    );
+    if (match && (!selected || selected.id !== match.id)) setSelected(match);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trials, searchParams]);
 
   /**
    * For customers: restrict to trials whose `customer` name matches their
@@ -417,7 +429,16 @@ export default function TrialsDashboard() {
       <VaselifeTrialDetail
         trial={selected}
         open={!!selected}
-        onOpenChange={(o) => !o && setSelected(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSelected(null);
+            if (searchParams.get("trial")) {
+              const next = new URLSearchParams(searchParams);
+              next.delete("trial");
+              setSearchParams(next, { replace: true });
+            }
+          }
+        }}
         plannerMatches={selected ? linkByHeaderId.get(selected.id)?.plannerMatches ?? [] : []}
         linkInfo={selected ? linkByHeaderId.get(selected.id) : undefined}
       />

@@ -1,9 +1,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, Sparkles, Loader2, RefreshCw,
   ClipboardList, Phone, MapPin, AlertTriangle, Users,
   Target, CalendarCheck, UserCheck, PlusCircle, Eye,
+  TrendingUp, ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SharePageButton } from "@/components/SharePageButton";
+import { useVaselifeHeaders } from "@/hooks/useVaselifeTrials";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
@@ -128,6 +131,15 @@ interface WeeklyPlan {
   suggestedNewActivities: { type: string; subject: string; farmName: string; suggestedUser: string; suggestedDay?: string; reason: string; priority: "critical" | "high" | "medium" }[];
   farmsWithoutCoverage: { farmId: string; farmName: string; lastActivityDate: string; qualityStatus: string; recommendation: string }[];
   weeklyFocus: string;
+  commercialFollowups?: {
+    trialId: string;
+    trialNumber: string;
+    farmName: string;
+    customer?: string;
+    keyProduct: string;
+    trialDate: string;
+    reason: string;
+  }[];
 }
 
 const typeIcon: Record<string, typeof ClipboardList> = {
@@ -221,6 +233,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
+  const { data: trials = [] } = useVaselifeHeaders();
 
   useEffect(() => {
     let active = true;
@@ -449,8 +462,83 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     const todayDate = `${days[today.getDay()]} ${fmt(today)}`;
     const weekDates = `Monday ${fmt(monday)} – Friday ${fmt(friday)}`;
 
-    return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr: plannerWeekNr, weekDates };
-  }, [allActivities, reports, activeUsers, userMap, accountMap, users, referenceNow, resolvedCurrentWeek]);
+    // === Commercial trial follow-ups ===
+    // For every trial whose Next Step = "Commercial" (i.e., recommendation does
+    // NOT contain the word "repeat"), check whether there has been any CRM
+    // activity on that farm since the trial's start_vl date that mentions a
+    // distinctive product/keyword from the trial's recommendation. If not,
+    // surface it so the team can plan a sales follow-up.
+    //
+    // This is a coarse pre-filter — the AI then makes the final call.
+    const STOP_WORDS = new Set([
+      "the","and","for","with","from","this","that","have","been","were","was","will","into","over","than","then","also","such","very","more","most","some","each","other","their","them","they","there","these","those","when","what","who","how","why","may","can","not","but","are","you","your","our","its","use","used","using","good","best","better","trial","trials","treatment","treatments","result","results","conclusion","recommendation","recommendations","commercial","customer","farm","cultivar","cultivars","vase","vases","day","days","week","weeks","year","years","mar","apr","may","jun","jul","aug","sep","oct","nov","dec","jan","feb",
+    ]);
+    const extractKeywords = (text: string | null | undefined): string[] => {
+      if (!text) return [];
+      // Pull tokens of length >=3, lowercase, dedup, drop stop-words.
+      const tokens = (text.toLowerCase().match(/[a-z0-9][a-z0-9\-+/]{2,}/g) || [])
+        .filter((t) => !STOP_WORDS.has(t) && !/^\d+$/.test(t));
+      return Array.from(new Set(tokens));
+    };
+
+    const commercialTrials: any[] = [];
+    for (const t of trials) {
+      const rec = (t.recommendations || "").trim();
+      if (!rec) continue;
+      // "Repeat" trials are excluded — only Commercial ones (same logic as Trials Dashboard column)
+      if (/repeat/i.test(rec)) continue;
+      if (!t.farm) continue;
+
+      const trialDate = t.start_vl || t.harvest_date || t.source_date || null;
+      const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
+      const farmName = t.farm;
+      const farmNameNorm = farmName.toLowerCase();
+
+      // Find activities for this farm (match by accountMap name — trial.farm
+      // is a free-text name from Plantscout, so we match against account names).
+      const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
+
+      // Keywords from recommendation/conclusion that we want to find evidence of.
+      const keywords = extractKeywords(`${rec} ${t.conclusion || ""}`);
+
+      const farmActivities = allActivities.filter((a) => {
+        if (a.accountId && farmAccountId) return a.accountId === farmAccountId;
+        // Fallback: match by farm name appearing in subject/description
+        const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
+        return hay.includes(farmNameNorm);
+      });
+
+      // Has there been any post-trial activity mentioning one of the trial keywords?
+      const followupHits = farmActivities
+        .filter((a) => {
+          const aDate = a.completedAt || a.createdAt || 0;
+          if (trialDateMs && aDate < trialDateMs) return false;
+          const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
+          return keywords.some((k) => hay.includes(k));
+        })
+        .length;
+
+      commercialTrials.push({
+        id: t.id,
+        no: t.trial_number || t.id.slice(0, 8),
+        farm: farmName,
+        cust: t.customer || undefined,
+        crop: t.crop || undefined,
+        date: trialDate,
+        rec: rec.slice(0, 220),
+        concl: (t.conclusion || "").slice(0, 220) || undefined,
+        kw: keywords.slice(0, 8),
+        followupHits,
+      });
+    }
+    // Only send trials that have NO follow-up evidence — the section's purpose.
+    const commercialFollowupCandidates = commercialTrials
+      .filter((c) => c.followupHits === 0)
+      .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+      .slice(0, 25);
+
+    return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr: plannerWeekNr, weekDates, commercialFollowupCandidates };
+  }, [allActivities, reports, activeUsers, userMap, accountMap, users, accounts, trials, referenceNow, resolvedCurrentWeek]);
 
   const runAnalysis = useCallback(async () => {
     setLoading(true);
@@ -544,6 +632,57 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       </div>
 
       <div className="space-y-6">
+      {/* Commercial trial follow-ups — sales opportunities with no recent CRM mention */}
+      {plan?.commercialFollowups && plan.commercialFollowups.length > 0 && (
+        <div data-pdf-section>
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-accent" />
+            Commercial Trial Follow-ups ({plan.commercialFollowups.length})
+            <span className="text-[10px] font-normal normal-case text-muted-foreground/80">
+              · Successful trials with no sales follow-up yet
+            </span>
+          </h4>
+          <div className="space-y-2">
+            {plan.commercialFollowups.map((c, i) => (
+              <motion.div
+                key={c.trialId || i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="rounded-lg border border-accent/30 bg-accent/5 p-3"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">{c.farmName}</span>
+                    {c.customer && (
+                      <Badge variant="outline" className="text-[10px]">{c.customer}</Badge>
+                    )}
+                    <Badge variant="secondary" className="text-[10px]">
+                      {c.keyProduct}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {c.trialDate && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(c.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                      </span>
+                    )}
+                    <Link
+                      to={`/trials?trial=${encodeURIComponent(c.trialId)}`}
+                      className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                    >
+                      Trial {c.trialNumber}
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </div>
+                <p className="text-xs text-foreground/90">{c.reason}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Open tasks overview */}
       <div>
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">

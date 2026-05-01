@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr, weekDates } = await req.json();
+    const { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr, weekDates, commercialFollowupCandidates } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -71,10 +71,21 @@ Return JSON with this structure:
   "userWorkloadAssessment": [{ "userName","openTasks","completedRecently","completionRate","farmsCovered","assessment":"On track"|"Overloaded"|"Underutilized"|"Falling behind","recommendation","suggestedSchedule":["Monday: ...","Tuesday: ..."] }],
   "suggestedNewActivities": [{ "type":"Task"|"Visit"|"Call","subject","farmName","suggestedUser","suggestedDay","reason" (cite data),"priority":"critical"|"high"|"medium" }],
   "farmsWithoutCoverage": [{ "farmId","farmName","lastActivityDate","qualityStatus","recommendation" }],
+  "commercialFollowups": [{ "trialId","trialNumber","farmName","customer","keyProduct","trialDate","reason" }],
   "weeklyFocus": "3-4 sentence team directive for this week. Summarize #1 priority, key risks, team actions."
 }
 
-**LIMITS per section:** urgentFarmVisits max 15, overdueActivities max 15, suggestedNewActivities max 15, farmsWithoutCoverage max 10. Across the whole team for the whole week, max 25 total farm visits (5 per day × 5 days).
+**LIMITS per section:** urgentFarmVisits max 15, overdueActivities max 15, suggestedNewActivities max 15, farmsWithoutCoverage max 10, commercialFollowups max 15. Across the whole team for the whole week, max 25 total farm visits (5 per day × 5 days).
+
+**COMMERCIAL FOLLOW-UPS — what to include:**
+The input \`commercialFollowupCandidates\` lists Vase Life trials whose Next Step is "Commercial" (recommendation does NOT contain "repeat") and where our pre-filter found NO CRM activity since the trial date that mentions a key product/keyword from the recommendation.
+For each candidate decide whether it truly represents an unfollowed-up sales opportunity:
+- Include it if the recommendation indicates a positive/successful product result that the team should now sell to that farm/customer (e.g. "GVB performed well", "AVB recommended", etc.).
+- Skip it if the recommendation is inconclusive, negative, or already trivially closed.
+- \`keyProduct\` must be the specific product/treatment name mentioned in the recommendation (e.g. "GVB", "AVB @5mL/L", "TOG 75"). Pull it from the recommendation text — never invent.
+- \`reason\` must be 1 short sentence (max 25 words) citing the trial result and what sales action is needed.
+- \`trialId\` and \`trialNumber\` MUST be copied verbatim from the candidate input.
+- Order by most recent trial first.
 
 **CRITICAL RULES:**
 1. ONLY reference data present in the input. Never invent names, values, or observations.
@@ -82,7 +93,8 @@ Return JSON with this structure:
 3. Staff notes: quote or closely paraphrase actual qN, pN, gC text.
 4. If fewer items qualify, return fewer. Never pad lists.
 5. Include ALL team members in userWorkloadAssessment.
-6. suggestedSchedule per user: max 5 visits/day, unlimited calls/tasks.`;
+6. suggestedSchedule per user: max 5 visits/day, unlimited calls/tasks.
+7. For commercialFollowups: \`trialId\` MUST exactly match an \`id\` from commercialFollowupCandidates.`;
 
     const userPrompt = `Create the action plan for THIS week (${weekDates || "Mon–Fri"}). Today is ${todayDate || "a weekday"}, week ${currentWeekNr || "?"}.
 The plan must cover Monday through Friday. The weekLabel should reflect "${weekDates || "Mon–Fri"}".
@@ -99,6 +111,9 @@ ${JSON.stringify(qualitySummary)}
 
 UNCOVERED FARMS (have quality reports but zero open activities):
 ${JSON.stringify(uncoveredFarms)}
+
+COMMERCIAL TRIAL CANDIDATES (Vase-Life trials with Next Step = Commercial AND no follow-up CRM activity yet on that farm mentioning the trial's product/keywords):
+${JSON.stringify(commercialFollowupCandidates || [])}
 
 Create the full Mon–Fri plan. Focus on what matters MOST.`;
 
@@ -201,9 +216,26 @@ Create the full Mon–Fri plan. Focus on what matters MOST.`;
                     additionalProperties: false,
                   },
                 },
+                commercialFollowups: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      trialId: { type: "string" },
+                      trialNumber: { type: "string" },
+                      farmName: { type: "string" },
+                      customer: { type: "string" },
+                      keyProduct: { type: "string" },
+                      trialDate: { type: "string" },
+                      reason: { type: "string" },
+                    },
+                    required: ["trialId", "trialNumber", "farmName", "keyProduct", "trialDate", "reason"],
+                    additionalProperties: false,
+                  },
+                },
                 weeklyFocus: { type: "string" },
               },
-              required: ["weekLabel", "executiveSummary", "urgentFarmVisits", "overdueActivities", "userWorkloadAssessment", "suggestedNewActivities", "farmsWithoutCoverage", "weeklyFocus"],
+              required: ["weekLabel", "executiveSummary", "urgentFarmVisits", "overdueActivities", "userWorkloadAssessment", "suggestedNewActivities", "farmsWithoutCoverage", "commercialFollowups", "weeklyFocus"],
               additionalProperties: false,
             },
           },
