@@ -338,6 +338,7 @@ export default function TrialsDashboard() {
                   <TableHead className="text-right">Treat.</TableHead>
                   <TableHead className="text-right">Vases</TableHead>
                   <TableHead>Initial quality</TableHead>
+                  <TableHead>Next step</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -396,6 +397,13 @@ export default function TrialsDashboard() {
                     <TableCell className="text-right text-sm">{t.treatment_count ?? "—"}</TableCell>
                     <TableCell className="text-right text-sm">{t.total_vases ?? "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{t.initial_quality || "—"}</TableCell>
+                    <TableCell className="text-sm">
+                      {/repeat/i.test(t.recommendations || "") ? (
+                        <Badge variant="outline" className="border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
+                      )}
+                    </TableCell>
                   </TableRow>
                   );
                 })}
