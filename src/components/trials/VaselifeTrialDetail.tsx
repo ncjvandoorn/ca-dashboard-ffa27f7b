@@ -23,9 +23,10 @@ import { Loader2, Beaker, FlaskConical, Sprout, ClipboardList } from "lucide-rea
 import {
   useVaselifeVases,
   useVaselifeMeasurements,
-  PROPERTY_LABELS,
   type VaselifeHeader,
 } from "@/hooks/useVaselifeTrials";
+import { PROPERTY_LABELS, getPropertyMeta } from "@/lib/vaselifeProperties";
+import { PropertyHeader, ScoreChip, ScoreScaleLegend } from "./VaselifeScoreUi";
 import type { Trial } from "@/lib/trialsParser";
 import type { TrialLinkInfo } from "@/lib/trialLinkage";
 
