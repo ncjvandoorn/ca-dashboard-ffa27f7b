@@ -682,7 +682,23 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       }
 
       const { data, error } = await supabase.functions.invoke("analyze-weekly-plan", { body: payload });
-      if (error) throw error;
+      if (error) {
+        // FunctionsHttpError swallows the body; try to extract real reason
+        let detail = error.message || "Edge function failed";
+        try {
+          const ctx = (error as any).context;
+          if (ctx && typeof ctx.text === "function") {
+            const body = await ctx.text();
+            try {
+              const j = JSON.parse(body);
+              if (j?.error) detail = j.error;
+            } catch {
+              if (body) detail = body.slice(0, 300);
+            }
+          }
+        } catch { /* ignore */ }
+        throw new Error(detail);
+      }
       if (data?.error) throw new Error(data.error);
       const analysis = data.analysis as WeeklyPlan;
       const normalizedPlan = {

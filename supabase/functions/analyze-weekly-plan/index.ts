@@ -248,18 +248,29 @@ Create the full Mon–Fri plan. Focus on what matters MOST.`;
     });
 
     console.log("Payload size:", requestBody.length, "bytes");
+    const t0 = Date.now();
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: requestBody,
-      }
-    );
+    let response: Response;
+    try {
+      response = await fetch(
+        "https://ai.gateway.lovable.dev/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: requestBody,
+        }
+      );
+    } catch (fetchErr) {
+      console.error("AI gateway fetch threw after", Date.now() - t0, "ms:", fetchErr);
+      return new Response(
+        JSON.stringify({ error: `AI gateway unreachable: ${fetchErr instanceof Error ? fetchErr.message : "unknown"}` }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    console.log("AI gateway responded in", Date.now() - t0, "ms, status:", response.status);
 
     if (!response.ok) {
       if (response.status === 429) {
