@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ClipboardList, Phone, MapPin, CheckCircle, Clock, AlertCircle, Lightbulb, Loader2 } from "lucide-react";
+import { ClipboardList, Phone, MapPin, CheckCircle, Clock, AlertCircle, Lightbulb, Loader2, FlaskConical } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import type { Activity, User } from "@/lib/csvParser";
+import { useVaselifeHeaders, useAllVaselifeMeasurements, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
+import { computeConcludedDate } from "@/lib/trialConcluded";
+import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 
 interface FarmInsight {
   farmId: string;
@@ -107,11 +110,56 @@ function formatDate(timestamp: number | null): string {
 
 export function ActivityDialog({ open, onOpenChange, farmId, farmName, activities, users, analysis }: ActivityDialogProps) {
   const userMap = useMemo(() => new Map((users ?? []).map((u) => [u.id, u.name])), [users]);
+  const { data: trials = [] } = useVaselifeHeaders();
+  const { data: allMeasurements = [] } = useAllVaselifeMeasurements();
+  const [selectedTrial, setSelectedTrial] = useState<VaselifeHeader | null>(null);
+
   const farmActivities = useMemo(() => {
     return activities
       .filter((a) => a.accountId === farmId)
       .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }, [activities, farmId]);
+
+  // Trials matched to this farm (by name) with computed conclusion date.
+  const farmTrials = useMemo(() => {
+    if (!farmName) return [] as Array<{ trial: VaselifeHeader; concludedAt: number; concludedDate: string }>;
+    const norm = farmName.trim().toLowerCase();
+    const measByHeader = new Map<string, number>();
+    for (const m of allMeasurements) {
+      const d = m.observation_days;
+      if (typeof d !== "number" || !Number.isFinite(d)) continue;
+      const cur = measByHeader.get(m.id_header) ?? 0;
+      if (d > cur) measByHeader.set(m.id_header, d);
+    }
+    const out: Array<{ trial: VaselifeHeader; concludedAt: number; concludedDate: string }> = [];
+    for (const t of trials) {
+      if (!t.farm || t.farm.trim().toLowerCase() !== norm) continue;
+      const maxDays = measByHeader.get(t.id) ?? 0;
+      const ms = maxDays > 0 ? [{ observation_days: maxDays }] : [];
+      const concludedDate = computeConcludedDate(t, ms);
+      if (!concludedDate) continue;
+      const ts = Date.parse(concludedDate);
+      if (Number.isNaN(ts)) continue;
+      out.push({ trial: t, concludedAt: ts, concludedDate });
+    }
+    return out;
+  }, [trials, allMeasurements, farmName]);
+
+  // Merged chronological timeline: activities + trial-result markers.
+  type TimelineItem =
+    | { kind: "activity"; date: number; activity: Activity }
+    | { kind: "trial"; date: number; trial: VaselifeHeader; concludedDate: string };
+  const timeline = useMemo<TimelineItem[]>(() => {
+    const items: TimelineItem[] = [];
+    for (const a of farmActivities) {
+      items.push({ kind: "activity", date: a.startsAt || a.createdAt || 0, activity: a });
+    }
+    for (const ft of farmTrials) {
+      items.push({ kind: "trial", date: ft.concludedAt, trial: ft.trial, concludedDate: ft.concludedDate });
+    }
+    items.sort((a, b) => b.date - a.date);
+    return items;
+  }, [farmActivities, farmTrials]);
 
   const suggestedActions = useMemo(
     () => generateSuggestedActions(analysis, farmId),
@@ -154,14 +202,14 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
               </div>
             )}
 
-            {/* Activity Timeline */}
+            {/* Activity Timeline (with Trial results merged in chronological order) */}
             <div>
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
-                Activity Timeline ({farmActivities.length})
+                Activity Timeline ({timeline.length})
               </h4>
 
-              {farmActivities.length === 0 ? (
+              {timeline.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-6 text-center">
                   No activities recorded for this farm.
                 </p>
@@ -171,7 +219,45 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                   <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
 
                   <div className="space-y-0">
-                    {farmActivities.slice(0, 50).map((activity, i) => {
+                    {timeline.slice(0, 80).map((item, i) => {
+                      if (item.kind === "trial") {
+                        const trial = item.trial;
+                        return (
+                          <motion.button
+                            key={`trial-${trial.id}`}
+                            type="button"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.02 }}
+                            onClick={() => setSelectedTrial(trial)}
+                            className="relative w-full text-left flex items-start gap-3 py-2.5 pl-0 hover:bg-primary/5 rounded-md transition-colors"
+                          >
+                            <div className="z-10 mt-1 w-[31px] flex justify-center shrink-0">
+                              <div className="w-2.5 h-2.5 rounded-full border-2 bg-primary border-primary" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                <FlaskConical className="h-3.5 w-3.5 text-primary shrink-0" />
+                                <span className="text-sm font-medium text-foreground truncate">
+                                  Trial {trial.trial_number || trial.id.slice(0, 8)} concluded
+                                </span>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/40 text-primary">
+                                  Trial result
+                                </Badge>
+                              </div>
+                              {trial.recommendations && (
+                                <p className="text-xs text-muted-foreground line-clamp-2 ml-[22px]">
+                                  {trial.recommendations}
+                                </p>
+                              )}
+                              <p className="text-[11px] text-muted-foreground/60 ml-[22px] mt-0.5">
+                                {formatDate(item.date)} · Click to view trial details
+                              </p>
+                            </div>
+                          </motion.button>
+                        );
+                      }
+                      const activity = item.activity;
                       const Icon = typeIcon[activity.type] || ClipboardList;
                       const colorClass = statusColor[activity.status] || statusColor["To Do"];
 
@@ -218,9 +304,9 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                     })}
                   </div>
 
-                  {farmActivities.length > 50 && (
+                  {timeline.length > 80 && (
                     <p className="text-xs text-muted-foreground text-center pt-2">
-                      Showing 50 of {farmActivities.length} activities
+                      Showing 80 of {timeline.length} items
                     </p>
                   )}
                 </div>
@@ -229,6 +315,13 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
           </div>
         </ScrollArea>
       </DialogContent>
+      {selectedTrial && (
+        <VaselifeTrialDetail
+          trial={selectedTrial}
+          open={!!selectedTrial}
+          onOpenChange={(o) => { if (!o) setSelectedTrial(null); }}
+        />
+      )}
     </Dialog>
   );
 }

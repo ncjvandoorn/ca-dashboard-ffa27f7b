@@ -17,6 +17,7 @@ import { SharePageButton } from "@/components/SharePageButton";
 import { useVaselifeHeaders, useAllVaselifeMeasurements, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
 import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 import { computeConcludedDate } from "@/lib/trialConcluded";
+import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
@@ -255,7 +256,23 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     return out;
   }, [trials, allMeasurements]);
   const [selectedTrial, setSelectedTrial] = useState<VaselifeHeader | null>(null);
+  const [activityFarm, setActivityFarm] = useState<{ id: string; name: string } | null>(null);
   const [passedOpen, setPassedOpen] = useState(false);
+
+  // Resolve a free-text farm name (from trials/AI) to an Account id, then open ActivityDialog.
+  const openFarmActivity = useCallback((farmName: string | null | undefined, knownId?: string | null) => {
+    if (!farmName && !knownId) return;
+    let id = knownId || "";
+    if (!id && farmName) {
+      const norm = farmName.trim().toLowerCase();
+      id = accounts.find((a) => a.name?.toLowerCase() === norm)?.id || "";
+    }
+    if (!id) {
+      toast({ title: "Farm not found", description: `No matching account for "${farmName}"`, variant: "destructive" });
+      return;
+    }
+    setActivityFarm({ id, name: farmName || accountMap.get(id) || "Farm" });
+  }, [accounts, accountMap]);
 
   // Commercial trials that DO have post-trial CRM follow-up — for review.
   const passedFollowups = useMemo(() => {
@@ -609,9 +626,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (/repeat/i.test(rec)) continue;
       if (!t.farm) continue;
 
-      const trialStartMs = t.start_vl ? Date.parse(t.start_vl) : (t.harvest_date ? Date.parse(t.harvest_date) : 0);
       const trialDate = concludedByTrial.get(t.id) || t.start_vl || t.harvest_date || null;
       const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
+      const concludedMs = trialDateMs;
       const farmName = t.farm;
       const farmNameNorm = farmName.toLowerCase();
 
@@ -637,7 +654,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       const followupHits = keywords.length === 0 ? 0 : farmActivities
         .filter((a) => {
           const aDate = a.completedAt || a.createdAt || 0;
-          if (trialStartMs && aDate < trialStartMs) return false;
+          if (concludedMs && aDate <= concludedMs) return false;
           const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
           return keywords.some((k) => hay.includes(k));
         })
@@ -795,7 +812,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                 >
                   <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm">{c.farmName}</span>
+                      <button type="button" onClick={() => openFarmActivity(c.farmName)} className="font-semibold text-sm text-primary hover:underline">{c.farmName}</button>
                       {c.customer && (
                         <Badge variant="outline" className="text-[10px]">{c.customer}</Badge>
                       )}
@@ -847,7 +864,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                   >
                     <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm">{p.farmName}</span>
+                        <button type="button" onClick={() => openFarmActivity(p.farmName)} className="font-semibold text-sm text-primary hover:underline">{p.farmName}</button>
                         {p.customer && (
                           <Badge variant="outline" className="text-[10px]">{p.customer}</Badge>
                         )}
@@ -955,7 +972,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-xs leading-tight line-clamp-1">{a.subject || "Untitled"}</p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    {farmName && <span className="text-[10px] text-muted-foreground">{farmName}</span>}
+                    {farmName && (
+                      <button type="button" onClick={() => openFarmActivity(farmName, a.accountId)} className="text-[10px] text-primary hover:underline">{farmName}</button>
+                    )}
                     {assignedName && <Badge variant="secondary" className="text-[9px] px-1 py-0">{assignedName.split(" ")[0]}</Badge>}
                     {daysOld !== null && daysOld > 14 && (
                       <Badge variant="outline" className="text-[9px] px-1 py-0 text-warning border-warning/30">
@@ -1012,7 +1031,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                     className={`rounded-lg border p-3 ${priorityStyle[v.priority]}`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-sm">{v.farmName}</span>
+                      <button type="button" onClick={() => openFarmActivity(v.farmName, v.farmId)} className="font-semibold text-sm text-primary hover:underline">{v.farmName}</button>
                       <div className="flex items-center gap-1.5">
                         {v.suggestedDay && <Badge variant="secondary" className="text-[10px]">{v.suggestedDay}</Badge>}
                         <Badge variant="outline" className="text-[10px] uppercase">{v.priority}</Badge>
@@ -1090,7 +1109,8 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                             {a.suggestedDay && <Badge variant="secondary" className="text-[9px]">{a.suggestedDay}</Badge>}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {a.farmName} · Assign to <b>{a.suggestedUser}</b>
+                            <button type="button" onClick={() => openFarmActivity(a.farmName)} className="text-primary hover:underline">{a.farmName}</button>
+                            {" "}· Assign to <b>{a.suggestedUser}</b>
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5 italic">{a.reason}</p>
                         </div>
@@ -1115,7 +1135,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                       <span className="font-medium text-xs">{a.activitySubject}</span>
                       <Badge variant="outline" className="text-[10px] text-warning border-warning/30">{a.daysOverdue}d overdue</Badge>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{a.farmName} · {a.assignedUser}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <button type="button" onClick={() => openFarmActivity(a.farmName)} className="text-primary hover:underline">{a.farmName}</button>
+                      {" · "}{a.assignedUser}
+                    </p>
                     <p className="text-[11px] text-muted-foreground italic">{a.recommendation}</p>
                   </div>
                 ))}
@@ -1134,7 +1157,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                 {plan.farmsWithoutCoverage.map((f, i) => (
                   <div key={i} className="rounded-lg border border-border p-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{f.farmName}</span>
+                      <button type="button" onClick={() => openFarmActivity(f.farmName, f.farmId)} className="font-medium text-sm text-primary hover:underline">{f.farmName}</button>
                       <span className="text-[10px] text-muted-foreground">Last: {f.lastActivityDate}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">{f.qualityStatus}</p>
@@ -1172,6 +1195,15 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         trial={selectedTrial}
         open={!!selectedTrial}
         onOpenChange={(o) => { if (!o) setSelectedTrial(null); }}
+      />
+      <ActivityDialog
+        open={!!activityFarm}
+        onOpenChange={(o) => { if (!o) setActivityFarm(null); }}
+        farmId={activityFarm?.id || ""}
+        farmName={activityFarm?.name || ""}
+        activities={allActivities}
+        users={users}
+        analysis={null}
       />
     </div>
   );
