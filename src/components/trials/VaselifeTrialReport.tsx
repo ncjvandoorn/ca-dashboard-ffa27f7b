@@ -20,6 +20,7 @@ import {
   getPropertyMeta,
   getCropHeadlineKpis,
   formatDeltaDays,
+  diffTreatmentNames,
 } from "@/lib/vaselifeProperties";
 import {
   PropertyHeader,
