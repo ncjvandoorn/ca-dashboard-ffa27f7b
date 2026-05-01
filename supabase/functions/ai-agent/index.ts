@@ -585,6 +585,9 @@ serve(async (req) => {
       rawActivities = [],
       logisticsData = [],
       sfTracking = [],
+      vaselifeHeaders = [],
+      vaselifeVases = [],
+      vaselifeMeasurements = [],
       customerScope,
     } = body;
 
