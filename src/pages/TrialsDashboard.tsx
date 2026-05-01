@@ -327,17 +327,17 @@ export default function TrialsDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>VL Start</TableHead>
                   <TableHead>Trial</TableHead>
                   <TableHead className="w-16 text-center">Linked</TableHead>
                   <TableHead>Farm</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Crop</TableHead>
-                  <TableHead>Freight</TableHead>
+                  <TableHead>Transport</TableHead>
                   <TableHead className="text-right">Cult.</TableHead>
                   <TableHead className="text-right">Treat.</TableHead>
                   <TableHead className="text-right">Vases</TableHead>
-                  <TableHead>Harvest</TableHead>
-                  <TableHead>VL Start</TableHead>
+                  <TableHead>Initial quality</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -360,6 +360,7 @@ export default function TrialsDashboard() {
                     className="cursor-pointer hover:bg-muted/40"
                     onClick={() => setSelected(t)}
                   >
+                    <TableCell className="text-xs text-muted-foreground">{fmtDate(t.start_vl)}</TableCell>
                     <TableCell className="font-medium text-sm">
                       {t.trial_number || (
                         <span className="text-muted-foreground italic">unnamed</span>
@@ -394,8 +395,7 @@ export default function TrialsDashboard() {
                     <TableCell className="text-right text-sm">{t.cultivar_count ?? "—"}</TableCell>
                     <TableCell className="text-right text-sm">{t.treatment_count ?? "—"}</TableCell>
                     <TableCell className="text-right text-sm">{t.total_vases ?? "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{fmtDate(t.harvest_date)}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{fmtDate(t.start_vl)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{t.initial_quality || "—"}</TableCell>
                   </TableRow>
                   );
                 })}
