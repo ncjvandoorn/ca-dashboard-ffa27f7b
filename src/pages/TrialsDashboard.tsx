@@ -429,7 +429,16 @@ export default function TrialsDashboard() {
       <VaselifeTrialDetail
         trial={selected}
         open={!!selected}
-        onOpenChange={(o) => !o && setSelected(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSelected(null);
+            if (searchParams.get("trial")) {
+              const next = new URLSearchParams(searchParams);
+              next.delete("trial");
+              setSearchParams(next, { replace: true });
+            }
+          }
+        }}
         plannerMatches={selected ? linkByHeaderId.get(selected.id)?.plannerMatches ?? [] : []}
         linkInfo={selected ? linkByHeaderId.get(selected.id) : undefined}
       />
