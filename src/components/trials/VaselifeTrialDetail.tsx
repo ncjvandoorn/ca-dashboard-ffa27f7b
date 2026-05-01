@@ -268,11 +268,17 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                   </TableHeader>
                   <TableBody>
                     {measurementMatrix.rows.map((r, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="text-xs font-medium">{r.cultivar}</TableCell>
+                      <TableRow key={i} className={r.isAverage ? "bg-primary/10 font-semibold border-b-2 border-primary/40" : ""}>
+                        <TableCell className="text-xs font-medium">
+                          {r.isAverage ? (
+                            <span className="text-primary uppercase tracking-wide">★ {r.cultivar}</span>
+                          ) : (
+                            r.cultivar
+                          )}
+                        </TableCell>
                         <TableCell className="text-xs font-mono">{r.treatmentNo}</TableCell>
                         {measurementMatrix.props.map((p) => (
-                          <TableCell key={p} className="text-center text-xs">
+                          <TableCell key={p} className={`text-center text-xs ${r.isAverage ? "text-primary" : ""}`}>
                             {r.scores[p] != null ? r.scores[p] : "—"}
                           </TableCell>
                         ))}
