@@ -160,14 +160,76 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
             </div>
           </section>
 
-          {/* Test setup — mirrors PDF "Test setup" table */}
+          {/* TREATMENT AVERAGES — the headline comparison (the point of the trial) */}
+          {treatmentAverages.length > 0 && (
+            <section>
+              <h3 className="text-xs uppercase tracking-wide text-primary font-bold mb-2 flex items-center gap-1.5">
+                <FlaskConical className="h-3.5 w-3.5" /> Treatment averages — comparison across cultivars
+              </h3>
+              <div className="border-2 border-primary/60 rounded-md overflow-x-auto bg-primary/5 ring-1 ring-primary/20">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 text-xs">T#</TableHead>
+                      <TableHead className="text-xs">Treatment</TableHead>
+                      <TableHead className="text-right text-xs w-20">VL days</TableHead>
+                      <TableHead className="text-right text-xs w-20">FVL %</TableHead>
+                      <TableHead className="text-right text-xs w-20">Bot %</TableHead>
+                      {tripProperties.map((p) => (
+                        <TableHead key={p} className="text-center text-[11px]" title={PROPERTY_LABELS[p] || p}>
+                          {p}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {treatmentAverages.map((v) => {
+                      const meas = v.treatment_no != null ? avgMeasByTreatment.get(v.treatment_no) : undefined;
+                      return (
+                        <TableRow key={v.id_line} className="bg-primary/5">
+                          <TableCell className="text-xs font-mono font-bold text-primary">
+                            {v.treatment_no}
+                          </TableCell>
+                          <TableCell className="text-xs font-medium">
+                            <div className="line-clamp-2">{v.treatment_name || "—"}</div>
+                          </TableCell>
+                          <TableCell className="text-right text-xs font-bold text-primary">
+                            {v.flv_days != null ? v.flv_days.toFixed(1) : "—"}
+                          </TableCell>
+                          <TableCell className="text-right text-xs">{v.flo_percentage ?? "—"}</TableCell>
+                          <TableCell className="text-right text-xs">{v.bot_percentage ?? "—"}</TableCell>
+                          {tripProperties.map((p) => (
+                            <TableCell key={p} className="text-center text-xs font-semibold text-primary">
+                              {meas?.get(p) != null ? meas!.get(p) : "—"}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              {tripProperties.length > 0 && (
+                <div className="mt-2 px-3 py-1.5 text-[11px] text-muted-foreground border border-border rounded-md bg-muted/20 flex flex-wrap gap-x-3 gap-y-1">
+                  <span className="font-semibold uppercase tracking-wide">Legend:</span>
+                  {tripProperties.map((p) => (
+                    <span key={p}>
+                      <span className="font-mono">{p}</span> = {PROPERTY_LABELS[p] || "?"}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Test setup — mirrors PDF "Test setup" table (cultivar rows only) */}
           <section>
             <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
               <Sprout className="h-3.5 w-3.5" /> Test setup
             </h3>
             {vasesLoading ? (
               <Loader />
-            ) : orderedVases.length === 0 ? (
+            ) : cultivarVases.length === 0 ? (
               <Empty>No vase data.</Empty>
             ) : (
               <div className="border border-border rounded-md overflow-x-auto">
@@ -185,48 +247,34 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orderedVases.map((v, i) => {
-                      const isAvg = isAverageName(v.cultivar);
-                      return (
-                        <TableRow
-                          key={v.id_line}
-                          className={isAvg ? "bg-primary/5 font-medium" : ""}
-                        >
-                          <TableCell className="text-xs font-mono">{i + 1}</TableCell>
-                          <TableCell className="text-xs">
-                            {isAvg ? (
-                              <span className="text-primary uppercase tracking-wide">
-                                ★ {v.cultivar}
-                              </span>
-                            ) : (
-                              v.cultivar || "—"
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {v.id_greenhouse || extractToken(v.treatment_name, 0) || "—"}
-                          </TableCell>
-                          <TableCell className="text-xs">{v.id_dipping || "—"}</TableCell>
-                          <TableCell className="text-xs">{v.post_harvest || "—"}</TableCell>
-                          <TableCell className="text-xs">{v.store_phase || "—"}</TableCell>
-                          <TableCell className="text-xs">{v.consumer_phase || "—"}</TableCell>
-                          <TableCell className="text-right text-xs">
-                            {v.vase_count ?? "—"}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {cultivarVases.map((v, i) => (
+                      <TableRow key={v.id_line}>
+                        <TableCell className="text-xs font-mono">{i + 1}</TableCell>
+                        <TableCell className="text-xs">{v.cultivar || "—"}</TableCell>
+                        <TableCell className="text-xs">
+                          {v.id_greenhouse || extractToken(v.treatment_name, 0) || "—"}
+                        </TableCell>
+                        <TableCell className="text-xs">{v.id_dipping || "—"}</TableCell>
+                        <TableCell className="text-xs">{v.post_harvest || "—"}</TableCell>
+                        <TableCell className="text-xs">{v.store_phase || "—"}</TableCell>
+                        <TableCell className="text-xs">{v.consumer_phase || "—"}</TableCell>
+                        <TableCell className="text-right text-xs">
+                          {v.vase_count ?? "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </div>
             )}
           </section>
 
-          {/* Results — Vaselife report: FVL % */}
+          {/* Results — Vaselife report: FVL % (per cultivar × treatment) */}
           <section>
             <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-              <FlaskConical className="h-3.5 w-3.5" /> Results — Vaselife report (FVL %)
+              <FlaskConical className="h-3.5 w-3.5" /> Results — per cultivar × treatment
             </h3>
-            {orderedVases.length === 0 ? (
+            {cultivarVases.length === 0 ? (
               <Empty>No results.</Empty>
             ) : (
               <div className="border border-border rounded-md overflow-hidden">
@@ -235,48 +283,32 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
                     <TableRow>
                       <TableHead className="w-10 text-xs">#</TableHead>
                       <TableHead className="text-xs">Tested variety</TableHead>
+                      <TableHead className="text-xs w-12">T#</TableHead>
                       <TableHead className="text-right text-xs w-24">VL days</TableHead>
                       <TableHead className="text-right text-xs w-20">FVL %</TableHead>
                       <TableHead className="text-right text-xs w-20">Botrytis %</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orderedVases.map((v, i) => {
-                      const isAvg = isAverageName(v.cultivar);
-                      return (
-                        <TableRow
-                          key={v.id_line}
-                          className={isAvg ? "bg-primary/10 font-semibold" : ""}
-                        >
-                          <TableCell className="text-xs font-mono">{i + 1}</TableCell>
-                          <TableCell className="text-xs">
-                            {isAvg ? (
-                              <span className="text-primary uppercase tracking-wide">
-                                ★ {v.cultivar}
-                              </span>
-                            ) : (
-                              v.cultivar || "—"
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right text-xs font-semibold">
-                            {v.flv_days != null ? v.flv_days.toFixed(1) : "—"}
-                          </TableCell>
-                          <TableCell className="text-right text-xs">
-                            {v.flo_percentage ?? "—"}
-                          </TableCell>
-                          <TableCell className="text-right text-xs">
-                            {v.bot_percentage ?? "—"}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {cultivarVases.map((v, i) => (
+                      <TableRow key={v.id_line}>
+                        <TableCell className="text-xs font-mono">{i + 1}</TableCell>
+                        <TableCell className="text-xs">{v.cultivar || "—"}</TableCell>
+                        <TableCell className="text-xs font-mono">{v.treatment_no ?? "—"}</TableCell>
+                        <TableCell className="text-right text-xs font-semibold">
+                          {v.flv_days != null ? v.flv_days.toFixed(1) : "—"}
+                        </TableCell>
+                        <TableCell className="text-right text-xs">{v.flo_percentage ?? "—"}</TableCell>
+                        <TableCell className="text-right text-xs">{v.bot_percentage ?? "—"}</TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </div>
             )}
           </section>
 
-          {/* Per-vase detail blocks — mirrors PDF per-page vase sections */}
+          {/* Per-vase detail blocks — only real cultivar vases */}
           <section>
             <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
               <Beaker className="h-3.5 w-3.5" /> Per-vase detail
@@ -289,11 +321,11 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
             </h3>
             {measLoading || vasesLoading ? (
               <Loader />
-            ) : orderedVases.length === 0 ? (
+            ) : cultivarVases.length === 0 ? (
               <Empty>No vase data.</Empty>
             ) : (
               <div className="space-y-4">
-                {orderedVases.map((v, i) => (
+                {cultivarVases.map((v, i) => (
                   <VaseDetailCard
                     key={v.id_line}
                     index={i + 1}
