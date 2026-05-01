@@ -125,6 +125,14 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
   }, [treatmentAverages]);
   const controlVlDays = controlTreatment?.flv_days ?? null;
 
+  // For the treatment-averages tables, show only the parts of the treatment
+  // name that differ between treatments. The shared prefix/suffix is collapsed
+  // to a single line above the table to keep context without repeating it.
+  const treatmentNameDiff = useMemo(
+    () => diffTreatmentNames(treatmentAverages.map((t) => t.treatment_name)),
+    [treatmentAverages],
+  );
+
 
   if (!trial) return null;
 
