@@ -669,13 +669,17 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                         {new Date(c.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                       </span>
                     )}
-                    <Link
-                      to={`/trials?trial=${encodeURIComponent(c.trialId)}`}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = trials.find((x) => x.id === c.trialId || (x.trial_number || "").toLowerCase() === (c.trialNumber || "").toLowerCase());
+                        if (t) setSelectedTrial(t);
+                      }}
                       className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
                     >
                       Trial {c.trialNumber}
                       <ExternalLink className="h-3 w-3" />
-                    </Link>
+                    </button>
                   </div>
                 </div>
                 <p className="text-xs text-foreground/90">{c.reason}</p>
