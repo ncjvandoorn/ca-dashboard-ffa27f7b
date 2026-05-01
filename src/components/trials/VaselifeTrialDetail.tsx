@@ -185,11 +185,29 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <p className="text-sm text-muted-foreground py-6 text-center">No vase data.</p>
             ) : (
               <div className="space-y-5">
-                {cultivars.map(({ cultivar, treatments }) => (
-                  <div key={cultivar} className="border border-border rounded-md overflow-hidden">
-                    <div className="bg-muted/40 px-3 py-2 text-sm font-semibold">
-                      {cultivar}
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {cultivars.map(({ cultivar, treatments, isAverage }) => (
+                  <div
+                    key={cultivar}
+                    className={
+                      isAverage
+                        ? "border-2 border-primary/60 rounded-md overflow-hidden bg-primary/5 ring-1 ring-primary/20"
+                        : "border border-border rounded-md overflow-hidden"
+                    }
+                  >
+                    <div
+                      className={
+                        isAverage
+                          ? "bg-primary/15 text-primary px-3 py-2 text-sm font-bold uppercase tracking-wide flex items-center gap-2"
+                          : "bg-muted/40 px-3 py-2 text-sm font-semibold"
+                      }
+                    >
+                      {isAverage && (
+                        <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">
+                          Average across cultivars
+                        </Badge>
+                      )}
+                      <span>{cultivar}</span>
+                      <span className={isAverage ? "text-xs font-normal text-primary/70" : "ml-2 text-xs font-normal text-muted-foreground"}>
                         ({treatments.length} treatment{treatments.length === 1 ? "" : "s"})
                       </span>
                     </div>
