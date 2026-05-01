@@ -155,49 +155,125 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
   // Plantscout already provides "Average" rows per treatment_no — we surface
   // those as a dedicated treatment-comparison section instead of treating
   // "Average" as just another cultivar.
-  // We also collapse duplicate treatments that differ only by whitespace.
-  const { cultivars, treatmentAverages, derivedVaseCount } = useMemo(() => {
-    const grouped = new Map<string, typeof vases>();
+  //
+  // The Plantscout `treatment_count` header value (and the per-row treatment_no
+  // sequence) often double-counts treatments that differ only by trivial
+  // whitespace/symbol spacing. We treat the unique normalised treatment name
+  // as the source of truth and renumber sequentially (1..N). The same
+  // collapsing is applied to per-cultivar rows so vase_count gets summed
+  // across the duplicate treatment_no entries.
+  const { cultivars, treatmentAverages, derivedVaseCount, treatmentDisplayNo } = useMemo(() => {
     const avgRows: typeof vases = [];
+    const realRows: typeof vases = [];
     for (const v of vases) {
-      if (isAverageName(v.cultivar)) {
-        avgRows.push(v);
-        continue;
-      }
-      const key = v.cultivar || "Unknown";
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key)!.push(v);
+      if (isAverageName(v.cultivar)) avgRows.push(v);
+      else realRows.push(v);
     }
-    const cultivars = Array.from(grouped.entries())
-      .map(([cultivar, items]) => ({
-        cultivar,
-        treatments: items.sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0)),
-      }))
-      .sort((a, b) => a.cultivar.localeCompare(b.cultivar));
 
-    // Merge duplicate average rows by normalised treatment name.
+    // Build canonical treatment list from average rows (preferred — they always
+    // exist one-per-treatment_no), falling back to real rows when no averages.
+    const canonicalSource = avgRows.length > 0 ? avgRows : realRows;
+    const sortedCanon = [...canonicalSource].sort(
+      (a, b) => (a.treatment_no || 0) - (b.treatment_no || 0),
+    );
+    // normalisedKey -> { display_no, original_treatment_nos[] }
+    const keyToInfo = new Map<string, { displayNo: number; originals: number[] }>();
+    for (const r of sortedCanon) {
+      const key = normaliseTreatmentName(r.treatment_name) || `__t${r.treatment_no}`;
+      const existing = keyToInfo.get(key);
+      if (!existing) {
+        keyToInfo.set(key, {
+          displayNo: keyToInfo.size + 1,
+          originals: r.treatment_no != null ? [r.treatment_no] : [],
+        });
+      } else if (r.treatment_no != null && !existing.originals.includes(r.treatment_no)) {
+        existing.originals.push(r.treatment_no);
+      }
+    }
+    // Map original treatment_no -> sequential display number (1..N)
+    const treatmentDisplayNo = new Map<number, number>();
+    for (const { displayNo, originals } of keyToInfo.values()) {
+      for (const o of originals) treatmentDisplayNo.set(o, displayNo);
+    }
+
+    // Build merged averages list (one row per unique treatment).
     const sortedAvg = [...avgRows].sort(
       (a, b) => (a.treatment_no || 0) - (b.treatment_no || 0),
     );
-    const mergedMap = new Map<string, typeof avgRows[number] & { merged_treatment_nos: number[] }>();
+    const mergedAvgMap = new Map<string, typeof avgRows[number] & { merged_treatment_nos: number[]; display_no: number }>();
     for (const r of sortedAvg) {
       const key = normaliseTreatmentName(r.treatment_name) || `__t${r.treatment_no}`;
-      const existing = mergedMap.get(key);
+      const info = keyToInfo.get(key);
+      const existing = mergedAvgMap.get(key);
       if (!existing) {
-        mergedMap.set(key, { ...r, merged_treatment_nos: r.treatment_no != null ? [r.treatment_no] : [] });
+        mergedAvgMap.set(key, {
+          ...r,
+          merged_treatment_nos: r.treatment_no != null ? [r.treatment_no] : [],
+          display_no: info?.displayNo ?? mergedAvgMap.size + 1,
+        });
       } else if (r.treatment_no != null) {
         existing.merged_treatment_nos.push(r.treatment_no);
       }
     }
-    const treatmentAverages = Array.from(mergedMap.values());
+    const treatmentAverages = Array.from(mergedAvgMap.values()).sort(
+      (a, b) => a.display_no - b.display_no,
+    );
 
-    // Real vase count = sum of vase_count on non-average rows
-    // (or row count fallback when vase_count is missing/zero everywhere).
-    const realRows = vases.filter((v) => !isAverageName(v.cultivar));
-    const sumVaseCount = realRows.reduce((s, v) => s + (v.vase_count || 0), 0);
+    // Per-cultivar groups: collapse duplicate treatments (same normalised name)
+    // into one row per unique treatment, summing vase_count and averaging metrics.
+    const grouped = new Map<string, typeof realRows>();
+    for (const v of realRows) {
+      const cKey = v.cultivar || "Unknown";
+      if (!grouped.has(cKey)) grouped.set(cKey, []);
+      grouped.get(cKey)!.push(v);
+    }
+    const cultivars = Array.from(grouped.entries())
+      .map(([cultivar, items]) => {
+        // Merge duplicates inside this cultivar
+        const merged = new Map<string, typeof items[number] & { merged_treatment_nos: number[]; display_no: number }>();
+        for (const r of items) {
+          const key = normaliseTreatmentName(r.treatment_name) || `__t${r.treatment_no}`;
+          const info = keyToInfo.get(key);
+          const existing = merged.get(key);
+          if (!existing) {
+            merged.set(key, {
+              ...r,
+              vase_count: r.vase_count || 0,
+              merged_treatment_nos: r.treatment_no != null ? [r.treatment_no] : [],
+              display_no: info?.displayNo ?? merged.size + 1,
+            });
+          } else {
+            existing.vase_count = (existing.vase_count || 0) + (r.vase_count || 0);
+            // Average numeric metrics across duplicates
+            const avgNum = (a: number | null, b: number | null): number | null => {
+              if (a == null && b == null) return null;
+              if (a == null) return b;
+              if (b == null) return a;
+              return (Number(a) + Number(b)) / 2;
+            };
+            existing.flv_days = avgNum(existing.flv_days as any, r.flv_days as any) as any;
+            existing.bot_percentage = avgNum(existing.bot_percentage as any, r.bot_percentage as any) as any;
+            existing.flo_percentage = avgNum(existing.flo_percentage as any, r.flo_percentage as any) as any;
+            if (r.treatment_no != null && !existing.merged_treatment_nos.includes(r.treatment_no)) {
+              existing.merged_treatment_nos.push(r.treatment_no);
+            }
+          }
+        }
+        return {
+          cultivar,
+          treatments: Array.from(merged.values()).sort((a, b) => a.display_no - b.display_no),
+        };
+      })
+      .sort((a, b) => a.cultivar.localeCompare(b.cultivar));
+
+    // Real total vases = sum of (merged) vase_counts across cultivars.
+    const sumVaseCount = cultivars.reduce(
+      (s, c) => s + c.treatments.reduce((ss, t) => ss + (t.vase_count || 0), 0),
+      0,
+    );
     const derivedVaseCount = sumVaseCount > 0 ? sumVaseCount : realRows.length;
 
-    return { cultivars, treatmentAverages, derivedVaseCount };
+    return { cultivars, treatmentAverages, derivedVaseCount, treatmentDisplayNo };
   }, [vases]);
 
   // Build measurement matrix.
