@@ -49,28 +49,37 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
 
   const isAverageName = (s: string) => /^\s*(average|avg|gemiddelde|mean)\b/i.test(s || "");
 
-  // Build cultivar -> treatments grouping
-  const cultivars = useMemo(() => {
+  // Split vases into per-cultivar groups and per-treatment averages.
+  // Plantscout already provides "Average" rows per treatment_no — we surface
+  // those as a dedicated treatment-comparison section instead of treating
+  // "Average" as just another cultivar.
+  const { cultivars, treatmentAverages } = useMemo(() => {
     const grouped = new Map<string, typeof vases>();
+    const avgRows: typeof vases = [];
     for (const v of vases) {
+      if (isAverageName(v.cultivar)) {
+        avgRows.push(v);
+        continue;
+      }
       const key = v.cultivar || "Unknown";
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(v);
     }
-    return Array.from(grouped.entries())
+    const cultivars = Array.from(grouped.entries())
       .map(([cultivar, items]) => ({
         cultivar,
-        isAverage: isAverageName(cultivar),
         treatments: items.sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0)),
       }))
-      .sort((a, b) => {
-        if (a.isAverage && !b.isAverage) return -1;
-        if (!a.isAverage && b.isAverage) return 1;
-        return a.cultivar.localeCompare(b.cultivar);
-      });
+      .sort((a, b) => a.cultivar.localeCompare(b.cultivar));
+    const treatmentAverages = avgRows.sort(
+      (a, b) => (a.treatment_no || 0) - (b.treatment_no || 0),
+    );
+    return { cultivars, treatmentAverages };
   }, [vases]);
 
-  // Build measurement matrix: row per (cultivar, treatment), column per property
+  // Build measurement matrix split into:
+  //  - treatmentAverageRows: one row per treatment_no (from Plantscout's Average cultivar)
+  //  - rows: per (cultivar, treatment) for the regular cultivars
   const measurementMatrix = useMemo(() => {
     const propsSet = new Set<string>();
     const rowMap = new Map<string, Record<string, number | null>>();
@@ -82,18 +91,37 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
       rowMap.get(key)![m.property_name] = m.score ?? null;
     }
     const props = Array.from(propsSet).sort();
-    const rows = Array.from(rowMap.entries())
-      .map(([key, scores]) => {
-        const [cultivar, tn] = key.split("|");
-        return { cultivar, treatmentNo: parseInt(tn), scores, isAverage: isAverageName(cultivar) };
-      })
-      .sort((a, b) => {
-        if (a.isAverage && !b.isAverage) return -1;
-        if (!a.isAverage && b.isAverage) return 1;
-        return a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo;
-      });
-    return { props, rows };
+    const all = Array.from(rowMap.entries()).map(([key, scores]) => {
+      const [cultivar, tn] = key.split("|");
+      return {
+        cultivar,
+        treatmentNo: parseInt(tn),
+        scores,
+        isAverage: isAverageName(cultivar),
+      };
+    });
+    const treatmentAverageRows = all
+      .filter((r) => r.isAverage)
+      .sort((a, b) => a.treatmentNo - b.treatmentNo);
+    const rows = all
+      .filter((r) => !r.isAverage)
+      .sort(
+        (a, b) =>
+          a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo,
+      );
+    return { props, rows, treatmentAverageRows };
   }, [measurements]);
+
+  // Look up the treatment_name for a given treatment_no (from any cultivar row)
+  const treatmentNameByNo = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const v of vases) {
+      if (v.treatment_no != null && v.treatment_name && !m.has(v.treatment_no)) {
+        m.set(v.treatment_no, v.treatment_name);
+      }
+    }
+    return m;
+  }, [vases]);
 
   if (!trial) return null;
 
