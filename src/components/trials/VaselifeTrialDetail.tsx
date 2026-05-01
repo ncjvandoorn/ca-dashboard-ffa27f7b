@@ -393,8 +393,8 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
             <div className="font-medium">{fmtDate(trial.start_transport)}</div>
           </div>
           <div>
-            <div className="text-muted-foreground">Retail/Store phase</div>
-            <div className="font-medium">{fmtDate(trial.start_retail)}</div>
+            <div className="text-muted-foreground">Trial concluded</div>
+            <div className="font-medium">{fmtDate(trial.source_date)}</div>
           </div>
           <div>
             <div className="text-muted-foreground">Start VL trial</div>

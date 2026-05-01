@@ -257,7 +257,8 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       if (!rec) continue;
       if (/repeat/i.test(rec)) continue;
       if (!t.farm) continue;
-      const trialDate = t.start_vl || t.harvest_date || t.source_date || null;
+      const trialStartMs = t.start_vl ? Date.parse(t.start_vl) : (t.harvest_date ? Date.parse(t.harvest_date) : 0);
+      const trialDate = t.source_date || t.start_vl || t.harvest_date || null;
       const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
       const farmNameNorm = t.farm.toLowerCase();
       const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
