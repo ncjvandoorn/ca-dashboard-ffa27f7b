@@ -260,38 +260,53 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                         {treatmentAverages.length === 1 ? "" : "s"}
                       </span>
                     </div>
+                    {treatmentNameDiff.shared.length > 0 && (
+                      <div className="px-3 py-1.5 text-[11px] border-b border-primary/20 bg-primary/[0.03] text-muted-foreground">
+                        <span className="font-semibold uppercase tracking-wide text-foreground/70 mr-1">
+                          Shared:
+                        </span>
+                        {treatmentNameDiff.shared.join(" · ")}
+                      </div>
+                    )}
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-12">T#</TableHead>
-                          <TableHead>Treatment</TableHead>
+                          <TableHead>Treatment (differences)</TableHead>
                           <TableHead className="w-20 text-right">VL days</TableHead>
                           <TableHead className="w-20 text-right">Bot %</TableHead>
                           <TableHead className="w-20 text-right">Flo %</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {treatmentAverages.map((t) => (
-                          <TableRow key={t.id_line} className="bg-primary/5">
-                            <TableCell className="font-mono text-xs font-semibold text-primary">
-                              {t.treatment_no}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              <div className="line-clamp-2 font-medium">
-                                {t.treatment_name || "—"}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right text-xs font-bold text-primary">
-                              {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
-                            </TableCell>
-                            <TableCell className="text-right text-xs">
-                              {t.bot_percentage ?? "—"}
-                            </TableCell>
-                            <TableCell className="text-right text-xs">
-                              {t.flo_percentage ?? "—"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {treatmentAverages.map((t, idx) => {
+                          const diffName =
+                            treatmentNameDiff.diffs[idx] || t.treatment_name || "—";
+                          return (
+                            <TableRow key={t.id_line} className="bg-primary/5">
+                              <TableCell className="font-mono text-xs font-semibold text-primary">
+                                {t.treatment_no}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                <div
+                                  className="line-clamp-2 font-medium"
+                                  title={t.treatment_name || undefined}
+                                >
+                                  {diffName}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right text-xs font-bold text-primary">
+                                {t.flv_days != null ? t.flv_days.toFixed(1) : "—"}
+                              </TableCell>
+                              <TableCell className="text-right text-xs">
+                                {t.bot_percentage ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-right text-xs">
+                                {t.flo_percentage ?? "—"}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
