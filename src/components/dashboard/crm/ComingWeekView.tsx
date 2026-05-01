@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SharePageButton } from "@/components/SharePageButton";
-import { useVaselifeHeaders } from "@/hooks/useVaselifeTrials";
+import { useVaselifeHeaders, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
+import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
@@ -234,6 +235,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
   const { data: trials = [] } = useVaselifeHeaders();
+  const [selectedTrial, setSelectedTrial] = useState<VaselifeHeader | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -667,13 +669,17 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                         {new Date(c.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                       </span>
                     )}
-                    <Link
-                      to={`/trials?trial=${encodeURIComponent(c.trialId)}`}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = trials.find((x) => x.id === c.trialId || (x.trial_number || "").toLowerCase() === (c.trialNumber || "").toLowerCase());
+                        if (t) setSelectedTrial(t);
+                      }}
                       className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
                     >
                       Trial {c.trialNumber}
                       <ExternalLink className="h-3 w-3" />
-                    </Link>
+                    </button>
                   </div>
                 </div>
                 <p className="text-xs text-foreground/90">{c.reason}</p>
@@ -914,6 +920,11 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         </div>
       )}
       </div>
+      <VaselifeTrialDetail
+        trial={selectedTrial}
+        open={!!selectedTrial}
+        onOpenChange={(o) => { if (!o) setSelectedTrial(null); }}
+      />
     </div>
   );
 }
