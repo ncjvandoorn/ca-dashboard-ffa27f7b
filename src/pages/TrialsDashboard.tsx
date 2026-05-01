@@ -305,6 +305,12 @@ export default function TrialsDashboard() {
                     yellow: "bg-amber-400",
                     red: "bg-rose-500",
                   };
+                  // If the farm link is missing (regardless of other issues), use a softer yellow
+                  const dotClass = link
+                    ? !link.farmLinked
+                      ? "bg-yellow-300"
+                      : dotColor[link.status]
+                    : "";
                   return (
                   <TableRow
                     key={t.id}
@@ -321,7 +327,7 @@ export default function TrialsDashboard() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span
-                              className={`inline-block h-3 w-3 rounded-full ring-2 ring-background ${dotColor[link.status]}`}
+                              className={`inline-block h-3 w-3 rounded-full ring-2 ring-background ${dotClass}`}
                               aria-label={`Link status: ${link.status}`}
                             />
                           </TooltipTrigger>
