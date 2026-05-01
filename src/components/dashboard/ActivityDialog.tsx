@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ClipboardList, Phone, MapPin, CheckCircle, Clock, AlertCircle, Lightbulb, Loader2 } from "lucide-react";
+import { ClipboardList, Phone, MapPin, CheckCircle, Clock, AlertCircle, Lightbulb, Loader2, FlaskConical } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import type { Activity, User } from "@/lib/csvParser";
+import { useVaselifeHeaders, useAllVaselifeMeasurements, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
+import { computeConcludedDate } from "@/lib/trialConcluded";
+import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 
 interface FarmInsight {
   farmId: string;
