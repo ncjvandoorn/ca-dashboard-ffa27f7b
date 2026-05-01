@@ -360,7 +360,15 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <FlaskConical className="h-5 w-5 text-primary" />
-            Trial {trial.trial_number || trial.id.slice(0, 8)}
+            <span>Trial {trial.trial_number || trial.id.slice(0, 8)}</span>
+            {(() => {
+              const isRepeat = /repeat/i.test(trial.recommendations || "");
+              return isRepeat ? (
+                <Badge variant="outline" className="ml-auto border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
+              ) : (
+                <Badge variant="outline" className="ml-auto border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
+              );
+            })()}
           </DialogTitle>
           <DialogDescription className="flex flex-wrap gap-2 items-center pt-1">
             {trial.farm && <Badge variant="secondary">{trial.farm}</Badge>}
