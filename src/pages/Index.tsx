@@ -63,6 +63,9 @@ const Index = () => {
   const { data: shipperArrivals } = useShipperArrivals();
   const { data: shipperReports } = useShipperReports();
   const { data: sfTrips } = useSensiwatchTrips();
+  const { data: vaselifeHeaders } = useVaselifeHeaders();
+  const { data: vaselifeVases } = useAllVaselifeVases();
+  const { data: vaselifeMeasurements } = useAllVaselifeMeasurements();
   const [selectedFarmId, setSelectedFarmId] = useState<string>("");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("26");
