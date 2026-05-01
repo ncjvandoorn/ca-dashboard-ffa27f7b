@@ -9,7 +9,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, MapPin, Loader2, RefreshCw } from "lucide-react";
-import { bestAddress, geocodeCustomer, isKenyaAccount, preloadCloudCache } from "@/lib/customerGeocode";
+import { bestAddress, geocodeCustomer, isEastAfricaAccount, preloadCloudCache } from "@/lib/customerGeocode";
+
+interface EACustomer {
+  id: string;
+  name: string;
+  address: string;
+}
 
 export default function Customers() {
   const navigate = useNavigate();
@@ -23,18 +29,19 @@ export default function Customers() {
   const [forceRefresh, setForceRefresh] = useState(false);
   const [activeFarm, setActiveFarm] = useState<{ id: string; name: string } | null>(null);
 
-  const kenyaCustomers = useMemo(() => {
+  const eaCustomers: EACustomer[] = useMemo(() => {
     if (!accounts) return [];
     return accounts
-      .filter((a) => isKenyaAccount(a.deliveryAddress, a.mainAddress))
-      .map((a) => ({ ...a, address: bestAddress(a.deliveryAddress, a.mainAddress) }));
+      .filter((a) => isEastAfricaAccount(a.deliveryAddress, a.mainAddress))
+      .map((a) => ({ id: a.id, name: a.name, address: bestAddress(a.deliveryAddress, a.mainAddress) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [accounts]);
 
   // Geocode in series (Nominatim asks ≤1 req/s). Cloud + local cache make repeats instant.
   useEffect(() => {
-    if (kenyaCustomers.length === 0) return;
+    if (eaCustomers.length === 0) return;
     let cancelled = false;
-    setProgress({ done: 0, total: kenyaCustomers.length });
+    setProgress({ done: 0, total: eaCustomers.length });
     setMarkers([]);
 
     (async () => {
@@ -43,9 +50,9 @@ export default function Customers() {
       if (cancelled) return;
 
       const out: CustomerMarker[] = [];
-      for (let i = 0; i < kenyaCustomers.length; i++) {
+      for (let i = 0; i < eaCustomers.length; i++) {
         if (cancelled) return;
-        const c = kenyaCustomers[i];
+        const c = eaCustomers[i];
         const geo = await geocodeCustomer(c.name, c.address, forceRefresh);
         if (geo && !cancelled) {
           out.push({
@@ -58,7 +65,7 @@ export default function Customers() {
           });
           setMarkers([...out]);
         }
-        setProgress({ done: i + 1, total: kenyaCustomers.length });
+        setProgress({ done: i + 1, total: eaCustomers.length });
         await new Promise((r) => setTimeout(r, 50));
       }
       if (!cancelled) setForceRefresh(false);
@@ -67,7 +74,15 @@ export default function Customers() {
     return () => {
       cancelled = true;
     };
-  }, [kenyaCustomers, refreshKey, forceRefresh]);
+  }, [eaCustomers, refreshKey, forceRefresh]);
+
+  const mappedIds = useMemo(() => new Set(markers.map((m) => m.id)), [markers]);
+
+  const filteredCustomers = useMemo(() => {
+    if (!search.trim()) return eaCustomers;
+    const q = search.toLowerCase();
+    return eaCustomers.filter((c) => c.name.toLowerCase().includes(q) || c.address.toLowerCase().includes(q));
+  }, [eaCustomers, search]);
 
   const filteredMarkers = useMemo(() => {
     if (!search.trim()) return markers;
@@ -77,8 +92,12 @@ export default function Customers() {
 
   const isGeocoding = progress.total > 0 && progress.done < progress.total;
 
-  const handleSelect = useCallback((m: CustomerMarker) => {
+  const handleSelectMarker = useCallback((m: CustomerMarker) => {
     setActiveFarm({ id: m.id, name: m.name });
+  }, []);
+
+  const handleSelectCustomer = useCallback((c: EACustomer) => {
+    setActiveFarm({ id: c.id, name: c.name });
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -114,9 +133,9 @@ export default function Customers() {
                 <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto max-w-none block shrink-0" />
               </button>
               <div>
-                <h1 className="text-xl font-semibold tracking-tight text-foreground">Customers — Kenya</h1>
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">Customers — East Africa</h1>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {kenyaCustomers.length} customers ·{" "}
+                  {eaCustomers.length} customers ·{" "}
                   {isGeocoding ? (
                     <span className="inline-flex items-center gap-1">
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -149,7 +168,7 @@ export default function Customers() {
         <div className="grid grid-cols-12 gap-6 mb-8">
           {/* Map */}
           <div className="col-span-12 lg:col-span-9 bg-card rounded-xl shadow-card p-2">
-            <CustomersMap markers={filteredMarkers} height={620} onSelect={handleSelect} />
+            <CustomersMap markers={filteredMarkers} height={620} onSelect={handleSelectMarker} />
             <div className="flex items-center gap-4 px-3 py-2 text-xs text-muted-foreground">
               <LegendDot color="hsl(160, 60%, 40%)" label="Known farm" />
               <LegendDot color="hsl(210, 70%, 50%)" label="Geocoded address" />
@@ -169,24 +188,34 @@ export default function Customers() {
               />
             </div>
             <p className="text-xs text-muted-foreground mb-2">
-              {filteredMarkers.length} of {markers.length} shown
+              {filteredCustomers.length} of {eaCustomers.length} shown
             </p>
             <div className="overflow-auto max-h-[560px] divide-y divide-border">
-              {filteredMarkers.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => handleSelect(m)}
-                  className="py-2.5 w-full text-left hover:bg-accent/5 px-2 -mx-2 rounded transition-colors"
-                >
-                  <div className="text-sm font-medium text-foreground">{m.name}</div>
-                  <div className="text-xs text-muted-foreground flex items-start gap-1 mt-0.5">
-                    <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
-                    <span>{m.address}</span>
-                  </div>
-                </button>
-              ))}
-              {filteredMarkers.length === 0 && (
+              {filteredCustomers.map((c) => {
+                const mapped = mappedIds.has(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => handleSelectCustomer(c)}
+                    className="py-2.5 w-full text-left hover:bg-accent/5 px-2 -mx-2 rounded transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-2 w-2 rounded-full shrink-0"
+                        style={{ background: mapped ? "hsl(160, 60%, 40%)" : "hsl(0, 0%, 70%)" }}
+                        title={mapped ? "Mapped" : "Not mapped"}
+                      />
+                      <div className="text-sm font-medium text-foreground truncate">{c.name}</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground flex items-start gap-1 mt-0.5 ml-4">
+                      <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+                      <span>{c.address || <em className="opacity-60">No address</em>}</span>
+                    </div>
+                  </button>
+                );
+              })}
+              {filteredCustomers.length === 0 && (
                 <p className="text-xs text-muted-foreground py-4 text-center">No customers match.</p>
               )}
             </div>
