@@ -638,48 +638,44 @@ function VaseDetailCard({
           </div>
         </div>
 
-        {/* Measurements — crop-specific properties */}
-        {properties.length > 0 && (
-          <div>
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
-              Measurements (final observation)
-            </div>
-            <div className="border border-border rounded-md overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {properties.map((p) => (
-                      <TableHead
-                        key={p}
-                        className="text-center text-[11px]"
-                        title={PROPERTY_LABELS[p] || p}
-                      >
-                        {p}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    {properties.map((p) => {
-                      const score = measurements.get(p);
-                      return (
-                        <TableCell
-                          key={p}
-                          className={`text-center text-xs ${
-                            isAvg ? "text-primary font-semibold" : ""
-                          }`}
-                        >
-                          {score != null ? score : "—"}
+        {/* Measurements — crop-specific properties (only those with data for this vase) */}
+        {(() => {
+          const vaseProps = properties.filter((p) => measurements.get(p) != null);
+          if (vaseProps.length === 0) return null;
+          return (
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
+                Measurements (final observation)
+              </div>
+              <div className="border border-border rounded-md overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {vaseProps.map((p) => (
+                        <TableHead key={p} className="text-center text-[11px]">
+                          <PropertyHeader code={p} />
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      {vaseProps.map((p) => (
+                        <TableCell key={p} className="text-center">
+                          <ScoreChip
+                            code={p}
+                            score={measurements.get(p) ?? null}
+                            bold={isAvg}
+                          />
                         </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                </TableBody>
-              </Table>
+                      ))}
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
