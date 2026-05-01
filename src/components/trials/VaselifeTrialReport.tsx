@@ -17,11 +17,9 @@ import {
   type VaselifeVase,
 } from "@/hooks/useVaselifeTrials";
 import {
-  PROPERTY_LABELS,
   getPropertyMeta,
   getCropHeadlineKpis,
   formatDeltaDays,
-  scoreTone,
 } from "@/lib/vaselifeProperties";
 import {
   PropertyHeader,
