@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import chrysalLogo from "@/assets/chrysal-logo.png";
-import { useVaselifeHeaders, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
+import { useVaselifeHeaders, useAllVaselifeVases, useAllVaselifeMeasurements, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
+import { PROPERTY_META } from "@/lib/vaselifeProperties";
 import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
