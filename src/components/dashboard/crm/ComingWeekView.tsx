@@ -745,6 +745,70 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
               </motion.div>
             ))}
           </div>
+
+          {/* Passed follow-ups — collapsible review of commercial trials that DO have post-trial CRM activity */}
+          {passedFollowups.length > 0 && (
+            <Collapsible open={passedOpen} onOpenChange={setPassedOpen} className="mt-3">
+              <CollapsibleTrigger className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${passedOpen ? "rotate-180" : ""}`} />
+                Passed follow-ups ({passedFollowups.length})
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 space-y-2">
+                {passedFollowups.map((p, i) => (
+                  <div
+                    key={p.trialId || i}
+                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm">{p.farmName}</span>
+                        {p.customer && (
+                          <Badge variant="outline" className="text-[10px]">{p.customer}</Badge>
+                        )}
+                        <Badge variant="secondary" className="text-[10px]">{p.keyProduct}</Badge>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {p.trialDate && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(p.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const t = trials.find((x) => x.id === p.trialId || (x.trial_number || "").toLowerCase() === (p.trialNumber || "").toLowerCase());
+                            if (t) setSelectedTrial(t);
+                          }}
+                          className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                        >
+                          Trial {p.trialNumber}
+                          <ExternalLink className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-1.5 space-y-1">
+                      {p.activities.map((a, j) => (
+                        <div key={j} className="text-[11px] text-foreground/85 border-l-2 border-emerald-500/40 pl-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {a.date && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {new Date(a.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                              </span>
+                            )}
+                            {a.type && <Badge variant="outline" className="text-[9px] py-0">{a.type}</Badge>}
+                            {a.subject && <span className="font-medium">{a.subject}</span>}
+                          </div>
+                          {a.description && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{a.description}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
       )}
 
