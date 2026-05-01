@@ -45,6 +45,7 @@ function fmtDate(d: string | null): string {
 export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches = [], linkInfo }: Props) {
   const { data: vases = [], isLoading: vasesLoading } = useVaselifeVases(trial?.id);
   const { data: measurements = [], isLoading: measLoading } = useVaselifeMeasurements(trial?.id);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const isAverageName = (s: string) => /^\s*(average|avg|gemiddelde|mean)\b/i.test(s || "");
 
