@@ -124,6 +124,21 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
     return m;
   }, [vases]);
 
+  // Diff treatment names: keep only the parts that vary across treatments,
+  // collapse the shared phases into a single caption above the table.
+  const treatmentNameDiff = useMemo(
+    () => diffTreatmentNames(treatmentAverages.map((t) => t.treatment_name)),
+    [treatmentAverages],
+  );
+  // For the measurements matrix (keyed by treatment_no), diff against the
+  // ordered list of unique treatment names.
+  const measTreatmentDiff = useMemo(() => {
+    const ordered = measurementMatrix.treatmentAverageRows.map(
+      (r) => treatmentNameByNo.get(r.treatmentNo) || "",
+    );
+    return diffTreatmentNames(ordered);
+  }, [measurementMatrix.treatmentAverageRows, treatmentNameByNo]);
+
   if (!trial) return null;
 
   return (
