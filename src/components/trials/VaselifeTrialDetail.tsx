@@ -32,6 +32,7 @@ import { getPropertyMeta, diffTreatmentNames, scoreToneClasses, type ScoreTone }
 import { PropertyHeader, ScoreChip, ScoreScaleLegend, ToneBadge } from "./VaselifeScoreUi";
 import type { Trial } from "@/lib/trialsParser";
 import type { TrialLinkInfo } from "@/lib/trialLinkage";
+import { computeConcludedDate } from "@/lib/trialConcluded";
 
 interface Props {
   trial: VaselifeHeader | null;
@@ -394,7 +395,7 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
           </div>
           <div>
             <div className="text-muted-foreground">Trial concluded</div>
-            <div className="font-medium">{fmtDate(trial.source_date)}</div>
+            <div className="font-medium">{fmtDate(computeConcludedDate(trial, measurements))}</div>
           </div>
           <div>
             <div className="text-muted-foreground">Start VL trial</div>
