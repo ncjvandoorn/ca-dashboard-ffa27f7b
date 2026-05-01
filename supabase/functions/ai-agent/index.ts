@@ -106,7 +106,34 @@ interface ToolContext {
   logisticsData: any[];
   sfTracking: any[];
   weeklyPlans: any[];
+  vaselifeHeaders: any[];
+  vaselifeVases: any[];
+  vaselifeMeasurements: any[];
   scope?: CustomerScope;
+}
+
+const norm = (s: any) => (typeof s === "string" ? s.trim().toLowerCase() : "");
+
+/**
+ * Whether a Plantscout trial header is visible to the current user.
+ * For internal users: always true. For customers: ONLY visible if either:
+ *   - the trial's customer name matches the user's customer account name, OR
+ *   - the trial's farm name matches a farm the customer has consent for.
+ * If neither match, the trial is completely invisible — never returned, never
+ * mentioned, never substituted with a similar one.
+ */
+function isTrialVisible(header: any, scope?: CustomerScope): boolean {
+  if (!scope?.isCustomer) return true;
+  const allowedCust = new Set((scope.allowedCustomerNames || []).map(norm));
+  const allowedFarms = new Set((scope.allowedFarmNames || []).map(norm));
+  const c = norm(header.customer);
+  const f = norm(header.farm);
+  return (!!c && allowedCust.has(c)) || (!!f && allowedFarms.has(f));
+}
+
+function scopedTrials(ctx: ToolContext): any[] {
+  if (!ctx.scope?.isCustomer) return ctx.vaselifeHeaders;
+  return ctx.vaselifeHeaders.filter((h) => isTrialVisible(h, ctx.scope));
 }
 
 function executeTool(name: string, args: any, ctx: ToolContext): any {
