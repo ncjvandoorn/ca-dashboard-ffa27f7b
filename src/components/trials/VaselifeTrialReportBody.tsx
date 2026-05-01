@@ -345,92 +345,6 @@ export function VaselifeTrialReportBody({
         </section>
       )}
 
-      {/* Test setup */}
-      <section>
-        <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-          <Sprout className="h-3.5 w-3.5" /> Test setup
-        </h3>
-        {vasesLoading ? (
-          <Loader />
-        ) : cultivarVases.length === 0 ? (
-          <Empty>No vase data.</Empty>
-        ) : (
-          <div className="border border-border rounded-md overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10 text-xs">Nr.</TableHead>
-                  <TableHead className="text-xs">Variety</TableHead>
-                  <TableHead className="text-xs">Greenhouse</TableHead>
-                  <TableHead className="text-xs">Dipping</TableHead>
-                  <TableHead className="text-xs">Post-Harvest</TableHead>
-                  <TableHead className="text-xs">Store phase</TableHead>
-                  <TableHead className="text-xs">Consumer phase</TableHead>
-                  <TableHead className="text-right text-xs w-14">Vases</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cultivarVases.map((v, i) => (
-                  <TableRow key={v.id_line}>
-                    <TableCell className="text-xs font-mono">{i + 1}</TableCell>
-                    <TableCell className="text-xs">{v.cultivar || "—"}</TableCell>
-                    <TableCell className="text-xs">
-                      {v.id_greenhouse || extractToken(v.treatment_name, 0) || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs">{v.id_dipping || "—"}</TableCell>
-                    <TableCell className="text-xs">{v.post_harvest || "—"}</TableCell>
-                    <TableCell className="text-xs">{v.store_phase || "—"}</TableCell>
-                    <TableCell className="text-xs">{v.consumer_phase || "—"}</TableCell>
-                    <TableCell className="text-right text-xs">
-                      {v.vase_count ?? "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </section>
-
-      {/* Results */}
-      <section>
-        <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
-          <FlaskConical className="h-3.5 w-3.5" /> Results — per cultivar × treatment
-        </h3>
-        {cultivarVases.length === 0 ? (
-          <Empty>No results.</Empty>
-        ) : (
-          <div className="border border-border rounded-md overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10 text-xs">#</TableHead>
-                  <TableHead className="text-xs">Tested variety</TableHead>
-                  <TableHead className="text-xs w-12">T#</TableHead>
-                  <TableHead className="text-right text-xs w-24">VL days</TableHead>
-                  <TableHead className="text-right text-xs w-20">FVL %</TableHead>
-                  <TableHead className="text-right text-xs w-20">Botrytis %</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cultivarVases.map((v, i) => (
-                  <TableRow key={v.id_line}>
-                    <TableCell className="text-xs font-mono">{i + 1}</TableCell>
-                    <TableCell className="text-xs">{v.cultivar || "—"}</TableCell>
-                    <TableCell className="text-xs font-mono">{v.treatment_no ?? "—"}</TableCell>
-                    <TableCell className="text-right text-xs font-semibold">
-                      {v.flv_days != null ? v.flv_days.toFixed(1) : "—"}
-                    </TableCell>
-                    <TableCell className="text-right text-xs">{v.flo_percentage ?? "—"}</TableCell>
-                    <TableCell className="text-right text-xs">{v.bot_percentage ?? "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </section>
-
       {/* Per-vase detail */}
       <section>
         <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
@@ -518,6 +432,92 @@ export function VaselifeTrialReportBody({
           )}
         </section>
       )}
+
+      {/* Test setup */}
+      <section>
+        <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
+          <Sprout className="h-3.5 w-3.5" /> Test setup
+        </h3>
+        {vasesLoading ? (
+          <Loader />
+        ) : cultivarVases.length === 0 ? (
+          <Empty>No vase data.</Empty>
+        ) : (
+          <div className="border border-border rounded-md overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10 text-xs">Nr.</TableHead>
+                  <TableHead className="text-xs">Variety</TableHead>
+                  <TableHead className="text-xs">Greenhouse</TableHead>
+                  <TableHead className="text-xs">Dipping</TableHead>
+                  <TableHead className="text-xs">Post-Harvest</TableHead>
+                  <TableHead className="text-xs">Store phase</TableHead>
+                  <TableHead className="text-xs">Consumer phase</TableHead>
+                  <TableHead className="text-right text-xs w-14">Vases</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cultivarVases.map((v, i) => (
+                  <TableRow key={v.id_line}>
+                    <TableCell className="text-xs font-mono">{i + 1}</TableCell>
+                    <TableCell className="text-xs">{v.cultivar || "—"}</TableCell>
+                    <TableCell className="text-xs">
+                      {v.id_greenhouse || extractToken(v.treatment_name, 0) || "—"}
+                    </TableCell>
+                    <TableCell className="text-xs">{v.id_dipping || "—"}</TableCell>
+                    <TableCell className="text-xs">{v.post_harvest || "—"}</TableCell>
+                    <TableCell className="text-xs">{v.store_phase || "—"}</TableCell>
+                    <TableCell className="text-xs">{v.consumer_phase || "—"}</TableCell>
+                    <TableCell className="text-right text-xs">
+                      {v.vase_count ?? "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
+
+      {/* Results */}
+      <section>
+        <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2 flex items-center gap-1.5">
+          <FlaskConical className="h-3.5 w-3.5" /> Results — per cultivar × treatment
+        </h3>
+        {cultivarVases.length === 0 ? (
+          <Empty>No results.</Empty>
+        ) : (
+          <div className="border border-border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10 text-xs">#</TableHead>
+                  <TableHead className="text-xs">Tested variety</TableHead>
+                  <TableHead className="text-xs w-12">T#</TableHead>
+                  <TableHead className="text-right text-xs w-24">VL days</TableHead>
+                  <TableHead className="text-right text-xs w-20">FVL %</TableHead>
+                  <TableHead className="text-right text-xs w-20">Botrytis %</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cultivarVases.map((v, i) => (
+                  <TableRow key={v.id_line}>
+                    <TableCell className="text-xs font-mono">{i + 1}</TableCell>
+                    <TableCell className="text-xs">{v.cultivar || "—"}</TableCell>
+                    <TableCell className="text-xs font-mono">{v.treatment_no ?? "—"}</TableCell>
+                    <TableCell className="text-right text-xs font-semibold">
+                      {v.flv_days != null ? v.flv_days.toFixed(1) : "—"}
+                    </TableCell>
+                    <TableCell className="text-right text-xs">{v.flo_percentage ?? "—"}</TableCell>
+                    <TableCell className="text-right text-xs">{v.bot_percentage ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
