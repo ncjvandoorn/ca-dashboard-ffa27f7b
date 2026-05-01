@@ -788,22 +788,61 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                       </div>
                     </div>
                     <div className="mt-1.5 space-y-1">
-                      {p.activities.map((a, j) => (
-                        <div key={j} className="text-[11px] text-foreground/85 border-l-2 border-emerald-500/40 pl-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {a.date && (
-                              <span className="text-[10px] text-muted-foreground">
-                                {new Date(a.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                              </span>
-                            )}
-                            {a.type && <Badge variant="outline" className="text-[9px] py-0">{a.type}</Badge>}
-                            {a.subject && <span className="font-medium">{a.subject}</span>}
-                          </div>
-                          {a.description && (
-                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{a.description}</p>
-                          )}
-                        </div>
-                      ))}
+                      {(() => {
+                        const items: Array<{ kind: "activity" | "trial"; date: number; node: JSX.Element }> = [];
+                        p.activities.forEach((a, j) => {
+                          const ts = a.date ? Date.parse(a.date) : 0;
+                          items.push({
+                            kind: "activity",
+                            date: ts,
+                            node: (
+                              <div key={`a-${j}`} className="text-[11px] text-foreground/85 border-l-2 border-emerald-500/40 pl-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {a.date && (
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {new Date(a.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                                    </span>
+                                  )}
+                                  {a.type && <Badge variant="outline" className="text-[9px] py-0">{a.type}</Badge>}
+                                  {a.subject && <span className="font-medium">{a.subject}</span>}
+                                </div>
+                                {a.description && (
+                                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{a.description}</p>
+                                )}
+                              </div>
+                            ),
+                          });
+                        });
+                        if (p.trialDate) {
+                          const ts = Date.parse(p.trialDate);
+                          const trial = trials.find((x) => x.id === p.trialId);
+                          items.push({
+                            kind: "trial",
+                            date: ts,
+                            node: (
+                              <button
+                                key="trial-result"
+                                type="button"
+                                onClick={() => trial && setSelectedTrial(trial)}
+                                className="w-full text-left text-[11px] border-l-2 border-primary/60 bg-primary/5 hover:bg-primary/10 transition-colors pl-2 py-1 rounded-r"
+                              >
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {new Date(p.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                                  </span>
+                                  <Badge variant="outline" className="text-[9px] py-0 border-primary/50 text-primary">Trial result</Badge>
+                                  <span className="font-medium">Trial {p.trialNumber} concluded</span>
+                                </div>
+                                {trial?.recommendations && (
+                                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{trial.recommendations}</p>
+                                )}
+                              </button>
+                            ),
+                          });
+                        }
+                        items.sort((a, b) => a.date - b.date);
+                        return items.map((it) => it.node);
+                      })()}
                     </div>
                   </div>
                 ))}
