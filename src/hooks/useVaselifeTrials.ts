@@ -58,21 +58,12 @@ export interface VaselifeMeasurement {
   score: number | null;
 }
 
-/** Property name reference — measured traits in Plantscout */
-export const PROPERTY_LABELS: Record<string, string> = {
-  FLC: "Flower Colour",
-  FLO: "Flower Opening",
-  FLD: "Flower Damage",
-  FLA: "Flower Abnormality",
-  STD: "Stem Damage",
-  STB: "Stem Bend",
-  LFQ: "Leaf Quality",
-  LFY: "Leaf Yellowing",
-  LFB: "Leaf Burning",
-  LFD: "Leaf Damage",
-  BTR: "Botrytis",
-  CVW: "Cultivar Write-off",
-};
+/**
+ * Property name reference — measured traits in Plantscout.
+ * Re-exported from `@/lib/vaselifeProperties` so all metadata
+ * (label, direction, tooltip description) lives in one place.
+ */
+export { PROPERTY_LABELS } from "@/lib/vaselifeProperties";
 
 export function useVaselifeHeaders() {
   return useQuery({
