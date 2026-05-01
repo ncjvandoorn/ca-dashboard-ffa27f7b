@@ -462,7 +462,82 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     const todayDate = `${days[today.getDay()]} ${fmt(today)}`;
     const weekDates = `Monday ${fmt(monday)} – Friday ${fmt(friday)}`;
 
-    return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr: plannerWeekNr, weekDates };
+    // === Commercial trial follow-ups ===
+    // For every trial whose Next Step = "Commercial" (i.e., recommendation does
+    // NOT contain the word "repeat"), check whether there has been any CRM
+    // activity on that farm since the trial's start_vl date that mentions a
+    // distinctive product/keyword from the trial's recommendation. If not,
+    // surface it so the team can plan a sales follow-up.
+    //
+    // This is a coarse pre-filter — the AI then makes the final call.
+    const STOP_WORDS = new Set([
+      "the","and","for","with","from","this","that","have","been","were","was","will","into","over","than","then","also","such","very","more","most","some","each","other","their","them","they","there","these","those","when","what","who","how","why","may","can","not","but","are","you","your","our","its","use","used","using","good","best","better","trial","trials","treatment","treatments","result","results","conclusion","recommendation","recommendations","commercial","customer","farm","cultivar","cultivars","vase","vases","day","days","week","weeks","year","years","mar","apr","may","jun","jul","aug","sep","oct","nov","dec","jan","feb",
+    ]);
+    const extractKeywords = (text: string | null | undefined): string[] => {
+      if (!text) return [];
+      // Pull tokens of length >=3, lowercase, dedup, drop stop-words.
+      const tokens = (text.toLowerCase().match(/[a-z0-9][a-z0-9\-+/]{2,}/g) || [])
+        .filter((t) => !STOP_WORDS.has(t) && !/^\d+$/.test(t));
+      return Array.from(new Set(tokens));
+    };
+
+    const commercialTrials: any[] = [];
+    for (const t of trials) {
+      const rec = (t.recommendations || "").trim();
+      if (!rec) continue;
+      // "Repeat" trials are excluded — only Commercial ones (same logic as Trials Dashboard column)
+      if (/repeat/i.test(rec)) continue;
+      if (!t.farm) continue;
+
+      const trialDate = t.start_vl || t.harvest_date || t.source_date || null;
+      const trialDateMs = trialDate ? Date.parse(trialDate) : 0;
+      const farmName = t.farm;
+      const farmNameNorm = farmName.toLowerCase();
+
+      // Find activities for this farm (match by accountMap name — trial.farm
+      // is a free-text name from Plantscout, so we match against account names).
+      const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === farmNameNorm)?.id;
+
+      // Keywords from recommendation/conclusion that we want to find evidence of.
+      const keywords = extractKeywords(`${rec} ${t.conclusion || ""}`);
+
+      const farmActivities = allActivities.filter((a) => {
+        if (a.accountId && farmAccountId) return a.accountId === farmAccountId;
+        // Fallback: match by farm name appearing in subject/description
+        const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
+        return hay.includes(farmNameNorm);
+      });
+
+      // Has there been any post-trial activity mentioning one of the trial keywords?
+      const followupHits = farmActivities
+        .filter((a) => {
+          const aDate = a.completedAt || a.createdAt || 0;
+          if (trialDateMs && aDate < trialDateMs) return false;
+          const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
+          return keywords.some((k) => hay.includes(k));
+        })
+        .length;
+
+      commercialTrials.push({
+        id: t.id,
+        no: t.trial_number || t.id.slice(0, 8),
+        farm: farmName,
+        cust: t.customer || undefined,
+        crop: t.crop || undefined,
+        date: trialDate,
+        rec: rec.slice(0, 220),
+        concl: (t.conclusion || "").slice(0, 220) || undefined,
+        kw: keywords.slice(0, 8),
+        followupHits,
+      });
+    }
+    // Only send trials that have NO follow-up evidence — the section's purpose.
+    const commercialFollowupCandidates = commercialTrials
+      .filter((c) => c.followupHits === 0)
+      .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+      .slice(0, 25);
+
+    return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr: plannerWeekNr, weekDates, commercialFollowupCandidates };
   }, [allActivities, reports, activeUsers, userMap, accountMap, users, referenceNow, resolvedCurrentWeek]);
 
   const runAnalysis = useCallback(async () => {
