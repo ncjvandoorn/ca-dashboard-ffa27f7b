@@ -43,6 +43,8 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
   const { data: vases = [], isLoading: vasesLoading } = useVaselifeVases(trial?.id);
   const { data: measurements = [], isLoading: measLoading } = useVaselifeMeasurements(trial?.id);
 
+  const isAverageName = (s: string) => /^\s*(average|avg|gemiddelde|mean)\b/i.test(s || "");
+
   // Build cultivar -> treatments grouping
   const cultivars = useMemo(() => {
     const grouped = new Map<string, typeof vases>();
@@ -51,10 +53,17 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(v);
     }
-    return Array.from(grouped.entries()).map(([cultivar, items]) => ({
-      cultivar,
-      treatments: items.sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0)),
-    }));
+    return Array.from(grouped.entries())
+      .map(([cultivar, items]) => ({
+        cultivar,
+        isAverage: isAverageName(cultivar),
+        treatments: items.sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0)),
+      }))
+      .sort((a, b) => {
+        if (a.isAverage && !b.isAverage) return -1;
+        if (!a.isAverage && b.isAverage) return 1;
+        return a.cultivar.localeCompare(b.cultivar);
+      });
   }, [vases]);
 
   // Build measurement matrix: row per (cultivar, treatment), column per property
