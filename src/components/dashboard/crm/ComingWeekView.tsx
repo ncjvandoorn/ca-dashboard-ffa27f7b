@@ -1109,7 +1109,8 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                             {a.suggestedDay && <Badge variant="secondary" className="text-[9px]">{a.suggestedDay}</Badge>}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {a.farmName} · Assign to <b>{a.suggestedUser}</b>
+                            <button type="button" onClick={() => openFarmActivity(a.farmName)} className="text-primary hover:underline">{a.farmName}</button>
+                            {" "}· Assign to <b>{a.suggestedUser}</b>
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5 italic">{a.reason}</p>
                         </div>
