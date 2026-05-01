@@ -23,6 +23,8 @@ interface CustomerScope {
   allowedFarmIds: string[];
   allowedOrderIds: string[];
   customerAccountId?: string;
+  allowedCustomerNames?: string[];
+  allowedFarmNames?: string[];
 }
 
 interface AIAgentProps {
@@ -37,6 +39,9 @@ interface AIAgentProps {
   shipperArrivals?: ShipperArrival[];
   shipperReports?: ShipperReport[];
   sfTrips?: SFTrip[];
+  vaselifeHeaders?: any[];
+  vaselifeVases?: any[];
+  vaselifeMeasurements?: any[];
   customerScope?: CustomerScope;
 }
 
