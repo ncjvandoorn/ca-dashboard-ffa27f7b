@@ -54,6 +54,18 @@ export default function TrialsDashboard() {
   const [customerFilter, setCustomerFilter] = useState<string>(ALL);
   const [farmFilter, setFarmFilter] = useState<string>(ALL);
   const [selected, setSelected] = useState<VaselifeHeader | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep-link: open a specific trial via ?trial=<id> or ?trial=<trial_number>
+  useEffect(() => {
+    const want = searchParams.get("trial");
+    if (!want || trials.length === 0) return;
+    const match = trials.find(
+      (t) => t.id === want || (t.trial_number || "").toLowerCase() === want.toLowerCase(),
+    );
+    if (match && (!selected || selected.id !== match.id)) setSelected(match);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trials, searchParams]);
 
   /**
    * For customers: restrict to trials whose `customer` name matches their
