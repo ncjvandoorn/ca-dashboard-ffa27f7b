@@ -807,11 +807,28 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       trialId: string; trialNumber: string; farmName: string;
       customer?: string; keyProduct: string; trialDate: string; reason: string;
     };
+    // Cutoff = end of selected week (Friday 23:59:59). Trials concluded after
+    // this date didn't exist yet "as of" that week, so they must not appear
+    // when the user navigates back to a past week.
+    const sat = weekNrToSaturday(selectedWeek);
+    const weekEnd = new Date(sat);
+    weekEnd.setDate(sat.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    const cutoffMs = weekEnd.getTime();
+    const concludedByCutoff = (dateStr: string | null | undefined) => {
+      if (!dateStr) return false; // unknown conclusion date → exclude (can't prove it was concluded by then)
+      const ms = Date.parse(dateStr);
+      return Number.isFinite(ms) && ms <= cutoffMs;
+    };
+
     const aiList = (plan?.commercialFollowups ?? []) as Item[];
     const aiIds = new Set(aiList.map((c) => c.trialId).filter(Boolean));
-    const kept = aiList.filter((c) => !c.trialId || !passedTrialIds.has(c.trialId));
+    const kept = aiList
+      .filter((c) => !c.trialId || !passedTrialIds.has(c.trialId))
+      .filter((c) => concludedByCutoff(c.trialDate));
     const additions: Item[] = liveCommercialCandidates
       .filter((c) => !aiIds.has(c.trialId) && !passedTrialIds.has(c.trialId))
+      .filter((c) => concludedByCutoff(c.trialDate))
       .map((c) => ({
         trialId: c.trialId,
         trialNumber: c.trialNumber,
@@ -823,7 +840,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       }));
     return [...kept, ...additions]
       .sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
-  }, [plan?.commercialFollowups, liveCommercialCandidates, passedTrialIds]);
+  }, [plan?.commercialFollowups, liveCommercialCandidates, passedTrialIds, selectedWeek]);
 
   return (
     <div className="space-y-6">
