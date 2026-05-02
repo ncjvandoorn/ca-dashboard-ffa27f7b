@@ -116,15 +116,19 @@ function normalizeName(s: string): string {
 
 /* Approximate home-base coordinates per sales rep first name.
  * Trips start AND end at this base; visits are ordered as a loop. */
+const BASE_CITIES: Record<string, { city: string; lat: number; lon: number }> = {
+  Nairobi: { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
+  Nakuru:  { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
+};
 const USER_HOME_BASE: Record<string, { city: string; lat: number; lon: number }> = {
-  paul:    { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
-  steven:  { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
-  steve:   { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
-  patrick: { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
-  peter:   { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
+  paul:    BASE_CITIES.Nairobi,
+  steven:  BASE_CITIES.Nairobi,
+  steve:   BASE_CITIES.Nairobi,
+  patrick: BASE_CITIES.Nakuru,
+  peter:   BASE_CITIES.Nakuru,
 };
 
-function homeBaseFor(userName: string): { city: string; lat: number; lon: number } | null {
+function defaultHomeBaseFor(userName: string): { city: string; lat: number; lon: number } | null {
   const first = (userName || "").trim().toLowerCase().split(/\s+/)[0];
   return USER_HOME_BASE[first] || null;
 }
@@ -244,6 +248,14 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const routesKeyInit = `${selectedWeek}|${initialCached?.loadedAt || ""}|${[...activeUsers.map(u=>u.id)].sort().join(",")}`;
   const [routes, setRoutes] = useState<Record<string, PlannedFarm[]>>(() => routesCache[routesKeyInit] || {});
   const [computingRoutes, setComputingRoutes] = useState(false);
+
+  // Per-user base override (session-only): defaults to USER_HOME_BASE.
+  const [baseOverride, setBaseOverride] = useState<Record<string, "Nairobi" | "Nakuru">>({});
+  const homeBaseFor = useCallback((userId: string, userName: string) => {
+    const ov = baseOverride[userId];
+    if (ov) return BASE_CITIES[ov];
+    return defaultHomeBaseFor(userName);
+  }, [baseOverride]);
 
   // Confirmations: this week + all prior weeks (to compute carry-over misses).
   const [confirmations, setConfirmations] = useState<PlannerConfirmation[]>([]);
@@ -625,7 +637,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
 
         // Order by nearest-neighbor loop starting/ending at user's home base.
         const userName = activeUsers.find(u => u.id === uid)?.name || "";
-        const home = homeBaseFor(userName);
+        const home = homeBaseFor(uid, userName);
         const ordered = nearestNeighborLoop(geocoded, home);
 
         // Distribute across Mon-Fri
@@ -638,7 +650,8 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         out[uid] = planned;
       }
 
-      const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}`;
+      const overrideKey = Object.entries(baseOverride).sort().map(([k,v])=>`${k}:${v}`).join(",");
+      const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}|${overrideKey}`;
       routesCache[key] = out;
       setRoutes(out);
     } catch (e) {
@@ -647,21 +660,22 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     } finally {
       setComputingRoutes(false);
     }
-  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible]);
+  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible, baseOverride, homeBaseFor]);
 
   // Auto-build routes when plan or selection changes — but skip the heavy
   // work (and the spinner) if we already have a cached result for this exact
-  // (week + plan version + users) combination.
+  // (week + plan version + users + base overrides) combination.
   useEffect(() => {
     if (!plan) return;
-    const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}`;
+    const overrideKey = Object.entries(baseOverride).sort().map(([k,v])=>`${k}:${v}`).join(",");
+    const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}|${overrideKey}`;
     const cached = routesCache[key];
     if (cached) {
       setRoutes(cached);
       return;
     }
     buildRoutes();
-  }, [plan, planLoadedAt, selectedWeek, userSet, buildRoutes]);
+  }, [plan, planLoadedAt, selectedWeek, userSet, buildRoutes, baseOverride]);
 
   // Refresh = trigger AI to regenerate the weekly plan for the selected week,
   // then reload from cache. Reuses analyze-weekly-plan via ComingWeekView's
@@ -775,7 +789,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
             for (const d of DAY_LABELS) byDay.set(d, []);
             for (const v of visits) byDay.get(v.day)!.push(v);
             const geocodedCount = visits.filter(v => v.geo).length;
-            const home = homeBaseFor(u.name);
+            const home = homeBaseFor(u.id, u.name);
             return (
               <div key={u.id} className="rounded-lg border border-border bg-background overflow-hidden">
                 <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border bg-muted/30 flex-wrap">
@@ -783,9 +797,29 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                     <span className="font-semibold text-sm">{u.name}</span>
                     <Badge variant="secondary" className="text-[10px]">{visits.length} visit{visits.length === 1 ? "" : "s"}</Badge>
                     {home && (
-                      <Badge variant="outline" className="text-[10px] gap-1">
-                        <MapPin className="h-2.5 w-2.5" /> Base: {home.city}
-                      </Badge>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] hover:bg-muted transition-colors"
+                            title="Change base city"
+                          >
+                            <MapPin className="h-2.5 w-2.5" /> Base: {home.city}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-1 w-[140px]" align="start">
+                          {(["Nairobi", "Nakuru"] as const).map(city => (
+                            <button
+                              key={city}
+                              type="button"
+                              onClick={() => setBaseOverride(prev => ({ ...prev, [u.id]: city }))}
+                              className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted ${home.city === city ? "font-semibold text-primary" : ""}`}
+                            >
+                              {city}
+                            </button>
+                          ))}
+                        </PopoverContent>
+                      </Popover>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
