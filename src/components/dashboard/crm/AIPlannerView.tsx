@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   geocodeCustomer, preloadCloudCache, bestAddress, type GeoResult,
 } from "@/lib/customerGeocode";
+import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
@@ -79,7 +80,7 @@ interface PlanVisit {
   reason: string;
   suggestedUser: string;
   priority: string;
-  source: "urgent" | "suggested";
+  source: "urgent" | "suggested" | "commercial";
 }
 
 interface PlannedFarm extends PlanVisit {
@@ -170,6 +171,12 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
     return m;
   }, [accounts]);
 
+  const { data: userCustomerRows } = useUserCustomers();
+  const resolveResponsible = useMemo(
+    () => buildResponsibleResolver(userCustomerRows || []),
+    [userCustomerRows],
+  );
+
   // Load cached plan for the selected week
   const loadPlan = useCallback(async () => {
     setLoading(true);
@@ -225,6 +232,25 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
           suggestedUser: v.suggestedUser || "",
           priority: v.priority || "medium",
           source: "suggested",
+        });
+      }
+
+      // Commercial trial follow-ups — top priority sales opportunities.
+      // These have no suggestedUser, so resolve via the per-farm/customer sales rep.
+      for (const v of (plan.commercialFollowups || [])) {
+        const rep = resolveResponsible(v.farmName) || resolveResponsible(v.customer) || "";
+        const reasonParts = [
+          v.trialNumber ? `Trial ${v.trialNumber}` : "",
+          v.keyProduct ? `(${v.keyProduct})` : "",
+          v.reason || "",
+        ].filter(Boolean);
+        allVisits.push({
+          farmId: undefined,
+          farmName: v.farmName,
+          reason: reasonParts.join(" · ") || "Commercial trial follow-up",
+          suggestedUser: rep,
+          priority: "critical",
+          source: "commercial",
         });
       }
 
@@ -293,7 +319,7 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
     } finally {
       setComputingRoutes(false);
     }
-  }, [plan, activeUsers, userSet, accountByName]);
+  }, [plan, activeUsers, userSet, accountByName, resolveResponsible]);
 
   // Auto-build routes when plan changes
   useEffect(() => { if (plan) buildRoutes(); }, [plan, buildRoutes]);
@@ -452,6 +478,8 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
                                 className={`rounded border px-2 py-1.5 text-[11px] ${
                                   v.source === "urgent"
                                     ? "border-destructive/40 bg-destructive/5"
+                                    : v.source === "commercial"
+                                    ? "border-amber-500/40 bg-amber-500/10"
                                     : "border-primary/30 bg-primary/5"
                                 }`}
                                 title={v.reason}
