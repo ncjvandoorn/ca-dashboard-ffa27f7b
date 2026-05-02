@@ -62,18 +62,6 @@ export function AppMenuItems() {
 
       <DropdownMenuSeparator />
 
-      {can("trial_planner") && (
-        <DropdownMenuItem onClick={() => navigate("/planner")}>
-          <CalendarRange className="h-4 w-4 mr-2" />
-          Trial Planner
-        </DropdownMenuItem>
-      )}
-      {can("data_loggers") && (
-        <DropdownMenuItem onClick={() => navigate("/data-loggers")}>
-          <Activity className="h-4 w-4 mr-2" />
-          Data Loggers
-        </DropdownMenuItem>
-      )}
       {can("crm_activities") && (
         <DropdownMenuItem onClick={() => navigate("/crm")}>
           <Users className="h-4 w-4 mr-2" />
@@ -84,6 +72,18 @@ export function AppMenuItems() {
         <DropdownMenuItem onClick={() => navigate("/customers")}>
           <MapPin className="h-4 w-4 mr-2" />
           Customers Map
+        </DropdownMenuItem>
+      )}
+      {can("trial_planner") && (
+        <DropdownMenuItem onClick={() => navigate("/planner")}>
+          <CalendarRange className="h-4 w-4 mr-2" />
+          Trial Planner
+        </DropdownMenuItem>
+      )}
+      {can("data_loggers") && (
+        <DropdownMenuItem onClick={() => navigate("/data-loggers")}>
+          <Activity className="h-4 w-4 mr-2" />
+          Data Loggers
         </DropdownMenuItem>
       )}
       {(isCustomer || can("settings")) && (
