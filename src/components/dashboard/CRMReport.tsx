@@ -107,6 +107,12 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
     return crmActivities.filter((a) => a.assignedUserId === selectedUserId);
   }, [crmActivities, selectedUserId]);
 
+  // Effective active users list passed to children — narrowed to one when a single user is selected.
+  const effectiveActiveUsers = useMemo(() => {
+    if (selectedUserId === "all") return activeUsers;
+    return activeUsers.filter((u) => u.id === selectedUserId);
+  }, [activeUsers, selectedUserId]);
+
   const columns = useMemo(() => {
     const cols: Record<string, Activity[]> = { "To Do": [], "In Progress": [], "Completed": [] };
     for (const a of filteredActivities) {
