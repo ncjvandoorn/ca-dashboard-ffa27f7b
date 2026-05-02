@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   MapPin, Sparkles, Loader2, RefreshCw, Route, AlertTriangle, Plus, X,
+  ChevronLeft, ChevronRight, CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -225,7 +226,10 @@ function farmVisitedInWeek(farmName: string, accounts: Account[], activities: Ac
 /* -------------------- Component -------------------- */
 
 export function AIPlannerView({ allActivities, users, accounts, reports, activeUsers }: Props) {
-  const selectedWeek = useMemo(() => getWeekNrForDate(new Date()), []);
+  const currentWeek = useMemo(() => getWeekNrForDate(new Date()), []);
+  const [selectedWeek, setSelectedWeek] = useState<number>(currentWeek);
+  const isPastWeek = selectedWeek < currentWeek;
+  const isFutureWeek = selectedWeek > currentWeek;
   // Selection mirrors the parent-controlled active users list (the unified
   // "All Users" filter in the CRM toolbar). When the filter changes upstream,
   // we always reflect exactly that set — no stale single-user lock-in.
@@ -423,7 +427,13 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     }
   }, [selectedWeek]);
 
-  useEffect(() => { loadPlan(false); }, [loadPlan]);
+  // When week changes, immediately reflect any cached plan to avoid showing stale data, then load.
+  useEffect(() => {
+    const cached = planCache[selectedWeek];
+    setPlan(cached?.plan ?? null);
+    setPlanLoadedAt(cached?.loadedAt ?? null);
+    loadPlan(false);
+  }, [loadPlan, selectedWeek]);
 
   // Build visit proposals per selected user, then geocode + order
   const buildRoutes = useCallback(async () => {
@@ -677,9 +687,44 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="text-sm font-semibold">
-          Week {selectedWeek} <span className="text-muted-foreground font-normal">· {weekDateRange(selectedWeek)}</span>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline" size="sm" className="h-8 w-8 p-0"
+            onClick={() => setSelectedWeek(w => shiftWeek(w, -1))}
+            aria-label="Previous week"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="text-sm font-semibold px-2 min-w-[220px] text-center">
+            Week {selectedWeek} <span className="text-muted-foreground font-normal">· {weekDateRange(selectedWeek)}</span>
+          </div>
+          <Button
+            variant="outline" size="sm" className="h-8 w-8 p-0"
+            onClick={() => setSelectedWeek(w => shiftWeek(w, 1))}
+            aria-label="Next week"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          {selectedWeek !== currentWeek && (
+            <Button
+              variant="ghost" size="sm" className="h-8 gap-1.5 ml-1"
+              onClick={() => setSelectedWeek(currentWeek)}
+            >
+              <CalendarDays className="h-3.5 w-3.5" /> This week
+            </Button>
+          )}
         </div>
+
+        {isPastWeek && (
+          <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-[10px]">
+            Read-only · past week
+          </Badge>
+        )}
+        {isFutureWeek && (
+          <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-[10px]">
+            Future week
+          </Badge>
+        )}
 
         <Button
           variant="outline" size="sm" className="h-8 gap-1.5"
@@ -822,6 +867,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                     onCheckedChange={(val) => toggleConfirmation(u.id, v.farmName, "ai", val === true)}
                                     className="mt-0.5"
                                     aria-label={`Confirm visit to ${v.farmName}`}
+                                    disabled={isPastWeek}
                                   />
                                   <span className="font-mono text-[10px] text-muted-foreground">#{v.order}</span>
                                   <div className="flex-1 min-w-0">
@@ -846,6 +892,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                   accounts={accounts}
                   onAdd={(farmName) => toggleConfirmation(u.id, farmName, "added", true)}
                   onRemove={(farmName) => removeAddedFarm(u.id, farmName)}
+                  readOnly={isPastWeek}
                 />
               </div>
             );
@@ -864,9 +911,10 @@ interface AddedFarmsRowProps {
   accounts: Account[];
   onAdd: (farmName: string) => void;
   onRemove: (farmName: string) => void;
+  readOnly?: boolean;
 }
 
-function AddedFarmsRow({ added, accounts, onAdd, onRemove }: AddedFarmsRowProps) {
+function AddedFarmsRow({ added, accounts, onAdd, onRemove, readOnly = false }: AddedFarmsRowProps) {
   const [open, setOpen] = useState(false);
   const sortedAccounts = useMemo(
     () => [...accounts].sort((a, b) => a.name.localeCompare(b.name)),
@@ -881,57 +929,64 @@ function AddedFarmsRow({ added, accounts, onAdd, onRemove }: AddedFarmsRowProps)
       <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
         Added this week
       </span>
+      {added.length === 0 && readOnly && (
+        <span className="text-[11px] text-muted-foreground italic">No farms added.</span>
+      )}
       {added.map(a => (
         <span
           key={a.id}
           className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 pl-2 pr-1 py-0.5 text-[11px]"
         >
           {a.farm_name}
-          <button
-            type="button"
-            onClick={() => onRemove(a.farm_name)}
-            className="rounded-full hover:bg-destructive/20 p-0.5"
-            aria-label={`Remove ${a.farm_name}`}
-          >
-            <X className="h-3 w-3" />
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={() => onRemove(a.farm_name)}
+              className="rounded-full hover:bg-destructive/20 p-0.5"
+              aria-label={`Remove ${a.farm_name}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </span>
       ))}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]">
-            <Plus className="h-3 w-3" /> Add farm
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-[280px]" align="start">
-          <Command>
-            <CommandInput placeholder="Search farm…" className="h-9" />
-            <CommandList>
-              <CommandEmpty>No farm found.</CommandEmpty>
-              <CommandGroup>
-                {sortedAccounts.map(acc => {
-                  const already = addedSet.has(normalizeName(acc.name));
-                  return (
-                    <CommandItem
-                      key={acc.id}
-                      value={acc.name}
-                      disabled={already}
-                      onSelect={() => {
-                        if (already) return;
-                        onAdd(acc.name);
-                        setOpen(false);
-                      }}
-                    >
-                      {acc.name}
-                      {already && <span className="ml-auto text-[10px] text-muted-foreground">added</span>}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      {!readOnly && (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]">
+              <Plus className="h-3 w-3" /> Add farm
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[280px]" align="start">
+            <Command>
+              <CommandInput placeholder="Search farm…" className="h-9" />
+              <CommandList>
+                <CommandEmpty>No farm found.</CommandEmpty>
+                <CommandGroup>
+                  {sortedAccounts.map(acc => {
+                    const already = addedSet.has(normalizeName(acc.name));
+                    return (
+                      <CommandItem
+                        key={acc.id}
+                        value={acc.name}
+                        disabled={already}
+                        onSelect={() => {
+                          if (already) return;
+                          onAdd(acc.name);
+                          setOpen(false);
+                        }}
+                      >
+                        {acc.name}
+                        {already && <span className="ml-auto text-[10px] text-muted-foreground">added</span>}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }
