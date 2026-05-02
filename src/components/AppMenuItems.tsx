@@ -86,6 +86,15 @@ export function AppMenuItems() {
           Customers Map
         </DropdownMenuItem>
       )}
+      {(isCustomer || can("settings")) && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => navigate("/profile")}>
+            <UserCircle className="h-4 w-4 mr-2" />
+            My Profile
+          </DropdownMenuItem>
+        </>
+      )}
       {can("reporting_check") && (
         <DropdownMenuItem onClick={() => navigate("/?check=reporting")}>
           <ClipboardCheck className="h-4 w-4 mr-2" />
@@ -97,16 +106,6 @@ export function AppMenuItems() {
           <BarChart3 className="h-4 w-4 mr-2" />
           Activity Analysis
         </DropdownMenuItem>
-      )}
-
-      {(isCustomer || can("settings")) && (
-        <>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate("/profile")}>
-            <UserCircle className="h-4 w-4 mr-2" />
-            My Profile
-          </DropdownMenuItem>
-        </>
       )}
       {can("settings") && (
         <DropdownMenuItem onClick={() => navigate("/admin")}>
