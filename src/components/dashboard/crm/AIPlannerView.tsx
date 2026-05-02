@@ -80,7 +80,7 @@ interface PlanVisit {
   reason: string;
   suggestedUser: string;
   priority: string;
-  source: "urgent" | "suggested";
+  source: "urgent" | "suggested" | "commercial";
 }
 
 interface PlannedFarm extends PlanVisit {
