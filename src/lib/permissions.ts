@@ -9,6 +9,7 @@ export type PermissionKey =
   | "trial_planner"
   | "data_loggers"
   | "crm_activities"
+  | "activity_analysis"
   | "trials_dashboard"
   | "subscription_plans"
   | "customers_map"
@@ -32,6 +33,7 @@ export const PERMISSION_ITEMS: PermissionItem[] = [
   { key: "data_loggers", label: "Data Loggers", group: "Menu items" },
   { key: "reporting_check", label: "Reporting Check", group: "Menu items" },
   { key: "crm_activities", label: "CRM Activities", group: "Menu items" },
+  { key: "activity_analysis", label: "Activity Analysis", group: "Menu items" },
   { key: "trials_dashboard", label: "Trials Dashboard", group: "Menu items" },
   { key: "subscription_plans", label: "Subscription Plans", group: "Menu items" },
   { key: "customers_map", label: "Customers Map", group: "Menu items" },
