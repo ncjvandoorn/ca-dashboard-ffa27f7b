@@ -1007,111 +1007,121 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${passedOpen ? "rotate-180" : ""}`} />
                 Passed follow-ups ({passedFollowups.length})
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 space-y-2">
-                {passedFollowups.map((p, i) => (
+              <CollapsibleContent className="mt-2 space-y-3">
+                {groupedPassedFollowups.map((g, gi) => (
                   <div
-                    key={p.trialId || i}
+                    key={g.key}
                     className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3"
                   >
-                    <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-                    {(() => {
-                      const headerTrial = trials.find((x) => x.id === p.trialId || (x.trial_number || "").toLowerCase() === (p.trialNumber || "").toLowerCase());
-                      const isRepeat = /repeat/i.test(headerTrial?.recommendations || "");
-                      return (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <button type="button" onClick={() => openFarmActivity(p.farmName)} className="font-semibold text-sm text-primary hover:underline">{p.farmName}</button>
-                          {p.customer && (
-                            <Badge variant="outline" className="text-[10px]">{p.customer}</Badge>
-                          )}
-                          {isRepeat ? (
-                            <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
-                          )}
-                          <Badge variant="secondary" className="text-[10px]">{p.keyProduct}</Badge>
-                        </div>
-                      );
-                    })()}
-                      <div className="flex items-center gap-1.5">
-                        {p.trialDate && (
-                          <span className="text-[10px] text-muted-foreground">
-                            {new Date(p.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const t = trials.find((x) => x.id === p.trialId || (x.trial_number || "").toLowerCase() === (p.trialNumber || "").toLowerCase());
-                            if (t) setSelectedTrial(t);
-                          }}
-                          className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
-                        >
-                          Trial {p.trialNumber}
-                          <ExternalLink className="h-3 w-3" />
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      <span className="font-semibold text-sm">{g.key}</span>
+                      {g.customer && g.farms.size > 0 && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {[...g.farms].join(" · ")}
+                        </span>
+                      )}
+                      <Badge variant="secondary" className="text-[10px]">{g.items.length} trial{g.items.length === 1 ? "" : "s"}</Badge>
                     </div>
-                    <div className="mt-1.5 space-y-1">
-                      {(() => {
-                        const items: Array<{ kind: "activity" | "trial"; date: number; node: JSX.Element }> = [];
-                        p.activities.forEach((a, j) => {
-                          const ts = a.date ? Date.parse(a.date) : 0;
-                          items.push({
-                            kind: "activity",
-                            date: ts,
-                            node: (
-                              <div key={`a-${j}`} className="text-[11px] text-foreground/85 border-l-2 border-emerald-500/40 pl-2">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  {a.date && (
-                                    <span className="text-[10px] text-muted-foreground">
-                                      {new Date(a.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                                    </span>
-                                  )}
-                                  {a.type && <Badge variant="outline" className="text-[9px] py-0">{a.type}</Badge>}
-                                  {a.subject && <span className="font-medium">{a.subject}</span>}
-                                </div>
-                                {a.description && (
-                                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{a.description}</p>
+                    <div className="space-y-3">
+                      {g.items.map((p, i) => {
+                        const headerTrial = trials.find((x) => x.id === p.trialId || (x.trial_number || "").toLowerCase() === (p.trialNumber || "").toLowerCase());
+                        const isRepeat = /repeat/i.test(headerTrial?.recommendations || "");
+                        return (
+                          <div key={p.trialId || i} className="border-l-2 border-emerald-500/40 pl-2">
+                            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <button type="button" onClick={() => openFarmActivity(p.farmName)} className="text-[12px] font-medium text-primary hover:underline">{p.farmName}</button>
+                                {isRepeat ? (
+                                  <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
                                 )}
+                                <Badge variant="secondary" className="text-[10px]">{p.keyProduct}</Badge>
                               </div>
-                            ),
-                          });
-                        });
-                        if (p.trialDate) {
-                          const ts = Date.parse(p.trialDate);
-                          const trial = trials.find((x) => x.id === p.trialId);
-                          items.push({
-                            kind: "trial",
-                            date: ts,
-                            node: (
-                              <button
-                                key="trial-result"
-                                type="button"
-                                onClick={() => trial && setSelectedTrial(trial)}
-                                className="w-full text-left text-[11px] border-l-2 border-primary/60 bg-primary/5 hover:bg-primary/10 transition-colors pl-2 py-1 rounded-r"
-                              >
-                                <div className="flex items-center gap-2 flex-wrap">
+                              <div className="flex items-center gap-1.5">
+                                {p.trialDate && (
                                   <span className="text-[10px] text-muted-foreground">
                                     {new Date(p.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                                   </span>
-                                  <Badge variant="outline" className="text-[9px] py-0 border-primary/50 text-primary">Trial result</Badge>
-                                  {/repeat/i.test(trial?.recommendations || "") ? (
-                                    <Badge variant="outline" className="text-[9px] py-0 border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
-                                  ) : (
-                                    <Badge variant="outline" className="text-[9px] py-0 border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
-                                  )}
-                                  <span className="font-medium">Trial {p.trialNumber} concluded</span>
-                                </div>
-                                {trial?.recommendations && (
-                                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{trial.recommendations}</p>
                                 )}
-                              </button>
-                            ),
-                          });
-                        }
-                        items.sort((a, b) => b.date - a.date);
-                        return items.map((it) => it.node);
-                      })()}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const t = trials.find((x) => x.id === p.trialId || (x.trial_number || "").toLowerCase() === (p.trialNumber || "").toLowerCase());
+                                    if (t) setSelectedTrial(t);
+                                  }}
+                                  className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                                >
+                                  Trial {p.trialNumber}
+                                  <ExternalLink className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+                            <div className="mt-1.5 space-y-1">
+                              {(() => {
+                                const items: Array<{ kind: "activity" | "trial"; date: number; node: JSX.Element }> = [];
+                                p.activities.forEach((a, j) => {
+                                  const ts = a.date ? Date.parse(a.date) : 0;
+                                  items.push({
+                                    kind: "activity",
+                                    date: ts,
+                                    node: (
+                                      <div key={`a-${j}`} className="text-[11px] text-foreground/85 border-l-2 border-emerald-500/40 pl-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          {a.date && (
+                                            <span className="text-[10px] text-muted-foreground">
+                                              {new Date(a.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                                            </span>
+                                          )}
+                                          {a.type && <Badge variant="outline" className="text-[9px] py-0">{a.type}</Badge>}
+                                          {a.subject && <span className="font-medium">{a.subject}</span>}
+                                        </div>
+                                        {a.description && (
+                                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{a.description}</p>
+                                        )}
+                                      </div>
+                                    ),
+                                  });
+                                });
+                                if (p.trialDate) {
+                                  const ts = Date.parse(p.trialDate);
+                                  const trial = trials.find((x) => x.id === p.trialId);
+                                  items.push({
+                                    kind: "trial",
+                                    date: ts,
+                                    node: (
+                                      <button
+                                        key="trial-result"
+                                        type="button"
+                                        onClick={() => trial && setSelectedTrial(trial)}
+                                        className="w-full text-left text-[11px] border-l-2 border-primary/60 bg-primary/5 hover:bg-primary/10 transition-colors pl-2 py-1 rounded-r"
+                                      >
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span className="text-[10px] text-muted-foreground">
+                                            {new Date(p.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                                          </span>
+                                          <Badge variant="outline" className="text-[9px] py-0 border-primary/50 text-primary">Trial result</Badge>
+                                          {/repeat/i.test(trial?.recommendations || "") ? (
+                                            <Badge variant="outline" className="text-[9px] py-0 border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
+                                          ) : (
+                                            <Badge variant="outline" className="text-[9px] py-0 border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
+                                          )}
+                                          <span className="font-medium">Trial {p.trialNumber} concluded</span>
+                                        </div>
+                                        {trial?.recommendations && (
+                                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{trial.recommendations}</p>
+                                        )}
+                                      </button>
+                                    ),
+                                  });
+                                }
+                                items.sort((a, b) => b.date - a.date);
+                                return items.map((it) => it.node);
+                              })()}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
