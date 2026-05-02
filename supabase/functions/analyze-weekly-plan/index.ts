@@ -34,12 +34,12 @@ serve(async (req) => {
 
 ${adminInstructions ? `**ADMIN INSTRUCTIONS (follow these closely):**\n${adminInstructions}\n` : ""}
 
-**WORK SCHEDULE**: The team works Monday to Friday. Today is ${todayDate || "a weekday"}. THIS week runs from ${weekDates || "Monday to Friday"}. The current week number is ${currentWeekNr || "unknown"} (format YYWW). This plan ALWAYS covers the FULL work week Monday–Friday, even if generated mid-week. All recommendations and schedules must use days Monday through Friday of THIS week. Never plan for next week.
+**WORK SCHEDULE**: The team works Monday to Friday. **Monday is an OFFICE day — never schedule farm visits on Monday.** Farm visits happen Tuesday to Friday only. Today is ${todayDate || "a weekday"}. THIS week runs from ${weekDates || "Monday to Friday"}. The current week number is ${currentWeekNr || "unknown"} (format YYWW). This plan ALWAYS covers the FULL work week Monday–Friday, even if generated mid-week. All recommendations and schedules must use days Monday through Friday of THIS week. Never plan for next week.
 
 **REALISTIC CONSTRAINTS:**
-- Each inspector can realistically visit a MAXIMUM of 5 farms per day (travel time, inspection time)
+- Each inspector can realistically visit a MAXIMUM of 3 farms per day, Tuesday–Friday only (12 visits/week max per user). Monday is reserved for office work.
 - Calls, admin tasks, and follow-ups have no daily limit
-- If a user has 60 open tasks, they cannot do all of them this week — prioritize the top 5-10 most urgent
+- If a user has 60 open tasks, they cannot do all of them this week — prioritize the top 10-12 most urgent
 - Focus on what is actionable THIS week. Do not suggest things for next week.
 
 **DATA FORMAT — COMPACT KEYS:**
