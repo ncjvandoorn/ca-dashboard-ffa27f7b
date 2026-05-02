@@ -789,7 +789,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
             for (const d of DAY_LABELS) byDay.set(d, []);
             for (const v of visits) byDay.get(v.day)!.push(v);
             const geocodedCount = visits.filter(v => v.geo).length;
-            const home = homeBaseFor(u.name);
+            const home = homeBaseFor(u.id, u.name);
             return (
               <div key={u.id} className="rounded-lg border border-border bg-background overflow-hidden">
                 <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border bg-muted/30 flex-wrap">
@@ -797,9 +797,29 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                     <span className="font-semibold text-sm">{u.name}</span>
                     <Badge variant="secondary" className="text-[10px]">{visits.length} visit{visits.length === 1 ? "" : "s"}</Badge>
                     {home && (
-                      <Badge variant="outline" className="text-[10px] gap-1">
-                        <MapPin className="h-2.5 w-2.5" /> Base: {home.city}
-                      </Badge>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] hover:bg-muted transition-colors"
+                            title="Change base city"
+                          >
+                            <MapPin className="h-2.5 w-2.5" /> Base: {home.city}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-1 w-[140px]" align="start">
+                          {(["Nairobi", "Nakuru"] as const).map(city => (
+                            <button
+                              key={city}
+                              type="button"
+                              onClick={() => setBaseOverride(prev => ({ ...prev, [u.id]: city }))}
+                              className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-muted ${home.city === city ? "font-semibold text-primary" : ""}`}
+                            >
+                              {city}
+                            </button>
+                          ))}
+                        </PopoverContent>
+                      </Popover>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
