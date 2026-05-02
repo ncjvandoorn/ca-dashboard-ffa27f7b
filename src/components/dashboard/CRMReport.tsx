@@ -133,6 +133,10 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
               <CalendarClock className="h-4 w-4" />
               Current Week
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setView("calendar")} className="gap-1.5">
+              <CalendarDays className="h-4 w-4" />
+              Calendar
+            </Button>
 
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
