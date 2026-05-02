@@ -130,9 +130,11 @@ function nearestNeighborOrder<T extends { geo: GeoResult | null }>(items: T[]): 
 function distributeAcrossWeek(n: number): string[] {
   if (n === 0) return [];
   const days: string[] = [];
-  const base = Math.floor(n / 5);
-  const extra = n % 5;
-  const counts = DAY_LABELS.map((_, i) => base + (i < extra ? 1 : 0));
+  const numDays = DAY_LABELS.length;
+  const capped = Math.min(n, numDays * MAX_VISITS_PER_DAY);
+  const base = Math.floor(capped / numDays);
+  const extra = capped % numDays;
+  const counts = DAY_LABELS.map((_, i) => Math.min(MAX_VISITS_PER_DAY, base + (i < extra ? 1 : 0)));
   counts.forEach((c, i) => {
     for (let k = 0; k < c; k++) days.push(DAY_LABELS[i]);
   });
