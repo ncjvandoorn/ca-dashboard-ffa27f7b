@@ -11,6 +11,7 @@ import { SeasonalityInsightsBody, type SeasonalityAnalysis } from "@/components/
 import { QualityReportBody } from "@/components/dashboard/QualityReportBody";
 import { SharedTripMap } from "@/components/dashboard/SharedTripMap";
 import { VaselifeTrialReportBody } from "@/components/trials/VaselifeTrialReportBody";
+import { PrintReportButton } from "@/components/trials/PrintReportButton";
 import { PropertyHeader, ScoreChip, ScoreScaleLegend } from "@/components/trials/VaselifeScoreUi";
 import { getPropertyMeta, diffTreatmentNames, scoreToneClasses, type ScoreTone } from "@/lib/vaselifeProperties";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
