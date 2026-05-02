@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ClipboardList, Phone, MapPin, Users, BarChart3,
-  CheckCircle, Clock, AlertCircle, Filter, CalendarClock, CalendarDays, Sparkles,
+  CheckCircle, Clock, AlertCircle, Filter, CalendarClock, CalendarDays, Sparkles, Search, X,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
