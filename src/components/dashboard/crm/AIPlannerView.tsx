@@ -469,7 +469,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   // the function with a minimal hint and rely on the user using "Current Week"
   // for full regeneration. Here we offer a soft-refresh that re-reads cache.
   const refreshFromCache = useCallback(() => {
-    loadPlan();
+    loadPlan(true);
     toast({ title: "Reloaded latest AI plan from cache" });
   }, [loadPlan]);
 
