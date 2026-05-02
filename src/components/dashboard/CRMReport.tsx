@@ -310,6 +310,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
                 );
               })}
             </div>
+            </>
           ) : view === "calendar" ? (
             <CalendarView
               allActivities={crmActivities}
