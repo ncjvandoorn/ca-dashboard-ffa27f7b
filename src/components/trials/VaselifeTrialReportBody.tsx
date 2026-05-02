@@ -26,6 +26,7 @@ import {
   ToneBadge,
   ScoreScaleLegend,
 } from "./VaselifeScoreUi";
+import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 
 interface Props {
   trial: VaselifeHeader;
@@ -171,8 +172,7 @@ export function VaselifeTrialReportBody({
           <InfoRow label="Farm" value={trial.farm || "—"} />
           <InfoRow label="Harvest date" value={fmtDate(trial.harvest_date)} />
           <InfoRow label="Sea Freight" value={fmtDate(trial.start_seafreight)} />
-          <InfoRow label="Transport phase" value={fmtDate(trial.start_transport)} />
-          <InfoRow label="Retail/Store phase" value={fmtDate(trial.start_retail)} />
+          <InfoRow label="Technical Consultant" value={technicalConsultant || "—"} />
           <InfoRow
             label="Cultivars × Treatments"
             value={`${trial.cultivar_count ?? "—"} × ${trial.treatment_count ?? "—"}`}
