@@ -796,6 +796,35 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     }
   }, [activeUsers.length, buildPayload, selectedWeek, isCurrentWeek, resolvedCurrentWeek]);
 
+  // Merge AI-generated commercial follow-ups (rich `reason` text) with live
+  // candidates so:
+  //  • Trials that have since been followed up are removed (they show under
+  //    Passed follow-ups automatically).
+  //  • New unfollowed-up trials appearing after the AI plan was cached are
+  //    carried into the current view, even without regenerating the AI plan.
+  const mergedCommercialFollowups = useMemo(() => {
+    type Item = {
+      trialId: string; trialNumber: string; farmName: string;
+      customer?: string; keyProduct: string; trialDate: string; reason: string;
+    };
+    const aiList = (plan?.commercialFollowups ?? []) as Item[];
+    const aiIds = new Set(aiList.map((c) => c.trialId).filter(Boolean));
+    const kept = aiList.filter((c) => !c.trialId || !passedTrialIds.has(c.trialId));
+    const additions: Item[] = liveCommercialCandidates
+      .filter((c) => !aiIds.has(c.trialId) && !passedTrialIds.has(c.trialId))
+      .map((c) => ({
+        trialId: c.trialId,
+        trialNumber: c.trialNumber,
+        farmName: c.farmName,
+        customer: c.customer,
+        keyProduct: c.keyProduct,
+        trialDate: c.trialDate || "",
+        reason: "Commercial trial concluded — no sales follow-up recorded yet.",
+      }));
+    return [...kept, ...additions]
+      .sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
+  }, [plan?.commercialFollowups, liveCommercialCandidates, passedTrialIds]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 flex-wrap">
