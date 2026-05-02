@@ -391,8 +391,8 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
             <div className="font-medium">{trial.initial_quality || "—"}</div>
           </div>
           <div>
-            <div className="text-muted-foreground">Transport phase</div>
-            <div className="font-medium">{fmtDate(trial.start_transport)}</div>
+            <div className="text-muted-foreground">Technical Consultant</div>
+            <div className="font-medium">{technicalConsultant || "—"}</div>
           </div>
           <div>
             <div className="text-muted-foreground">Trial concluded</div>
