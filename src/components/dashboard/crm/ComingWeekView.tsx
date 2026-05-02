@@ -953,15 +953,25 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                   transition={{ delay: gi * 0.04 }}
                   className="rounded-lg border border-accent/30 bg-accent/5 p-3"
                 >
-                  <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <span className="font-semibold text-sm">{g.key}</span>
+                  <div className="mb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm">{g.key}</span>
+                      <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
+                      <Badge variant="secondary" className="text-[10px]">{g.items.length} trial{g.items.length === 1 ? "" : "s"}</Badge>
+                    </div>
+                    {(() => {
+                      const responsible = resolveResponsible(g.customer || g.key) || resolveResponsible([...g.farms][0]);
+                      return responsible ? (
+                        <div className="text-[11px] text-muted-foreground mt-0.5">
+                          Responsible: <span className="font-medium text-foreground">{responsible}</span>
+                        </div>
+                      ) : null;
+                    })()}
                     {g.customer && g.farms.size > 0 && (
-                      <span className="text-[10px] text-muted-foreground">
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
                         {[...g.farms].join(" · ")}
-                      </span>
+                      </div>
                     )}
-                    <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
-                    <Badge variant="secondary" className="text-[10px]">{g.items.length} trial{g.items.length === 1 ? "" : "s"}</Badge>
                   </div>
                   <div className="space-y-1.5">
                     {g.items.map((c, i) => (
