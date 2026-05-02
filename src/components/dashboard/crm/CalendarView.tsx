@@ -65,12 +65,11 @@ function fmtDate(ts: number) {
 export function CalendarView({ allActivities, users, accounts, activeUsers, onBack }: Props) {
   const [mode, setMode] = useState<Mode>("week");
   const [anchor, setAnchor] = useState<Date>(() => startOfDay(new Date()));
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(() => activeUsers.map(u => u.id));
 
   const userMap = useMemo(() => new Map(users.map(u => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map(a => [a.id, a.name])), [accounts]);
 
-  const userSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
+  const userSet = useMemo(() => new Set(activeUsers.map(u => u.id)), [activeUsers]);
 
   // Filter activities by selected users + having a date
   const filtered = useMemo(() => {
@@ -134,11 +133,6 @@ export function CalendarView({ allActivities, users, accounts, activeUsers, onBa
     return String(anchor.getFullYear());
   }, [mode, range, anchor]);
 
-  const toggleUser = (id: string) => {
-    setSelectedUserIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
-
-  const allSelected = selectedUserIds.length === activeUsers.length;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -171,45 +165,6 @@ export function CalendarView({ allActivities, users, accounts, activeUsers, onBa
               <TabsTrigger value="year" className="text-xs">Year</TabsTrigger>
             </TabsList>
           </Tabs>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-1.5">
-                <Filter className="h-4 w-4" />
-                Users ({selectedUserIds.length}/{activeUsers.length})
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-2" align="start">
-              <div className="flex items-center justify-between px-2 py-1.5 border-b border-border mb-1">
-                <span className="text-xs font-medium">Filter users</span>
-                <button
-                  className="text-xs text-primary hover:underline"
-                  onClick={() => setSelectedUserIds(allSelected ? [] : activeUsers.map(u => u.id))}
-                >
-                  {allSelected ? "Clear" : "All"}
-                </button>
-              </div>
-              <ScrollArea className="h-64">
-                <div className="space-y-0.5 pr-2">
-                  {activeUsers.map(u => {
-                    const checked = userSet.has(u.id);
-                    return (
-                      <button
-                        key={u.id}
-                        onClick={() => toggleUser(u.id)}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent text-left text-sm"
-                      >
-                        <div className={`h-4 w-4 rounded border flex items-center justify-center ${checked ? "bg-primary border-primary" : "border-border"}`}>
-                          {checked && <Check className="h-3 w-3 text-primary-foreground" />}
-                        </div>
-                        <span className="truncate">{u.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            </PopoverContent>
-          </Popover>
 
           {/* Counts */}
           <div className="ml-auto flex items-center gap-2">
