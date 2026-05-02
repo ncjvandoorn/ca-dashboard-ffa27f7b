@@ -289,6 +289,74 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
           suggestedUser: rep,
           priority: "critical",
           source: "commercial",
+          visitScore: 100,
+        });
+      }
+
+      // Deterministic fallback: if the AI returns too few visits, fill the
+      // Tuesday–Friday capacity from real CRM + quality data instead of leaving
+      // the route almost empty. The AI still sets priorities; this only prevents
+      // candidate farms from being skipped by an under-filled AI response.
+      const recentByFarm = new Map<string, QualityReport[]>();
+      for (const r of reports) {
+        if (!r.farmAccountId) continue;
+        const arr = recentByFarm.get(r.farmAccountId) || [];
+        arr.push(r);
+        recentByFarm.set(r.farmAccountId, arr);
+      }
+      for (const arr of recentByFarm.values()) arr.sort((a, b) => b.weekNr - a.weekNr);
+
+      const openByFarm = new Map<string, Activity[]>();
+      for (const a of allActivities) {
+        if (!a.accountId || (a.status !== "To Do" && a.status !== "In Progress")) continue;
+        const arr = openByFarm.get(a.accountId) || [];
+        arr.push(a);
+        openByFarm.set(a.accountId, arr);
+      }
+
+      const now = Date.now();
+      for (const [farmId, openItems] of openByFarm.entries()) {
+        const acc = accountById.get(farmId);
+        if (!acc) continue;
+        const oldest = openItems.reduce((max, a) => Math.max(max, a.createdAt ? Math.floor((now - a.createdAt) / 86400000) : 0), 0);
+        const visitActivity = openItems.find((a) => (a.type || "").toLowerCase() === "visit") || openItems[0];
+        const suggestedUser = userNameById.get(visitActivity.assignedUserId || visitActivity.ownerUserId) || "";
+        allVisits.push({
+          farmId,
+          farmName: acc.name,
+          reason: `${oldest >= 14 ? "Overdue" : "Open"} CRM item: ${visitActivity.subject || "follow-up"}`,
+          suggestedUser,
+          priority: oldest >= 14 ? "high" : "medium",
+          source: "crm",
+          visitScore: oldest >= 14 ? 70 + Math.min(oldest, 30) : 35 + Math.min(oldest, 20),
+        });
+      }
+
+      for (const [farmId, farmReports] of recentByFarm.entries()) {
+        if (openByFarm.has(farmId)) continue;
+        const acc = accountById.get(farmId);
+        if (!acc) continue;
+        const latest = farmReports[0];
+        const responsible = resolveResponsible(acc.name) || "";
+        const hasStaffNote = Boolean(latest.qrGenQualityFlowers || latest.qrGenProtocolChanges || latest.generalComment);
+        const badRating = (latest.qrGenQualityRating || 0) >= 2;
+        const tempIssue = (latest.qrExportTempColdstore || 0) > 6 || (latest.qrIntakeTempColdstore || 0) > 6;
+        const phIssue = (latest.qrIntakePh || 0) > 5.5 || (latest.qrExportPh || 0) > 5.5;
+        if (!responsible || (!hasStaffNote && !badRating && !tempIssue && !phIssue)) continue;
+        const reasons = [
+          badRating ? `quality rating ${latest.qrGenQualityRating}` : "",
+          tempIssue ? "temperature issue" : "",
+          phIssue ? "pH issue" : "",
+          hasStaffNote ? "staff note" : "",
+        ].filter(Boolean);
+        allVisits.push({
+          farmId,
+          farmName: acc.name,
+          reason: `Coverage visit: latest week ${latest.weekNr} has ${reasons.join(", ")}`,
+          suggestedUser: responsible,
+          priority: badRating || tempIssue ? "high" : "medium",
+          source: "coverage",
+          visitScore: (badRating ? 60 : 0) + (tempIssue ? 45 : 0) + (phIssue ? 35 : 0) + (hasStaffNote ? 25 : 0),
         });
       }
 
@@ -335,13 +403,17 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
       const out: Record<string, PlannedFarm[]> = {};
 
       for (const [uid, visits] of byUserId.entries()) {
-        // Cap at 10 by priority then source (urgent first)
+        // Cap at 12 by priority/source/score, keeping commercial follow-ups first.
         const trimmed = [...visits]
           .sort((a, b) => {
             const pa = prioRank[a.priority?.toLowerCase()] ?? 9;
             const pb = prioRank[b.priority?.toLowerCase()] ?? 9;
             if (pa !== pb) return pa - pb;
-            if (a.source !== b.source) return a.source === "urgent" ? -1 : 1;
+            const sourceRank: Record<PlanVisit["source"], number> = { commercial: 0, urgent: 1, crm: 2, coverage: 3, suggested: 4 };
+            if (a.source !== b.source) return sourceRank[a.source] - sourceRank[b.source];
+            const sa = a.visitScore ?? 0;
+            const sb = b.visitScore ?? 0;
+            if (sa !== sb) return sb - sa;
             return 0;
           })
           .slice(0, MAX_VISITS_PER_WEEK);
@@ -379,7 +451,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     } finally {
       setComputingRoutes(false);
     }
-  }, [plan, activeUsers, userSet, accountByName, resolveResponsible]);
+  }, [plan, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible]);
 
   // Auto-build routes when plan changes
   useEffect(() => { if (plan) buildRoutes(); }, [plan, buildRoutes]);
