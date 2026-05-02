@@ -263,37 +263,52 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: Math.min(i, 25) * 0.015 }}
                                 className="rounded-lg border border-border bg-background p-3 shadow-sm cursor-default"
-                              >
-                            <div className="flex items-start gap-2 mb-1.5">
-                              <Icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                              <span className="text-sm font-medium leading-tight line-clamp-2">
-                                {activity.subject || "Untitled"}
-                              </span>
-                            </div>
-                            {activity.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2 mb-2 ml-6">
-                                {activity.description}
-                              </p>
-                            )}
-                            <div className="flex items-center justify-between ml-6">
-                              <div className="flex flex-col gap-0.5">
-                                {farmName && (
-                                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                                    <MapPin className="h-3 w-3" />
-                                    {farmName}
+                                <div className="flex items-start gap-2 mb-1.5">
+                                  <Icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                  <span className="text-sm font-medium leading-tight line-clamp-2">
+                                    {activity.subject || "Untitled"}
                                   </span>
+                                </div>
+                                {activity.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2 ml-6">
+                                    {activity.description}
+                                  </p>
                                 )}
-                                <span className="text-[11px] text-muted-foreground/60">
-                                  {timeAgo(activity.createdAt)} · {formatDate(activity.startsAt || activity.createdAt)}
-                                </span>
+                                <div className="flex items-center justify-between ml-6">
+                                  <div className="flex flex-col gap-0.5">
+                                    {farmName && (
+                                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                        <MapPin className="h-3 w-3" />
+                                        {farmName}
+                                      </span>
+                                    )}
+                                    <span className="text-[11px] text-muted-foreground/60">
+                                      {timeAgo(activity.createdAt)} · {formatDate(activity.startsAt || activity.createdAt)}
+                                    </span>
+                                  </div>
+                                  {assignedName && (
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                                      {assignedName.split(" ").map((n) => n[0]).join("").toUpperCase()}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </motion.div>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" align="start" className="max-w-sm whitespace-pre-wrap break-words">
+                              <div className="space-y-1">
+                                <div className="font-semibold text-xs">{activity.subject || "Untitled"}</div>
+                                {activity.type && (
+                                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{activity.type}</div>
+                                )}
+                                {activity.description && (
+                                  <div className="text-xs">{activity.description}</div>
+                                )}
+                                <div className="text-[10px] text-muted-foreground pt-1">
+                                  {farmName ? `${farmName} · ` : ""}{assignedName || "Unassigned"} · {formatDate(activity.startsAt || activity.createdAt)}
+                                </div>
                               </div>
-                              {assignedName && (
-                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                                  {assignedName.split(" ").map((n) => n[0]).join("").toUpperCase()}
-                                </Badge>
-                              )}
-                            </div>
-                          </motion.div>
+                            </TooltipContent>
+                          </Tooltip>
                         );
                       })}
                       {items.length === 0 && (
