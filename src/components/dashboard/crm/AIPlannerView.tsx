@@ -24,6 +24,15 @@ const DAY_LABELS = ["Tue", "Wed", "Thu", "Fri"];
 const MAX_VISITS_PER_WEEK = 12;
 const MAX_VISITS_PER_DAY = 3;
 
+// Module-level cache so switching tabs / unmounting+remounting the planner
+// shows the previously-loaded AI plan instantly (no spinner) instead of
+// re-querying the cache table each time. Manual "Reload AI plan" still
+// fetches fresh.
+const planCache: Record<number, { plan: WeeklyPlan; loadedAt: string }> = {};
+// Cache computed routes per week so geocoding/route-building only runs once
+// per session unless the underlying plan or selected users change.
+const routesCache: Record<string, Record<string, PlannedFarm[]>> = {};
+
 /* -------------------- Week helpers (YYWW, Sat-Fri) -------------------- */
 
 function getWeekNrForDate(date: Date): number {
@@ -174,23 +183,19 @@ function distributeAcrossWeek(n: number): string[] {
 
 export function AIPlannerView({ allActivities, users, accounts, reports, activeUsers }: Props) {
   const selectedWeek = useMemo(() => getWeekNrForDate(new Date()), []);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(() => activeUsers.map(u => u.id));
-  // Keep selection in sync with the preselected users from settings.
-  useEffect(() => {
-    setSelectedUserIds((prev) => {
-      const active = new Set(activeUsers.map(u => u.id));
-      const filtered = prev.filter(id => active.has(id));
-      // If nothing valid is selected (e.g. first load), default to all active.
-      return filtered.length === 0 ? activeUsers.map(u => u.id) : filtered;
-    });
-  }, [activeUsers]);
+  // Selection mirrors the parent-controlled active users list (the unified
+  // "All Users" filter in the CRM toolbar). When the filter changes upstream,
+  // we always reflect exactly that set — no stale single-user lock-in.
+  const selectedUserIds = useMemo(() => activeUsers.map(u => u.id), [activeUsers]);
   const userSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
-  const [plan, setPlan] = useState<WeeklyPlan | null>(null);
-  const [planLoadedAt, setPlanLoadedAt] = useState<string | null>(null);
+  const initialCached = planCache[selectedWeek];
+  const [plan, setPlan] = useState<WeeklyPlan | null>(initialCached?.plan ?? null);
+  const [planLoadedAt, setPlanLoadedAt] = useState<string | null>(initialCached?.loadedAt ?? null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [routes, setRoutes] = useState<Record<string, PlannedFarm[]>>({});
+  const routesKeyInit = `${selectedWeek}|${initialCached?.loadedAt || ""}|${[...activeUsers.map(u=>u.id)].sort().join(",")}`;
+  const [routes, setRoutes] = useState<Record<string, PlannedFarm[]>>(() => routesCache[routesKeyInit] || {});
   const [computingRoutes, setComputingRoutes] = useState(false);
 
   const accountByName = useMemo(() => {
@@ -218,11 +223,11 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     [userCustomerRows],
   );
 
-  // Load cached plan for the selected week
-  const loadPlan = useCallback(async () => {
-    setLoading(true);
-    setPlan(null);
-    setRoutes({});
+  // Load cached plan for the selected week. `forceSpinner` is true only on
+  // explicit user-triggered reload — automatic loads keep the previously
+  // displayed plan visible (no flash of the loading state).
+  const loadPlan = useCallback(async (forceSpinner = false) => {
+    if (forceSpinner || !planCache[selectedWeek]) setLoading(true);
     try {
       const { data } = await supabase
         .from("weekly_plan_cache")
@@ -230,9 +235,12 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         .eq("week_nr", selectedWeek)
         .maybeSingle();
       if (data?.analysis) {
-        setPlan(data.analysis as WeeklyPlan);
+        const p = data.analysis as WeeklyPlan;
+        planCache[selectedWeek] = { plan: p, loadedAt: data.created_at };
+        setPlan(p);
         setPlanLoadedAt(data.created_at);
-      } else {
+      } else if (forceSpinner) {
+        setPlan(null);
         setPlanLoadedAt(null);
       }
     } catch (e) {
@@ -242,7 +250,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     }
   }, [selectedWeek]);
 
-  useEffect(() => { loadPlan(); }, [loadPlan]);
+  useEffect(() => { loadPlan(false); }, [loadPlan]);
 
   // Build visit proposals per selected user, then geocode + order
   const buildRoutes = useCallback(async () => {
@@ -447,6 +455,8 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         out[uid] = planned;
       }
 
+      const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}`;
+      routesCache[key] = out;
       setRoutes(out);
     } catch (e) {
       console.error("AIPlanner: buildRoutes error", e);
@@ -454,10 +464,21 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     } finally {
       setComputingRoutes(false);
     }
-  }, [plan, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible]);
+  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible]);
 
-  // Auto-build routes when plan changes
-  useEffect(() => { if (plan) buildRoutes(); }, [plan, buildRoutes]);
+  // Auto-build routes when plan or selection changes — but skip the heavy
+  // work (and the spinner) if we already have a cached result for this exact
+  // (week + plan version + users) combination.
+  useEffect(() => {
+    if (!plan) return;
+    const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}`;
+    const cached = routesCache[key];
+    if (cached) {
+      setRoutes(cached);
+      return;
+    }
+    buildRoutes();
+  }, [plan, planLoadedAt, selectedWeek, userSet, buildRoutes]);
 
   // Refresh = trigger AI to regenerate the weekly plan for the selected week,
   // then reload from cache. Reuses analyze-weekly-plan via ComingWeekView's
@@ -465,7 +486,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   // the function with a minimal hint and rely on the user using "Current Week"
   // for full regeneration. Here we offer a soft-refresh that re-reads cache.
   const refreshFromCache = useCallback(() => {
-    loadPlan();
+    loadPlan(true);
     toast({ title: "Reloaded latest AI plan from cache" });
   }, [loadPlan]);
 

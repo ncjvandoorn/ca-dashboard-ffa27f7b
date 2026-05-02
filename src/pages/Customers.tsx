@@ -17,12 +17,17 @@ interface EACustomer {
   address: string;
 }
 
+// Module-level cache so re-mounting the Customers page (after navigating away
+// and back) shows the previously geocoded markers instantly. Manual "Refresh"
+// still re-geocodes from scratch.
+let markersCache: CustomerMarker[] = [];
+
 export default function Customers() {
   const navigate = useNavigate();
   const { data: accounts, isLoading } = useAccounts();
   const { data: activities = [] } = useActivities();
   const { data: users = [] } = useUsers();
-  const [markers, setMarkers] = useState<CustomerMarker[]>([]);
+  const [markers, setMarkers] = useState<CustomerMarker[]>(() => markersCache);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [search, setSearch] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
@@ -40,6 +45,19 @@ export default function Customers() {
   // Geocode in series (Nominatim asks ≤1 req/s). Cloud + local cache make repeats instant.
   useEffect(() => {
     if (eaCustomers.length === 0) return;
+
+    // Skip rebuilding entirely if we already have a cached marker set covering
+    // every East-Africa customer and the user did not request a refresh.
+    if (!forceRefresh && markersCache.length > 0) {
+      const cachedIds = new Set(markersCache.map((m) => m.id));
+      const allCovered = eaCustomers.every((c) => cachedIds.has(c.id));
+      if (allCovered) {
+        setMarkers(markersCache);
+        setProgress({ done: eaCustomers.length, total: eaCustomers.length });
+        return;
+      }
+    }
+
     let cancelled = false;
     setProgress({ done: 0, total: eaCustomers.length });
     setMarkers([]);
@@ -68,7 +86,10 @@ export default function Customers() {
         setProgress({ done: i + 1, total: eaCustomers.length });
         await new Promise((r) => setTimeout(r, 50));
       }
-      if (!cancelled) setForceRefresh(false);
+      if (!cancelled) {
+        markersCache = out;
+        setForceRefresh(false);
+      }
     })();
 
     return () => {
