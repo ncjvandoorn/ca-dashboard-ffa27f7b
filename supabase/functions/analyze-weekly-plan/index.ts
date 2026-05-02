@@ -75,7 +75,7 @@ Return JSON with this structure:
   "weeklyFocus": "3-4 sentence team directive for this week. Summarize #1 priority, key risks, team actions."
 }
 
-**LIMITS per section:** urgentFarmVisits max 15, overdueActivities max 15, suggestedNewActivities max 15, farmsWithoutCoverage max 10, commercialFollowups max 15. Across the whole team for the whole week, max 25 total farm visits (5 per day × 5 days).
+**LIMITS per section:** urgentFarmVisits max 40, overdueActivities max 15, suggestedNewActivities max 40, farmsWithoutCoverage max 10, commercialFollowups max 15. Per user: max 12 farm visits per week (3 per day × 4 days, Tuesday–Friday). Aim to fill each user's 12-visit capacity when there is enough actionable data.
 
 **COMMERCIAL FOLLOW-UPS — what to include:**
 The input \`commercialFollowupCandidates\` lists Vase Life trials whose Next Step is "Commercial" (recommendation does NOT contain "repeat") and where our pre-filter found NO CRM activity since the trial date that mentions a key product/keyword from the recommendation.
