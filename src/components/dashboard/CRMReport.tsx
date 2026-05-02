@@ -155,7 +155,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
             </span>
           </div>
 
-          {/* Tab row: Board / Calendar */}
+          {/* Tab row: Board / Calendar / AI Planner */}
           <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1 mb-5">
             <button
               type="button"
@@ -176,6 +176,16 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
             >
               <CalendarDays className="h-4 w-4" />
               Calendar
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("ai-planner")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
+                view === "ai-planner" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+              AI Planner
             </button>
           </div>
 
@@ -253,13 +263,21 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
                 );
               })}
             </div>
-          ) : (
+          ) : view === "calendar" ? (
             <CalendarView
               allActivities={crmActivities}
               users={users}
               accounts={accounts}
               activeUsers={activeUsers}
               onBack={() => setView("board")}
+            />
+          ) : (
+            <AIPlannerView
+              allActivities={crmActivities}
+              users={users}
+              accounts={accounts}
+              reports={reports}
+              activeUsers={activeUsers}
             />
           )}
         </>
