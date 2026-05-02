@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ClipboardList, Phone, MapPin, Users, BarChart3,
-  CheckCircle, Clock, AlertCircle, Filter, CalendarClock, CalendarDays,
+  CheckCircle, Clock, AlertCircle, Filter, CalendarClock, CalendarDays, Sparkles,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -18,6 +18,7 @@ import { getCrmVisibleUserIds } from "@/lib/crmUserFilter";
 import { ActivityAnalysis } from "./crm/ActivityAnalysis";
 import { ComingWeekView } from "./crm/ComingWeekView";
 import { CalendarView } from "./crm/CalendarView";
+import { AIPlannerView } from "./crm/AIPlannerView";
 
 interface CRMReportProps {
   activities: Activity[];
