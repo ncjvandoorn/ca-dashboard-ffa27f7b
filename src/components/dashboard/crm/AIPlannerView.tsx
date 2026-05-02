@@ -1,9 +1,16 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  MapPin, Sparkles, Loader2, RefreshCw, Route,
+  MapPin, Sparkles, Loader2, RefreshCw, Route, AlertTriangle, Plus, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
