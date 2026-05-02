@@ -370,6 +370,14 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     return out.sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
   }, [trials, allActivities, accounts, concludedByTrial]);
 
+  // Set of trialIds that have moved into "Passed follow-ups" (i.e., a follow-up
+  // activity now exists). Used to evict them from the active commercial
+  // follow-up list, even if the cached AI plan still listed them.
+  const passedTrialIds = useMemo(
+    () => new Set(passedFollowups.map((p) => p.trialId).filter(Boolean)),
+    [passedFollowups],
+  );
+
   useEffect(() => {
     let active = true;
 
