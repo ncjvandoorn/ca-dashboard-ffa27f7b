@@ -66,7 +66,7 @@ Return JSON with this structure:
 {
   "weekLabel": "Week XX (DD Mon – DD Mon YYYY)",
   "executiveSummary": "3-4 sentences: team situation, key quality concerns, #1 priority for THIS week.",
-  "urgentFarmVisits": [{ "farmId","farmName","reason" (cite data),"suggestedUser","suggestedDay" (Mon-Fri),"qualityIssues":[],"priority":"critical"|"high" }],
+  "urgentFarmVisits": [{ "farmId","farmName","reason" (cite data),"suggestedUser","suggestedDay" (Tue-Fri),"qualityIssues":[],"priority":"critical"|"high" }],
   "overdueActivities": [{ "activitySubject","farmName","assignedUser","daysOverdue","recommendation" }],
   "userWorkloadAssessment": [{ "userName","openTasks","completedRecently","completionRate","farmsCovered","assessment":"On track"|"Overloaded"|"Underutilized"|"Falling behind","recommendation","suggestedSchedule":["Monday: ...","Tuesday: ..."] }],
   "suggestedNewActivities": [{ "type":"Task"|"Visit"|"Call","subject","farmName","suggestedUser","suggestedDay","reason" (cite data),"priority":"critical"|"high"|"medium" }],
