@@ -370,6 +370,63 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     return out.sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
   }, [trials, allActivities, accounts, concludedByTrial]);
 
+  // Set of trialIds that have moved into "Passed follow-ups" (i.e., a follow-up
+  // activity now exists). Used to evict them from the active commercial
+  // follow-up list, even if the cached AI plan still listed them.
+  const passedTrialIds = useMemo(
+    () => new Set(passedFollowups.map((p) => p.trialId).filter(Boolean)),
+    [passedFollowups],
+  );
+
+  // Live "needs follow-up" candidates — recomputed every render from current
+  // trials + activities. Mirrors the logic in buildPayload(). Used to carry
+  // forward un-followed-up trials into new weeks automatically (so a stale
+  // weekly_plan_cache from a previous week doesn't drop them).
+  const liveCommercialCandidates = useMemo(() => {
+    const STOP = new Set([
+      "the","and","for","with","from","this","that","have","been","were","was","will","into","over","than","then","also","such","very","more","most","some","each","other","their","them","they","there","these","those","when","what","who","how","why","may","can","not","but","are","you","your","our","its","use","used","using","good","best","better",
+      "trial","trials","test","tests","testing","commercial","repeat","control","treatment","treatments","recommend","recommended","recommendation","recommendations","conclusion","conclusions","observation","observations","result","results","performance","quality","superior","preferred","preferable","reliable","alternative","option","options","value","extended","shelf","life","vase","customer","customers","farm","farms","standard","spray","rose","roses","flower","flowers","stem","stems","variety","varieties","cultivar","cultivars","crop","crops","day","days","week","weeks","year","years","season","botrytis","disease","mildew","powdery","application","applications","applied","apply","follow","followup","action","visit","visits","report","reports","note","notes","field","greenhouse","grower","growers","client","clients","sales","market","product","products","dose","dosage","rate","rates","mls","percent","percentage",
+    ]);
+    const BRAND_RX = /^(gvb|avb|svb|cvb|chrysal|professional|clear|rva|bulb|botreat|vident|gatten|rosedip|rose-dip|rose_dip|supreme|finalin|ethybloc|ethylene|opti|rosa|pf|pfn|pfnl)/i;
+    const isDistinctive = (kw: string) => BRAND_RX.test(kw) || /\d/.test(kw) || /[-+/]/.test(kw);
+    const extractKw = (text: string) =>
+      Array.from(new Set((text.toLowerCase().match(/[a-z][a-z0-9\-+/]{3,}/g) || [])
+        .filter((t) => !STOP.has(t) && !/^\d+$/.test(t) && t.length >= 4)));
+
+    const out: Array<{
+      trialId: string; trialNumber: string; farmName: string;
+      customer?: string; keyProduct: string; trialDate: string | null;
+    }> = [];
+    for (const t of trials) {
+      const rec = (t.recommendations || "").trim();
+      if (!rec) continue;
+      if (/repeat/i.test(rec)) continue;
+      if (!t.farm) continue;
+      const trialDate = concludedByTrial.get(t.id) || t.start_vl || t.harvest_date || null;
+      const concludedMs = trialDate ? Date.parse(trialDate) : 0;
+      const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === t.farm!.toLowerCase())?.id;
+      if (!farmAccountId) continue;
+      const distinctive = extractKw(rec).filter(isDistinctive);
+      const farmActs = allActivities.filter((a) => a.accountId === farmAccountId);
+      const hits = distinctive.length === 0 ? 0 : farmActs.filter((a) => {
+        const aDate = a.completedAt || a.createdAt || 0;
+        if (concludedMs && aDate <= concludedMs) return false;
+        const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
+        return distinctive.some((k) => hay.includes(k));
+      }).length;
+      if (hits > 0) continue; // already followed up → will appear in passedFollowups
+      out.push({
+        trialId: t.id,
+        trialNumber: t.trial_number || t.id.slice(0, 8),
+        farmName: t.farm,
+        customer: t.customer || undefined,
+        keyProduct: distinctive[0] || extractKw(rec)[0] || "product",
+        trialDate,
+      });
+    }
+    return out.sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
+  }, [trials, allActivities, accounts, concludedByTrial]);
+
   useEffect(() => {
     let active = true;
 
@@ -739,6 +796,35 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     }
   }, [activeUsers.length, buildPayload, selectedWeek, isCurrentWeek, resolvedCurrentWeek]);
 
+  // Merge AI-generated commercial follow-ups (rich `reason` text) with live
+  // candidates so:
+  //  • Trials that have since been followed up are removed (they show under
+  //    Passed follow-ups automatically).
+  //  • New unfollowed-up trials appearing after the AI plan was cached are
+  //    carried into the current view, even without regenerating the AI plan.
+  const mergedCommercialFollowups = useMemo(() => {
+    type Item = {
+      trialId: string; trialNumber: string; farmName: string;
+      customer?: string; keyProduct: string; trialDate: string; reason: string;
+    };
+    const aiList = (plan?.commercialFollowups ?? []) as Item[];
+    const aiIds = new Set(aiList.map((c) => c.trialId).filter(Boolean));
+    const kept = aiList.filter((c) => !c.trialId || !passedTrialIds.has(c.trialId));
+    const additions: Item[] = liveCommercialCandidates
+      .filter((c) => !aiIds.has(c.trialId) && !passedTrialIds.has(c.trialId))
+      .map((c) => ({
+        trialId: c.trialId,
+        trialNumber: c.trialNumber,
+        farmName: c.farmName,
+        customer: c.customer,
+        keyProduct: c.keyProduct,
+        trialDate: c.trialDate || "",
+        reason: "Commercial trial concluded — no sales follow-up recorded yet.",
+      }));
+    return [...kept, ...additions]
+      .sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
+  }, [plan?.commercialFollowups, liveCommercialCandidates, passedTrialIds]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 flex-wrap">
@@ -790,18 +876,18 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
       <div className="space-y-6">
       {/* Commercial trial follow-ups — sales opportunities with no recent CRM mention */}
-      {((plan?.commercialFollowups && plan.commercialFollowups.length > 0) || passedFollowups.length > 0) && (
+      {(mergedCommercialFollowups.length > 0 || passedFollowups.length > 0) && (
         <div data-pdf-section>
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-accent" />
-            Commercial Trial Follow-ups ({plan?.commercialFollowups?.length ?? 0})
+            Commercial Trial Follow-ups ({mergedCommercialFollowups.length})
             <span className="text-[10px] font-normal normal-case text-muted-foreground/80">
               · Successful trials with no sales follow-up yet
             </span>
           </h4>
-          {plan?.commercialFollowups && plan.commercialFollowups.length > 0 ? (
+          {mergedCommercialFollowups.length > 0 ? (
             <div className="space-y-2">
-              {plan.commercialFollowups.map((c, i) => (
+              {mergedCommercialFollowups.map((c, i) => (
                 <motion.div
                   key={c.trialId || i}
                   initial={{ opacity: 0, x: -8 }}
