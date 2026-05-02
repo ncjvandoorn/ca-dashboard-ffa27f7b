@@ -125,6 +125,42 @@ export type Database = {
           },
         ]
       }
+      crm_planner_confirmations: {
+        Row: {
+          checked: boolean
+          created_at: string
+          created_by: string | null
+          farm_name: string
+          id: string
+          source: string
+          updated_at: string
+          user_id: string
+          week_nr: number
+        }
+        Insert: {
+          checked?: boolean
+          created_at?: string
+          created_by?: string | null
+          farm_name: string
+          id?: string
+          source?: string
+          updated_at?: string
+          user_id: string
+          week_nr: number
+        }
+        Update: {
+          checked?: boolean
+          created_at?: string
+          created_by?: string | null
+          farm_name?: string
+          id?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+          week_nr?: number
+        }
+        Relationships: []
+      }
       crm_settings: {
         Row: {
           id: string
