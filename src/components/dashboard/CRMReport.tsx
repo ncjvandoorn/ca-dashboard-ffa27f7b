@@ -61,7 +61,7 @@ function timeAgo(timestamp: number | null): string {
 
 export function CRMReport({ activities, users, accounts, reports, inline = false }: CRMReportProps) {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"board" | "analysis" | "coming-week">("board");
+  const [view, setView] = useState<"board" | "analysis" | "coming-week" | "calendar">("board");
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({ "To Do": 25, "In Progress": 25, "Completed": 25 });
 
