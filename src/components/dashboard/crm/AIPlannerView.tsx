@@ -478,6 +478,8 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
                                 className={`rounded border px-2 py-1.5 text-[11px] ${
                                   v.source === "urgent"
                                     ? "border-destructive/40 bg-destructive/5"
+                                    : v.source === "commercial"
+                                    ? "border-amber-500/40 bg-amber-500/10"
                                     : "border-primary/30 bg-primary/5"
                                 }`}
                                 title={v.reason}
