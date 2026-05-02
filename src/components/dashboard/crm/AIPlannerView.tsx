@@ -233,6 +233,8 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
           priority: v.priority || "medium",
           source: "suggested",
         });
+      }
+
       // Commercial trial follow-ups — top priority sales opportunities.
       // These have no suggestedUser, so resolve via the per-farm/customer sales rep.
       for (const v of (plan.commercialFollowups || [])) {
