@@ -434,7 +434,11 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
                     No AI-suggested visits this week.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-px bg-border">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-px bg-border">
+                    <div className="bg-background p-2 min-h-[140px]">
+                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">Mon</div>
+                      <div className="text-[11px] text-muted-foreground/70 italic">Office day</div>
+                    </div>
                     {DAY_LABELS.map(day => {
                       const items = byDay.get(day)!;
                       return (
