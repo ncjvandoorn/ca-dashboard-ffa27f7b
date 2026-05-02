@@ -121,10 +121,10 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
 
   const body = (
     <div className="py-4">
-      {view === "board" ? (
+      {view === "board" || view === "calendar" ? (
         <>
-          {/* Toolbar */}
-          <div className="flex items-center gap-3 mb-5 flex-wrap">
+          {/* Top toolbar: page-level navigation */}
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => setView("analysis")} className="gap-1.5">
               <BarChart3 className="h-4 w-4" />
               Activity Analysis
@@ -132,10 +132,6 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
             <Button variant="outline" size="sm" onClick={() => setView("coming-week")} className="gap-1.5">
               <CalendarClock className="h-4 w-4" />
               Current Week
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setView("calendar")} className="gap-1.5">
-              <CalendarDays className="h-4 w-4" />
-              Calendar
             </Button>
 
             <div className="flex items-center gap-2">
@@ -158,79 +154,114 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
             </span>
           </div>
 
-          {/* Kanban columns */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {STATUS_COLUMNS.map((status) => {
-              const items = columns[status];
-              const meta = columnMeta[status];
-              return (
-                <div key={status} className="flex flex-col">
-                  <div className="flex items-center gap-2 mb-3">
-                    <meta.icon className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="font-semibold text-sm">{status}</h3>
-                    <Badge variant="secondary" className="text-xs ml-auto">{items.length}</Badge>
-                  </div>
-                  <div className={`rounded-xl border p-2 min-h-[200px] space-y-2 ${statusStyle[status] || "border-border bg-muted/20"}`}>
-                    {items.slice(0, visibleCounts[status] || 25).map((activity, i) => {
-                      const Icon = typeIcon[activity.type] || ClipboardList;
-                      const assignedName = activity.assignedUserId ? userMap.get(activity.assignedUserId) : null;
-                      const farmName = activity.accountId ? accountMap.get(activity.accountId) : null;
-                      return (
-                        <motion.div
-                          key={activity.id}
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: Math.min(i, 25) * 0.015 }}
-                          className="rounded-lg border border-border bg-background p-3 shadow-sm"
-                        >
-                          <div className="flex items-start gap-2 mb-1.5">
-                            <Icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                            <span className="text-sm font-medium leading-tight line-clamp-2">
-                              {activity.subject || "Untitled"}
-                            </span>
-                          </div>
-                          {activity.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2 ml-6">
-                              {activity.description}
-                            </p>
-                          )}
-                          <div className="flex items-center justify-between ml-6">
-                            <div className="flex flex-col gap-0.5">
-                              {farmName && (
-                                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
-                                  {farmName}
-                                </span>
-                              )}
-                              <span className="text-[11px] text-muted-foreground/60">
-                                {timeAgo(activity.createdAt)} · {formatDate(activity.startsAt || activity.createdAt)}
+          {/* Tab row: Board / Calendar */}
+          <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1 mb-5">
+            <button
+              type="button"
+              onClick={() => setView("board")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
+                view === "board" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <ClipboardList className="h-4 w-4" />
+              Board
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("calendar")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
+                view === "calendar" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <CalendarDays className="h-4 w-4" />
+              Calendar
+            </button>
+          </div>
+
+          {view === "board" ? (
+            /* Kanban columns */
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {STATUS_COLUMNS.map((status) => {
+                const items = columns[status];
+                const meta = columnMeta[status];
+                return (
+                  <div key={status} className="flex flex-col">
+                    <div className="flex items-center gap-2 mb-3">
+                      <meta.icon className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="font-semibold text-sm">{status}</h3>
+                      <Badge variant="secondary" className="text-xs ml-auto">{items.length}</Badge>
+                    </div>
+                    <div className={`rounded-xl border p-2 min-h-[200px] space-y-2 ${statusStyle[status] || "border-border bg-muted/20"}`}>
+                      {items.slice(0, visibleCounts[status] || 25).map((activity, i) => {
+                        const Icon = typeIcon[activity.type] || ClipboardList;
+                        const assignedName = activity.assignedUserId ? userMap.get(activity.assignedUserId) : null;
+                        const farmName = activity.accountId ? accountMap.get(activity.accountId) : null;
+                        return (
+                          <motion.div
+                            key={activity.id}
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: Math.min(i, 25) * 0.015 }}
+                            className="rounded-lg border border-border bg-background p-3 shadow-sm"
+                          >
+                            <div className="flex items-start gap-2 mb-1.5">
+                              <Icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                              <span className="text-sm font-medium leading-tight line-clamp-2">
+                                {activity.subject || "Untitled"}
                               </span>
                             </div>
-                            {assignedName && (
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                                {assignedName.split(" ").map((n) => n[0]).join("").toUpperCase()}
-                              </Badge>
+                            {activity.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2 mb-2 ml-6">
+                                {activity.description}
+                              </p>
                             )}
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                    {items.length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-8">No activities</p>
-                    )}
-                    {items.length > (visibleCounts[status] || 25) && (
-                      <button
-                        onClick={() => setVisibleCounts((prev) => ({ ...prev, [status]: (prev[status] || 25) + 25 }))}
-                        className="text-xs text-primary hover:underline text-center w-full pt-1 cursor-pointer"
-                      >
-                        +{items.length - (visibleCounts[status] || 25)} more — show 25 more
-                      </button>
-                    )}
+                            <div className="flex items-center justify-between ml-6">
+                              <div className="flex flex-col gap-0.5">
+                                {farmName && (
+                                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {farmName}
+                                  </span>
+                                )}
+                                <span className="text-[11px] text-muted-foreground/60">
+                                  {timeAgo(activity.createdAt)} · {formatDate(activity.startsAt || activity.createdAt)}
+                                </span>
+                              </div>
+                              {assignedName && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                                  {assignedName.split(" ").map((n) => n[0]).join("").toUpperCase()}
+                                </Badge>
+                              )}
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                      {items.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center py-8">No activities</p>
+                      )}
+                      {items.length > (visibleCounts[status] || 25) && (
+                        <button
+                          onClick={() => setVisibleCounts((prev) => ({ ...prev, [status]: (prev[status] || 25) + 25 }))}
+                          className="text-xs text-primary hover:underline text-center w-full pt-1 cursor-pointer"
+                        >
+                          +{items.length - (visibleCounts[status] || 25)} more — show 25 more
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <CalendarView
+              allActivities={crmActivities}
+              users={users}
+              accounts={accounts}
+              activeUsers={activeUsers}
+              onBack={() => setView("board")}
+              embedded
+            />
+          )}
         </>
       ) : view === "analysis" ? (
         <ActivityAnalysis
