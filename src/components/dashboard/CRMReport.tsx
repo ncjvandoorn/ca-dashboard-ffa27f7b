@@ -279,18 +279,12 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
               allActivities={crmActivities}
               users={users}
               accounts={accounts}
-              activeUsers={activeUsers}
-              onBack={() => setView("board")}
-            />
-          ) : (
-            <AIPlannerView
+              activeUsers={effectiveActiveUsers}
               allActivities={crmActivities}
               users={users}
               accounts={accounts}
               reports={reports}
-              activeUsers={activeUsers}
-            />
-          )}
+              activeUsers={effectiveActiveUsers}
         </>
       ) : view === "analysis" ? (
         <ActivityAnalysis
