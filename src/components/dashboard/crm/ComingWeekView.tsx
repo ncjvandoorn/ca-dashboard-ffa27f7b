@@ -845,11 +845,11 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
   }, [plan?.commercialFollowups, liveCommercialCandidates, passedTrialIds, selectedWeek]);
 
-  // Group commercial follow-ups by customer (fall back to farm name when no customer).
+  // Group commercial follow-ups by farm (sales reps are assigned per farm).
   const groupedCommercialFollowups = useMemo(() => {
     const groups = new Map<string, { key: string; customer?: string; farms: Set<string>; items: typeof mergedCommercialFollowups }>();
     for (const c of mergedCommercialFollowups) {
-      const key = (c.customer || c.farmName || "—").trim();
+      const key = (c.farmName || c.customer || "—").trim();
       const g = groups.get(key) || { key, customer: c.customer, farms: new Set<string>(), items: [] as typeof mergedCommercialFollowups };
       if (c.farmName) g.farms.add(c.farmName);
       g.items.push(c);
@@ -864,11 +864,11 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .sort((a, b) => (b.latest || "").localeCompare(a.latest || ""));
   }, [mergedCommercialFollowups]);
 
-  // Group passed follow-ups by customer (fall back to farm name).
+  // Group passed follow-ups by farm.
   const groupedPassedFollowups = useMemo(() => {
     const groups = new Map<string, { key: string; customer?: string; farms: Set<string>; items: typeof passedFollowups }>();
     for (const p of passedFollowups) {
-      const key = (p.customer || p.farmName || "—").trim();
+      const key = (p.farmName || p.customer || "—").trim();
       const g = groups.get(key) || { key, customer: p.customer, farms: new Set<string>(), items: [] as typeof passedFollowups };
       if (p.farmName) g.farms.add(p.farmName);
       g.items.push(p);
