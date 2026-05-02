@@ -153,6 +153,10 @@ function SharedRenderer({ row }: { row: SharedPageRow }) {
     return <SharedVaselifeReport payload={payload} />;
   }
 
+  if (row.page_type === "crm_meeting_snapshot") {
+    return <SharedCrmMeeting payload={payload} />;
+  }
+
   return <Unsupported />;
 }
 
