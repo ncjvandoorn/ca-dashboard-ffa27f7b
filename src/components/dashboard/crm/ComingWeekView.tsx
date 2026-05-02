@@ -840,7 +840,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       }));
     return [...kept, ...additions]
       .sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
-  }, [plan?.commercialFollowups, liveCommercialCandidates, passedTrialIds]);
+  }, [plan?.commercialFollowups, liveCommercialCandidates, passedTrialIds, selectedWeek]);
 
   return (
     <div className="space-y-6">
