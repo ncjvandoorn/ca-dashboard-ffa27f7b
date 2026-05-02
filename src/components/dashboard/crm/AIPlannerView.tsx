@@ -186,6 +186,42 @@ function distributeAcrossWeek(n: number): string[] {
   return days;
 }
 
+/* -------------------- Confirmation helpers -------------------- */
+
+interface PlannerConfirmation {
+  id: string;
+  week_nr: number;
+  user_id: string;
+  farm_name: string;
+  source: "ai" | "added";
+  checked: boolean;
+}
+
+/** Saturday 00:00 → next Saturday 00:00 covering the YYWW week. */
+function weekTimeBounds(wn: number): { start: number; end: number } {
+  const sat = weekNrToSaturday(wn);
+  const start = sat.getTime();
+  const end = start + 7 * 86400000;
+  return { start, end };
+}
+
+/** Did this farm receive ANY Visit-type activity (any status) inside the given YYWW week? */
+function farmVisitedInWeek(farmName: string, accounts: Account[], activities: Activity[], wn: number): boolean {
+  const target = normalizeName(farmName);
+  if (!target) return false;
+  const acc = accounts.find(a => normalizeName(a.name) === target);
+  if (!acc) return false;
+  const { start, end } = weekTimeBounds(wn);
+  for (const a of activities) {
+    if (a.accountId !== acc.id) continue;
+    if ((a.type || "").toLowerCase() !== "visit") continue;
+    const t = a.startsAt ?? a.completedAt ?? a.createdAt;
+    if (!t) continue;
+    if (t >= start && t < end) return true;
+  }
+  return false;
+}
+
 /* -------------------- Component -------------------- */
 
 export function AIPlannerView({ allActivities, users, accounts, reports, activeUsers }: Props) {
