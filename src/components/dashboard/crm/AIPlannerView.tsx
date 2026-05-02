@@ -24,6 +24,12 @@ const DAY_LABELS = ["Tue", "Wed", "Thu", "Fri"];
 const MAX_VISITS_PER_WEEK = 12;
 const MAX_VISITS_PER_DAY = 3;
 
+// Module-level cache so switching tabs / unmounting+remounting the planner
+// shows the previously-loaded AI plan instantly (no spinner) instead of
+// re-querying the cache table each time. Manual "Reload AI plan" still
+// fetches fresh.
+const planCache: Record<number, { plan: WeeklyPlan; loadedAt: string }> = {};
+
 /* -------------------- Week helpers (YYWW, Sat-Fri) -------------------- */
 
 function getWeekNrForDate(date: Date): number {
