@@ -93,36 +93,60 @@ function normalizeName(s: string): string {
   return (s || "").trim().toLowerCase();
 }
 
-/* Nearest-neighbor TSP starting from the geographic centroid's nearest farm.
- * Falls back to original order when geo data is missing. */
-function nearestNeighborOrder<T extends { geo: GeoResult | null }>(items: T[]): T[] {
+/* Approximate home-base coordinates per sales rep first name.
+ * Trips start AND end at this base; visits are ordered as a loop. */
+const USER_HOME_BASE: Record<string, { city: string; lat: number; lon: number }> = {
+  paul:    { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
+  steven:  { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
+  steve:   { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
+  patrick: { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
+  peter:   { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
+};
+
+function homeBaseFor(userName: string): { city: string; lat: number; lon: number } | null {
+  const first = (userName || "").trim().toLowerCase().split(/\s+/)[0];
+  return USER_HOME_BASE[first] || null;
+}
+
+/* Nearest-neighbor TSP loop: starts at `home`, visits all farms via
+ * shortest next-hop, returns to `home`. Falls back to original order
+ * when geo data is missing. If no home is provided, starts at the
+ * farm closest to the centroid of the farm set. */
+function nearestNeighborLoop<T extends { geo: GeoResult | null }>(
+  items: T[],
+  home: { lat: number; lon: number } | null,
+): T[] {
   const withGeo = items.filter(i => i.geo);
   const without = items.filter(i => !i.geo);
-  if (withGeo.length <= 1) return [...withGeo, ...without];
+  if (withGeo.length === 0) return without;
 
-  // Start from the northernmost farm (highest lat) — gives stable predictable ordering.
-  let startIdx = 0;
-  for (let i = 1; i < withGeo.length; i++) {
-    if ((withGeo[i].geo!.lat) > (withGeo[startIdx].geo!.lat)) startIdx = i;
-  }
+  const sqd = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => {
+    const dLat = a.lat - b.lat; const dLon = a.lon - b.lon;
+    return dLat * dLat + dLon * dLon;
+  };
 
-  const visited = new Set<number>([startIdx]);
-  const order: T[] = [withGeo[startIdx]];
+  // Anchor for first hop: home if known, otherwise centroid.
+  const anchor = home ?? (() => {
+    const lat = withGeo.reduce((s, x) => s + x.geo!.lat, 0) / withGeo.length;
+    const lon = withGeo.reduce((s, x) => s + x.geo!.lon, 0) / withGeo.length;
+    return { lat, lon };
+  })();
+
+  const visited = new Set<number>();
+  const order: T[] = [];
+  let current = anchor;
   while (visited.size < withGeo.length) {
-    const last = order[order.length - 1].geo!;
     let bestIdx = -1;
     let bestDist = Infinity;
     for (let i = 0; i < withGeo.length; i++) {
       if (visited.has(i)) continue;
-      const g = withGeo[i].geo!;
-      const dLat = g.lat - last.lat;
-      const dLon = g.lon - last.lon;
-      const d = dLat * dLat + dLon * dLon;
+      const d = sqd(current, withGeo[i].geo!);
       if (d < bestDist) { bestDist = d; bestIdx = i; }
     }
     if (bestIdx === -1) break;
     visited.add(bestIdx);
     order.push(withGeo[bestIdx]);
+    current = withGeo[bestIdx].geo!;
   }
   return [...order, ...without];
 }
@@ -319,8 +343,10 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
           return { ...v, geo };
         }));
 
-        // Order by nearest-neighbor (shortest path between farms)
-        const ordered = nearestNeighborOrder(geocoded);
+        // Order by nearest-neighbor loop starting/ending at user's home base.
+        const userName = activeUsers.find(u => u.id === uid)?.name || "";
+        const home = homeBaseFor(userName);
+        const ordered = nearestNeighborLoop(geocoded, home);
 
         // Distribute across Mon-Fri
         const days = distributeAcrossWeek(ordered.length);
@@ -462,16 +488,22 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
             for (const d of DAY_LABELS) byDay.set(d, []);
             for (const v of visits) byDay.get(v.day)!.push(v);
             const geocodedCount = visits.filter(v => v.geo).length;
+            const home = homeBaseFor(u.name);
             return (
               <div key={u.id} className="rounded-lg border border-border bg-background overflow-hidden">
                 <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border bg-muted/30 flex-wrap">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm">{u.name}</span>
                     <Badge variant="secondary" className="text-[10px]">{visits.length} visit{visits.length === 1 ? "" : "s"}</Badge>
+                    {home && (
+                      <Badge variant="outline" className="text-[10px] gap-1">
+                        <MapPin className="h-2.5 w-2.5" /> Base: {home.city}
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     <Route className="h-3.5 w-3.5" />
-                    Ordered by shortest path · {geocodedCount}/{visits.length} geocoded
+                    {home ? `Loop from ${home.city}` : "Shortest path"} · {geocodedCount}/{visits.length} geocoded
                   </div>
                 </div>
 
