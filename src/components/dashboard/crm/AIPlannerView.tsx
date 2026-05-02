@@ -488,16 +488,22 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
             for (const d of DAY_LABELS) byDay.set(d, []);
             for (const v of visits) byDay.get(v.day)!.push(v);
             const geocodedCount = visits.filter(v => v.geo).length;
+            const home = homeBaseFor(u.name);
             return (
               <div key={u.id} className="rounded-lg border border-border bg-background overflow-hidden">
                 <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border bg-muted/30 flex-wrap">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm">{u.name}</span>
                     <Badge variant="secondary" className="text-[10px]">{visits.length} visit{visits.length === 1 ? "" : "s"}</Badge>
+                    {home && (
+                      <Badge variant="outline" className="text-[10px] gap-1">
+                        <MapPin className="h-2.5 w-2.5" /> Base: {home.city}
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     <Route className="h-3.5 w-3.5" />
-                    Ordered by shortest path · {geocodedCount}/{visits.length} geocoded
+                    {home ? `Loop from ${home.city}` : "Shortest path"} · {geocodedCount}/{visits.length} geocoded
                   </div>
                 </div>
 
