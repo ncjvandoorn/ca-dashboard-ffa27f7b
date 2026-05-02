@@ -256,13 +256,14 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
                         const assignedName = activity.assignedUserId ? userMap.get(activity.assignedUserId) : null;
                         const farmName = activity.accountId ? accountMap.get(activity.accountId) : null;
                         return (
-                          <motion.div
-                            key={activity.id}
-                            initial={{ opacity: 0, y: 4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: Math.min(i, 25) * 0.015 }}
-                            className="rounded-lg border border-border bg-background p-3 shadow-sm"
-                          >
+                          <Tooltip key={activity.id} delayDuration={250}>
+                            <TooltipTrigger asChild>
+                              <motion.div
+                                initial={{ opacity: 0, y: 4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: Math.min(i, 25) * 0.015 }}
+                                className="rounded-lg border border-border bg-background p-3 shadow-sm cursor-default"
+                              >
                             <div className="flex items-start gap-2 mb-1.5">
                               <Icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                               <span className="text-sm font-medium leading-tight line-clamp-2">
