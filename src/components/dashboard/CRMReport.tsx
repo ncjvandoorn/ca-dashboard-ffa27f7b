@@ -241,6 +241,14 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
           selectedUserId={selectedUserId}
           onBack={() => setView("board")}
         />
+      ) : view === "calendar" ? (
+        <CalendarView
+          allActivities={crmActivities}
+          users={users}
+          accounts={accounts}
+          activeUsers={activeUsers}
+          onBack={() => setView("board")}
+        />
       ) : (
         <ComingWeekView
           allActivities={crmActivities}
