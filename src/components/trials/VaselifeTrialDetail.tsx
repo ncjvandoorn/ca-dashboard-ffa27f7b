@@ -501,15 +501,6 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               </TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => window.open(`/trials/${trial.id}/print`, "_blank", "noopener")}
-                className="gap-1.5"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                Print
-              </Button>
               <SharePageButton
                 pageType="vaselife_report"
                 disabled={vasesLoading || measLoading}
