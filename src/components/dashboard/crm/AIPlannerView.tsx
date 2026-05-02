@@ -259,6 +259,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   }, [baseOverride]);
 
   // Confirmations: this week + all prior weeks (to compute carry-over misses).
+  const { isAdmin } = useAuth();
   const [confirmations, setConfirmations] = useState<PlannerConfirmation[]>([]);
   const [, setConfLoaded] = useState(false);
 
