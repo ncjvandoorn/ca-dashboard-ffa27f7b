@@ -79,12 +79,19 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
     });
   }, []);
   const activeUsers = useMemo(() => {
-    const ids = new Set<string>();
-    for (const a of activities) {
-      if (a.assignedUserId) ids.add(a.assignedUserId);
+    // If admin has preselected users in settings, use exactly that list.
+    // Otherwise, fall back to users that have activities.
+    let ids: string[];
+    if (crmVisibleIds && crmVisibleIds.length > 0) {
+      ids = crmVisibleIds;
+    } else {
+      const set = new Set<string>();
+      for (const a of activities) {
+        if (a.assignedUserId) set.add(a.assignedUserId);
+      }
+      ids = [...set];
     }
-    return [...ids]
-      .filter((id) => !crmVisibleIds || crmVisibleIds.includes(id))
+    return ids
       .map((id) => ({ id, name: userMap.get(id) || id.slice(0, 8) }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [activities, userMap, crmVisibleIds]);
