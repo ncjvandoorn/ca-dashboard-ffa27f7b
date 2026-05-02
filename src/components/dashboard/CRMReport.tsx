@@ -17,6 +17,7 @@ import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 import { getCrmVisibleUserIds } from "@/lib/crmUserFilter";
 import { ActivityAnalysis } from "./crm/ActivityAnalysis";
 import { ComingWeekView } from "./crm/ComingWeekView";
+import { CalendarView } from "./crm/CalendarView";
 
 interface CRMReportProps {
   activities: Activity[];
