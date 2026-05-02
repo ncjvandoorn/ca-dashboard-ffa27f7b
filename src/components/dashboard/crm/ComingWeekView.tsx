@@ -19,6 +19,7 @@ import { VaselifeTrialDetail } from "@/components/trials/VaselifeTrialDetail";
 import { computeConcludedDate } from "@/lib/trialConcluded";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
+import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 
 interface Props {
   allActivities: Activity[];
