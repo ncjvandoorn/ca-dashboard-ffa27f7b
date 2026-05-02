@@ -240,6 +240,8 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
   const { data: trials = [] } = useVaselifeHeaders();
   const { data: allMeasurements = [] } = useAllVaselifeMeasurements();
+  const { data: userCustomerRows = [] } = useUserCustomers();
+  const resolveResponsible = useMemo(() => buildResponsibleResolver(userCustomerRows), [userCustomerRows]);
   const concludedByTrial = useMemo(() => {
     const byHeader = new Map<string, number>();
     for (const m of allMeasurements) {
