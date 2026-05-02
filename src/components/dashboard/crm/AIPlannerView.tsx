@@ -618,6 +618,10 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                     ? "border-destructive/40 bg-destructive/5"
                                     : v.source === "commercial"
                                     ? "border-amber-500/40 bg-amber-500/10"
+                                    : v.source === "crm"
+                                    ? "border-accent/40 bg-accent/10"
+                                    : v.source === "coverage"
+                                    ? "border-secondary/40 bg-secondary/20"
                                     : "border-primary/30 bg-primary/5"
                                 }`}
                                 title={v.reason}
