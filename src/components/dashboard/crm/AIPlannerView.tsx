@@ -1,12 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  MapPin, Sparkles, Loader2, RefreshCw,
-  Filter, Check, Route,
+  MapPin, Sparkles, Loader2, RefreshCw, Route,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
