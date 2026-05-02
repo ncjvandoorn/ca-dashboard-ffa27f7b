@@ -12,6 +12,8 @@ import { QualityReportBody } from "@/components/dashboard/QualityReportBody";
 import { SharedTripMap } from "@/components/dashboard/SharedTripMap";
 import { VaselifeTrialReportBody } from "@/components/trials/VaselifeTrialReportBody";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 
 export default function SharedPage() {
   const { token } = useParams<{ token: string }>();
