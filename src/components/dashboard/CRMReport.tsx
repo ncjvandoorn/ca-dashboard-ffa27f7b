@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ClipboardList, Phone, MapPin, Users, BarChart3,
-  CheckCircle, Clock, AlertCircle, Filter, CalendarClock, CalendarDays,
+  CheckCircle, Clock, AlertCircle, Filter, CalendarClock, CalendarDays, Sparkles,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -18,6 +18,7 @@ import { getCrmVisibleUserIds } from "@/lib/crmUserFilter";
 import { ActivityAnalysis } from "./crm/ActivityAnalysis";
 import { ComingWeekView } from "./crm/ComingWeekView";
 import { CalendarView } from "./crm/CalendarView";
+import { AIPlannerView } from "./crm/AIPlannerView";
 
 interface CRMReportProps {
   activities: Activity[];
@@ -61,7 +62,7 @@ function timeAgo(timestamp: number | null): string {
 
 export function CRMReport({ activities, users, accounts, reports, inline = false }: CRMReportProps) {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"board" | "analysis" | "coming-week" | "calendar">("board");
+  const [view, setView] = useState<"board" | "analysis" | "coming-week" | "calendar" | "ai-planner">("board");
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({ "To Do": 25, "In Progress": 25, "Completed": 25 });
 
@@ -117,11 +118,11 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
     "Completed": { icon: CheckCircle, dotColor: "bg-accent" },
   };
 
-  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : view === "calendar" ? "Calendar" : "Current Week Planner";
+  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : view === "calendar" ? "Calendar" : view === "ai-planner" ? "AI Planner" : "Current Week Planner";
 
   const body = (
     <div className="py-4">
-      {view === "board" || view === "calendar" ? (
+      {view === "board" || view === "calendar" || view === "ai-planner" ? (
         <>
           {/* Top toolbar: page-level navigation */}
           <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -154,7 +155,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
             </span>
           </div>
 
-          {/* Tab row: Board / Calendar */}
+          {/* Tab row: Board / Calendar / AI Planner */}
           <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1 mb-5">
             <button
               type="button"
@@ -175,6 +176,16 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
             >
               <CalendarDays className="h-4 w-4" />
               Calendar
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("ai-planner")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
+                view === "ai-planner" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+              AI Planner
             </button>
           </div>
 
@@ -252,13 +263,21 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
                 );
               })}
             </div>
-          ) : (
+          ) : view === "calendar" ? (
             <CalendarView
               allActivities={crmActivities}
               users={users}
               accounts={accounts}
               activeUsers={activeUsers}
               onBack={() => setView("board")}
+            />
+          ) : (
+            <AIPlannerView
+              allActivities={crmActivities}
+              users={users}
+              accounts={accounts}
+              reports={reports}
+              activeUsers={activeUsers}
             />
           )}
         </>
