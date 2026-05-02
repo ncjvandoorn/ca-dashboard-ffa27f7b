@@ -427,7 +427,13 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     }
   }, [selectedWeek]);
 
-  useEffect(() => { loadPlan(false); }, [loadPlan]);
+  // When week changes, immediately reflect any cached plan to avoid showing stale data, then load.
+  useEffect(() => {
+    const cached = planCache[selectedWeek];
+    setPlan(cached?.plan ?? null);
+    setPlanLoadedAt(cached?.loadedAt ?? null);
+    loadPlan(false);
+  }, [loadPlan, selectedWeek]);
 
   // Build visit proposals per selected user, then geocode + order
   const buildRoutes = useCallback(async () => {
