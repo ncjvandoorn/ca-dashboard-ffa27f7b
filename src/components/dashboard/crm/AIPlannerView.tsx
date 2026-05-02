@@ -226,7 +226,10 @@ function farmVisitedInWeek(farmName: string, accounts: Account[], activities: Ac
 /* -------------------- Component -------------------- */
 
 export function AIPlannerView({ allActivities, users, accounts, reports, activeUsers }: Props) {
-  const selectedWeek = useMemo(() => getWeekNrForDate(new Date()), []);
+  const currentWeek = useMemo(() => getWeekNrForDate(new Date()), []);
+  const [selectedWeek, setSelectedWeek] = useState<number>(currentWeek);
+  const isPastWeek = selectedWeek < currentWeek;
+  const isFutureWeek = selectedWeek > currentWeek;
   // Selection mirrors the parent-controlled active users list (the unified
   // "All Users" filter in the CRM toolbar). When the filter changes upstream,
   // we always reflect exactly that set — no stale single-user lock-in.
