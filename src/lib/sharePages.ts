@@ -11,7 +11,8 @@ export type SharePageType =
   | "quality_report"
   | "trip_detail"
   | "container_detail"
-  | "vaselife_report";
+  | "vaselife_report"
+  | "crm_meeting_snapshot";
 
 export const SHARE_TTL_DAYS = 7;
 
