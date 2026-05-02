@@ -84,6 +84,12 @@ interface PlanVisit {
   visitScore?: number;
 }
 
+interface WeeklyPlan {
+  urgentFarmVisits?: Array<{ farmId?: string; farmName: string; reason?: string; suggestedUser?: string; priority?: string }>;
+  suggestedNewActivities?: Array<{ type?: string; farmName: string; reason?: string; suggestedUser?: string; priority?: string }>;
+  commercialFollowups?: Array<{ farmName: string; customer?: string; trialNumber?: string; keyProduct?: string; reason?: string }>;
+}
+
 interface PlannedFarm extends PlanVisit {
   geo: GeoResult | null;
   day: string; // Mon..Fri
@@ -183,7 +189,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   }, [activeUsers]);
   const userSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
-  const [plan, setPlan] = useState<any | null>(null);
+  const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [planLoadedAt, setPlanLoadedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -227,7 +233,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         .eq("week_nr", selectedWeek)
         .maybeSingle();
       if (data?.analysis) {
-        setPlan(data.analysis);
+        setPlan(data.analysis as WeeklyPlan);
         setPlanLoadedAt(data.created_at);
       } else {
         setPlanLoadedAt(null);
