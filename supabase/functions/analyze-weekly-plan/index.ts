@@ -124,7 +124,13 @@ ${JSON.stringify(uncoveredFarms)}
 COMMERCIAL TRIAL CANDIDATES (Vase-Life trials with Next Step = Commercial AND no follow-up CRM activity yet on that farm mentioning the trial's product/keywords):
 ${JSON.stringify(commercialFollowupCandidates || [])}
 
-Create the full Mon–Fri plan. Focus on what matters MOST.`;
+PRIOR PLAN REVIEW (per-user, per-week — what the team committed to in past Monday meetings, and whether each commitment turned into a real Visit):
+${JSON.stringify(priorPlanReview || [])}
+
+UNRESOLVED MISSES (committed in a prior week, still no Visit recorded — these are MANDATORY top-priority urgentFarmVisits this week):
+${JSON.stringify(unresolvedMisses || [])}
+
+Create the full Mon–Fri plan. Focus on what matters MOST. Always honour the LEARNING FROM PAST PLANS rules.`;
 
     const requestBody = JSON.stringify({
       model: "google/gemini-2.5-flash",
