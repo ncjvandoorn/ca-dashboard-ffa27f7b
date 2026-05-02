@@ -960,7 +960,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                       <Badge variant="secondary" className="text-[10px]">{g.items.length} trial{g.items.length === 1 ? "" : "s"}</Badge>
                     </div>
                     {(() => {
-                      const responsible = resolveResponsible(g.customer || g.key) || resolveResponsible([...g.farms][0]);
+                      const responsible = resolveResponsible(g.key) || resolveResponsible(g.customer);
                       return responsible ? (
                         <div className="text-[11px] text-muted-foreground mt-0.5">
                           Responsible: <span className="font-medium text-foreground">{responsible}</span>
@@ -1032,7 +1032,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                         <Badge variant="secondary" className="text-[10px]">{g.items.length} trial{g.items.length === 1 ? "" : "s"}</Badge>
                       </div>
                       {(() => {
-                        const responsible = resolveResponsible(g.customer || g.key) || resolveResponsible([...g.farms][0]);
+                        const responsible = resolveResponsible(g.key) || resolveResponsible(g.customer);
                         return responsible ? (
                           <div className="text-[11px] text-muted-foreground mt-0.5">
                             Responsible: <span className="font-medium text-foreground">{responsible}</span>
