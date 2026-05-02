@@ -263,6 +263,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: Math.min(i, 25) * 0.015 }}
                                 className="rounded-lg border border-border bg-background p-3 shadow-sm cursor-default"
+                              >
                                 <div className="flex items-start gap-2 mb-1.5">
                                   <Icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                                   <span className="text-sm font-medium leading-tight line-clamp-2">
