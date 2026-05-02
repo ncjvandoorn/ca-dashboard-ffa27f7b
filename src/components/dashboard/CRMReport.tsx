@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ClipboardList, Phone, MapPin, Users, BarChart3,
-  CheckCircle, Clock, AlertCircle, Filter, CalendarClock,
+  CheckCircle, Clock, AlertCircle, Filter, CalendarClock, CalendarDays,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -17,6 +17,7 @@ import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 import { getCrmVisibleUserIds } from "@/lib/crmUserFilter";
 import { ActivityAnalysis } from "./crm/ActivityAnalysis";
 import { ComingWeekView } from "./crm/ComingWeekView";
+import { CalendarView } from "./crm/CalendarView";
 
 interface CRMReportProps {
   activities: Activity[];
@@ -60,7 +61,7 @@ function timeAgo(timestamp: number | null): string {
 
 export function CRMReport({ activities, users, accounts, reports, inline = false }: CRMReportProps) {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"board" | "analysis" | "coming-week">("board");
+  const [view, setView] = useState<"board" | "analysis" | "coming-week" | "calendar">("board");
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({ "To Do": 25, "In Progress": 25, "Completed": 25 });
 
@@ -116,7 +117,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
     "Completed": { icon: CheckCircle, dotColor: "bg-accent" },
   };
 
-  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : "Current Week Planner";
+  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : view === "calendar" ? "Calendar" : "Current Week Planner";
 
   const body = (
     <div className="py-4">
@@ -131,6 +132,10 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
             <Button variant="outline" size="sm" onClick={() => setView("coming-week")} className="gap-1.5">
               <CalendarClock className="h-4 w-4" />
               Current Week
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setView("calendar")} className="gap-1.5">
+              <CalendarDays className="h-4 w-4" />
+              Calendar
             </Button>
 
             <div className="flex items-center gap-2">
@@ -234,6 +239,14 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
           accounts={accounts}
           activeUsers={activeUsers}
           selectedUserId={selectedUserId}
+          onBack={() => setView("board")}
+        />
+      ) : view === "calendar" ? (
+        <CalendarView
+          allActivities={crmActivities}
+          users={users}
+          accounts={accounts}
+          activeUsers={activeUsers}
           onBack={() => setView("board")}
         />
       ) : (
