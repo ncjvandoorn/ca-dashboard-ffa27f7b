@@ -516,6 +516,7 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                   measurements,
                   aiAnalysis,
                   aiUpdatedAt,
+                  technicalConsultant,
                 })}
               />
               <Button
