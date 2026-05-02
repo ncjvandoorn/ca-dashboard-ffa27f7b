@@ -17,6 +17,11 @@ interface EACustomer {
   address: string;
 }
 
+// Module-level cache so re-mounting the Customers page (after navigating away
+// and back) shows the previously geocoded markers instantly. Manual "Refresh"
+// still re-geocodes from scratch.
+let markersCache: CustomerMarker[] = [];
+
 export default function Customers() {
   const navigate = useNavigate();
   const { data: accounts, isLoading } = useAccounts();
