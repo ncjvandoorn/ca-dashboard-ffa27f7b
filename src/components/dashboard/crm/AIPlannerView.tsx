@@ -22,8 +22,9 @@ interface Props {
   activeUsers: { id: string; name: string }[];
 }
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-const MAX_VISITS_PER_WEEK = 10;
+const DAY_LABELS = ["Tue", "Wed", "Thu", "Fri"];
+const MAX_VISITS_PER_WEEK = 12;
+const MAX_VISITS_PER_DAY = 3;
 
 /* -------------------- Week helpers (YYWW, Sat-Fri) -------------------- */
 
@@ -129,9 +130,11 @@ function nearestNeighborOrder<T extends { geo: GeoResult | null }>(items: T[]): 
 function distributeAcrossWeek(n: number): string[] {
   if (n === 0) return [];
   const days: string[] = [];
-  const base = Math.floor(n / 5);
-  const extra = n % 5;
-  const counts = DAY_LABELS.map((_, i) => base + (i < extra ? 1 : 0));
+  const numDays = DAY_LABELS.length;
+  const capped = Math.min(n, numDays * MAX_VISITS_PER_DAY);
+  const base = Math.floor(capped / numDays);
+  const extra = capped % numDays;
+  const counts = DAY_LABELS.map((_, i) => Math.min(MAX_VISITS_PER_DAY, base + (i < extra ? 1 : 0)));
   counts.forEach((c, i) => {
     for (let k = 0; k < c; k++) days.push(DAY_LABELS[i]);
   });
@@ -277,7 +280,7 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
         const days = distributeAcrossWeek(ordered.length);
         const planned: PlannedFarm[] = ordered.map((f, i) => ({
           ...f,
-          day: days[i] || "Mon",
+          day: days[i] || "Tue",
           order: i + 1,
         }));
         out[uid] = planned;
@@ -431,7 +434,7 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
                     No AI-suggested visits this week.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-px bg-border">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-px bg-border">
                     {DAY_LABELS.map(day => {
                       const items = byDay.get(day)!;
                       return (
