@@ -18,6 +18,7 @@ import {
   geocodeCustomer, preloadCloudCache, bestAddress, isEastAfricaAccount, type GeoResult,
 } from "@/lib/customerGeocode";
 import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
+import { useAuth } from "@/hooks/useAuth";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
