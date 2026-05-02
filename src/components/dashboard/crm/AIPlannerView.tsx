@@ -319,7 +319,7 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
     } finally {
       setComputingRoutes(false);
     }
-  }, [plan, activeUsers, userSet, accountByName]);
+  }, [plan, activeUsers, userSet, accountByName, resolveResponsible]);
 
   // Auto-build routes when plan changes
   useEffect(() => { if (plan) buildRoutes(); }, [plan, buildRoutes]);
