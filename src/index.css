@@ -135,3 +135,24 @@
 .leaflet-pane.leaflet-marker-pane { z-index: 3 !important; }
 .leaflet-pane.leaflet-tooltip-pane { z-index: 4 !important; }
 .leaflet-pane.leaflet-popup-pane { z-index: 5 !important; }
+
+/* ── Print: when .print-vlr-active is set on body, only the report content prints ── */
+@media print {
+  body.print-vlr-active * { visibility: hidden !important; }
+  body.print-vlr-active #vlr-print-area,
+  body.print-vlr-active #vlr-print-area * { visibility: visible !important; }
+  body.print-vlr-active #vlr-print-area {
+    position: absolute !important;
+    left: 0; top: 0; right: 0;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  body.print-vlr-active .vlr-no-print { display: none !important; }
+  @page { margin: 12mm; }
+}
