@@ -18,6 +18,7 @@ import {
   geocodeCustomer, preloadCloudCache, bestAddress, isEastAfricaAccount, type GeoResult,
 } from "@/lib/customerGeocode";
 import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
+import { useAuth } from "@/hooks/useAuth";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
@@ -258,6 +259,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   }, [baseOverride]);
 
   // Confirmations: this week + all prior weeks (to compute carry-over misses).
+  const { isAdmin } = useAuth();
   const [confirmations, setConfirmations] = useState<PlannerConfirmation[]>([]);
   const [, setConfLoaded] = useState(false);
 
@@ -901,7 +903,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                     onCheckedChange={(val) => toggleConfirmation(u.id, v.farmName, "ai", val === true)}
                                     className="mt-0.5"
                                     aria-label={`Confirm visit to ${v.farmName}`}
-                                    disabled={isPastWeek}
+                                    disabled={isPastWeek || !isAdmin}
                                   />
                                   <span className="font-mono text-[10px] text-muted-foreground">#{v.order}</span>
                                   <div className="flex-1 min-w-0">
@@ -926,7 +928,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                   accounts={accounts}
                   onAdd={(farmName) => toggleConfirmation(u.id, farmName, "added", true)}
                   onRemove={(farmName) => removeAddedFarm(u.id, farmName)}
-                  readOnly={isPastWeek}
+                  readOnly={isPastWeek || !isAdmin}
                 />
               </div>
             );
