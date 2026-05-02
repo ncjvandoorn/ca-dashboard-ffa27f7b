@@ -29,6 +29,8 @@ export const ALLOWED_FILENAMES = new Set(DATA_FILES.map((f) => f.key));
 export const FILENAME_ALIASES: Record<string, string> = {
   "all_account.csv": "account.csv",
   "all_user.csv": "user.csv",
+  "user_customer.csv": "userCustomer.csv",
+  "usercustomer.csv": "userCustomer.csv",
 };
 
 /** Map filenames to react-query cache keys so we can invalidate after upload */
