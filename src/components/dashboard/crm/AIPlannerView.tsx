@@ -194,7 +194,8 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const [planLoadedAt, setPlanLoadedAt] = useState<string | null>(initialCached?.loadedAt ?? null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [routes, setRoutes] = useState<Record<string, PlannedFarm[]>>({});
+  const routesKeyInit = `${selectedWeek}|${initialCached?.loadedAt || ""}|${[...activeUsers.map(u=>u.id)].sort().join(",")}`;
+  const [routes, setRoutes] = useState<Record<string, PlannedFarm[]>>(() => routesCache[routesKeyInit] || {});
   const [computingRoutes, setComputingRoutes] = useState(false);
 
   const accountByName = useMemo(() => {
