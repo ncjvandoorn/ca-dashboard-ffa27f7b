@@ -929,57 +929,64 @@ function AddedFarmsRow({ added, accounts, onAdd, onRemove, readOnly = false }: A
       <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
         Added this week
       </span>
+      {added.length === 0 && readOnly && (
+        <span className="text-[11px] text-muted-foreground italic">No farms added.</span>
+      )}
       {added.map(a => (
         <span
           key={a.id}
           className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 pl-2 pr-1 py-0.5 text-[11px]"
         >
           {a.farm_name}
-          <button
-            type="button"
-            onClick={() => onRemove(a.farm_name)}
-            className="rounded-full hover:bg-destructive/20 p-0.5"
-            aria-label={`Remove ${a.farm_name}`}
-          >
-            <X className="h-3 w-3" />
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={() => onRemove(a.farm_name)}
+              className="rounded-full hover:bg-destructive/20 p-0.5"
+              aria-label={`Remove ${a.farm_name}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </span>
       ))}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]">
-            <Plus className="h-3 w-3" /> Add farm
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-[280px]" align="start">
-          <Command>
-            <CommandInput placeholder="Search farm…" className="h-9" />
-            <CommandList>
-              <CommandEmpty>No farm found.</CommandEmpty>
-              <CommandGroup>
-                {sortedAccounts.map(acc => {
-                  const already = addedSet.has(normalizeName(acc.name));
-                  return (
-                    <CommandItem
-                      key={acc.id}
-                      value={acc.name}
-                      disabled={already}
-                      onSelect={() => {
-                        if (already) return;
-                        onAdd(acc.name);
-                        setOpen(false);
-                      }}
-                    >
-                      {acc.name}
-                      {already && <span className="ml-auto text-[10px] text-muted-foreground">added</span>}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      {!readOnly && (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]">
+              <Plus className="h-3 w-3" /> Add farm
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[280px]" align="start">
+            <Command>
+              <CommandInput placeholder="Search farm…" className="h-9" />
+              <CommandList>
+                <CommandEmpty>No farm found.</CommandEmpty>
+                <CommandGroup>
+                  {sortedAccounts.map(acc => {
+                    const already = addedSet.has(normalizeName(acc.name));
+                    return (
+                      <CommandItem
+                        key={acc.id}
+                        value={acc.name}
+                        disabled={already}
+                        onSelect={() => {
+                          if (already) return;
+                          onAdd(acc.name);
+                          setOpen(false);
+                        }}
+                      >
+                        {acc.name}
+                        {already && <span className="ml-auto text-[10px] text-muted-foreground">added</span>}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }
