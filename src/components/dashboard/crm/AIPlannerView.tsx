@@ -469,8 +469,6 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     toast({ title: "Reloaded latest AI plan from cache" });
   }, [loadPlan]);
 
-  const allUsersSelected = selectedUserIds.length === activeUsers.length;
-
   const usersToShow = useMemo(
     () => activeUsers.filter(u => userSet.has(u.id)),
     [activeUsers, userSet],
