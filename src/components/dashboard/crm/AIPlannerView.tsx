@@ -660,21 +660,22 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     } finally {
       setComputingRoutes(false);
     }
-  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible]);
+  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible, baseOverride, homeBaseFor]);
 
   // Auto-build routes when plan or selection changes — but skip the heavy
   // work (and the spinner) if we already have a cached result for this exact
-  // (week + plan version + users) combination.
+  // (week + plan version + users + base overrides) combination.
   useEffect(() => {
     if (!plan) return;
-    const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}`;
+    const overrideKey = Object.entries(baseOverride).sort().map(([k,v])=>`${k}:${v}`).join(",");
+    const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}|${overrideKey}`;
     const cached = routesCache[key];
     if (cached) {
       setRoutes(cached);
       return;
     }
     buildRoutes();
-  }, [plan, planLoadedAt, selectedWeek, userSet, buildRoutes]);
+  }, [plan, planLoadedAt, selectedWeek, userSet, buildRoutes, baseOverride]);
 
   // Refresh = trigger AI to regenerate the weekly plan for the selected week,
   // then reload from cache. Reuses analyze-weekly-plan via ComingWeekView's
