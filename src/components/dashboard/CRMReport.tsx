@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ClipboardList, Phone, MapPin, Users, BarChart3,
-  CheckCircle, Clock, AlertCircle, Filter, CalendarClock, CalendarDays, Sparkles,
+  CheckCircle, Clock, AlertCircle, Filter, CalendarClock, CalendarDays, Sparkles, Search, X,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -67,6 +67,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
   const [view, setView] = useState<"board" | "analysis" | "coming-week" | "calendar" | "ai-planner">("board");
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({ "To Do": 25, "In Progress": 25, "Completed": 25 });
+  const [boardSearch, setBoardSearch] = useState("");
 
   const userMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
   const accountMap = useMemo(() => new Map(accounts.map((a) => [a.id, a.name])), [accounts]);
@@ -117,7 +118,16 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
 
   const columns = useMemo(() => {
     const cols: Record<string, Activity[]> = { "To Do": [], "In Progress": [], "Completed": [] };
+    const q = boardSearch.trim().toLowerCase();
+    const matches = (a: Activity) => {
+      if (!q) return true;
+      const farm = a.accountId ? (accountMap.get(a.accountId) || "") : "";
+      const assignee = a.assignedUserId ? (userMap.get(a.assignedUserId) || "") : "";
+      return [a.subject, a.description, a.type, farm, assignee]
+        .some((v) => (v || "").toString().toLowerCase().includes(q));
+    };
     for (const a of filteredActivities) {
+      if (!matches(a)) continue;
       const status = STATUS_COLUMNS.includes(a.status as any) ? a.status : null;
       if (status) cols[status].push(a);
     }
@@ -125,7 +135,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
       cols[key].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     }
     return cols;
-  }, [filteredActivities]);
+  }, [filteredActivities, boardSearch, accountMap, userMap]);
 
   const columnMeta: Record<string, { icon: typeof ClipboardList; dotColor: string }> = {
     "To Do": { icon: AlertCircle, dotColor: "bg-warning" },
@@ -204,8 +214,31 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
           </div>
 
           {view === "board" ? (
-            /* Kanban columns */
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <>
+              {/* Search filter */}
+              <div className="relative mb-4 max-w-md">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  value={boardSearch}
+                  onChange={(e) => setBoardSearch(e.target.value)}
+                  placeholder="Search board (subject, farm, assignee, type, description…)"
+                  className="w-full h-9 pl-8 pr-8 rounded-md border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                {boardSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setBoardSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Kanban columns */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {STATUS_COLUMNS.map((status) => {
                 const items = columns[status];
                 const meta = columnMeta[status];
@@ -277,6 +310,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
                 );
               })}
             </div>
+            </>
           ) : view === "calendar" ? (
             <CalendarView
               allActivities={crmActivities}
