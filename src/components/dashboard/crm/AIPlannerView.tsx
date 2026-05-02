@@ -15,7 +15,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  geocodeCustomer, preloadCloudCache, bestAddress, type GeoResult,
+  geocodeCustomer, preloadCloudCache, bestAddress, isEastAfricaAccount, type GeoResult,
 } from "@/lib/customerGeocode";
 import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
