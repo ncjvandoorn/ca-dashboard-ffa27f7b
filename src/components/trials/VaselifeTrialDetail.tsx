@@ -34,6 +34,7 @@ import { PropertyHeader, ScoreChip, ScoreScaleLegend, ToneBadge } from "./Vaseli
 import type { Trial } from "@/lib/trialsParser";
 import type { TrialLinkInfo } from "@/lib/trialLinkage";
 import { computeConcludedDate } from "@/lib/trialConcluded";
+import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 
 interface Props {
   trial: VaselifeHeader | null;
@@ -94,6 +95,11 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiUpdatedAt, setAiUpdatedAt] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const { data: userCustomers = [] } = useUserCustomers();
+  const technicalConsultant = useMemo(() => {
+    const resolve = buildResponsibleResolver(userCustomers);
+    return resolve(trial?.farm) || resolve(trial?.customer) || "";
+  }, [userCustomers, trial?.farm, trial?.customer]);
 
   useEffect(() => {
     setAiAnalysis(null);
