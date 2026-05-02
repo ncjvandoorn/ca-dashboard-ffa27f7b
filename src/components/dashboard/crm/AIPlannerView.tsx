@@ -29,6 +29,9 @@ const MAX_VISITS_PER_DAY = 3;
 // re-querying the cache table each time. Manual "Reload AI plan" still
 // fetches fresh.
 const planCache: Record<number, { plan: WeeklyPlan; loadedAt: string }> = {};
+// Cache computed routes per week so geocoding/route-building only runs once
+// per session unless the underlying plan or selected users change.
+const routesCache: Record<string, Record<string, PlannedFarm[]>> = {};
 
 /* -------------------- Week helpers (YYWW, Sat-Fri) -------------------- */
 
