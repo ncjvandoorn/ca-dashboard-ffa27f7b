@@ -11,6 +11,7 @@ import { SeasonalityInsightsBody, type SeasonalityAnalysis } from "@/components/
 import { QualityReportBody } from "@/components/dashboard/QualityReportBody";
 import { SharedTripMap } from "@/components/dashboard/SharedTripMap";
 import { VaselifeTrialReportBody } from "@/components/trials/VaselifeTrialReportBody";
+import { PrintReportButton } from "@/components/trials/PrintReportButton";
 import { PropertyHeader, ScoreChip, ScoreScaleLegend } from "@/components/trials/VaselifeScoreUi";
 import { getPropertyMeta, diffTreatmentNames, scoreToneClasses, type ScoreTone } from "@/lib/vaselifeProperties";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -1290,16 +1291,21 @@ function SharedVaselifeReport({ payload }: { payload: any }) {
 
       <Sheet open={reportOpen} onOpenChange={setReportOpen}>
         <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto bg-background">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2 text-lg pr-8">
-              <FileText className="h-5 w-5 text-primary" />
-              Vase Life Report
-              <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
-                {reportCode}
-              </span>
-            </SheetTitle>
-          </SheetHeader>
-          <VaselifeTrialReportBody trial={trial} vases={vases} measurements={measurements} />
+          <div id="vlr-print-area">
+            <SheetHeader>
+              <div className="flex items-center justify-between gap-2 pr-8">
+                <SheetTitle className="flex items-center gap-2 text-lg">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Vase Life Report
+                  <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
+                    {reportCode}
+                  </span>
+                </SheetTitle>
+                <PrintReportButton />
+              </div>
+            </SheetHeader>
+            <VaselifeTrialReportBody trial={trial} vases={vases} measurements={measurements} />
+          </div>
         </SheetContent>
       </Sheet>
     </div>

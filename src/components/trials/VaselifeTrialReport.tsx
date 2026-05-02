@@ -6,6 +6,7 @@ import {
   type VaselifeHeader,
 } from "@/hooks/useVaselifeTrials";
 import { VaselifeTrialReportBody } from "./VaselifeTrialReportBody";
+import { PrintReportButton } from "./PrintReportButton";
 
 interface Props {
   trial: VaselifeHeader | null;
@@ -35,24 +36,30 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
         side="right"
         className="w-full sm:max-w-3xl overflow-y-auto bg-background"
       >
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2 text-lg pr-8">
-            <FileText className="h-5 w-5 text-primary" />
-            Vase Life Report
-            <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
-              {reportCode}
-            </span>
-          </SheetTitle>
-        </SheetHeader>
+        <div id="vlr-print-area">
+          <SheetHeader>
+            <div className="flex items-center justify-between gap-2 pr-8">
+              <SheetTitle className="flex items-center gap-2 text-lg">
+                <FileText className="h-5 w-5 text-primary" />
+                Vase Life Report
+                <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
+                  {reportCode}
+                </span>
+              </SheetTitle>
+              <PrintReportButton />
+            </div>
+          </SheetHeader>
 
-        <VaselifeTrialReportBody
-          trial={trial}
-          vases={vases}
-          measurements={measurements}
-          vasesLoading={vasesLoading}
-          measLoading={measLoading}
-        />
+          <VaselifeTrialReportBody
+            trial={trial}
+            vases={vases}
+            measurements={measurements}
+            vasesLoading={vasesLoading}
+            measLoading={measLoading}
+          />
+        </div>
       </SheetContent>
     </Sheet>
   );
 }
+
