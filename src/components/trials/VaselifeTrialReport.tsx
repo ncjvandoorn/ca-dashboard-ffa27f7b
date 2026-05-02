@@ -5,7 +5,6 @@ import {
   useVaselifeMeasurements,
   type VaselifeHeader,
 } from "@/hooks/useVaselifeTrials";
-import { SharePageButton } from "@/components/SharePageButton";
 import { VaselifeTrialReportBody } from "./VaselifeTrialReportBody";
 
 interface Props {
