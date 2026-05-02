@@ -14,6 +14,7 @@ export const DATA_FILES: DataFileDef[] = [
   { key: "activity.csv", label: "Activity Data", accept: ".csv" },
   { key: "user.csv", label: "ALL Users", accept: ".csv" },
   { key: "customerFarm.csv", label: "Customer-Farm Links", accept: ".csv" },
+  { key: "userCustomer.csv", label: "Sales Rep ↔ Customer", accept: ".csv" },
   { key: "container.csv", label: "Containers", accept: ".csv" },
   { key: "servicesOrder.csv", label: "Services Orders", accept: ".csv" },
   { key: "servicesOrderDatalogdevice.csv", label: "Order ↔ Datalogger Links", accept: ".csv" },
@@ -28,6 +29,8 @@ export const ALLOWED_FILENAMES = new Set(DATA_FILES.map((f) => f.key));
 export const FILENAME_ALIASES: Record<string, string> = {
   "all_account.csv": "account.csv",
   "all_user.csv": "user.csv",
+  "user_customer.csv": "userCustomer.csv",
+  "usercustomer.csv": "userCustomer.csv",
 };
 
 /** Map filenames to react-query cache keys so we can invalidate after upload */
@@ -37,6 +40,7 @@ export const FILE_QUERY_KEY_MAP: Record<string, string> = {
   "activity.csv": "activities",
   "user.csv": "users",
   "customerFarm.csv": "customerFarms",
+  "userCustomer.csv": "userCustomers",
   "container.csv": "containers",
   "servicesOrder.csv": "servicesOrders",
   "servicesOrderDatalogdevice.csv": "servicesOrderDatalogdevices",
