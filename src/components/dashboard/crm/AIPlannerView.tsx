@@ -143,6 +143,15 @@ function distributeAcrossWeek(n: number): string[] {
 export function AIPlannerView({ accounts, activeUsers }: Props) {
   const selectedWeek = useMemo(() => getWeekNrForDate(new Date()), []);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(() => activeUsers.map(u => u.id));
+  // Keep selection in sync with the preselected users from settings.
+  useEffect(() => {
+    setSelectedUserIds((prev) => {
+      const active = new Set(activeUsers.map(u => u.id));
+      const filtered = prev.filter(id => active.has(id));
+      // If nothing valid is selected (e.g. first load), default to all active.
+      return filtered.length === 0 ? activeUsers.map(u => u.id) : filtered;
+    });
+  }, [activeUsers]);
   const userSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
   const [plan, setPlan] = useState<any | null>(null);
