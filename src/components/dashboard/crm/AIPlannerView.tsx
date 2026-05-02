@@ -93,36 +93,60 @@ function normalizeName(s: string): string {
   return (s || "").trim().toLowerCase();
 }
 
-/* Nearest-neighbor TSP starting from the geographic centroid's nearest farm.
- * Falls back to original order when geo data is missing. */
-function nearestNeighborOrder<T extends { geo: GeoResult | null }>(items: T[]): T[] {
+/* Approximate home-base coordinates per sales rep first name.
+ * Trips start AND end at this base; visits are ordered as a loop. */
+const USER_HOME_BASE: Record<string, { city: string; lat: number; lon: number }> = {
+  paul:    { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
+  steven:  { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
+  steve:   { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
+  patrick: { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
+  peter:   { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
+};
+
+function homeBaseFor(userName: string): { city: string; lat: number; lon: number } | null {
+  const first = (userName || "").trim().toLowerCase().split(/\s+/)[0];
+  return USER_HOME_BASE[first] || null;
+}
+
+/* Nearest-neighbor TSP loop: starts at `home`, visits all farms via
+ * shortest next-hop, returns to `home`. Falls back to original order
+ * when geo data is missing. If no home is provided, starts at the
+ * farm closest to the centroid of the farm set. */
+function nearestNeighborLoop<T extends { geo: GeoResult | null }>(
+  items: T[],
+  home: { lat: number; lon: number } | null,
+): T[] {
   const withGeo = items.filter(i => i.geo);
   const without = items.filter(i => !i.geo);
-  if (withGeo.length <= 1) return [...withGeo, ...without];
+  if (withGeo.length === 0) return without;
 
-  // Start from the northernmost farm (highest lat) — gives stable predictable ordering.
-  let startIdx = 0;
-  for (let i = 1; i < withGeo.length; i++) {
-    if ((withGeo[i].geo!.lat) > (withGeo[startIdx].geo!.lat)) startIdx = i;
-  }
+  const sqd = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => {
+    const dLat = a.lat - b.lat; const dLon = a.lon - b.lon;
+    return dLat * dLat + dLon * dLon;
+  };
 
-  const visited = new Set<number>([startIdx]);
-  const order: T[] = [withGeo[startIdx]];
+  // Anchor for first hop: home if known, otherwise centroid.
+  const anchor = home ?? (() => {
+    const lat = withGeo.reduce((s, x) => s + x.geo!.lat, 0) / withGeo.length;
+    const lon = withGeo.reduce((s, x) => s + x.geo!.lon, 0) / withGeo.length;
+    return { lat, lon };
+  })();
+
+  const visited = new Set<number>();
+  const order: T[] = [];
+  let current = anchor;
   while (visited.size < withGeo.length) {
-    const last = order[order.length - 1].geo!;
     let bestIdx = -1;
     let bestDist = Infinity;
     for (let i = 0; i < withGeo.length; i++) {
       if (visited.has(i)) continue;
-      const g = withGeo[i].geo!;
-      const dLat = g.lat - last.lat;
-      const dLon = g.lon - last.lon;
-      const d = dLat * dLat + dLon * dLon;
+      const d = sqd(current, withGeo[i].geo!);
       if (d < bestDist) { bestDist = d; bestIdx = i; }
     }
     if (bestIdx === -1) break;
     visited.add(bestIdx);
     order.push(withGeo[bestIdx]);
+    current = withGeo[bestIdx].geo!;
   }
   return [...order, ...without];
 }
