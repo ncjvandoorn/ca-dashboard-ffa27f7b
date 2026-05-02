@@ -768,11 +768,180 @@ function OrdersList({ orders }: { orders: any[] }) {
   );
 }
 
+function vlDaysTone(v: number | null | undefined): ScoreTone {
+  if (v == null) return "neutral";
+  if (v >= 7) return "good";
+  if (v >= 5) return "warn";
+  return "bad";
+}
+function botPctTone(v: number | null | undefined): ScoreTone {
+  if (v == null) return "neutral";
+  if (v <= 5) return "good";
+  if (v <= 20) return "warn";
+  return "bad";
+}
+function floPctTone(v: number | null | undefined): ScoreTone {
+  if (v == null) return "neutral";
+  if (v >= 75) return "good";
+  if (v >= 50) return "warn";
+  return "bad";
+}
+function MetricChip({ tone, children }: { tone: ScoreTone; children: React.ReactNode }) {
+  return (
+    <span
+      className={`inline-flex items-center justify-center min-w-[36px] px-1.5 py-0.5 rounded text-[11px] font-semibold tabular-nums ${scoreToneClasses(tone)}`}
+    >
+      {children}
+    </span>
+  );
+}
+
 function SharedVaselifeReport({ payload }: { payload: any }) {
   const trial = payload?.trial;
-  const vases = payload?.vases ?? [];
-  const measurements = payload?.measurements ?? [];
+  const vases: any[] = payload?.vases ?? [];
+  const measurements: any[] = payload?.measurements ?? [];
+  const aiAnalysis: string | null = payload?.aiAnalysis ?? null;
+  const aiUpdatedAt: string | null = payload?.aiUpdatedAt ?? null;
   const [reportOpen, setReportOpen] = useState(false);
+
+  const isAverageName = (s: string) => /^\s*(average|avg|gemiddelde|mean)\b/i.test(s || "");
+  const normaliseTreatmentName = (s: string | null | undefined) =>
+    (s || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .replace(/\s*\|\s*/g, "|")
+      .replace(/\s*([+/@])\s*/g, "$1")
+      .trim();
+
+  const { cultivars, treatmentAverages, derivedVaseCount } = useMemo(() => {
+    if (!vases || vases.length === 0) {
+      return { cultivars: [] as any[], treatmentAverages: [] as any[], derivedVaseCount: 0 };
+    }
+    const avgRows: any[] = [];
+    const realRows: any[] = [];
+    for (const v of vases) {
+      if (isAverageName(v.cultivar)) avgRows.push(v);
+      else realRows.push(v);
+    }
+    const canonicalSource = avgRows.length > 0 ? avgRows : realRows;
+    const sortedCanon = [...canonicalSource].sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0));
+    const keyToInfo = new Map<string, { displayNo: number; originals: number[] }>();
+    for (const r of sortedCanon) {
+      const key = normaliseTreatmentName(r.treatment_name) || `__t${r.treatment_no}`;
+      const existing = keyToInfo.get(key);
+      if (!existing) {
+        keyToInfo.set(key, {
+          displayNo: keyToInfo.size + 1,
+          originals: r.treatment_no != null ? [r.treatment_no] : [],
+        });
+      } else if (r.treatment_no != null && !existing.originals.includes(r.treatment_no)) {
+        existing.originals.push(r.treatment_no);
+      }
+    }
+    const sortedAvg = [...avgRows].sort((a, b) => (a.treatment_no || 0) - (b.treatment_no || 0));
+    const mergedAvgMap = new Map<string, any>();
+    for (const r of sortedAvg) {
+      const key = normaliseTreatmentName(r.treatment_name) || `__t${r.treatment_no}`;
+      const info = keyToInfo.get(key);
+      const existing = mergedAvgMap.get(key);
+      if (!existing) {
+        mergedAvgMap.set(key, { ...r, display_no: info?.displayNo ?? mergedAvgMap.size + 1 });
+      }
+    }
+    const treatmentAverages = Array.from(mergedAvgMap.values()).sort((a, b) => a.display_no - b.display_no);
+
+    const grouped = new Map<string, any[]>();
+    for (const v of realRows) {
+      const cKey = v.cultivar || "Unknown";
+      if (!grouped.has(cKey)) grouped.set(cKey, []);
+      grouped.get(cKey)!.push(v);
+    }
+    const cultivars = Array.from(grouped.entries())
+      .map(([cultivar, items]) => {
+        const merged = new Map<string, any>();
+        for (const r of items) {
+          const key = normaliseTreatmentName(r.treatment_name) || `__t${r.treatment_no}`;
+          const info = keyToInfo.get(key);
+          const existing = merged.get(key);
+          if (!existing) {
+            merged.set(key, { ...r, vase_count: r.vase_count || 0, display_no: info?.displayNo ?? merged.size + 1 });
+          } else {
+            existing.vase_count = (existing.vase_count || 0) + (r.vase_count || 0);
+          }
+        }
+        return {
+          cultivar,
+          treatments: Array.from(merged.values()).sort((a: any, b: any) => a.display_no - b.display_no),
+        };
+      })
+      .sort((a, b) => a.cultivar.localeCompare(b.cultivar));
+
+    const sumVaseCount = cultivars.reduce(
+      (s, c) => s + c.treatments.reduce((ss: number, t: any) => ss + (t.vase_count || 0), 0),
+      0,
+    );
+    const derivedVaseCount = sumVaseCount > 0 ? sumVaseCount : realRows.length;
+    return { cultivars, treatmentAverages, derivedVaseCount };
+  }, [vases]);
+
+  const measurementMatrix = useMemo(() => {
+    const propsSet = new Set<string>();
+    const rowMap = new Map<string, Record<string, number | null>>();
+    const tSums = new Map<number, Map<string, { sum: number; n: number }>>();
+    for (const m of measurements) {
+      if (!m.property_name) continue;
+      propsSet.add(m.property_name);
+      const key = `${m.cultivar || "?"}|${m.treatment_no || 0}`;
+      if (!rowMap.has(key)) rowMap.set(key, {});
+      rowMap.get(key)![m.property_name] = m.score ?? null;
+      if (m.treatment_no != null && m.score != null && !isAverageName(m.cultivar || "")) {
+        if (!tSums.has(m.treatment_no)) tSums.set(m.treatment_no, new Map());
+        const propMap = tSums.get(m.treatment_no)!;
+        const cur = propMap.get(m.property_name) || { sum: 0, n: 0 };
+        cur.sum += Number(m.score);
+        cur.n += 1;
+        propMap.set(m.property_name, cur);
+      }
+    }
+    const props = Array.from(propsSet).sort();
+    const rows = Array.from(rowMap.entries())
+      .map(([key, scores]) => {
+        const [cultivar, tn] = key.split("|");
+        return { cultivar, treatmentNo: parseInt(tn), scores };
+      })
+      .filter((r) => !isAverageName(r.cultivar))
+      .sort((a, b) => a.cultivar.localeCompare(b.cultivar) || a.treatmentNo - b.treatmentNo);
+    const treatmentAverageRows = Array.from(tSums.entries())
+      .map(([treatmentNo, propMap]) => {
+        const scores: Record<string, number | null> = {};
+        for (const [p, { sum, n }] of propMap) scores[p] = n > 0 ? sum / n : null;
+        return { cultivar: "Average", treatmentNo, scores };
+      })
+      .sort((a, b) => a.treatmentNo - b.treatmentNo);
+    return { props, rows, treatmentAverageRows };
+  }, [measurements]);
+
+  const treatmentNameByNo = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const v of vases) {
+      if (v.treatment_no != null && v.treatment_name && !m.has(v.treatment_no)) {
+        m.set(v.treatment_no, v.treatment_name);
+      }
+    }
+    return m;
+  }, [vases]);
+
+  const treatmentNameDiff = useMemo(
+    () => diffTreatmentNames(treatmentAverages.map((t: any) => t.treatment_name)),
+    [treatmentAverages],
+  );
+  const measTreatmentDiff = useMemo(() => {
+    const ordered = measurementMatrix.treatmentAverageRows.map(
+      (r) => treatmentNameByNo.get(r.treatmentNo) || "",
+    );
+    return diffTreatmentNames(ordered);
+  }, [measurementMatrix.treatmentAverageRows, treatmentNameByNo]);
+
   if (!trial) {
     return (
       <div className="max-w-md mx-auto mt-12 text-center">
@@ -787,7 +956,7 @@ function SharedVaselifeReport({ payload }: { payload: any }) {
     d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -831,7 +1000,7 @@ function SharedVaselifeReport({ payload }: { payload: any }) {
         <div>
           <div className="text-muted-foreground">Cultivars × Treatments</div>
           <div className="font-medium">
-            {trial.cultivar_count ?? "—"} × {trial.treatment_count ?? "—"}
+            {trial.cultivar_count ?? "—"} × {treatmentAverages.length > 0 ? treatmentAverages.length : (trial.treatment_count ?? "—")}
           </div>
         </div>
         <div>
@@ -843,7 +1012,7 @@ function SharedVaselifeReport({ payload }: { payload: any }) {
         </div>
         <div>
           <div className="text-muted-foreground">Total vases</div>
-          <div className="font-medium">{trial.total_vases ?? vases.length ?? "—"}</div>
+          <div className="font-medium">{derivedVaseCount > 0 ? derivedVaseCount : (trial.total_vases ?? "—")}</div>
         </div>
         <div>
           <div className="text-muted-foreground">Measurements</div>
@@ -865,10 +1034,257 @@ function SharedVaselifeReport({ payload }: { payload: any }) {
         </section>
       )}
 
-      {trial.recommendations && (
-        <section className="space-y-1 mt-3">
-          <h3 className="text-sm font-semibold">Recommendations</h3>
-          <p className="text-sm text-muted-foreground whitespace-pre-line">{trial.recommendations}</p>
+      {/* AI analysis */}
+      {aiAnalysis && (
+        <section className="mt-4 border border-primary/30 rounded-md bg-primary/5">
+          <div className="flex items-center justify-between gap-2 px-3 py-2">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Sparkles className="h-4 w-4 text-primary" />
+              AI analysis
+              {aiUpdatedAt && (
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  · updated {new Date(aiUpdatedAt).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="px-3 pb-3 pt-2 border-t border-primary/20 text-sm leading-relaxed text-foreground/90 [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:space-y-1 [&>ul]:my-2 [&_strong]:font-semibold [&_strong]:text-foreground [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:bg-muted [&_code]:text-[0.85em]">
+            <ReactMarkdown>{aiAnalysis}</ReactMarkdown>
+          </div>
+        </section>
+      )}
+
+      {/* Vases — treatment averages + per-cultivar */}
+      {(treatmentAverages.length > 0 || cultivars.length > 0) && (
+        <section className="mt-5 space-y-5">
+          <h3 className="text-sm font-semibold">Vases ({derivedVaseCount || vases.length})</h3>
+
+          {treatmentAverages.length > 0 && (
+            <div className="border-2 border-primary/60 rounded-md overflow-hidden bg-primary/5 ring-1 ring-primary/20">
+              <div className="bg-primary/15 text-primary px-3 py-2 flex items-center gap-2 flex-wrap">
+                <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">★ Treatment averages</Badge>
+                <span className="text-sm font-bold uppercase tracking-wide">Comparison across all cultivars</span>
+                <span className="text-xs font-normal text-primary/70 ml-auto">
+                  {treatmentAverages.length} treatment{treatmentAverages.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              {treatmentNameDiff.shared.length > 0 && (
+                <div className="px-3 py-1.5 text-[11px] border-b border-primary/20 bg-primary/[0.03] text-muted-foreground">
+                  <span className="font-semibold uppercase tracking-wide text-foreground/70 mr-1">Shared:</span>
+                  {treatmentNameDiff.shared.join(" · ")}
+                </div>
+              )}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">T#</TableHead>
+                    <TableHead>Treatment (differences)</TableHead>
+                    <TableHead className="w-20 text-right">VL days</TableHead>
+                    <TableHead className="w-20 text-right">Bot %</TableHead>
+                    <TableHead className="w-20 text-right">Flo %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {treatmentAverages.map((t: any, idx: number) => {
+                    const diffName = treatmentNameDiff.diffs[idx] || t.treatment_name || "—";
+                    return (
+                      <TableRow key={t.id_line || idx} className="bg-primary/5">
+                        <TableCell className="font-mono text-xs font-semibold text-primary">
+                          {t.display_no ?? t.treatment_no}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <div className="line-clamp-2 font-medium" title={t.treatment_name || undefined}>
+                            {diffName}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right text-xs">
+                          <MetricChip tone={vlDaysTone(t.flv_days)}>
+                            {t.flv_days != null ? Number(t.flv_days).toFixed(1) : "—"}
+                          </MetricChip>
+                        </TableCell>
+                        <TableCell className="text-right text-xs">
+                          <MetricChip tone={botPctTone(t.bot_percentage)}>
+                            {t.bot_percentage ?? "—"}
+                          </MetricChip>
+                        </TableCell>
+                        <TableCell className="text-right text-xs">
+                          <MetricChip tone={floPctTone(t.flo_percentage)}>
+                            {t.flo_percentage ?? "—"}
+                          </MetricChip>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {cultivars.map(({ cultivar, treatments }: any) => (
+            <div key={cultivar} className="border border-border rounded-md overflow-hidden">
+              <div className="bg-muted/40 px-3 py-2 text-sm font-semibold">
+                {cultivar}
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  ({treatments.length} treatment{treatments.length === 1 ? "" : "s"})
+                </span>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Treatment</TableHead>
+                    <TableHead className="w-20 text-right">Vases</TableHead>
+                    <TableHead className="w-20 text-right">VL days</TableHead>
+                    <TableHead className="w-20 text-right">Bot %</TableHead>
+                    <TableHead className="w-20 text-right">Flo %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {treatments.map((t: any) => (
+                    <TableRow key={t.id_line}>
+                      <TableCell className="font-mono text-xs">{t.display_no ?? t.treatment_no}</TableCell>
+                      <TableCell className="text-xs">
+                        <div className="line-clamp-2">{t.treatment_name || "—"}</div>
+                      </TableCell>
+                      <TableCell className="text-right text-xs">{t.vase_count ?? "—"}</TableCell>
+                      <TableCell className="text-right text-xs">
+                        <MetricChip tone={vlDaysTone(t.flv_days)}>
+                          {t.flv_days != null ? Number(t.flv_days).toFixed(1) : "—"}
+                        </MetricChip>
+                      </TableCell>
+                      <TableCell className="text-right text-xs">
+                        <MetricChip tone={botPctTone(t.bot_percentage)}>
+                          {t.bot_percentage ?? "—"}
+                        </MetricChip>
+                      </TableCell>
+                      <TableCell className="text-right text-xs">
+                        <MetricChip tone={floPctTone(t.flo_percentage)}>
+                          {t.flo_percentage ?? "—"}
+                        </MetricChip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* Measurements */}
+      {(measurementMatrix.rows.length > 0 || measurementMatrix.treatmentAverageRows.length > 0) && (
+        <section className="mt-5 space-y-4">
+          <h3 className="text-sm font-semibold">Measurements ({measurements.length})</h3>
+
+          {measurementMatrix.treatmentAverageRows.length > 0 && (
+            <div className="border-2 border-primary/60 rounded-md overflow-x-auto bg-primary/5 ring-1 ring-primary/20">
+              <div className="bg-primary/15 text-primary px-3 py-2 flex items-center gap-2 flex-wrap">
+                <Badge className="bg-primary text-primary-foreground hover:bg-primary text-[10px] uppercase">★ Treatment averages</Badge>
+                <span className="text-sm font-bold uppercase tracking-wide">Per-treatment scores (averaged across cultivars)</span>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">T#</TableHead>
+                    <TableHead>Treatment</TableHead>
+                    {measurementMatrix.props.map((p) => (
+                      <TableHead key={p} className="text-center text-xs">
+                        <PropertyHeader code={p} />
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {measurementMatrix.treatmentAverageRows.map((r, idx) => {
+                    const fullName = treatmentNameByNo.get(r.treatmentNo) || "";
+                    const diffName = measTreatmentDiff.diffs[idx] || fullName || "—";
+                    return (
+                      <TableRow key={r.treatmentNo} className="bg-primary/5">
+                        <TableCell className="text-xs font-mono font-bold text-primary">{r.treatmentNo}</TableCell>
+                        <TableCell className="text-xs font-medium">
+                          <div className="line-clamp-2" title={fullName || undefined}>{diffName}</div>
+                        </TableCell>
+                        {measurementMatrix.props.map((p) => (
+                          <TableCell key={p} className="text-center">
+                            <ScoreChip code={p} score={r.scores[p]} bold />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {measurementMatrix.rows.length > 0 && (
+            <div className="border border-border rounded-md overflow-x-auto">
+              <div className="px-3 py-2 text-xs font-semibold bg-muted/40 border-b border-border">
+                Per cultivar × treatment
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cultivar</TableHead>
+                    <TableHead className="w-12">T#</TableHead>
+                    {measurementMatrix.props.map((p) => (
+                      <TableHead key={p} className="text-center text-xs">
+                        <PropertyHeader code={p} />
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {measurementMatrix.rows.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-xs font-medium">{r.cultivar}</TableCell>
+                      <TableCell className="text-xs font-mono">{r.treatmentNo}</TableCell>
+                      {measurementMatrix.props.map((p) => (
+                        <TableCell key={p} className="text-center">
+                          <ScoreChip code={p} score={r.scores[p]} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="px-3 py-2 text-[11px] border-t border-border bg-muted/20 space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-0.5">
+                  {measurementMatrix.props.map((p) => {
+                    const meta = getPropertyMeta(p);
+                    return (
+                      <div key={p} className="flex gap-1.5 text-foreground/80">
+                        <span className="font-mono font-semibold shrink-0">{p}</span>
+                        <span className="shrink-0">— {meta.label}</span>
+                        <span className="text-muted-foreground truncate" title={meta.description}>
+                          · {meta.description}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <ScoreScaleLegend />
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Conclusion & Recommendations details */}
+      {(trial.spec_comments || trial.recommendations) && (
+        <section className="mt-5 space-y-4">
+          {trial.spec_comments && (
+            <div>
+              <h3 className="text-sm font-semibold mb-1">Specific Comments</h3>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{trial.spec_comments}</p>
+            </div>
+          )}
+          {trial.recommendations && (
+            <div>
+              <h3 className="text-sm font-semibold mb-1">Recommendations</h3>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{trial.recommendations}</p>
+            </div>
+          )}
         </section>
       )}
 
