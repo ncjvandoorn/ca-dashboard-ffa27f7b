@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   UserCircle,
   Activity,
+  BarChart3,
   MapPin,
 } from "lucide-react";
 
@@ -73,12 +74,6 @@ export function AppMenuItems() {
           Data Loggers
         </DropdownMenuItem>
       )}
-      {can("reporting_check") && (
-        <DropdownMenuItem onClick={() => navigate("/?check=reporting")}>
-          <ClipboardCheck className="h-4 w-4 mr-2" />
-          Reporting Check
-        </DropdownMenuItem>
-      )}
       {can("crm_activities") && (
         <DropdownMenuItem onClick={() => navigate("/crm")}>
           <Users className="h-4 w-4 mr-2" />
@@ -89,6 +84,18 @@ export function AppMenuItems() {
         <DropdownMenuItem onClick={() => navigate("/customers")}>
           <MapPin className="h-4 w-4 mr-2" />
           Customers Map
+        </DropdownMenuItem>
+      )}
+      {can("reporting_check") && (
+        <DropdownMenuItem onClick={() => navigate("/?check=reporting")}>
+          <ClipboardCheck className="h-4 w-4 mr-2" />
+          Reporting Check
+        </DropdownMenuItem>
+      )}
+      {can("activity_analysis") && (
+        <DropdownMenuItem onClick={() => navigate("/activity-analysis")}>
+          <BarChart3 className="h-4 w-4 mr-2" />
+          Activity Analysis
         </DropdownMenuItem>
       )}
 
