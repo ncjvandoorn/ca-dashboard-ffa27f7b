@@ -842,6 +842,44 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
   }, [plan?.commercialFollowups, liveCommercialCandidates, passedTrialIds, selectedWeek]);
 
+  // Group commercial follow-ups by customer (fall back to farm name when no customer).
+  const groupedCommercialFollowups = useMemo(() => {
+    const groups = new Map<string, { key: string; customer?: string; farms: Set<string>; items: typeof mergedCommercialFollowups }>();
+    for (const c of mergedCommercialFollowups) {
+      const key = (c.customer || c.farmName || "—").trim();
+      const g = groups.get(key) || { key, customer: c.customer, farms: new Set<string>(), items: [] as typeof mergedCommercialFollowups };
+      if (c.farmName) g.farms.add(c.farmName);
+      g.items.push(c);
+      groups.set(key, g);
+    }
+    return Array.from(groups.values())
+      .map((g) => ({
+        ...g,
+        items: [...g.items].sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || "")),
+        latest: g.items.reduce((m, x) => (x.trialDate && x.trialDate > m ? x.trialDate : m), ""),
+      }))
+      .sort((a, b) => (b.latest || "").localeCompare(a.latest || ""));
+  }, [mergedCommercialFollowups]);
+
+  // Group passed follow-ups by customer (fall back to farm name).
+  const groupedPassedFollowups = useMemo(() => {
+    const groups = new Map<string, { key: string; customer?: string; farms: Set<string>; items: typeof passedFollowups }>();
+    for (const p of passedFollowups) {
+      const key = (p.customer || p.farmName || "—").trim();
+      const g = groups.get(key) || { key, customer: p.customer, farms: new Set<string>(), items: [] as typeof passedFollowups };
+      if (p.farmName) g.farms.add(p.farmName);
+      g.items.push(p);
+      groups.set(key, g);
+    }
+    return Array.from(groups.values())
+      .map((g) => ({
+        ...g,
+        items: [...g.items].sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || "")),
+        latest: g.items.reduce((m, x) => (x.trialDate && x.trialDate > m ? x.trialDate : m), ""),
+      }))
+      .sort((a, b) => (b.latest || "").localeCompare(a.latest || ""));
+  }, [passedFollowups]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 flex-wrap">
