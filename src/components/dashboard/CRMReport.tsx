@@ -138,6 +138,46 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
               AI Analysis
             </Button>
 
+            <span className="text-xs text-muted-foreground ml-auto">
+              {filteredActivities.filter((a) => STATUS_COLUMNS.includes(a.status as any)).length} activities
+            </span>
+          </div>
+
+          {/* Tab row + user filter */}
+          <div className="flex items-center gap-3 mb-5 flex-wrap">
+            <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1">
+              <button
+                type="button"
+                onClick={() => setView("board")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
+                  view === "board" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <ClipboardList className="h-4 w-4" />
+                Board
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("calendar")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
+                  view === "calendar" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <CalendarDays className="h-4 w-4" />
+                Calendar
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("ai-planner")}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
+                  view === "ai-planner" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Sparkles className="h-4 w-4" />
+                AI Planner
+              </button>
+            </div>
+
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
@@ -152,44 +192,6 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
                 </SelectContent>
               </Select>
             </div>
-
-            <span className="text-xs text-muted-foreground ml-auto">
-              {filteredActivities.filter((a) => STATUS_COLUMNS.includes(a.status as any)).length} activities
-            </span>
-          </div>
-
-          {/* Tab row: Board / Calendar / AI Planner */}
-          <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/30 p-1 mb-5">
-            <button
-              type="button"
-              onClick={() => setView("board")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
-                view === "board" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <ClipboardList className="h-4 w-4" />
-              Board
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("calendar")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
-                view === "calendar" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <CalendarDays className="h-4 w-4" />
-              Calendar
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("ai-planner")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-md transition-colors ${
-                view === "ai-planner" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Sparkles className="h-4 w-4" />
-              AI Planner
-            </button>
           </div>
 
           {view === "board" ? (
