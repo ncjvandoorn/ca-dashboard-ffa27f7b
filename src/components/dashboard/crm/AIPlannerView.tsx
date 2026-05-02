@@ -233,6 +233,23 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
           priority: v.priority || "medium",
           source: "suggested",
         });
+      // Commercial trial follow-ups — top priority sales opportunities.
+      // These have no suggestedUser, so resolve via the per-farm/customer sales rep.
+      for (const v of (plan.commercialFollowups || [])) {
+        const rep = resolveResponsible(v.farmName) || resolveResponsible(v.customer) || "";
+        const reasonParts = [
+          v.trialNumber ? `Trial ${v.trialNumber}` : "",
+          v.keyProduct ? `(${v.keyProduct})` : "",
+          v.reason || "",
+        ].filter(Boolean);
+        allVisits.push({
+          farmId: undefined,
+          farmName: v.farmName,
+          reason: reasonParts.join(" · ") || "Commercial trial follow-up",
+          suggestedUser: rep,
+          priority: "critical",
+          source: "commercial",
+        });
       }
 
       // Group by suggested user (only those in selectedUserIds)
