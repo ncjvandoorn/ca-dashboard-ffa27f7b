@@ -171,6 +171,12 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
     return m;
   }, [accounts]);
 
+  const { data: userCustomerRows } = useUserCustomers();
+  const resolveResponsible = useMemo(
+    () => buildResponsibleResolver(userCustomerRows || []),
+    [userCustomerRows],
+  );
+
   // Load cached plan for the selected week
   const loadPlan = useCallback(async () => {
     setLoading(true);
