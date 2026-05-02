@@ -116,15 +116,19 @@ function normalizeName(s: string): string {
 
 /* Approximate home-base coordinates per sales rep first name.
  * Trips start AND end at this base; visits are ordered as a loop. */
+const BASE_CITIES: Record<string, { city: string; lat: number; lon: number }> = {
+  Nairobi: { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
+  Nakuru:  { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
+};
 const USER_HOME_BASE: Record<string, { city: string; lat: number; lon: number }> = {
-  paul:    { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
-  steven:  { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
-  steve:   { city: "Nairobi", lat: -1.2921, lon: 36.8219 },
-  patrick: { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
-  peter:   { city: "Nakuru",  lat: -0.3031, lon: 36.0800 },
+  paul:    BASE_CITIES.Nairobi,
+  steven:  BASE_CITIES.Nairobi,
+  steve:   BASE_CITIES.Nairobi,
+  patrick: BASE_CITIES.Nakuru,
+  peter:   BASE_CITIES.Nakuru,
 };
 
-function homeBaseFor(userName: string): { city: string; lat: number; lon: number } | null {
+function defaultHomeBaseFor(userName: string): { city: string; lat: number; lon: number } | null {
   const first = (userName || "").trim().toLowerCase().split(/\s+/)[0];
   return USER_HOME_BASE[first] || null;
 }
