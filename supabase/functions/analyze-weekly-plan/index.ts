@@ -93,7 +93,7 @@ For each candidate decide whether it truly represents an unfollowed-up sales opp
 3. Staff notes: quote or closely paraphrase actual qN, pN, gC text.
 4. If fewer items qualify, return fewer. Never pad lists.
 5. Include ALL team members in userWorkloadAssessment.
-6. suggestedSchedule per user: max 5 visits/day, unlimited calls/tasks.
+6. suggestedSchedule per user: max 3 visits/day, Tuesday–Friday only (Monday = office). Unlimited calls/tasks.
 7. For commercialFollowups: \`trialId\` MUST exactly match an \`id\` from commercialFollowupCandidates.`;
 
     const userPrompt = `Create the action plan for THIS week (${weekDates || "Mon–Fri"}). Today is ${todayDate || "a weekday"}, week ${currentWeekNr || "?"}.
