@@ -343,8 +343,10 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
           return { ...v, geo };
         }));
 
-        // Order by nearest-neighbor (shortest path between farms)
-        const ordered = nearestNeighborOrder(geocoded);
+        // Order by nearest-neighbor loop starting/ending at user's home base.
+        const userName = activeUsers.find(u => u.id === uid)?.name || "";
+        const home = homeBaseFor(userName);
+        const ordered = nearestNeighborLoop(geocoded, home);
 
         // Distribute across Mon-Fri
         const days = distributeAcrossWeek(ordered.length);
