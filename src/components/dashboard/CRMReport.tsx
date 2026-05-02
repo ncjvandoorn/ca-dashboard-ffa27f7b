@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 import { getCrmVisibleUserIds } from "@/lib/crmUserFilter";
