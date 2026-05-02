@@ -259,7 +259,6 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
               accounts={accounts}
               activeUsers={activeUsers}
               onBack={() => setView("board")}
-              embedded
             />
           )}
         </>
@@ -270,14 +269,6 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
           accounts={accounts}
           activeUsers={activeUsers}
           selectedUserId={selectedUserId}
-          onBack={() => setView("board")}
-        />
-      ) : view === "calendar" ? (
-        <CalendarView
-          allActivities={crmActivities}
-          users={users}
-          accounts={accounts}
-          activeUsers={activeUsers}
           onBack={() => setView("board")}
         />
       ) : (
