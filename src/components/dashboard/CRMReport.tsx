@@ -62,7 +62,7 @@ function timeAgo(timestamp: number | null): string {
 
 export function CRMReport({ activities, users, accounts, reports, inline = false }: CRMReportProps) {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"board" | "analysis" | "coming-week" | "calendar">("board");
+  const [view, setView] = useState<"board" | "analysis" | "coming-week" | "calendar" | "ai-planner">("board");
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({ "To Do": 25, "In Progress": 25, "Completed": 25 });
 
@@ -118,11 +118,11 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
     "Completed": { icon: CheckCircle, dotColor: "bg-accent" },
   };
 
-  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : view === "calendar" ? "Calendar" : "Current Week Planner";
+  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : view === "calendar" ? "Calendar" : view === "ai-planner" ? "AI Planner" : "Current Week Planner";
 
   const body = (
     <div className="py-4">
-      {view === "board" || view === "calendar" ? (
+      {view === "board" || view === "calendar" || view === "ai-planner" ? (
         <>
           {/* Top toolbar: page-level navigation */}
           <div className="flex items-center gap-3 mb-3 flex-wrap">
