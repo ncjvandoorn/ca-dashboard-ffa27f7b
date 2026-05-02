@@ -5,6 +5,7 @@ import { FileText, Sparkles, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { VaselifeTrialReport } from "./VaselifeTrialReport";
+import { SharePageButton } from "@/components/SharePageButton";
 import {
   Dialog,
   DialogContent,
@@ -499,15 +500,22 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
                 )}
               </TabsTrigger>
             </TabsList>
-            <Button
-              size="sm"
-              variant="default"
-              onClick={() => setReportOpen(true)}
-              className="gap-1.5"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              Report
-            </Button>
+            <div className="flex items-center gap-2">
+              <SharePageButton
+                pageType="vaselife_report"
+                disabled={vasesLoading || measLoading}
+                getPayload={() => ({ trial, vases, measurements })}
+              />
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => setReportOpen(true)}
+                className="gap-1.5"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Report
+              </Button>
+            </div>
           </div>
 
 

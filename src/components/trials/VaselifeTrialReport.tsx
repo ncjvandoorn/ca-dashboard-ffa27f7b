@@ -5,7 +5,6 @@ import {
   useVaselifeMeasurements,
   type VaselifeHeader,
 } from "@/hooks/useVaselifeTrials";
-import { SharePageButton } from "@/components/SharePageButton";
 import { VaselifeTrialReportBody } from "./VaselifeTrialReportBody";
 
 interface Props {
@@ -37,20 +36,13 @@ export function VaselifeTrialReport({ trial, open, onOpenChange }: Props) {
         className="w-full sm:max-w-3xl overflow-y-auto bg-background"
       >
         <SheetHeader>
-          <div className="flex items-center justify-between gap-3 pr-8">
-            <SheetTitle className="flex items-center gap-2 text-lg">
-              <FileText className="h-5 w-5 text-primary" />
-              Vase Life Report
-              <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
-                {reportCode}
-              </span>
-            </SheetTitle>
-            <SharePageButton
-              pageType="vaselife_report"
-              disabled={vasesLoading || measLoading}
-              getPayload={() => ({ trial, vases, measurements })}
-            />
-          </div>
+          <SheetTitle className="flex items-center gap-2 text-lg pr-8">
+            <FileText className="h-5 w-5 text-primary" />
+            Vase Life Report
+            <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
+              {reportCode}
+            </span>
+          </SheetTitle>
         </SheetHeader>
 
         <VaselifeTrialReportBody

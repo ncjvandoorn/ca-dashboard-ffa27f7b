@@ -153,6 +153,10 @@ function SharedRenderer({ row }: { row: SharedPageRow }) {
     return <SharedVaselifeReport payload={payload} />;
   }
 
+  if (row.page_type === "crm_meeting_snapshot") {
+    return <SharedCrmMeeting payload={payload} />;
+  }
+
   return <Unsupported />;
 }
 
@@ -787,5 +791,171 @@ function SharedVaselifeReport({ payload }: { payload: any }) {
       </p>
       <VaselifeTrialReportBody trial={trial} vases={vases} measurements={measurements} />
     </div>
+  );
+}
+
+/* ───────────────────────── CRM Meeting Snapshot ───────────────────────── */
+
+function SharedCrmMeeting({ payload }: { payload: any }) {
+  const weekLabel: string = payload?.weekLabel || "";
+  const weekNr: number = payload?.weekNr;
+  const team: { id: string; name: string }[] = payload?.teamMembers || [];
+  const board: any[] = payload?.board || [];
+  const calendar: any[] = payload?.calendar || [];
+  const confs: any[] = payload?.aiPlanner?.confirmations || [];
+  const insights = payload?.aiActivityInsights;
+  const generatedAt = payload?.generatedAt;
+
+  const byStatus = (s: string) => board.filter(b => b.status === s);
+  const DAY_KEYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const dayOf = (ts: number | null) => {
+    if (!ts) return "—";
+    const d = new Date(ts);
+    return DAY_KEYS[(d.getDay() + 6) % 7];
+  };
+  const calendarByDay = DAY_KEYS.map(d => ({
+    day: d,
+    items: calendar.filter(c => dayOf(c.startsAt) === d).sort((a, b) => (a.startsAt || 0) - (b.startsAt || 0)),
+  }));
+
+  const confsByUser = new Map<string, { ai: any[]; added: any[] }>();
+  for (const c of confs) {
+    const u = c.userName || "Unassigned";
+    if (!confsByUser.has(u)) confsByUser.set(u, { ai: [], added: [] });
+    const bucket = confsByUser.get(u)!;
+    if (c.source === "added") bucket.added.push(c);
+    else if (c.checked) bucket.ai.push(c);
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div>
+        <div className="flex items-center gap-2">
+          <ClipboardCheck className="h-5 w-5 text-primary" />
+          <h1 className="text-2xl font-semibold">CRM Meeting Snapshot</h1>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">
+          Week {weekNr} · {weekLabel}
+          {generatedAt && ` · captured ${new Date(generatedAt).toLocaleString()}`}
+        </p>
+      </div>
+
+      {/* AI Activity Insights */}
+      <Section title="AI Activity Insights">
+        {!insights || !insights.plan ? (
+          <p className="text-sm text-muted-foreground italic">No AI plan was cached for this week.</p>
+        ) : (
+          <SharedWeeklyPlan payload={{ plan: insights.plan, weekLabel: `Week ${weekNr} · ${weekLabel}` }} />
+        )}
+      </Section>
+
+      {/* AI Planner */}
+      <Section title="AI Planner — confirmed visits">
+        {confsByUser.size === 0 ? (
+          <p className="text-sm text-muted-foreground italic">No confirmations recorded for this week.</p>
+        ) : (
+          <div className="space-y-3">
+            {[...confsByUser.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([userName, b]) => (
+              <div key={userName} className="rounded-lg border border-border bg-card p-3">
+                <p className="font-medium text-sm">{userName}</p>
+                {b.ai.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">AI suggested · confirmed</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {b.ai.map((c, i) => (
+                        <span key={i} className="text-xs rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5">
+                          {c.farm_name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {b.added.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Added in meeting</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {b.added.map((c, i) => (
+                        <span key={i} className="text-xs rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5">
+                          + {c.farm_name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {b.ai.length === 0 && b.added.length === 0 && (
+                  <p className="text-xs text-muted-foreground italic mt-1">No farms confirmed.</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* Calendar */}
+      <Section title="Calendar — this week">
+        {calendar.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">No activities scheduled this week.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border border-border">
+            {calendarByDay.map(d => (
+              <div key={d.day} className="bg-background p-2 min-h-[120px]">
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">{d.day}</div>
+                <div className="space-y-1">
+                  {d.items.length === 0 && <div className="text-[11px] text-muted-foreground/60 italic">—</div>}
+                  {d.items.map(it => (
+                    <div key={it.id} className="rounded border border-border bg-muted/30 px-1.5 py-1 text-[11px]">
+                      <div className="font-medium truncate">{it.subject}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {it.farmName || "—"}{it.assignedName ? ` · ${it.assignedName}` : ""}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* Board */}
+      <Section title="Board — open items + this week's completed">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {(["To Do", "In Progress", "Completed"] as const).map(status => {
+            const items = byStatus(status);
+            return (
+              <div key={status} className="rounded-lg border border-border bg-card p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold">{status}</h3>
+                  <SnapBadge>{items.length}</SnapBadge>
+                </div>
+                <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
+                  {items.length === 0 && <p className="text-xs text-muted-foreground italic">No items.</p>}
+                  {items.map(it => (
+                    <div key={it.id} className="rounded border border-border bg-background px-2 py-1.5 text-xs">
+                      <div className="font-medium truncate">{it.subject}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">
+                        {it.type}{it.farmName ? ` · ${it.farmName}` : ""}{it.assignedName ? ` · ${it.assignedName}` : ""}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+
+      <p className="text-[11px] text-muted-foreground italic pt-4 border-t border-border">
+        Snapshot of {team.length} team member{team.length === 1 ? "" : "s"} · captured at the moment Share was clicked.
+      </p>
+    </div>
+  );
+}
+
+function SnapBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-medium">
+      {children}
+    </span>
   );
 }
