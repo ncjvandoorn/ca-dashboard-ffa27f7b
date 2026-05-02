@@ -687,9 +687,44 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="text-sm font-semibold">
-          Week {selectedWeek} <span className="text-muted-foreground font-normal">· {weekDateRange(selectedWeek)}</span>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline" size="sm" className="h-8 w-8 p-0"
+            onClick={() => setSelectedWeek(w => shiftWeek(w, -1))}
+            aria-label="Previous week"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="text-sm font-semibold px-2 min-w-[220px] text-center">
+            Week {selectedWeek} <span className="text-muted-foreground font-normal">· {weekDateRange(selectedWeek)}</span>
+          </div>
+          <Button
+            variant="outline" size="sm" className="h-8 w-8 p-0"
+            onClick={() => setSelectedWeek(w => shiftWeek(w, 1))}
+            aria-label="Next week"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          {selectedWeek !== currentWeek && (
+            <Button
+              variant="ghost" size="sm" className="h-8 gap-1.5 ml-1"
+              onClick={() => setSelectedWeek(currentWeek)}
+            >
+              <CalendarDays className="h-3.5 w-3.5" /> This week
+            </Button>
+          )}
         </div>
+
+        {isPastWeek && (
+          <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-[10px]">
+            Read-only · past week
+          </Badge>
+        )}
+        {isFutureWeek && (
+          <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-[10px]">
+            Future week
+          </Badge>
+        )}
 
         <Button
           variant="outline" size="sm" className="h-8 gap-1.5"
