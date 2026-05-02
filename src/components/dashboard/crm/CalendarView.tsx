@@ -1,14 +1,11 @@
 import { useState, useMemo } from "react";
 import {
   ArrowLeft, ChevronLeft, ChevronRight, ClipboardList, Phone, MapPin,
-  Filter, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Activity, User, Account } from "@/lib/csvParser";
 
 interface Props {
