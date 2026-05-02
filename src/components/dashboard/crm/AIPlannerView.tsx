@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   geocodeCustomer, preloadCloudCache, bestAddress, type GeoResult,
 } from "@/lib/customerGeocode";
+import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 
 interface Props {
