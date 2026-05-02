@@ -80,7 +80,8 @@ interface PlanVisit {
   reason: string;
   suggestedUser: string;
   priority: string;
-  source: "urgent" | "suggested" | "commercial";
+  source: "urgent" | "suggested" | "commercial" | "crm" | "coverage";
+  visitScore?: number;
 }
 
 interface PlannedFarm extends PlanVisit {
@@ -168,7 +169,7 @@ function distributeAcrossWeek(n: number): string[] {
 
 /* -------------------- Component -------------------- */
 
-export function AIPlannerView({ accounts, activeUsers }: Props) {
+export function AIPlannerView({ allActivities, users, accounts, reports, activeUsers }: Props) {
   const selectedWeek = useMemo(() => getWeekNrForDate(new Date()), []);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(() => activeUsers.map(u => u.id));
   // Keep selection in sync with the preselected users from settings.
@@ -194,6 +195,19 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
     for (const a of accounts) m.set(normalizeName(a.name), a);
     return m;
   }, [accounts]);
+
+  const accountById = useMemo(() => {
+    const m = new Map<string, Account>();
+    for (const a of accounts) m.set(a.id, a);
+    return m;
+  }, [accounts]);
+
+  const userNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const u of users) m.set(u.id, u.name);
+    for (const u of activeUsers) m.set(u.id, u.name);
+    return m;
+  }, [users, activeUsers]);
 
   const { data: userCustomerRows } = useUserCustomers();
   const resolveResponsible = useMemo(
