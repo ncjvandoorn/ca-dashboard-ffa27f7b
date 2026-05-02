@@ -249,6 +249,14 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const [routes, setRoutes] = useState<Record<string, PlannedFarm[]>>(() => routesCache[routesKeyInit] || {});
   const [computingRoutes, setComputingRoutes] = useState(false);
 
+  // Per-user base override (session-only): defaults to USER_HOME_BASE.
+  const [baseOverride, setBaseOverride] = useState<Record<string, "Nairobi" | "Nakuru">>({});
+  const homeBaseFor = useCallback((userId: string, userName: string) => {
+    const ov = baseOverride[userId];
+    if (ov) return BASE_CITIES[ov];
+    return defaultHomeBaseFor(userName);
+  }, [baseOverride]);
+
   // Confirmations: this week + all prior weeks (to compute carry-over misses).
   const [confirmations, setConfirmations] = useState<PlannerConfirmation[]>([]);
   const [, setConfLoaded] = useState(false);
