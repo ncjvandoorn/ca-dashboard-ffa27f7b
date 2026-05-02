@@ -637,7 +637,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
 
         // Order by nearest-neighbor loop starting/ending at user's home base.
         const userName = activeUsers.find(u => u.id === uid)?.name || "";
-        const home = homeBaseFor(userName);
+        const home = homeBaseFor(uid, userName);
         const ordered = nearestNeighborLoop(geocoded, home);
 
         // Distribute across Mon-Fri
