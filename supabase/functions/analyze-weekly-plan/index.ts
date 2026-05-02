@@ -34,12 +34,12 @@ serve(async (req) => {
 
 ${adminInstructions ? `**ADMIN INSTRUCTIONS (follow these closely):**\n${adminInstructions}\n` : ""}
 
-**WORK SCHEDULE**: The team works Monday to Friday. Today is ${todayDate || "a weekday"}. THIS week runs from ${weekDates || "Monday to Friday"}. The current week number is ${currentWeekNr || "unknown"} (format YYWW). This plan ALWAYS covers the FULL work week Monday–Friday, even if generated mid-week. All recommendations and schedules must use days Monday through Friday of THIS week. Never plan for next week.
+**WORK SCHEDULE**: The team works Monday to Friday. **Monday is an OFFICE day — never schedule farm visits on Monday.** Farm visits happen Tuesday to Friday only. Today is ${todayDate || "a weekday"}. THIS week runs from ${weekDates || "Monday to Friday"}. The current week number is ${currentWeekNr || "unknown"} (format YYWW). This plan ALWAYS covers the FULL work week Monday–Friday, even if generated mid-week. All recommendations and schedules must use days Monday through Friday of THIS week. Never plan for next week.
 
 **REALISTIC CONSTRAINTS:**
-- Each inspector can realistically visit a MAXIMUM of 5 farms per day (travel time, inspection time)
+- Each inspector can realistically visit a MAXIMUM of 3 farms per day, Tuesday–Friday only (12 visits/week max per user). Monday is reserved for office work.
 - Calls, admin tasks, and follow-ups have no daily limit
-- If a user has 60 open tasks, they cannot do all of them this week — prioritize the top 5-10 most urgent
+- If a user has 60 open tasks, they cannot do all of them this week — prioritize the top 10-12 most urgent
 - Focus on what is actionable THIS week. Do not suggest things for next week.
 
 **DATA FORMAT — COMPACT KEYS:**
@@ -66,7 +66,7 @@ Return JSON with this structure:
 {
   "weekLabel": "Week XX (DD Mon – DD Mon YYYY)",
   "executiveSummary": "3-4 sentences: team situation, key quality concerns, #1 priority for THIS week.",
-  "urgentFarmVisits": [{ "farmId","farmName","reason" (cite data),"suggestedUser","suggestedDay" (Mon-Fri),"qualityIssues":[],"priority":"critical"|"high" }],
+  "urgentFarmVisits": [{ "farmId","farmName","reason" (cite data),"suggestedUser","suggestedDay" (Tue-Fri),"qualityIssues":[],"priority":"critical"|"high" }],
   "overdueActivities": [{ "activitySubject","farmName","assignedUser","daysOverdue","recommendation" }],
   "userWorkloadAssessment": [{ "userName","openTasks","completedRecently","completionRate","farmsCovered","assessment":"On track"|"Overloaded"|"Underutilized"|"Falling behind","recommendation","suggestedSchedule":["Monday: ...","Tuesday: ..."] }],
   "suggestedNewActivities": [{ "type":"Task"|"Visit"|"Call","subject","farmName","suggestedUser","suggestedDay","reason" (cite data),"priority":"critical"|"high"|"medium" }],
@@ -75,7 +75,7 @@ Return JSON with this structure:
   "weeklyFocus": "3-4 sentence team directive for this week. Summarize #1 priority, key risks, team actions."
 }
 
-**LIMITS per section:** urgentFarmVisits max 15, overdueActivities max 15, suggestedNewActivities max 15, farmsWithoutCoverage max 10, commercialFollowups max 15. Across the whole team for the whole week, max 25 total farm visits (5 per day × 5 days).
+**LIMITS per section:** urgentFarmVisits max 40, overdueActivities max 15, suggestedNewActivities max 40, farmsWithoutCoverage max 10, commercialFollowups max 15. Per user: max 12 farm visits per week (3 per day × 4 days, Tuesday–Friday). Aim to fill each user's 12-visit capacity when there is enough actionable data.
 
 **COMMERCIAL FOLLOW-UPS — what to include:**
 The input \`commercialFollowupCandidates\` lists Vase Life trials whose Next Step is "Commercial" (recommendation does NOT contain "repeat") and where our pre-filter found NO CRM activity since the trial date that mentions a key product/keyword from the recommendation.
@@ -93,7 +93,7 @@ For each candidate decide whether it truly represents an unfollowed-up sales opp
 3. Staff notes: quote or closely paraphrase actual qN, pN, gC text.
 4. If fewer items qualify, return fewer. Never pad lists.
 5. Include ALL team members in userWorkloadAssessment.
-6. suggestedSchedule per user: max 5 visits/day, unlimited calls/tasks.
+6. suggestedSchedule per user: max 3 visits/day, Tuesday–Friday only (Monday = office). Unlimited calls/tasks.
 7. For commercialFollowups: \`trialId\` MUST exactly match an \`id\` from commercialFollowupCandidates.`;
 
     const userPrompt = `Create the action plan for THIS week (${weekDates || "Mon–Fri"}). Today is ${todayDate || "a weekday"}, week ${currentWeekNr || "?"}.
