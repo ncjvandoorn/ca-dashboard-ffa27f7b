@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  ChevronLeft, ChevronRight, MapPin, Sparkles, Loader2, RefreshCw,
+  MapPin, Sparkles, Loader2, RefreshCw,
   Filter, Check, Route,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -141,8 +141,7 @@ function distributeAcrossWeek(n: number): string[] {
 /* -------------------- Component -------------------- */
 
 export function AIPlannerView({ accounts, activeUsers }: Props) {
-  const [selectedWeek, setSelectedWeek] = useState<number>(() => getWeekNrForDate(new Date()));
-  const currentWeek = getWeekNrForDate(new Date());
+  const selectedWeek = useMemo(() => getWeekNrForDate(new Date()), []);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(() => activeUsers.map(u => u.id));
   const userSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
@@ -313,18 +312,7 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setSelectedWeek(shiftWeek(selectedWeek, -1))}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" className="h-8" onClick={() => setSelectedWeek(currentWeek)}>
-            This week
-          </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setSelectedWeek(shiftWeek(selectedWeek, 1))}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="text-sm font-semibold min-w-[220px]">
+        <div className="text-sm font-semibold">
           Week {selectedWeek} <span className="text-muted-foreground font-normal">· {weekDateRange(selectedWeek)}</span>
         </div>
 
