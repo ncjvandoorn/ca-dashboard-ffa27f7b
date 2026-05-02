@@ -280,7 +280,7 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
         const days = distributeAcrossWeek(ordered.length);
         const planned: PlannedFarm[] = ordered.map((f, i) => ({
           ...f,
-          day: days[i] || "Mon",
+          day: days[i] || "Tue",
           order: i + 1,
         }));
         out[uid] = planned;
