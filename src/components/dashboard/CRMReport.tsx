@@ -118,7 +118,16 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
 
   const columns = useMemo(() => {
     const cols: Record<string, Activity[]> = { "To Do": [], "In Progress": [], "Completed": [] };
+    const q = boardSearch.trim().toLowerCase();
+    const matches = (a: Activity) => {
+      if (!q) return true;
+      const farm = a.accountId ? (accountMap.get(a.accountId) || "") : "";
+      const assignee = a.assignedUserId ? (userMap.get(a.assignedUserId) || "") : "";
+      return [a.subject, a.description, a.type, farm, assignee]
+        .some((v) => (v || "").toString().toLowerCase().includes(q));
+    };
     for (const a of filteredActivities) {
+      if (!matches(a)) continue;
       const status = STATUS_COLUMNS.includes(a.status as any) ? a.status : null;
       if (status) cols[status].push(a);
     }
@@ -126,7 +135,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
       cols[key].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     }
     return cols;
-  }, [filteredActivities]);
+  }, [filteredActivities, boardSearch, accountMap, userMap]);
 
   const columnMeta: Record<string, { icon: typeof ClipboardList; dotColor: string }> = {
     "To Do": { icon: AlertCircle, dotColor: "bg-warning" },
