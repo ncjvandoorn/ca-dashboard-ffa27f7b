@@ -876,18 +876,18 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
 
       <div className="space-y-6">
       {/* Commercial trial follow-ups — sales opportunities with no recent CRM mention */}
-      {((plan?.commercialFollowups && plan.commercialFollowups.length > 0) || passedFollowups.length > 0) && (
+      {(mergedCommercialFollowups.length > 0 || passedFollowups.length > 0) && (
         <div data-pdf-section>
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-accent" />
-            Commercial Trial Follow-ups ({plan?.commercialFollowups?.length ?? 0})
+            Commercial Trial Follow-ups ({mergedCommercialFollowups.length})
             <span className="text-[10px] font-normal normal-case text-muted-foreground/80">
               · Successful trials with no sales follow-up yet
             </span>
           </h4>
-          {plan?.commercialFollowups && plan.commercialFollowups.length > 0 ? (
+          {mergedCommercialFollowups.length > 0 ? (
             <div className="space-y-2">
-              {plan.commercialFollowups.map((c, i) => (
+              {mergedCommercialFollowups.map((c, i) => (
                 <motion.div
                   key={c.trialId || i}
                   initial={{ opacity: 0, x: -8 }}
