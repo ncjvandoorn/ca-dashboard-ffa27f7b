@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  ChevronLeft, ChevronRight, MapPin, Sparkles, Loader2, RefreshCw,
+  MapPin, Sparkles, Loader2, RefreshCw,
   Filter, Check, Route,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
