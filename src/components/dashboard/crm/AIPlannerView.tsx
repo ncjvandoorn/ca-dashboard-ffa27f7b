@@ -186,8 +186,9 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const selectedUserIds = useMemo(() => activeUsers.map(u => u.id), [activeUsers]);
   const userSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
-  const [plan, setPlan] = useState<WeeklyPlan | null>(null);
-  const [planLoadedAt, setPlanLoadedAt] = useState<string | null>(null);
+  const initialCached = planCache[selectedWeek];
+  const [plan, setPlan] = useState<WeeklyPlan | null>(initialCached?.plan ?? null);
+  const [planLoadedAt, setPlanLoadedAt] = useState<string | null>(initialCached?.loadedAt ?? null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [routes, setRoutes] = useState<Record<string, PlannedFarm[]>>({});
@@ -218,11 +219,11 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     [userCustomerRows],
   );
 
-  // Load cached plan for the selected week
-  const loadPlan = useCallback(async () => {
-    setLoading(true);
-    setPlan(null);
-    setRoutes({});
+  // Load cached plan for the selected week. `forceSpinner` is true only on
+  // explicit user-triggered reload — automatic loads keep the previously
+  // displayed plan visible (no flash of the loading state).
+  const loadPlan = useCallback(async (forceSpinner = false) => {
+    if (forceSpinner || !planCache[selectedWeek]) setLoading(true);
     try {
       const { data } = await supabase
         .from("weekly_plan_cache")
@@ -230,9 +231,12 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         .eq("week_nr", selectedWeek)
         .maybeSingle();
       if (data?.analysis) {
-        setPlan(data.analysis as WeeklyPlan);
+        const p = data.analysis as WeeklyPlan;
+        planCache[selectedWeek] = { plan: p, loadedAt: data.created_at };
+        setPlan(p);
         setPlanLoadedAt(data.created_at);
-      } else {
+      } else if (forceSpinner) {
+        setPlan(null);
         setPlanLoadedAt(null);
       }
     } catch (e) {
@@ -242,7 +246,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     }
   }, [selectedWeek]);
 
-  useEffect(() => { loadPlan(); }, [loadPlan]);
+  useEffect(() => { loadPlan(false); }, [loadPlan]);
 
   // Build visit proposals per selected user, then geocode + order
   const buildRoutes = useCallback(async () => {
