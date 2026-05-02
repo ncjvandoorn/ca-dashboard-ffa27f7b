@@ -55,6 +55,12 @@ export function VaselifeTrialReportBody({
   vasesLoading = false,
   measLoading = false,
 }: Props) {
+  const { data: userCustomers = [] } = useUserCustomers();
+  const technicalConsultant = useMemo(() => {
+    const resolve = buildResponsibleResolver(userCustomers);
+    return resolve(trial.farm) || resolve(trial.customer) || "";
+  }, [userCustomers, trial.farm, trial.customer]);
+
   const { tripProperties, propCounts } = useMemo(() => {
     const counts = new Map<string, number>();
     for (const m of measurements) {
