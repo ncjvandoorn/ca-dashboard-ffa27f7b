@@ -931,6 +931,41 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
               </div>
             );
           })}
+
+          {/* Color legend */}
+          <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-2">Legend</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px]">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded border border-destructive/40 bg-destructive/5" />
+                Urgent
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded border border-amber-500/40 bg-amber-500/10" />
+                Commercial
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded border border-accent/40 bg-accent/10" />
+                CRM follow-up
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded border border-secondary/40 bg-secondary/20" />
+                Coverage
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded border border-primary/30 bg-primary/5" />
+                Other AI suggestion
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded border-2 border-destructive bg-destructive/10" />
+                Missed (carry-over)
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded border border-primary/40 bg-primary/10 ring-1 ring-primary/40" />
+                Confirmed / added
+              </span>
+            </div>
+          </div>
         </div>
       )}
     </div>
