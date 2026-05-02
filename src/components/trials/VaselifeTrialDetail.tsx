@@ -504,7 +504,13 @@ export function VaselifeTrialDetail({ trial, open, onOpenChange, plannerMatches 
               <SharePageButton
                 pageType="vaselife_report"
                 disabled={vasesLoading || measLoading}
-                getPayload={() => ({ trial, vases, measurements })}
+                getPayload={() => ({
+                  trial,
+                  vases,
+                  measurements,
+                  aiAnalysis,
+                  aiUpdatedAt,
+                })}
               />
               <Button
                 size="sm"
