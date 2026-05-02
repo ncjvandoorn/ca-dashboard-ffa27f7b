@@ -12,6 +12,8 @@ import { QualityReportBody } from "@/components/dashboard/QualityReportBody";
 import { SharedTripMap } from "@/components/dashboard/SharedTripMap";
 import { VaselifeTrialReportBody } from "@/components/trials/VaselifeTrialReportBody";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 
 export default function SharedPage() {
   const { token } = useParams<{ token: string }>();
@@ -767,6 +769,7 @@ function SharedVaselifeReport({ payload }: { payload: any }) {
   const trial = payload?.trial;
   const vases = payload?.vases ?? [];
   const measurements = payload?.measurements ?? [];
+  const [reportOpen, setReportOpen] = useState(false);
   if (!trial) {
     return (
       <div className="max-w-md mx-auto mt-12 text-center">
@@ -777,19 +780,109 @@ function SharedVaselifeReport({ payload }: { payload: any }) {
   const reportCode =
     trial.trial_number ||
     (trial.start_vl ? String(trial.start_vl).replace(/-/g, "").slice(0, 8) : String(trial.id || "").slice(0, 8));
+  const fmtDate = (d: string | null | undefined) =>
+    d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex items-center gap-2 mb-1">
-        <FileText className="h-5 w-5 text-primary" />
-        <h1 className="text-2xl font-semibold">Vase Life Report</h1>
-        <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
-          {reportCode}
-        </span>
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <FileText className="h-5 w-5 text-primary" />
+            <h1 className="text-2xl font-semibold">Trial {trial.trial_number || String(trial.id || "").slice(0, 8)}</h1>
+            <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
+              {reportCode}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2 items-center">
+            {trial.farm && <Badge variant="secondary">{trial.farm}</Badge>}
+            {trial.customer && <Badge variant="outline">{trial.customer}</Badge>}
+            {trial.crop && <Badge variant="outline">{trial.crop}</Badge>}
+            {trial.freight_type && <Badge variant="outline">{trial.freight_type}</Badge>}
+          </div>
+        </div>
+        <Button size="sm" variant="default" onClick={() => setReportOpen(true)} className="gap-1.5 shrink-0">
+          <FileText className="h-3.5 w-3.5" />
+          Report
+        </Button>
       </div>
-      <p className="text-sm text-muted-foreground mb-6">
-        {trial.crop || "—"}{trial.customer ? ` · ${trial.customer}` : ""}{trial.farm ? ` · ${trial.farm}` : ""}
-      </p>
-      <VaselifeTrialReportBody trial={trial} vases={vases} measurements={measurements} />
+
+      {/* Top metadata block */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs border border-border rounded-md p-3 bg-muted/30 mt-2">
+        <div>
+          <div className="text-muted-foreground">Harvest date</div>
+          <div className="font-medium">{fmtDate(trial.harvest_date)}</div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">Initial quality</div>
+          <div className="font-medium">{trial.initial_quality || "—"}</div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">Transport phase</div>
+          <div className="font-medium">{fmtDate(trial.start_transport)}</div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">Start VL trial</div>
+          <div className="font-medium">{fmtDate(trial.start_vl)}</div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">Cultivars × Treatments</div>
+          <div className="font-medium">
+            {trial.cultivar_count ?? "—"} × {trial.treatment_count ?? "—"}
+          </div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">Vases / treatment</div>
+          <div className="font-medium">
+            {trial.vases_per_treatment ?? "—"}
+            {trial.stems_per_vase ? ` · ${trial.stems_per_vase} stems` : ""}
+          </div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">Total vases</div>
+          <div className="font-medium">{trial.total_vases ?? vases.length ?? "—"}</div>
+        </div>
+        <div>
+          <div className="text-muted-foreground">Measurements</div>
+          <div className="font-medium">{measurements.length}</div>
+        </div>
+      </div>
+
+      {trial.objective && (
+        <section className="space-y-1 mt-4">
+          <h3 className="text-sm font-semibold">Objective</h3>
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{trial.objective}</p>
+        </section>
+      )}
+
+      {trial.conclusion && (
+        <section className="space-y-1 mt-3">
+          <h3 className="text-sm font-semibold">Conclusion</h3>
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{trial.conclusion}</p>
+        </section>
+      )}
+
+      {trial.recommendations && (
+        <section className="space-y-1 mt-3">
+          <h3 className="text-sm font-semibold">Recommendations</h3>
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{trial.recommendations}</p>
+        </section>
+      )}
+
+      <Sheet open={reportOpen} onOpenChange={setReportOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto bg-background">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2 text-lg pr-8">
+              <FileText className="h-5 w-5 text-primary" />
+              Vase Life Report
+              <span className="ml-2 font-mono text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
+                {reportCode}
+              </span>
+            </SheetTitle>
+          </SheetHeader>
+          <VaselifeTrialReportBody trial={trial} vases={vases} measurements={measurements} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
