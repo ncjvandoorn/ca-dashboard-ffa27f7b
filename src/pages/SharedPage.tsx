@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Loader2, AlertCircle, ArrowLeft, Bot, ClipboardCheck, FileText, Container as ContainerIcon, GitCompare, CalendarDays, ChevronDown, ChevronRight, Thermometer, Sun, Droplets, MapPin, Clock } from "lucide-react";
+import { Loader2, AlertCircle, ArrowLeft, Bot, ClipboardCheck, FileText, Container as ContainerIcon, GitCompare, CalendarDays, ChevronDown, ChevronRight, Thermometer, Sun, Droplets, MapPin, Clock, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -11,6 +11,9 @@ import { SeasonalityInsightsBody, type SeasonalityAnalysis } from "@/components/
 import { QualityReportBody } from "@/components/dashboard/QualityReportBody";
 import { SharedTripMap } from "@/components/dashboard/SharedTripMap";
 import { VaselifeTrialReportBody } from "@/components/trials/VaselifeTrialReportBody";
+import { PropertyHeader, ScoreChip, ScoreScaleLegend } from "@/components/trials/VaselifeScoreUi";
+import { getPropertyMeta, diffTreatmentNames, scoreToneClasses, type ScoreTone } from "@/lib/vaselifeProperties";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
