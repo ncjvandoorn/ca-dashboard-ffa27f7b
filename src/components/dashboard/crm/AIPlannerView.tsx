@@ -141,8 +141,7 @@ function distributeAcrossWeek(n: number): string[] {
 /* -------------------- Component -------------------- */
 
 export function AIPlannerView({ accounts, activeUsers }: Props) {
-  const [selectedWeek, setSelectedWeek] = useState<number>(() => getWeekNrForDate(new Date()));
-  const currentWeek = getWeekNrForDate(new Date());
+  const selectedWeek = useMemo(() => getWeekNrForDate(new Date()), []);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>(() => activeUsers.map(u => u.id));
   const userSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
