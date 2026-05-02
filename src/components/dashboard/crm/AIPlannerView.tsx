@@ -241,6 +241,136 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const [routes, setRoutes] = useState<Record<string, PlannedFarm[]>>(() => routesCache[routesKeyInit] || {});
   const [computingRoutes, setComputingRoutes] = useState(false);
 
+  // Confirmations: this week + all prior weeks (to compute carry-over misses).
+  const [confirmations, setConfirmations] = useState<PlannerConfirmation[]>([]);
+  const [, setConfLoaded] = useState(false);
+
+  const loadConfirmations = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("crm_planner_confirmations")
+      .select("id, week_nr, user_id, farm_name, source, checked")
+      .lte("week_nr", selectedWeek);
+    if (error) {
+      console.error("loadConfirmations error", error);
+      return;
+    }
+    setConfirmations((data || []) as PlannerConfirmation[]);
+    setConfLoaded(true);
+  }, [selectedWeek]);
+
+  useEffect(() => { loadConfirmations(); }, [loadConfirmations]);
+
+  // Fast lookup for current-week confirmations.
+  const confByKey = useMemo(() => {
+    const m = new Map<string, PlannerConfirmation>();
+    for (const c of confirmations) {
+      if (c.week_nr !== selectedWeek) continue;
+      m.set(`${c.user_id}|${normalizeName(c.farm_name)}`, c);
+    }
+    return m;
+  }, [confirmations, selectedWeek]);
+
+  // "Added" farms per user for this week (manually added during meeting).
+  const addedByUser = useMemo(() => {
+    const m = new Map<string, PlannerConfirmation[]>();
+    for (const c of confirmations) {
+      if (c.week_nr !== selectedWeek) continue;
+      if (c.source !== "added") continue;
+      const arr = m.get(c.user_id) || [];
+      arr.push(c);
+      m.set(c.user_id, arr);
+    }
+    return m;
+  }, [confirmations, selectedWeek]);
+
+  // Carry-over misses: confirmed (checked=true) farms in any prior week (< selectedWeek)
+  // for which NO Visit-type activity exists in their committed week — and which
+  // also haven't been visited in any week since.
+  const carryOverByUser = useMemo(() => {
+    const out = new Map<string, Array<{ farmName: string; weekNr: number; source: "ai" | "added" }>>();
+    for (const c of confirmations) {
+      if (c.week_nr >= selectedWeek) continue;
+      if (!c.checked) continue;
+      let visitedSince = false;
+      for (let w = c.week_nr; w < selectedWeek; w++) {
+        if (farmVisitedInWeek(c.farm_name, accounts, allActivities, w)) { visitedSince = true; break; }
+      }
+      if (visitedSince) continue;
+      const arr = out.get(c.user_id) || [];
+      if (!arr.some(x => normalizeName(x.farmName) === normalizeName(c.farm_name))) {
+        arr.push({ farmName: c.farm_name, weekNr: c.week_nr, source: c.source });
+      }
+      out.set(c.user_id, arr);
+    }
+    for (const [, arr] of out) arr.sort((a, b) => a.weekNr - b.weekNr);
+    return out;
+  }, [confirmations, selectedWeek, accounts, allActivities]);
+
+  /** Toggle / create a confirmation for the current week. */
+  const toggleConfirmation = useCallback(async (
+    userId: string,
+    farmName: string,
+    source: "ai" | "added",
+    nextChecked: boolean,
+  ) => {
+    const key = `${userId}|${normalizeName(farmName)}`;
+    const existing = confByKey.get(key);
+    setConfirmations(prev => {
+      const without = prev.filter(c => !(c.week_nr === selectedWeek && c.user_id === userId && normalizeName(c.farm_name) === normalizeName(farmName)));
+      return [...without, {
+        id: existing?.id ?? `temp-${Date.now()}`,
+        week_nr: selectedWeek,
+        user_id: userId,
+        farm_name: farmName,
+        source,
+        checked: nextChecked,
+      }];
+    });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (existing && !existing.id.startsWith("temp-")) {
+      const { error } = await supabase
+        .from("crm_planner_confirmations")
+        .update({ checked: nextChecked, source })
+        .eq("id", existing.id);
+      if (error) {
+        toast({ title: "Could not save", description: error.message, variant: "destructive" });
+        loadConfirmations();
+      }
+    } else {
+      const { error } = await supabase
+        .from("crm_planner_confirmations")
+        .upsert({
+          week_nr: selectedWeek,
+          user_id: userId,
+          farm_name: farmName,
+          source,
+          checked: nextChecked,
+          created_by: user?.id ?? null,
+        }, { onConflict: "week_nr,user_id,farm_name" });
+      if (error) {
+        toast({ title: "Could not save", description: error.message, variant: "destructive" });
+      }
+      loadConfirmations();
+    }
+  }, [confByKey, selectedWeek, loadConfirmations]);
+
+  /** Remove an "added" farm entirely. */
+  const removeAddedFarm = useCallback(async (userId: string, farmName: string) => {
+    const key = `${userId}|${normalizeName(farmName)}`;
+    const existing = confByKey.get(key);
+    setConfirmations(prev => prev.filter(c => !(c.week_nr === selectedWeek && c.user_id === userId && normalizeName(c.farm_name) === normalizeName(farmName))));
+    if (existing && !existing.id.startsWith("temp-")) {
+      const { error } = await supabase
+        .from("crm_planner_confirmations")
+        .delete()
+        .eq("id", existing.id);
+      if (error) {
+        toast({ title: "Could not remove", description: error.message, variant: "destructive" });
+        loadConfirmations();
+      }
+    }
+  }, [confByKey, selectedWeek, loadConfirmations]);
+
   const accountByName = useMemo(() => {
     const m = new Map<string, Account>();
     for (const a of accounts) m.set(normalizeName(a.name), a);
