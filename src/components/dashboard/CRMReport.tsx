@@ -117,7 +117,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
     "Completed": { icon: CheckCircle, dotColor: "bg-accent" },
   };
 
-  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : "Current Week Planner";
+  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : view === "calendar" ? "Calendar" : "Current Week Planner";
 
   const body = (
     <div className="py-4">
