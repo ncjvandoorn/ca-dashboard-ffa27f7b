@@ -94,7 +94,16 @@ For each candidate decide whether it truly represents an unfollowed-up sales opp
 4. If fewer items qualify, return fewer. Never pad lists.
 5. Include ALL team members in userWorkloadAssessment.
 6. suggestedSchedule per user: max 3 visits/day, Tuesday–Friday only (Monday = office). Unlimited calls/tasks.
-7. For commercialFollowups: \`trialId\` MUST exactly match an \`id\` from commercialFollowupCandidates.`;
+7. For commercialFollowups: \`trialId\` MUST exactly match an \`id\` from commercialFollowupCandidates.
+
+**LEARNING FROM PAST PLANS — VERY IMPORTANT:**
+The input may include \`priorPlanReview\` (per-user, per-week record of farms the team committed to during their Monday meeting in past weeks, with whether each commitment was actually fulfilled by a real Visit activity that week) and \`unresolvedMisses\` (specific farms that were committed to in a prior week but for which NO Visit-type activity has been recorded since the commitment).
+
+When generating THIS week's plan you MUST:
+- Treat every entry in \`unresolvedMisses\` as the **highest possible priority** — schedule them as urgentFarmVisits this week, assigned to the same user who committed to them, with priority "critical". The reason field MUST start with: "CARRY-OVER from week XX — promised but not yet visited." (use the actual week number).
+- Read \`priorPlanReview\` to understand each user's commitment fulfilment pattern. If a user repeatedly fails to convert commitments into visits, mention this in their userWorkloadAssessment recommendation (kindly, factually).
+- If a user reliably visits the farms they commit to, you can be slightly more aggressive in suggesting visits for them.
+- Do NOT re-suggest farms from \`priorPlanReview\` where \`fulfilled=true\` UNLESS the underlying quality data warrants a fresh visit.`;
 
     const userPrompt = `Create the action plan for THIS week (${weekDates || "Mon–Fri"}). Today is ${todayDate || "a weekday"}, week ${currentWeekNr || "?"}.
 The plan must cover Monday through Friday. The weekLabel should reflect "${weekDates || "Mon–Fri"}".
