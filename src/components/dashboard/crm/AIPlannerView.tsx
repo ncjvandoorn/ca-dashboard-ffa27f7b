@@ -22,8 +22,9 @@ interface Props {
   activeUsers: { id: string; name: string }[];
 }
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-const MAX_VISITS_PER_WEEK = 10;
+const DAY_LABELS = ["Tue", "Wed", "Thu", "Fri"];
+const MAX_VISITS_PER_WEEK = 12;
+const MAX_VISITS_PER_DAY = 3;
 
 /* -------------------- Week helpers (YYWW, Sat-Fri) -------------------- */
 
