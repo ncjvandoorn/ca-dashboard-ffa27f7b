@@ -22,39 +22,6 @@ import { CalendarView } from "./crm/CalendarView";
 import { AIPlannerView } from "./crm/AIPlannerView";
 
 
-/* YYWW week helpers (Sat-Fri cycle, Week 1 contains Jan 1) — must match AIPlannerView/ComingWeekView */
-function getCrmWeekNr(date: Date): number {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const daysSinceSat = (d.getDay() + 1) % 7;
-  const currentSat = new Date(d);
-  currentSat.setDate(d.getDate() - daysSinceSat);
-  const jan1 = new Date(currentSat.getFullYear(), 0, 1);
-  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
-  const week1Sat = new Date(jan1);
-  week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
-  const weekNum = Math.floor((currentSat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
-  return (currentSat.getFullYear() % 100) * 100 + weekNum;
-}
-function crmWeekBounds(wn: number): { start: number; end: number } {
-  const year = 2000 + Math.floor(wn / 100);
-  const week = wn % 100;
-  const jan1 = new Date(year, 0, 1);
-  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
-  const week1Sat = new Date(jan1); week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
-  week1Sat.setHours(0, 0, 0, 0);
-  const sat = new Date(week1Sat); sat.setDate(week1Sat.getDate() + (week - 1) * 7);
-  const start = sat.getTime();
-  return { start, end: start + 7 * 86400000 };
-}
-function crmWeekLabel(wn: number): string {
-  const { start, end } = crmWeekBounds(wn);
-  const monday = new Date(start + 2 * 86400000);
-  const friday = new Date(end - 2 * 86400000);
-  const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-  return `${fmt(monday)} – ${fmt(friday)} ${friday.getFullYear()}`;
-}
-
 interface CRMReportProps {
   activities: Activity[];
   users: User[];
