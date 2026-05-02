@@ -760,6 +760,75 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
         payload.todayDate = `Monday ${fmt(targetMonday)} (generated retrospectively)`;
       }
 
+      // Inject prior-week confirmations so the AI learns from what the team
+      // actually committed to in past Monday meetings — and which of those
+      // commitments turned into real Visit activities vs. were missed.
+      try {
+        const { data: confs } = await supabase
+          .from("crm_planner_confirmations")
+          .select("week_nr, user_id, farm_name, source, checked")
+          .lt("week_nr", selectedWeek);
+        if (confs && confs.length) {
+          const userNameById = new Map(users.map(u => [u.id, u.name]));
+          const visitedInWeek = (farmName: string, wn: number): boolean => {
+            const acc = accounts.find(a => (a.name || "").toLowerCase() === (farmName || "").toLowerCase());
+            if (!acc) return false;
+            const sat = weekNrToSaturday(wn);
+            const start = sat.getTime();
+            const end = start + 7 * 86400000;
+            return allActivities.some(a =>
+              a.accountId === acc.id &&
+              (a.type || "").toLowerCase() === "visit" &&
+              ((a.startsAt ?? a.completedAt ?? a.createdAt ?? 0) >= start) &&
+              ((a.startsAt ?? a.completedAt ?? a.createdAt ?? 0) < end)
+            );
+          };
+          const visitedAfterWeek = (farmName: string, fromWn: number): boolean => {
+            const acc = accounts.find(a => (a.name || "").toLowerCase() === (farmName || "").toLowerCase());
+            if (!acc) return false;
+            const sat = weekNrToSaturday(fromWn);
+            const start = sat.getTime();
+            return allActivities.some(a =>
+              a.accountId === acc.id &&
+              (a.type || "").toLowerCase() === "visit" &&
+              ((a.startsAt ?? a.completedAt ?? a.createdAt ?? 0) >= start)
+            );
+          };
+
+          // Group: per (user, week) bucket of {checked, source, farmName, fulfilled}
+          const buckets = new Map<string, { user: string; week: number; items: Array<{ farm: string; source: string; checked: boolean; fulfilled: boolean }> }>();
+          for (const c of confs as any[]) {
+            const key = `${c.user_id}|${c.week_nr}`;
+            const userName = userNameById.get(c.user_id) || c.user_id.slice(0, 6);
+            const fulfilled = visitedInWeek(c.farm_name, c.week_nr);
+            const b = buckets.get(key) || { user: userName, week: c.week_nr, items: [] };
+            b.items.push({ farm: c.farm_name, source: c.source, checked: !!c.checked, fulfilled });
+            buckets.set(key, b);
+          }
+
+          // Last 4 weeks summary (success rate per user)
+          const recentWeekCutoff = selectedWeek - 4;
+          const priorPlanReview = [...buckets.values()]
+            .filter(b => b.week >= recentWeekCutoff)
+            .sort((a, b) => b.week - a.week);
+
+          // Unresolved misses (still no visit since the commitment week)
+          const unresolvedMisses: Array<{ user: string; week: number; farm: string; source: string }> = [];
+          for (const b of buckets.values()) {
+            for (const it of b.items) {
+              if (!it.checked) continue;
+              if (visitedAfterWeek(it.farm, b.week)) continue;
+              unresolvedMisses.push({ user: b.user, week: b.week, farm: it.farm, source: it.source });
+            }
+          }
+
+          (payload as any).priorPlanReview = priorPlanReview;
+          (payload as any).unresolvedMisses = unresolvedMisses.slice(0, 50);
+        }
+      } catch (e) {
+        console.warn("Could not fetch prior planner confirmations:", e);
+      }
+
       const { data, error } = await supabase.functions.invoke("analyze-weekly-plan", { body: payload });
       if (error) {
         // FunctionsHttpError swallows the body; try to extract real reason
