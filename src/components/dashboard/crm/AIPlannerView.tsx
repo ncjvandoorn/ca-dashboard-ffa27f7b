@@ -1,12 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  MapPin, Sparkles, Loader2, RefreshCw,
-  Filter, Check, Route,
+  MapPin, Sparkles, Loader2, RefreshCw, Route,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -472,8 +469,6 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     toast({ title: "Reloaded latest AI plan from cache" });
   }, [loadPlan]);
 
-  const allUsersSelected = selectedUserIds.length === activeUsers.length;
-
   const usersToShow = useMemo(
     () => activeUsers.filter(u => userSet.has(u.id)),
     [activeUsers, userSet],
@@ -491,45 +486,6 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         <div className="text-sm font-semibold">
           Week {selectedWeek} <span className="text-muted-foreground font-normal">· {weekDateRange(selectedWeek)}</span>
         </div>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5">
-              <Filter className="h-4 w-4" />
-              Users ({selectedUserIds.length}/{activeUsers.length})
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-2" align="start">
-            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border mb-1">
-              <span className="text-xs font-medium">Filter users</span>
-              <button
-                className="text-xs text-primary hover:underline"
-                onClick={() => setSelectedUserIds(allUsersSelected ? [] : activeUsers.map(u => u.id))}
-              >
-                {allUsersSelected ? "Clear" : "All"}
-              </button>
-            </div>
-            <ScrollArea className="h-64">
-              <div className="space-y-0.5 pr-2">
-                {activeUsers.map(u => {
-                  const checked = userSet.has(u.id);
-                  return (
-                    <button
-                      key={u.id}
-                      onClick={() => setSelectedUserIds(prev => prev.includes(u.id) ? prev.filter(x => x !== u.id) : [...prev, u.id])}
-                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent text-left text-sm"
-                    >
-                      <div className={`h-4 w-4 rounded border flex items-center justify-center ${checked ? "bg-primary border-primary" : "border-border"}`}>
-                        {checked && <Check className="h-3 w-3 text-primary-foreground" />}
-                      </div>
-                      <span className="truncate">{u.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          </PopoverContent>
-        </Popover>
 
         <Button
           variant="outline" size="sm" className="h-8 gap-1.5"
