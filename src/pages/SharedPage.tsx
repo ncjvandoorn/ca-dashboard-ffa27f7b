@@ -991,8 +991,8 @@ function SharedVaselifeReport({ payload }: { payload: any }) {
           <div className="font-medium">{trial.initial_quality || "—"}</div>
         </div>
         <div>
-          <div className="text-muted-foreground">Transport phase</div>
-          <div className="font-medium">{fmtDate(trial.start_transport)}</div>
+          <div className="text-muted-foreground">Technical Consultant</div>
+          <div className="font-medium">{payload?.technicalConsultant || "—"}</div>
         </div>
         <div>
           <div className="text-muted-foreground">Start VL trial</div>
