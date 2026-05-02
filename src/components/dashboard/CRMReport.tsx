@@ -131,7 +131,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
     "Completed": { icon: CheckCircle, dotColor: "bg-accent" },
   };
 
-  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : view === "calendar" ? "Calendar" : view === "ai-planner" ? "AI Planner" : "AI Analysis";
+  const viewTitle = view === "board" ? "CRM Activity Board" : view === "analysis" ? "Activity Analysis" : view === "calendar" ? "Calendar" : view === "ai-planner" ? "AI Planner" : "AI Activity Insights";
 
   const body = (
     <div className="py-4">
@@ -141,7 +141,7 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
           <div className="flex items-center gap-3 mb-3 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => setView("coming-week")} className="gap-1.5">
               <CalendarClock className="h-4 w-4" />
-              AI Analysis
+              AI Activity Insights
             </Button>
 
             <span className="text-xs text-muted-foreground ml-auto">
