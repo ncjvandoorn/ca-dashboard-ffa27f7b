@@ -749,7 +749,35 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                   </div>
                 </div>
 
-                {visits.length === 0 ? (
+                {/* Carry-over misses (top priority — must visit) */}
+                {(carryOverByUser.get(u.id)?.length || 0) > 0 && (
+                  <div className="px-3 pt-3 space-y-2">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-destructive uppercase tracking-wide">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Top priority — committed but not visited
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {(carryOverByUser.get(u.id) || []).map(m => (
+                        <div
+                          key={`miss-${m.farmName}-${m.weekNr}`}
+                          className="rounded-md border-2 border-destructive bg-destructive/10 px-2.5 py-2 text-[11px] shadow-[0_0_0_1px_hsl(var(--destructive)/0.4)]"
+                        >
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold truncate">{m.farmName}</div>
+                              <div className="text-[10px] text-destructive/80">
+                                Promised week {m.weekNr} · still no Visit recorded
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {visits.length === 0 && (addedByUser.get(u.id)?.length || 0) === 0 ? (
                   <div className="p-4 text-xs text-muted-foreground italic">
                     No AI-suggested visits this week.
                   </div>
@@ -766,10 +794,16 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                           <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">{day}</div>
                           <div className="space-y-1.5">
                             {items.length === 0 && <div className="text-[11px] text-muted-foreground/60 italic">—</div>}
-                            {items.map(v => (
+                            {items.map(v => {
+                              const cKey = `${u.id}|${normalizeName(v.farmName)}`;
+                              const conf = confByKey.get(cKey);
+                              const isChecked = !!conf?.checked;
+                              return (
                               <div
                                 key={`${v.farmName}-${v.order}`}
                                 className={`rounded border px-2 py-1.5 text-[11px] ${
+                                  isChecked ? "ring-1 ring-primary/40 " : ""
+                                }${
                                   v.source === "urgent"
                                     ? "border-destructive/40 bg-destructive/5"
                                     : v.source === "commercial"
@@ -782,7 +816,13 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                 }`}
                                 title={v.reason}
                               >
-                                <div className="flex items-start gap-1">
+                                <div className="flex items-start gap-1.5">
+                                  <Checkbox
+                                    checked={isChecked}
+                                    onCheckedChange={(val) => toggleConfirmation(u.id, v.farmName, "ai", val === true)}
+                                    className="mt-0.5"
+                                    aria-label={`Confirm visit to ${v.farmName}`}
+                                  />
                                   <span className="font-mono text-[10px] text-muted-foreground">#{v.order}</span>
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium truncate">{v.farmName}</div>
@@ -790,18 +830,108 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                   </div>
                                 </div>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       );
                     })}
                   </div>
                 )}
+
+                {/* Manually added farms for this week */}
+                <AddedFarmsRow
+                  userId={u.id}
+                  added={addedByUser.get(u.id) || []}
+                  accounts={accounts}
+                  onAdd={(farmName) => toggleConfirmation(u.id, farmName, "added", true)}
+                  onRemove={(farmName) => removeAddedFarm(u.id, farmName)}
+                />
               </div>
             );
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+/* -------------------- Added farms row -------------------- */
+
+interface AddedFarmsRowProps {
+  userId: string;
+  added: PlannerConfirmation[];
+  accounts: Account[];
+  onAdd: (farmName: string) => void;
+  onRemove: (farmName: string) => void;
+}
+
+function AddedFarmsRow({ added, accounts, onAdd, onRemove }: AddedFarmsRowProps) {
+  const [open, setOpen] = useState(false);
+  const sortedAccounts = useMemo(
+    () => [...accounts].sort((a, b) => a.name.localeCompare(b.name)),
+    [accounts],
+  );
+  const addedSet = useMemo(
+    () => new Set(added.map(a => normalizeName(a.farm_name))),
+    [added],
+  );
+  return (
+    <div className="border-t border-border bg-muted/20 px-3 py-2 flex items-center gap-2 flex-wrap">
+      <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+        Added this week
+      </span>
+      {added.map(a => (
+        <span
+          key={a.id}
+          className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 pl-2 pr-1 py-0.5 text-[11px]"
+        >
+          {a.farm_name}
+          <button
+            type="button"
+            onClick={() => onRemove(a.farm_name)}
+            className="rounded-full hover:bg-destructive/20 p-0.5"
+            aria-label={`Remove ${a.farm_name}`}
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </span>
+      ))}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]">
+            <Plus className="h-3 w-3" /> Add farm
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 w-[280px]" align="start">
+          <Command>
+            <CommandInput placeholder="Search farm…" className="h-9" />
+            <CommandList>
+              <CommandEmpty>No farm found.</CommandEmpty>
+              <CommandGroup>
+                {sortedAccounts.map(acc => {
+                  const already = addedSet.has(normalizeName(acc.name));
+                  return (
+                    <CommandItem
+                      key={acc.id}
+                      value={acc.name}
+                      disabled={already}
+                      onSelect={() => {
+                        if (already) return;
+                        onAdd(acc.name);
+                        setOpen(false);
+                      }}
+                    >
+                      {acc.name}
+                      {already && <span className="ml-auto text-[10px] text-muted-foreground">added</span>}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
