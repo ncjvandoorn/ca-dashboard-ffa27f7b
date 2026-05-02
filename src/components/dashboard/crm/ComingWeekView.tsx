@@ -941,46 +941,56 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
             </span>
           </h4>
           {mergedCommercialFollowups.length > 0 ? (
-            <div className="space-y-2">
-              {mergedCommercialFollowups.map((c, i) => (
+            <div className="space-y-3">
+              {groupedCommercialFollowups.map((g, gi) => (
                 <motion.div
-                  key={c.trialId || i}
+                  key={g.key}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04 }}
+                  transition={{ delay: gi * 0.04 }}
                   className="rounded-lg border border-accent/30 bg-accent/5 p-3"
                 >
-                  <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button type="button" onClick={() => openFarmActivity(c.farmName)} className="font-semibold text-sm text-primary hover:underline">{c.farmName}</button>
-                      {c.customer && (
-                        <Badge variant="outline" className="text-[10px]">{c.customer}</Badge>
-                      )}
-                      <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
-                      <Badge variant="secondary" className="text-[10px]">
-                        {c.keyProduct}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {c.trialDate && (
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(c.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const t = trials.find((x) => x.id === c.trialId || (x.trial_number || "").toLowerCase() === (c.trialNumber || "").toLowerCase());
-                          if (t) setSelectedTrial(t);
-                        }}
-                        className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
-                      >
-                        Trial {c.trialNumber}
-                        <ExternalLink className="h-3 w-3" />
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                    <span className="font-semibold text-sm">{g.key}</span>
+                    {g.customer && g.farms.size > 0 && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {[...g.farms].join(" · ")}
+                      </span>
+                    )}
+                    <Badge variant="outline" className="text-[10px] border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
+                    <Badge variant="secondary" className="text-[10px]">{g.items.length} trial{g.items.length === 1 ? "" : "s"}</Badge>
                   </div>
-                  <p className="text-xs text-foreground/90">{c.reason}</p>
+                  <div className="space-y-1.5">
+                    {g.items.map((c, i) => (
+                      <div key={c.trialId || i} className="border-l-2 border-accent/40 pl-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button type="button" onClick={() => openFarmActivity(c.farmName)} className="text-[12px] font-medium text-primary hover:underline">{c.farmName}</button>
+                            <Badge variant="secondary" className="text-[10px]">{c.keyProduct}</Badge>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {c.trialDate && (
+                              <span className="text-[10px] text-muted-foreground">
+                                {new Date(c.trialDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const t = trials.find((x) => x.id === c.trialId || (x.trial_number || "").toLowerCase() === (c.trialNumber || "").toLowerCase());
+                                if (t) setSelectedTrial(t);
+                              }}
+                              className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                            >
+                              Trial {c.trialNumber}
+                              <ExternalLink className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-foreground/85 mt-0.5">{c.reason}</p>
+                      </div>
+                    ))}
+                  </div>
                 </motion.div>
               ))}
             </div>
