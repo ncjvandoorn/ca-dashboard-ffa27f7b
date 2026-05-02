@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 import { getCrmVisibleUserIds } from "@/lib/crmUserFilter";
 import { ActivityAnalysis } from "./crm/ActivityAnalysis";
