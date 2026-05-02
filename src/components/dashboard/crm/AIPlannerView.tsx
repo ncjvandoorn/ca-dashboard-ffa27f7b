@@ -1,9 +1,16 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  MapPin, Sparkles, Loader2, RefreshCw, Route,
+  MapPin, Sparkles, Loader2, RefreshCw, Route, AlertTriangle, Plus, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -179,6 +186,42 @@ function distributeAcrossWeek(n: number): string[] {
   return days;
 }
 
+/* -------------------- Confirmation helpers -------------------- */
+
+interface PlannerConfirmation {
+  id: string;
+  week_nr: number;
+  user_id: string;
+  farm_name: string;
+  source: "ai" | "added";
+  checked: boolean;
+}
+
+/** Saturday 00:00 → next Saturday 00:00 covering the YYWW week. */
+function weekTimeBounds(wn: number): { start: number; end: number } {
+  const sat = weekNrToSaturday(wn);
+  const start = sat.getTime();
+  const end = start + 7 * 86400000;
+  return { start, end };
+}
+
+/** Did this farm receive ANY Visit-type activity (any status) inside the given YYWW week? */
+function farmVisitedInWeek(farmName: string, accounts: Account[], activities: Activity[], wn: number): boolean {
+  const target = normalizeName(farmName);
+  if (!target) return false;
+  const acc = accounts.find(a => normalizeName(a.name) === target);
+  if (!acc) return false;
+  const { start, end } = weekTimeBounds(wn);
+  for (const a of activities) {
+    if (a.accountId !== acc.id) continue;
+    if ((a.type || "").toLowerCase() !== "visit") continue;
+    const t = a.startsAt ?? a.completedAt ?? a.createdAt;
+    if (!t) continue;
+    if (t >= start && t < end) return true;
+  }
+  return false;
+}
+
 /* -------------------- Component -------------------- */
 
 export function AIPlannerView({ allActivities, users, accounts, reports, activeUsers }: Props) {
@@ -197,6 +240,136 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const routesKeyInit = `${selectedWeek}|${initialCached?.loadedAt || ""}|${[...activeUsers.map(u=>u.id)].sort().join(",")}`;
   const [routes, setRoutes] = useState<Record<string, PlannedFarm[]>>(() => routesCache[routesKeyInit] || {});
   const [computingRoutes, setComputingRoutes] = useState(false);
+
+  // Confirmations: this week + all prior weeks (to compute carry-over misses).
+  const [confirmations, setConfirmations] = useState<PlannerConfirmation[]>([]);
+  const [, setConfLoaded] = useState(false);
+
+  const loadConfirmations = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("crm_planner_confirmations")
+      .select("id, week_nr, user_id, farm_name, source, checked")
+      .lte("week_nr", selectedWeek);
+    if (error) {
+      console.error("loadConfirmations error", error);
+      return;
+    }
+    setConfirmations((data || []) as PlannerConfirmation[]);
+    setConfLoaded(true);
+  }, [selectedWeek]);
+
+  useEffect(() => { loadConfirmations(); }, [loadConfirmations]);
+
+  // Fast lookup for current-week confirmations.
+  const confByKey = useMemo(() => {
+    const m = new Map<string, PlannerConfirmation>();
+    for (const c of confirmations) {
+      if (c.week_nr !== selectedWeek) continue;
+      m.set(`${c.user_id}|${normalizeName(c.farm_name)}`, c);
+    }
+    return m;
+  }, [confirmations, selectedWeek]);
+
+  // "Added" farms per user for this week (manually added during meeting).
+  const addedByUser = useMemo(() => {
+    const m = new Map<string, PlannerConfirmation[]>();
+    for (const c of confirmations) {
+      if (c.week_nr !== selectedWeek) continue;
+      if (c.source !== "added") continue;
+      const arr = m.get(c.user_id) || [];
+      arr.push(c);
+      m.set(c.user_id, arr);
+    }
+    return m;
+  }, [confirmations, selectedWeek]);
+
+  // Carry-over misses: confirmed (checked=true) farms in any prior week (< selectedWeek)
+  // for which NO Visit-type activity exists in their committed week — and which
+  // also haven't been visited in any week since.
+  const carryOverByUser = useMemo(() => {
+    const out = new Map<string, Array<{ farmName: string; weekNr: number; source: "ai" | "added" }>>();
+    for (const c of confirmations) {
+      if (c.week_nr >= selectedWeek) continue;
+      if (!c.checked) continue;
+      let visitedSince = false;
+      for (let w = c.week_nr; w < selectedWeek; w++) {
+        if (farmVisitedInWeek(c.farm_name, accounts, allActivities, w)) { visitedSince = true; break; }
+      }
+      if (visitedSince) continue;
+      const arr = out.get(c.user_id) || [];
+      if (!arr.some(x => normalizeName(x.farmName) === normalizeName(c.farm_name))) {
+        arr.push({ farmName: c.farm_name, weekNr: c.week_nr, source: c.source });
+      }
+      out.set(c.user_id, arr);
+    }
+    for (const [, arr] of out) arr.sort((a, b) => a.weekNr - b.weekNr);
+    return out;
+  }, [confirmations, selectedWeek, accounts, allActivities]);
+
+  /** Toggle / create a confirmation for the current week. */
+  const toggleConfirmation = useCallback(async (
+    userId: string,
+    farmName: string,
+    source: "ai" | "added",
+    nextChecked: boolean,
+  ) => {
+    const key = `${userId}|${normalizeName(farmName)}`;
+    const existing = confByKey.get(key);
+    setConfirmations(prev => {
+      const without = prev.filter(c => !(c.week_nr === selectedWeek && c.user_id === userId && normalizeName(c.farm_name) === normalizeName(farmName)));
+      return [...without, {
+        id: existing?.id ?? `temp-${Date.now()}`,
+        week_nr: selectedWeek,
+        user_id: userId,
+        farm_name: farmName,
+        source,
+        checked: nextChecked,
+      }];
+    });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (existing && !existing.id.startsWith("temp-")) {
+      const { error } = await supabase
+        .from("crm_planner_confirmations")
+        .update({ checked: nextChecked, source })
+        .eq("id", existing.id);
+      if (error) {
+        toast({ title: "Could not save", description: error.message, variant: "destructive" });
+        loadConfirmations();
+      }
+    } else {
+      const { error } = await supabase
+        .from("crm_planner_confirmations")
+        .upsert({
+          week_nr: selectedWeek,
+          user_id: userId,
+          farm_name: farmName,
+          source,
+          checked: nextChecked,
+          created_by: user?.id ?? null,
+        }, { onConflict: "week_nr,user_id,farm_name" });
+      if (error) {
+        toast({ title: "Could not save", description: error.message, variant: "destructive" });
+      }
+      loadConfirmations();
+    }
+  }, [confByKey, selectedWeek, loadConfirmations]);
+
+  /** Remove an "added" farm entirely. */
+  const removeAddedFarm = useCallback(async (userId: string, farmName: string) => {
+    const key = `${userId}|${normalizeName(farmName)}`;
+    const existing = confByKey.get(key);
+    setConfirmations(prev => prev.filter(c => !(c.week_nr === selectedWeek && c.user_id === userId && normalizeName(c.farm_name) === normalizeName(farmName))));
+    if (existing && !existing.id.startsWith("temp-")) {
+      const { error } = await supabase
+        .from("crm_planner_confirmations")
+        .delete()
+        .eq("id", existing.id);
+      if (error) {
+        toast({ title: "Could not remove", description: error.message, variant: "destructive" });
+        loadConfirmations();
+      }
+    }
+  }, [confByKey, selectedWeek, loadConfirmations]);
 
   const accountByName = useMemo(() => {
     const m = new Map<string, Account>();
@@ -576,7 +749,35 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                   </div>
                 </div>
 
-                {visits.length === 0 ? (
+                {/* Carry-over misses (top priority — must visit) */}
+                {(carryOverByUser.get(u.id)?.length || 0) > 0 && (
+                  <div className="px-3 pt-3 space-y-2">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-destructive uppercase tracking-wide">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      Top priority — committed but not visited
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {(carryOverByUser.get(u.id) || []).map(m => (
+                        <div
+                          key={`miss-${m.farmName}-${m.weekNr}`}
+                          className="rounded-md border-2 border-destructive bg-destructive/10 px-2.5 py-2 text-[11px] shadow-[0_0_0_1px_hsl(var(--destructive)/0.4)]"
+                        >
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold truncate">{m.farmName}</div>
+                              <div className="text-[10px] text-destructive/80">
+                                Promised week {m.weekNr} · still no Visit recorded
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {visits.length === 0 && (addedByUser.get(u.id)?.length || 0) === 0 ? (
                   <div className="p-4 text-xs text-muted-foreground italic">
                     No AI-suggested visits this week.
                   </div>
@@ -593,10 +794,16 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                           <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium mb-1.5">{day}</div>
                           <div className="space-y-1.5">
                             {items.length === 0 && <div className="text-[11px] text-muted-foreground/60 italic">—</div>}
-                            {items.map(v => (
+                            {items.map(v => {
+                              const cKey = `${u.id}|${normalizeName(v.farmName)}`;
+                              const conf = confByKey.get(cKey);
+                              const isChecked = !!conf?.checked;
+                              return (
                               <div
                                 key={`${v.farmName}-${v.order}`}
                                 className={`rounded border px-2 py-1.5 text-[11px] ${
+                                  isChecked ? "ring-1 ring-primary/40 " : ""
+                                }${
                                   v.source === "urgent"
                                     ? "border-destructive/40 bg-destructive/5"
                                     : v.source === "commercial"
@@ -609,7 +816,13 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                 }`}
                                 title={v.reason}
                               >
-                                <div className="flex items-start gap-1">
+                                <div className="flex items-start gap-1.5">
+                                  <Checkbox
+                                    checked={isChecked}
+                                    onCheckedChange={(val) => toggleConfirmation(u.id, v.farmName, "ai", val === true)}
+                                    className="mt-0.5"
+                                    aria-label={`Confirm visit to ${v.farmName}`}
+                                  />
                                   <span className="font-mono text-[10px] text-muted-foreground">#{v.order}</span>
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium truncate">{v.farmName}</div>
@@ -617,18 +830,108 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                   </div>
                                 </div>
                               </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       );
                     })}
                   </div>
                 )}
+
+                {/* Manually added farms for this week */}
+                <AddedFarmsRow
+                  userId={u.id}
+                  added={addedByUser.get(u.id) || []}
+                  accounts={accounts}
+                  onAdd={(farmName) => toggleConfirmation(u.id, farmName, "added", true)}
+                  onRemove={(farmName) => removeAddedFarm(u.id, farmName)}
+                />
               </div>
             );
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+/* -------------------- Added farms row -------------------- */
+
+interface AddedFarmsRowProps {
+  userId: string;
+  added: PlannerConfirmation[];
+  accounts: Account[];
+  onAdd: (farmName: string) => void;
+  onRemove: (farmName: string) => void;
+}
+
+function AddedFarmsRow({ added, accounts, onAdd, onRemove }: AddedFarmsRowProps) {
+  const [open, setOpen] = useState(false);
+  const sortedAccounts = useMemo(
+    () => [...accounts].sort((a, b) => a.name.localeCompare(b.name)),
+    [accounts],
+  );
+  const addedSet = useMemo(
+    () => new Set(added.map(a => normalizeName(a.farm_name))),
+    [added],
+  );
+  return (
+    <div className="border-t border-border bg-muted/20 px-3 py-2 flex items-center gap-2 flex-wrap">
+      <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+        Added this week
+      </span>
+      {added.map(a => (
+        <span
+          key={a.id}
+          className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 pl-2 pr-1 py-0.5 text-[11px]"
+        >
+          {a.farm_name}
+          <button
+            type="button"
+            onClick={() => onRemove(a.farm_name)}
+            className="rounded-full hover:bg-destructive/20 p-0.5"
+            aria-label={`Remove ${a.farm_name}`}
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </span>
+      ))}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-7 gap-1 text-[11px]">
+            <Plus className="h-3 w-3" /> Add farm
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 w-[280px]" align="start">
+          <Command>
+            <CommandInput placeholder="Search farm…" className="h-9" />
+            <CommandList>
+              <CommandEmpty>No farm found.</CommandEmpty>
+              <CommandGroup>
+                {sortedAccounts.map(acc => {
+                  const already = addedSet.has(normalizeName(acc.name));
+                  return (
+                    <CommandItem
+                      key={acc.id}
+                      value={acc.name}
+                      disabled={already}
+                      onSelect={() => {
+                        if (already) return;
+                        onAdd(acc.name);
+                        setOpen(false);
+                      }}
+                    >
+                      {acc.name}
+                      {already && <span className="ml-auto text-[10px] text-muted-foreground">added</span>}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
