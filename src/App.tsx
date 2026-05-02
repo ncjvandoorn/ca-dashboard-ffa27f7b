@@ -14,6 +14,7 @@ import Admin from "./pages/Admin.tsx";
 import Planner from "./pages/Planner.tsx";
 import DataLoggers from "./pages/DataLoggers.tsx";
 import TrialsDashboard from "./pages/TrialsDashboard.tsx";
+import PrintTrialReport from "./pages/PrintTrialReport.tsx";
 import AllReports from "./pages/AllReports.tsx";
 import ActiveSF from "./pages/ActiveSF.tsx";
 
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/planner" element={<PermissionRoute permission="trial_planner"><Planner /></PermissionRoute>} />
             <Route path="/data-loggers" element={<PermissionRoute permission="data_loggers"><DataLoggers /></PermissionRoute>} />
             <Route path="/trials" element={<PermissionRoute permission="trials_dashboard"><TrialsDashboard /></PermissionRoute>} />
+            <Route path="/trials/:id/print" element={<ProtectedRoute><PrintTrialReport /></ProtectedRoute>} />
             <Route path="/report" element={<PermissionRoute permission="all_reports"><AllReports /></PermissionRoute>} />
             <Route path="/active-sf" element={<PermissionRoute permission="active_sf"><ActiveSF /></PermissionRoute>} />
             
