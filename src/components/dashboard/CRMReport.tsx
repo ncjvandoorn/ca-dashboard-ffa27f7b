@@ -250,12 +250,6 @@ export function CRMReport({ activities, users, accounts, reports, inline = false
               AI Activity Insights
             </Button>
 
-            <SharePageButton
-              pageType="crm_meeting_snapshot"
-              getPayload={buildMeetingSnapshot}
-              label="Share this page"
-            />
-
             <span className="text-xs text-muted-foreground ml-auto">
               {filteredActivities.filter((a) => STATUS_COLUMNS.includes(a.status as any)).length} activities
             </span>
