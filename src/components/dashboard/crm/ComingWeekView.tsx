@@ -1033,18 +1033,19 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
                         <Badge variant="secondary" className="text-[10px]">{g.items.length} trial{g.items.length === 1 ? "" : "s"}</Badge>
                       </div>
                       {(() => {
+                        const subtitle = g.customer || ([...g.farms][0] !== g.key ? [...g.farms].join(" · ") : "");
                         const responsible = resolveResponsible(g.key) || resolveResponsible(g.customer);
-                        return responsible ? (
+                        if (!subtitle && !responsible) return null;
+                        return (
                           <div className="text-[11px] text-muted-foreground mt-0.5">
-                            Responsible: <span className="font-medium text-foreground">{responsible}</span>
+                            {subtitle}
+                            {subtitle && responsible && " · "}
+                            {responsible && (
+                              <>Responsible: <span className="font-medium text-foreground">{responsible}</span></>
+                            )}
                           </div>
-                        ) : null;
+                        );
                       })()}
-                      {g.customer && g.farms.size > 0 && (
-                        <div className="text-[10px] text-muted-foreground mt-0.5">
-                          {[...g.farms].join(" · ")}
-                        </div>
-                      )}
                     </div>
                     <div className="space-y-3">
                       {g.items.map((p, i) => {
