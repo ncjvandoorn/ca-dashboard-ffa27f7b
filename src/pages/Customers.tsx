@@ -27,7 +27,7 @@ export default function Customers() {
   const { data: accounts, isLoading } = useAccounts();
   const { data: activities = [] } = useActivities();
   const { data: users = [] } = useUsers();
-  const [markers, setMarkers] = useState<CustomerMarker[]>([]);
+  const [markers, setMarkers] = useState<CustomerMarker[]>(() => markersCache);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [search, setSearch] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
