@@ -254,14 +254,34 @@ export function AIPlannerView({ accounts, activeUsers }: Props) {
         });
       }
 
-      // Group by suggested user (only those in selectedUserIds)
-      const userById = new Map(activeUsers.map(u => [u.id, u]));
-      const userByName = new Map<string, string>(); // lowercase name -> id
+      // Group by suggested user (only those in selectedUserIds).
+      // Match tolerantly: exact, then first-name + last-name prefix
+      // (handles "Steve Mbogo" in CSV vs "Steven Mbogo" in user list).
+      const userByName = new Map<string, string>();
       for (const u of activeUsers) userByName.set(normalizeName(u.name), u.id);
+      const resolveUserId = (name: string): string | undefined => {
+        const n = normalizeName(name);
+        if (!n) return undefined;
+        if (userByName.has(n)) return userByName.get(n);
+        const [firstA, ...restA] = n.split(/\s+/);
+        const lastA = restA.join(" ");
+        for (const [uname, uid] of userByName.entries()) {
+          const [firstB, ...restB] = uname.split(/\s+/);
+          const lastB = restB.join(" ");
+          if (!lastA || !lastB) continue;
+          if (lastA !== lastB) continue;
+          // Same last name + one first name is a prefix of the other (min 3 chars)
+          const minLen = Math.min(firstA.length, firstB.length);
+          if (minLen >= 3 && firstA.slice(0, minLen) === firstB.slice(0, minLen)) {
+            return uid;
+          }
+        }
+        return undefined;
+      };
 
       const byUserId = new Map<string, PlanVisit[]>();
       for (const v of allVisits) {
-        const id = userByName.get(normalizeName(v.suggestedUser));
+        const id = resolveUserId(v.suggestedUser);
         if (!id || !userSet.has(id)) continue;
         if (!byUserId.has(id)) byUserId.set(id, []);
         // Prevent same-farm duplicates per user
