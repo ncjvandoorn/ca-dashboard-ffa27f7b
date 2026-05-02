@@ -5,6 +5,7 @@ import { FileText, Sparkles, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { VaselifeTrialReport } from "./VaselifeTrialReport";
+import { SharePageButton } from "@/components/SharePageButton";
 import {
   Dialog,
   DialogContent,
