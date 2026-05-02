@@ -45,6 +45,19 @@ export default function Customers() {
   // Geocode in series (Nominatim asks ≤1 req/s). Cloud + local cache make repeats instant.
   useEffect(() => {
     if (eaCustomers.length === 0) return;
+
+    // Skip rebuilding entirely if we already have a cached marker set covering
+    // every East-Africa customer and the user did not request a refresh.
+    if (!forceRefresh && markersCache.length > 0) {
+      const cachedIds = new Set(markersCache.map((m) => m.id));
+      const allCovered = eaCustomers.every((c) => cachedIds.has(c.id));
+      if (allCovered) {
+        setMarkers(markersCache);
+        setProgress({ done: eaCustomers.length, total: eaCustomers.length });
+        return;
+      }
+    }
+
     let cancelled = false;
     setProgress({ done: 0, total: eaCustomers.length });
     setMarkers([]);
@@ -73,7 +86,10 @@ export default function Customers() {
         setProgress({ done: i + 1, total: eaCustomers.length });
         await new Promise((r) => setTimeout(r, 50));
       }
-      if (!cancelled) setForceRefresh(false);
+      if (!cancelled) {
+        markersCache = out;
+        setForceRefresh(false);
+      }
     })();
 
     return () => {
