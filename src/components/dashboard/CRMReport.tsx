@@ -20,7 +20,7 @@ import { ActivityAnalysis } from "./crm/ActivityAnalysis";
 import { ComingWeekView } from "./crm/ComingWeekView";
 import { CalendarView } from "./crm/CalendarView";
 import { AIPlannerView } from "./crm/AIPlannerView";
-import { SharePageButton } from "@/components/SharePageButton";
+
 
 /* YYWW week helpers (Sat-Fri cycle, Week 1 contains Jan 1) — must match AIPlannerView/ComingWeekView */
 function getCrmWeekNr(date: Date): number {
