@@ -15,7 +15,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  geocodeCustomer, preloadCloudCache, bestAddress, type GeoResult,
+  geocodeCustomer, preloadCloudCache, bestAddress, isEastAfricaAccount, type GeoResult,
 } from "@/lib/customerGeocode";
 import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
@@ -917,7 +917,9 @@ interface AddedFarmsRowProps {
 function AddedFarmsRow({ added, accounts, onAdd, onRemove, readOnly = false }: AddedFarmsRowProps) {
   const [open, setOpen] = useState(false);
   const sortedAccounts = useMemo(
-    () => [...accounts].sort((a, b) => a.name.localeCompare(b.name)),
+    () => [...accounts]
+      .filter(a => isEastAfricaAccount(a.deliveryAddress, a.mainAddress))
+      .sort((a, b) => a.name.localeCompare(b.name)),
     [accounts],
   );
   const addedSet = useMemo(
