@@ -420,11 +420,13 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const loadPlan = useCallback(async (forceSpinner = false) => {
     if (forceSpinner || !planCache[selectedWeek]) setLoading(true);
     try {
-      const { data } = await supabase
+      const { data: rows } = await supabase
         .from("weekly_plan_cache")
         .select("analysis, created_at")
         .eq("week_nr", selectedWeek)
-        .maybeSingle();
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const data = rows?.[0];
       if (data?.analysis) {
         const p = data.analysis as WeeklyPlan;
         planCache[selectedWeek] = { plan: p, loadedAt: data.created_at };
