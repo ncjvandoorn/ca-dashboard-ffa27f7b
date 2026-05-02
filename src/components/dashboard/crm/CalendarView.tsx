@@ -35,12 +35,19 @@ function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDat
 function addMonths(d: Date, n: number) { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; }
 function sameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 
-/** Monday of the week containing d */
+/** Monday of the work-week containing d.
+ * Project week runs Sat-Fri, so Saturday belongs to the NEXT Mon-Fri block.
+ */
 function startOfWeekMonday(d: Date) {
   const x = startOfDay(d);
   const day = x.getDay(); // 0 Sun .. 6 Sat
-  const diff = (day + 6) % 7; // Mon=0
-  x.setDate(x.getDate() - diff);
+  if (day === 6) {
+    // Saturday: jump forward to upcoming Monday
+    x.setDate(x.getDate() + 2);
+  } else {
+    const diff = (day + 6) % 7; // Mon=0
+    x.setDate(x.getDate() - diff);
+  }
   return x;
 }
 
