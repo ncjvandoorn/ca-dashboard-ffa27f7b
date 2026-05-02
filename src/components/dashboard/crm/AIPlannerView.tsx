@@ -174,16 +174,10 @@ function distributeAcrossWeek(n: number): string[] {
 
 export function AIPlannerView({ allActivities, users, accounts, reports, activeUsers }: Props) {
   const selectedWeek = useMemo(() => getWeekNrForDate(new Date()), []);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(() => activeUsers.map(u => u.id));
-  // Keep selection in sync with the preselected users from settings.
-  useEffect(() => {
-    setSelectedUserIds((prev) => {
-      const active = new Set(activeUsers.map(u => u.id));
-      const filtered = prev.filter(id => active.has(id));
-      // If nothing valid is selected (e.g. first load), default to all active.
-      return filtered.length === 0 ? activeUsers.map(u => u.id) : filtered;
-    });
-  }, [activeUsers]);
+  // Selection mirrors the parent-controlled active users list (the unified
+  // "All Users" filter in the CRM toolbar). When the filter changes upstream,
+  // we always reflect exactly that set — no stale single-user lock-in.
+  const selectedUserIds = useMemo(() => activeUsers.map(u => u.id), [activeUsers]);
   const userSet = useMemo(() => new Set(selectedUserIds), [selectedUserIds]);
 
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
