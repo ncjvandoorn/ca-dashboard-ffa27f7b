@@ -650,7 +650,8 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         out[uid] = planned;
       }
 
-      const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}`;
+      const overrideKey = Object.entries(baseOverride).sort().map(([k,v])=>`${k}:${v}`).join(",");
+      const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}|${overrideKey}`;
       routesCache[key] = out;
       setRoutes(out);
     } catch (e) {
