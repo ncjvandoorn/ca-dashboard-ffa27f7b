@@ -455,6 +455,8 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         out[uid] = planned;
       }
 
+      const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}`;
+      routesCache[key] = out;
       setRoutes(out);
     } catch (e) {
       console.error("AIPlanner: buildRoutes error", e);
@@ -462,10 +464,21 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     } finally {
       setComputingRoutes(false);
     }
-  }, [plan, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible]);
+  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible]);
 
-  // Auto-build routes when plan changes
-  useEffect(() => { if (plan) buildRoutes(); }, [plan, buildRoutes]);
+  // Auto-build routes when plan or selection changes — but skip the heavy
+  // work (and the spinner) if we already have a cached result for this exact
+  // (week + plan version + users) combination.
+  useEffect(() => {
+    if (!plan) return;
+    const key = `${selectedWeek}|${planLoadedAt || ""}|${[...userSet].sort().join(",")}`;
+    const cached = routesCache[key];
+    if (cached) {
+      setRoutes(cached);
+      return;
+    }
+    buildRoutes();
+  }, [plan, planLoadedAt, selectedWeek, userSet, buildRoutes]);
 
   // Refresh = trigger AI to regenerate the weekly plan for the selected week,
   // then reload from cache. Reuses analyze-weekly-plan via ComingWeekView's
