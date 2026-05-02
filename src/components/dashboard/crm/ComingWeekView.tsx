@@ -378,6 +378,55 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
     [passedFollowups],
   );
 
+  // Live "needs follow-up" candidates — recomputed every render from current
+  // trials + activities. Mirrors the logic in buildPayload(). Used to carry
+  // forward un-followed-up trials into new weeks automatically (so a stale
+  // weekly_plan_cache from a previous week doesn't drop them).
+  const liveCommercialCandidates = useMemo(() => {
+    const STOP = new Set([
+      "the","and","for","with","from","this","that","have","been","were","was","will","into","over","than","then","also","such","very","more","most","some","each","other","their","them","they","there","these","those","when","what","who","how","why","may","can","not","but","are","you","your","our","its","use","used","using","good","best","better",
+      "trial","trials","test","tests","testing","commercial","repeat","control","treatment","treatments","recommend","recommended","recommendation","recommendations","conclusion","conclusions","observation","observations","result","results","performance","quality","superior","preferred","preferable","reliable","alternative","option","options","value","extended","shelf","life","vase","customer","customers","farm","farms","standard","spray","rose","roses","flower","flowers","stem","stems","variety","varieties","cultivar","cultivars","crop","crops","day","days","week","weeks","year","years","season","botrytis","disease","mildew","powdery","application","applications","applied","apply","follow","followup","action","visit","visits","report","reports","note","notes","field","greenhouse","grower","growers","client","clients","sales","market","product","products","dose","dosage","rate","rates","mls","percent","percentage",
+    ]);
+    const BRAND_RX = /^(gvb|avb|svb|cvb|chrysal|professional|clear|rva|bulb|botreat|vident|gatten|rosedip|rose-dip|rose_dip|supreme|finalin|ethybloc|ethylene|opti|rosa|pf|pfn|pfnl)/i;
+    const isDistinctive = (kw: string) => BRAND_RX.test(kw) || /\d/.test(kw) || /[-+/]/.test(kw);
+    const extractKw = (text: string) =>
+      Array.from(new Set((text.toLowerCase().match(/[a-z][a-z0-9\-+/]{3,}/g) || [])
+        .filter((t) => !STOP.has(t) && !/^\d+$/.test(t) && t.length >= 4)));
+
+    const out: Array<{
+      trialId: string; trialNumber: string; farmName: string;
+      customer?: string; keyProduct: string; trialDate: string | null;
+    }> = [];
+    for (const t of trials) {
+      const rec = (t.recommendations || "").trim();
+      if (!rec) continue;
+      if (/repeat/i.test(rec)) continue;
+      if (!t.farm) continue;
+      const trialDate = concludedByTrial.get(t.id) || t.start_vl || t.harvest_date || null;
+      const concludedMs = trialDate ? Date.parse(trialDate) : 0;
+      const farmAccountId = accounts.find((a) => a.name?.toLowerCase() === t.farm!.toLowerCase())?.id;
+      if (!farmAccountId) continue;
+      const distinctive = extractKw(rec).filter(isDistinctive);
+      const farmActs = allActivities.filter((a) => a.accountId === farmAccountId);
+      const hits = distinctive.length === 0 ? 0 : farmActs.filter((a) => {
+        const aDate = a.completedAt || a.createdAt || 0;
+        if (concludedMs && aDate <= concludedMs) return false;
+        const hay = `${a.subject || ""} ${a.description || ""}`.toLowerCase();
+        return distinctive.some((k) => hay.includes(k));
+      }).length;
+      if (hits > 0) continue; // already followed up → will appear in passedFollowups
+      out.push({
+        trialId: t.id,
+        trialNumber: t.trial_number || t.id.slice(0, 8),
+        farmName: t.farm,
+        customer: t.customer || undefined,
+        keyProduct: distinctive[0] || extractKw(rec)[0] || "product",
+        trialDate,
+      });
+    }
+    return out.sort((a, b) => (b.trialDate || "").localeCompare(a.trialDate || ""));
+  }, [trials, allActivities, accounts, concludedByTrial]);
+
   useEffect(() => {
     let active = true;
 
