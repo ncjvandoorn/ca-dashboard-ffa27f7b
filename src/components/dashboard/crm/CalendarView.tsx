@@ -362,7 +362,7 @@ function MonthGrid({ anchor, activities, userMap, accountMap, onPickDay }: {
                           <span className="truncate">{a.subject || "Untitled"}</span>
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-xs">
+                      <TooltipContent side="right" className="max-w-md max-h-[70vh] overflow-y-auto">
                         <ChipTooltipContent activity={a} userMap={userMap} accountMap={accountMap} />
                       </TooltipContent>
                     </Tooltip>
