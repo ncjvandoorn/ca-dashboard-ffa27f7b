@@ -834,11 +834,37 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
           <Button
             variant="outline" size="sm" className="h-8 gap-1.5"
             onClick={refreshFromCache}
-            disabled={loading}
+            disabled={loading || isApproved}
+            title={isApproved ? "Plan approved — unlock to reload" : undefined}
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Reload AI plan
           </Button>
+        )}
+
+        {isAdmin && plan && (
+          <Button
+            variant={isApproved ? "outline" : "default"}
+            size="sm" className="h-8 gap-1.5"
+            onClick={toggleApproval}
+            disabled={approvalLoading}
+          >
+            {approvalLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isApproved ? (
+              <Lock className="h-4 w-4" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
+            {isApproved ? "Unlock plan" : "Approve plan"}
+          </Button>
+        )}
+
+        {isApproved && (
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/40 text-[10px] gap-1">
+            <Lock className="h-3 w-3" />
+            Approved {new Date(approval!.approved_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+          </Badge>
         )}
 
         <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
