@@ -143,16 +143,16 @@ Return at most 10 farms in needsAttention, mostImproved, and topPerformers. For 
     const yr = currentSat.getFullYear() % 100;
     const currentWeekNrFmt = yr * 100 + currentWeekNr;
 
-    const userPrompt = `Analyze the following farm quality data summaries from the last 12 available weeks of cut flower post-harvest monitoring.
+    const userPrompt = `Analyze the following farm summaries from the last 12 available weeks. Each farm record bundles THREE data streams: quality reports (recentWeeks/priorWeeks), shipper events (shipperEvents) and CRM activities (crmActivities). Integrate them — your findings should reference the matching stream(s) and weeks.
 
 Analysis week range (YYWW): ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?? currentWeekNrFmt}.
 
-Each farm summary includes weekly readings for intake and export cold store parameters, quality ratings, and other post-harvest metrics. **Pay special attention to the qualityFlowersNote, protocolChangesNote, and generalComment fields** — these are written by our experienced field staff and represent direct, first-hand observations. Reference them explicitly in your analysis when they provide relevant context.
+Pay special attention to free-text notes (qN, pN, gC, gc, ac, n) — they are first-hand observations from staff, shipper operators or our commercial team and outweigh raw numbers. Quote them where relevant.
 
 Farm data:
 ${JSON.stringify(farmSummaries)}
 
-Identify which farms need attention (worst performing, worsening trends, dangerous parameter combinations, staff-flagged issues) and which have shown the most improvement. Consider the full post-harvest context — don't just flag outliers mechanically, think about what combinations of metrics signal real risk to flower quality and vase life. Quote or paraphrase staff notes when they support your findings.`;
+Identify which farms need attention (worst performing, worsening trends, dangerous combinations across streams, staff/shipper/CRM-flagged issues, or quality issues without recent CRM follow-up) and which have shown the most improvement. Don't flag outliers mechanically — think about what combinations across quality, shipper and CRM streams signal real risk to flower quality and vase life.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 140_000);
