@@ -536,13 +536,22 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     }
   }, [selectedWeek]);
 
-  // When week changes, immediately reflect any cached plan to avoid showing stale data, then load.
+  // When week changes, immediately reflect any cached plan to avoid showing stale data,
+  // then check approval. If the week is approved/locked, the plan snapshot is rendered
+  // exactly as approved — we DO NOT auto-fetch the latest cache (locked = frozen).
+  // Only when the week is not approved do we refresh from cache.
   useEffect(() => {
+    let cancelled = false;
     const cached = planCache[selectedWeek];
     setPlan(cached?.plan ?? null);
     setPlanLoadedAt(cached?.loadedAt ?? null);
-    loadPlan(false);
-  }, [loadPlan, selectedWeek]);
+    (async () => {
+      const approved = await loadApproval();
+      if (cancelled) return;
+      if (!approved) loadPlan(false);
+    })();
+    return () => { cancelled = true; };
+  }, [loadApproval, loadPlan, selectedWeek]);
 
   // Build visit proposals per selected user, then geocode + order
   const buildRoutes = useCallback(async () => {
