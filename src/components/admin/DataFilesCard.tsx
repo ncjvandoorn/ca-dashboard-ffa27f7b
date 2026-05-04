@@ -119,6 +119,27 @@ export const DataFilesCard = () => {
             </Button>
           </label>
         </div>
+
+        <div className="rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-4 py-2 font-medium text-muted-foreground">File</th>
+                <th className="text-left px-4 py-2 font-medium text-muted-foreground font-mono text-xs">Filename</th>
+                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Last upload</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DATA_FILES.map((f) => (
+                <tr key={f.key} className="border-t border-border">
+                  <td className="px-4 py-2">{f.label}</td>
+                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{f.key}</td>
+                  <td className="px-4 py-2 text-right text-muted-foreground">{formatTimestamp(uploadDates[f.key] ?? null)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </CardContent>
     </Card>
   );
