@@ -386,6 +386,22 @@ export default function TrialsDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={
+                        filtered.length > 0 && filtered.every((t) => checkedIds.has(t.id))
+                      }
+                      onCheckedChange={(v) => {
+                        setCheckedIds((prev) => {
+                          const next = new Set(prev);
+                          if (v) filtered.forEach((t) => next.add(t.id));
+                          else filtered.forEach((t) => next.delete(t.id));
+                          return next;
+                        });
+                      }}
+                      aria-label="Select all visible trials"
+                    />
+                  </TableHead>
                   <TableHead>Concluded</TableHead>
                   <TableHead>Trial</TableHead>
                   <TableHead className="w-16 text-center">Linked</TableHead>
