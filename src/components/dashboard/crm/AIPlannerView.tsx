@@ -265,6 +265,12 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const [, setConfLoaded] = useState(false);
   const [activityFarm, setActivityFarm] = useState<{ id: string; name: string } | null>(null);
 
+  // Approval lock for the selected week (admin-only). When approved, the
+  // plan is frozen: no reload, no checkbox toggling, no add/remove farm.
+  const [approval, setApproval] = useState<{ approved_at: string; approved_by: string | null } | null>(null);
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const isApproved = !!approval;
+
   const openFarmActivity = useCallback((farmName: string | null | undefined) => {
     if (!farmName) return;
     const norm = normalizeName(farmName);
