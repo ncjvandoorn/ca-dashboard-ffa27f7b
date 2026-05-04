@@ -263,6 +263,18 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const { isAdmin } = useAuth();
   const [confirmations, setConfirmations] = useState<PlannerConfirmation[]>([]);
   const [, setConfLoaded] = useState(false);
+  const [activityFarm, setActivityFarm] = useState<{ id: string; name: string } | null>(null);
+
+  const openFarmActivity = useCallback((farmName: string | null | undefined) => {
+    if (!farmName) return;
+    const norm = normalizeName(farmName);
+    const acc = accounts.find((a) => normalizeName(a.name) === norm);
+    if (!acc) {
+      toast({ title: "Farm not found", description: `No matching account for "${farmName}"`, variant: "destructive" });
+      return;
+    }
+    setActivityFarm({ id: acc.id, name: acc.name });
+  }, [accounts]);
 
   const loadConfirmations = useCallback(async () => {
     const { data, error } = await supabase
