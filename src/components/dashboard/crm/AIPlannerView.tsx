@@ -768,7 +768,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     } finally {
       setComputingRoutes(false);
     }
-  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible, baseOverride, homeBaseFor]);
+  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible, baseOverride, homeBaseFor, userScope]);
 
   // Auto-build routes when plan or selection changes — but skip the heavy
   // work (and the spinner) if we already have a cached result for this exact
