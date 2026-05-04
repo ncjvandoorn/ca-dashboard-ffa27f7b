@@ -20,6 +20,7 @@ import {
 import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
+import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 
 interface Props {
   allActivities: Activity[];
