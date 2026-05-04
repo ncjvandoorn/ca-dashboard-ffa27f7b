@@ -620,20 +620,28 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         }
       }
 
-      // Priority order helper
+      // Priority hierarchy (TOP-DOWN): 1) Commercial trials, 2) CRM activity,
+      // 3) Quality/shipper/arrival coverage. "Urgent" entries can come from
+      // either CRM or quality; we use the source field to decide rank.
+      const sourceRank: Record<PlanVisit["source"], number> = {
+        commercial: 0, // trials follow-up — most important
+        crm: 1,        // open / overdue CRM items
+        urgent: 2,     // AI-flagged urgent (quality/shipper)
+        coverage: 3,   // quality coverage gap
+        suggested: 4,  // generic AI suggestion
+      };
       const prioRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
       const out: Record<string, PlannedFarm[]> = {};
 
       for (const [uid, visits] of byUserId.entries()) {
-        // Cap at 12 by priority/source/score, keeping commercial follow-ups first.
+        // Sort by source first (hierarchy is the dominant signal), then priority.
         const trimmed = [...visits]
           .sort((a, b) => {
+            if (a.source !== b.source) return sourceRank[a.source] - sourceRank[b.source];
             const pa = prioRank[a.priority?.toLowerCase()] ?? 9;
             const pb = prioRank[b.priority?.toLowerCase()] ?? 9;
             if (pa !== pb) return pa - pb;
-            const sourceRank: Record<PlanVisit["source"], number> = { commercial: 0, urgent: 1, crm: 2, coverage: 3, suggested: 4 };
-            if (a.source !== b.source) return sourceRank[a.source] - sourceRank[b.source];
             const sa = a.visitScore ?? 0;
             const sb = b.visitScore ?? 0;
             if (sa !== sb) return sb - sa;
