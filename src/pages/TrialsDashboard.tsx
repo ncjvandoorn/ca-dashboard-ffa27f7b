@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FlaskConical, Loader2, Search, Database } from "lucide-react";
+import { FlaskConical, Loader2, Search, Database, Layers, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { VaselifeCombinedDetail } from "@/components/trials/VaselifeCombinedDetail";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +61,23 @@ export default function TrialsDashboard() {
   const [customerFilter, setCustomerFilter] = useState<string>(ALL);
   const [farmFilter, setFarmFilter] = useState<string>(ALL);
   const [selected, setSelected] = useState<VaselifeHeader | null>(null);
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const [comboOpen, setComboOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const toggleChecked = (id: string) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const clearChecked = () => setCheckedIds(new Set());
+  const checkedTrials = useMemo(
+    () => trials.filter((t) => checkedIds.has(t.id)),
+    [trials, checkedIds],
+  );
 
   // Deep-link: open a specific trial via ?trial=<id> or ?trial=<trial_number>
   useEffect(() => {
