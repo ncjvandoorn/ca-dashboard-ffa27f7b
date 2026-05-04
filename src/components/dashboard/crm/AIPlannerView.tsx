@@ -922,7 +922,13 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                   />
                                   <span className="font-mono text-[10px] text-muted-foreground">#{v.order}</span>
                                   <div className="flex-1 min-w-0">
-                                    <div className="font-medium truncate">{v.farmName}</div>
+                                    <button
+                                      type="button"
+                                      onClick={() => openFarmActivity(v.farmName)}
+                                      className="font-medium truncate text-left hover:underline hover:text-primary block w-full"
+                                    >
+                                      {v.farmName}
+                                    </button>
                                     <div className="text-[10px] text-muted-foreground line-clamp-2">{v.reason}</div>
                                   </div>
                                 </div>
