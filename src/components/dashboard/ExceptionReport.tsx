@@ -302,6 +302,11 @@ function scopeAnalysisToFarms(raw: any, allowedFarmIds: Set<string>) {
 export function ExceptionReport({
   reports,
   accounts,
+  activities = [],
+  users = [],
+  shipperReports = [],
+  shipperArrivals = [],
+  servicesOrders = [],
   onSelectFarm,
   open,
   onOpenChange,
