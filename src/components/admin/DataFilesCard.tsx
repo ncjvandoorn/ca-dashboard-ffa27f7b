@@ -1,16 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DATA_FILES, bulkUploadFiles } from "@/lib/adminBulkUpload";
+import { supabase } from "@/integrations/supabase/client";
+
+const formatTimestamp = (iso: string | null): string => {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 export const DataFilesCard = () => {
   const [bulkUploading, setBulkUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadDates, setUploadDates] = useState<Record<string, string | null>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const refreshDates = useCallback(async () => {
+    const { data } = await supabase.storage
+      .from("data-files")
+      .list("", { limit: 1000 });
+    if (!data) return;
+    const map: Record<string, string | null> = {};
+    for (const f of data) {
+      map[f.name] = f.updated_at || f.created_at || null;
+    }
+    setUploadDates(map);
+  }, []);
+
+  useEffect(() => {
+    refreshDates();
+  }, [refreshDates]);
 
   const handleBulkUpload = async (files: File[]) => {
     setBulkUploading(true);
@@ -18,6 +43,7 @@ export const DataFilesCard = () => {
       await queryClient.invalidateQueries({ queryKey: [key] });
     });
     setBulkUploading(false);
+    await refreshDates();
 
     if (result.unknown.length > 0) {
       toast({
@@ -92,6 +118,27 @@ export const DataFilesCard = () => {
               </span>
             </Button>
           </label>
+        </div>
+
+        <div className="rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-4 py-2 font-medium text-muted-foreground">File</th>
+                <th className="text-left px-4 py-2 font-medium text-muted-foreground font-mono text-xs">Filename</th>
+                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Last upload</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DATA_FILES.map((f) => (
+                <tr key={f.key} className="border-t border-border">
+                  <td className="px-4 py-2">{f.label}</td>
+                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{f.key}</td>
+                  <td className="px-4 py-2 text-right text-muted-foreground">{formatTimestamp(uploadDates[f.key] ?? null)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>
