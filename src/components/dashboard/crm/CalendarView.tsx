@@ -397,7 +397,7 @@ function ChipTooltipContent({ activity, userMap, accountMap }: {
       {farm && <div className="text-xs"><span className="text-muted-foreground">Farm:</span> {farm}</div>}
       {assignee && <div className="text-xs"><span className="text-muted-foreground">Assignee:</span> {assignee}</div>}
       {activity.description && (
-        <div className="text-xs mt-1.5 pt-1.5 border-t border-border/50 line-clamp-6 whitespace-pre-wrap">{activity.description}</div>
+        <div className="text-xs mt-1.5 pt-1.5 border-t border-border/50 whitespace-pre-wrap break-words">{activity.description}</div>
       )}
     </div>
   );
