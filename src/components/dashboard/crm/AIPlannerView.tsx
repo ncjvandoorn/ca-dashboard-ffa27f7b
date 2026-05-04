@@ -20,6 +20,7 @@ import {
 import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
+import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 
 interface Props {
   allActivities: Activity[];
@@ -262,6 +263,18 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const { isAdmin } = useAuth();
   const [confirmations, setConfirmations] = useState<PlannerConfirmation[]>([]);
   const [, setConfLoaded] = useState(false);
+  const [activityFarm, setActivityFarm] = useState<{ id: string; name: string } | null>(null);
+
+  const openFarmActivity = useCallback((farmName: string | null | undefined) => {
+    if (!farmName) return;
+    const norm = normalizeName(farmName);
+    const acc = accounts.find((a) => normalizeName(a.name) === norm);
+    if (!acc) {
+      toast({ title: "Farm not found", description: `No matching account for "${farmName}"`, variant: "destructive" });
+      return;
+    }
+    setActivityFarm({ id: acc.id, name: acc.name });
+  }, [accounts]);
 
   const loadConfirmations = useCallback(async () => {
     const { data, error } = await supabase
@@ -848,7 +861,13 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                           <div className="flex items-start gap-2">
                             <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold truncate">{m.farmName}</div>
+                              <button
+                                type="button"
+                                onClick={() => openFarmActivity(m.farmName)}
+                                className="font-semibold truncate text-left hover:underline hover:text-primary block w-full"
+                              >
+                                {m.farmName}
+                              </button>
                               <div className="text-[10px] text-destructive/80">
                                 Promised week {m.weekNr} · still no Visit recorded
                               </div>
@@ -909,7 +928,13 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                   />
                                   <span className="font-mono text-[10px] text-muted-foreground">#{v.order}</span>
                                   <div className="flex-1 min-w-0">
-                                    <div className="font-medium truncate">{v.farmName}</div>
+                                    <button
+                                      type="button"
+                                      onClick={() => openFarmActivity(v.farmName)}
+                                      className="font-medium truncate text-left hover:underline hover:text-primary block w-full"
+                                    >
+                                      {v.farmName}
+                                    </button>
                                     <div className="text-[10px] text-muted-foreground line-clamp-2">{v.reason}</div>
                                   </div>
                                 </div>
@@ -930,6 +955,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                   accounts={accounts}
                   onAdd={(farmName) => toggleConfirmation(u.id, farmName, "added", true)}
                   onRemove={(farmName) => removeAddedFarm(u.id, farmName)}
+                  onFarmClick={openFarmActivity}
                   readOnly={isPastWeek || !isAdmin}
                 />
               </div>
@@ -972,6 +998,16 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
           </div>
         </div>
       )}
+
+      <ActivityDialog
+        open={!!activityFarm}
+        onOpenChange={(o) => { if (!o) setActivityFarm(null); }}
+        farmId={activityFarm?.id || ""}
+        farmName={activityFarm?.name || ""}
+        activities={allActivities}
+        users={users}
+        analysis={null}
+      />
     </div>
   );
 }
@@ -984,10 +1020,11 @@ interface AddedFarmsRowProps {
   accounts: Account[];
   onAdd: (farmName: string) => void;
   onRemove: (farmName: string) => void;
+  onFarmClick?: (farmName: string) => void;
   readOnly?: boolean;
 }
 
-function AddedFarmsRow({ added, accounts, onAdd, onRemove, readOnly = false }: AddedFarmsRowProps) {
+function AddedFarmsRow({ added, accounts, onAdd, onRemove, onFarmClick, readOnly = false }: AddedFarmsRowProps) {
   const [open, setOpen] = useState(false);
   const sortedAccounts = useMemo(
     () => [...accounts]
@@ -1012,7 +1049,17 @@ function AddedFarmsRow({ added, accounts, onAdd, onRemove, readOnly = false }: A
           key={a.id}
           className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 pl-2 pr-1 py-0.5 text-[11px]"
         >
-          {a.farm_name}
+          {onFarmClick ? (
+            <button
+              type="button"
+              onClick={() => onFarmClick(a.farm_name)}
+              className="hover:underline hover:text-primary"
+            >
+              {a.farm_name}
+            </button>
+          ) : (
+            a.farm_name
+          )}
           {!readOnly && (
             <button
               type="button"
