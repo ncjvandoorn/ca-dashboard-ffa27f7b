@@ -1039,7 +1039,17 @@ function AddedFarmsRow({ added, accounts, onAdd, onRemove, onFarmClick, readOnly
           key={a.id}
           className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 pl-2 pr-1 py-0.5 text-[11px]"
         >
-          {a.farm_name}
+          {onFarmClick ? (
+            <button
+              type="button"
+              onClick={() => onFarmClick(a.farm_name)}
+              className="hover:underline hover:text-primary"
+            >
+              {a.farm_name}
+            </button>
+          ) : (
+            a.farm_name
+          )}
           {!readOnly && (
             <button
               type="button"
