@@ -20,6 +20,7 @@ import { computeConcludedDate } from "@/lib/trialConcluded";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
+import { getUserExpertiseMap, type UserExpertiseMap } from "@/lib/userExpertise";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
@@ -225,6 +226,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const [loading, setLoading] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
+  const [expertiseMap, setExpertiseMap] = useState<UserExpertiseMap>({});
+  useEffect(() => {
+    getUserExpertiseMap().then(setExpertiseMap).catch(() => {});
+  }, []);
   const lastCurrentWeekRef = useRef(currentWeek);
   const resolvedCurrentWeek = useMemo(
     () => (referenceNow ? getWeekNrForDate(referenceNow, "utc") : currentWeek),
@@ -640,6 +645,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       id: u.id,
       name: u.name,
       pos: users.find((usr) => usr.id === u.id)?.position || undefined,
+      expertise: (expertiseMap[u.id] || "").trim() || undefined,
     }));
 
     const weekRange = {
@@ -741,7 +747,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       .slice(0, 25);
 
     return { activitySummary, qualitySummary, userSummary, weekRange, uncoveredFarms, todayDate, currentWeekNr: plannerWeekNr, weekDates, commercialFollowupCandidates };
-  }, [allActivities, reports, activeUsers, userMap, accountMap, users, accounts, trials, referenceNow, resolvedCurrentWeek, concludedByTrial]);
+  }, [allActivities, reports, activeUsers, userMap, accountMap, users, accounts, trials, referenceNow, resolvedCurrentWeek, concludedByTrial, expertiseMap]);
 
   const runAnalysis = useCallback(async () => {
     setLoading(true);
