@@ -309,7 +309,7 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                               </div>
                             </motion.div>
                           </TooltipTrigger>
-                          <TooltipContent side="right" align="start" className="max-w-sm whitespace-pre-wrap break-words">
+                          <TooltipContent side="left" align="start" collisionPadding={16} className="max-w-xs whitespace-pre-wrap break-words z-[100]">
                             <div className="space-y-1">
                               <div className="font-semibold text-xs">{activity.subject || "Untitled"}</div>
                               {activity.type && (
