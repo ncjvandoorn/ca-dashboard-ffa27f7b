@@ -43,6 +43,7 @@ export const DataFilesCard = () => {
       await queryClient.invalidateQueries({ queryKey: [key] });
     });
     setBulkUploading(false);
+    await refreshDates();
 
     if (result.unknown.length > 0) {
       toast({
