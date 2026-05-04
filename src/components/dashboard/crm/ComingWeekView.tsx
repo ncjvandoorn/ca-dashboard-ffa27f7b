@@ -20,7 +20,7 @@ import { computeConcludedDate } from "@/lib/trialConcluded";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
-import { getUserExpertiseMap, type UserExpertiseMap } from "@/lib/userExpertise";
+import { getUserExpertiseFullMap, type UserExpertiseFullMap } from "@/lib/userExpertise";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
@@ -226,9 +226,9 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const [loading, setLoading] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
-  const [expertiseMap, setExpertiseMap] = useState<UserExpertiseMap>({});
+  const [expertiseMap, setExpertiseMap] = useState<UserExpertiseFullMap>({});
   useEffect(() => {
-    getUserExpertiseMap().then(setExpertiseMap).catch(() => {});
+    getUserExpertiseFullMap().then(setExpertiseMap).catch(() => {});
   }, []);
   const lastCurrentWeekRef = useRef(currentWeek);
   const resolvedCurrentWeek = useMemo(
@@ -645,7 +645,8 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       id: u.id,
       name: u.name,
       pos: users.find((usr) => usr.id === u.id)?.position || undefined,
-      expertise: (expertiseMap[u.id] || "").trim() || undefined,
+      expertise: (expertiseMap[u.id]?.expertise || "").trim() || undefined,
+      farmScope: expertiseMap[u.id]?.farmScope || "responsible",
     }));
 
     const weekRange = {
