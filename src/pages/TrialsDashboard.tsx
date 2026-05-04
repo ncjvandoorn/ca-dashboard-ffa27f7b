@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
 import { usePlannerTrials } from "@/hooks/usePlannerTrials";
 import { computeTrialLink, type LinkStatus } from "@/lib/trialLinkage";
+import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import { computeConcludedDate } from "@/lib/trialConcluded";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
