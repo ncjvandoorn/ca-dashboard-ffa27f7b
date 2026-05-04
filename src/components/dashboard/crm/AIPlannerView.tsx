@@ -955,6 +955,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                   accounts={accounts}
                   onAdd={(farmName) => toggleConfirmation(u.id, farmName, "added", true)}
                   onRemove={(farmName) => removeAddedFarm(u.id, farmName)}
+                  onFarmClick={openFarmActivity}
                   readOnly={isPastWeek || !isAdmin}
                 />
               </div>
