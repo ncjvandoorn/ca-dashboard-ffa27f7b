@@ -389,7 +389,17 @@ export function ExceptionReport({
       }
 
       // No valid cache — run AI analysis for current scope (admin only)
-      const farmSummaries = buildFarmSummaries(reports, accounts, recentWeeks, priorWeeks);
+      const farmSummaries = buildFarmSummaries({
+        reports,
+        accounts,
+        recentWeeks,
+        priorWeeks,
+        activities,
+        users,
+        shipperReports,
+        shipperArrivals,
+        servicesOrders,
+      });
 
       if (farmSummaries.length === 0) {
         setError("No farms with sufficient data in the last 12 weeks.");
