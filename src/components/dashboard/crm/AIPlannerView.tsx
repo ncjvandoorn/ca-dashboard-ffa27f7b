@@ -1025,7 +1025,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                     onCheckedChange={(val) => toggleConfirmation(u.id, v.farmName, "ai", val === true)}
                                     className="mt-0.5"
                                     aria-label={`Confirm visit to ${v.farmName}`}
-                                    disabled={isPastWeek || !isAdmin}
+                                    disabled={isPastWeek || !isAdmin || isApproved}
                                   />
                                   <span className="font-mono text-[10px] text-muted-foreground">#{v.order}</span>
                                   <div className="flex-1 min-w-0">
