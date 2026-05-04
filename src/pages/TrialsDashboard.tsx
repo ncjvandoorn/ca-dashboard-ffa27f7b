@@ -378,7 +378,7 @@ export default function TrialsDashboard() {
                   <TableHead className="text-right">Treat.</TableHead>
                   <TableHead className="text-right">Vases</TableHead>
                   <TableHead>Initial quality</TableHead>
-                  <TableHead>Next step</TableHead>
+                  <TableHead className="min-w-[140px]">Next step</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
