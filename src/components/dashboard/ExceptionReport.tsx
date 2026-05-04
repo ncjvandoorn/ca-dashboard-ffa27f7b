@@ -13,11 +13,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import type { QualityReport, Account } from "@/lib/csvParser";
+import type { QualityReport, Account, Activity, ShipperReport, ShipperArrival, ServicesOrder, User } from "@/lib/csvParser";
 
 interface ExceptionReportProps {
   reports: QualityReport[];
   accounts: Account[];
+  activities?: Activity[];
+  users?: User[];
+  shipperReports?: ShipperReport[];
+  shipperArrivals?: ShipperArrival[];
+  servicesOrders?: ServicesOrder[];
   onSelectFarm: (farmId: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -26,9 +31,12 @@ interface ExceptionReportProps {
 }
 
 const WINDOW = 12;
-const ANALYSIS_VERSION = 2;
+const ANALYSIS_VERSION = 3;
 const NOTE_WEEKS_RECENT = 4;
 const NOTE_WEEKS_PRIOR = 2;
+const CRM_RECENT_DAYS = 120;
+const CRM_MAX_PER_FARM = 8;
+const SHIPPER_MAX_PER_FARM = 12;
 
 function trimNote(note?: string | null, maxLen = 140): string | undefined {
   if (!note) return undefined;
