@@ -62,6 +62,12 @@ Quality data: w=weekNr(YYWW), iPh=intakePH, iEc=intakeEC, iT=intakeTemp, iH=inta
 4. WORKLOAD: Balance work across team. If one user has 50 open and another has 3, redistribute.
 5. NEW ACTIVITIES: Based on the hierarchy above — be specific (cite farm, metric, week numbers).
 
+**USER EXPERTISE — STRICT ASSIGNMENT RULE:**
+Each entry in TEAM may include an \`expertise\` field describing what that Technical Consultant is qualified to handle (or explicitly NOT qualified to handle, e.g. "All products except Gatten, Danisaraba and Biostimulants" or "Only Gatten, Danisaraba and Biostimulants").
+- When choosing \`suggestedUser\` for ANY urgentFarmVisit, suggestedNewActivity, or commercialFollowup, you MUST respect each user's expertise. Never assign a task or visit involving a product/topic the user is excluded from.
+- If a finding involves a specific product (e.g. a commercial trial recommending Gatten), assign it to a user whose expertise covers that product. If multiple qualify, balance workload.
+- If NO user on the team is qualified, still surface the finding but set \`suggestedUser\` to "" and mention "no qualified TC available" in the reason.
+
 When two findings compete for the same slot in urgentFarmVisits or suggestedNewActivities, the higher tier in this hierarchy ALWAYS wins. Mention which tier a finding belongs to in its reason field when relevant.
 
 Return JSON with this structure:
