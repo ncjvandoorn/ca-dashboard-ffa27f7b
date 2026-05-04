@@ -298,15 +298,29 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
 
   useEffect(() => { loadConfirmations(); }, [loadConfirmations]);
 
-  // Load approval status for the selected week.
+  // Load approval status for the selected week. When approved, we also fetch
+  // the locked plan snapshot so we can render the frozen plan without ever
+  // re-fetching from cache (the user explicitly asked: locked = no auto reload).
   const loadApproval = useCallback(async () => {
     const { data, error } = await supabase
       .from("weekly_plan_approvals")
-      .select("approved_at, approved_by")
+      .select("approved_at, approved_by, plan_snapshot")
       .eq("week_nr", selectedWeek)
       .maybeSingle();
-    if (error) { console.error("loadApproval error", error); return; }
-    setApproval(data ? { approved_at: data.approved_at as string, approved_by: (data.approved_by as string | null) ?? null } : null);
+    if (error) { console.error("loadApproval error", error); return null; }
+    if (data) {
+      setApproval({ approved_at: data.approved_at as string, approved_by: (data.approved_by as string | null) ?? null });
+      const snap = (data as { plan_snapshot?: unknown }).plan_snapshot;
+      if (snap) {
+        const p = snap as WeeklyPlan;
+        planCache[selectedWeek] = { plan: p, loadedAt: data.approved_at as string };
+        setPlan(p);
+        setPlanLoadedAt(data.approved_at as string);
+      }
+      return true;
+    }
+    setApproval(null);
+    return false;
   }, [selectedWeek]);
 
   useEffect(() => { loadApproval(); }, [loadApproval]);
