@@ -13,11 +13,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import type { QualityReport, Account } from "@/lib/csvParser";
+import type { QualityReport, Account, Activity, ShipperReport, ShipperArrival, ServicesOrder, User } from "@/lib/csvParser";
 
 interface ExceptionReportProps {
   reports: QualityReport[];
   accounts: Account[];
+  activities?: Activity[];
+  users?: User[];
+  shipperReports?: ShipperReport[];
+  shipperArrivals?: ShipperArrival[];
+  servicesOrders?: ServicesOrder[];
   onSelectFarm: (farmId: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -26,9 +31,12 @@ interface ExceptionReportProps {
 }
 
 const WINDOW = 12;
-const ANALYSIS_VERSION = 2;
+const ANALYSIS_VERSION = 3;
 const NOTE_WEEKS_RECENT = 4;
 const NOTE_WEEKS_PRIOR = 2;
+const CRM_RECENT_DAYS = 120;
+const CRM_MAX_PER_FARM = 8;
+const SHIPPER_MAX_PER_FARM = 12;
 
 function trimNote(note?: string | null, maxLen = 140): string | undefined {
   if (!note) return undefined;
@@ -79,12 +87,72 @@ function getWeekWindow(reports: QualityReport[]): WeekWindow {
   };
 }
 
-function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recentWeeks: number[], priorWeeks: number[]) {
+function trimNoteShort(note?: string | null, maxLen = 200): string | undefined {
+  return trimNote(note, maxLen);
+}
+
+interface BuildContext {
+  reports: QualityReport[];
+  accounts: Account[];
+  recentWeeks: number[];
+  priorWeeks: number[];
+  activities: Activity[];
+  users: User[];
+  shipperReports: ShipperReport[];
+  shipperArrivals: ShipperArrival[];
+  servicesOrders: ServicesOrder[];
+}
+
+function weekNrFromDate(ts: number | null | undefined): number | null {
+  if (!ts) return null;
+  const d = new Date(ts);
+  const daysSinceSat = (d.getDay() + 1) % 7;
+  const sat = new Date(d);
+  sat.setDate(d.getDate() - daysSinceSat);
+  sat.setHours(0, 0, 0, 0);
+  const jan1 = new Date(sat.getFullYear(), 0, 1);
+  const jan1DaysSinceSat = (jan1.getDay() + 1) % 7;
+  const week1Sat = new Date(jan1);
+  week1Sat.setDate(jan1.getDate() - jan1DaysSinceSat);
+  week1Sat.setHours(0, 0, 0, 0);
+  const wk = Math.floor((sat.getTime() - week1Sat.getTime()) / (7 * 86400000)) + 1;
+  return (sat.getFullYear() % 100) * 100 + wk;
+}
+
+function buildFarmSummaries(ctx: BuildContext) {
+  const { reports, accounts, recentWeeks, priorWeeks, activities, users, shipperReports, shipperArrivals, servicesOrders } = ctx;
   const recentSet = new Set(recentWeeks);
   const priorSet = new Set(priorWeeks);
   const recentNoteWeeks = new Set(recentWeeks.slice(-NOTE_WEEKS_RECENT));
   const priorNoteWeeks = new Set(priorWeeks.slice(-NOTE_WEEKS_PRIOR));
   const accountMap = new Map(accounts.map((a) => [a.id, a.name]));
+  const userMap = new Map(users.map((u) => [u.id, u.name]));
+
+  // Index shipper events by farm via service orders.
+  const ordersByFarm = new Map<string, ServicesOrder[]>();
+  for (const o of servicesOrders) {
+    if (!o.farmAccountId) continue;
+    if (!ordersByFarm.has(o.farmAccountId)) ordersByFarm.set(o.farmAccountId, []);
+    ordersByFarm.get(o.farmAccountId)!.push(o);
+  }
+  const shipperReportById = new Map(shipperReports.map((s) => [s.id, s]));
+  const arrivalsByOrder = new Map<string, ShipperArrival[]>();
+  for (const a of shipperArrivals) {
+    if (!a.servicesOrderId) continue;
+    if (!arrivalsByOrder.has(a.servicesOrderId)) arrivalsByOrder.set(a.servicesOrderId, []);
+    arrivalsByOrder.get(a.servicesOrderId)!.push(a);
+  }
+
+  // Index recent CRM activities by farm.
+  const cutoff = Date.now() - CRM_RECENT_DAYS * 86400000;
+  const activitiesByFarm = new Map<string, Activity[]>();
+  for (const a of activities) {
+    if (!a.accountId) continue;
+    const ts = a.startsAt ?? a.completedAt ?? a.createdAt ?? 0;
+    if (!ts || ts < cutoff) continue;
+    if (!activitiesByFarm.has(a.accountId)) activitiesByFarm.set(a.accountId, []);
+    activitiesByFarm.get(a.accountId)!.push(a);
+  }
 
   const recentByFarm = new Map<string, QualityReport[]>();
   const olderByFarm = new Map<string, QualityReport[]>();
@@ -137,11 +205,62 @@ function buildFarmSummaries(reports: QualityReport[], accounts: Account[], recen
         return entry;
       });
 
+    // Build shipper events for this farm.
+    const orders = ordersByFarm.get(farmId) || [];
+    const shipperEvents: any[] = [];
+    for (const o of orders) {
+      const sr = o.shipperReportId ? shipperReportById.get(o.shipperReportId) : undefined;
+      const stuffingTs = sr?.stuffingDate ?? o.dippingDate ?? null;
+      const w = weekNrFromDate(stuffingTs ?? undefined) ?? 0;
+      if (w > 0 && w < (recentWeeks[0] ?? 0)) continue;
+      const arrivals = arrivalsByOrder.get(o.id) || [];
+      const arr = arrivals.sort((a, b) => (b.arrivalDate ?? 0) - (a.arrivalDate ?? 0))[0];
+      if (!sr && !arr) continue;
+      const ev: Record<string, any> = { w };
+      if (stuffingTs) ev.sd = new Date(stuffingTs).toISOString().slice(0, 10);
+      if (sr?.loadingMin != null) ev.lm = sr.loadingMin;
+      const stuffingComment = trimNoteShort(sr?.generalComments);
+      if (stuffingComment) ev.gc = stuffingComment;
+      if (arr?.arrivalDate) ev.ad = new Date(arr.arrivalDate).toISOString().slice(0, 10);
+      if (arr?.dischargeWaitingMin != null) ev.dw = arr.dischargeWaitingMin;
+      const aT = [arr?.arrivalTemp1, arr?.arrivalTemp2, arr?.arrivalTemp3].filter((v) => v != null);
+      if (aT.length) ev.aT = aT;
+      const vT = [arr?.afterVc1Temp, arr?.afterVc2Temp, arr?.afterVc3Temp].filter((v) => v != null);
+      if (vT.length) ev.vT = vT;
+      if (arr?.vcCycles != null) ev.vc = arr.vcCycles;
+      if (arr?.vcDurationMin != null) ev.vd = arr.vcDurationMin;
+      const arrivalComment = trimNoteShort(arr?.specificComments);
+      if (arrivalComment) ev.ac = arrivalComment;
+      shipperEvents.push(ev);
+    }
+    shipperEvents.sort((a, b) => (b.w ?? 0) - (a.w ?? 0));
+
+    // Build recent CRM activities for this farm.
+    const farmActs = (activitiesByFarm.get(farmId) || [])
+      .sort((a, b) => (b.startsAt ?? b.completedAt ?? b.createdAt ?? 0) - (a.startsAt ?? a.completedAt ?? a.createdAt ?? 0))
+      .slice(0, CRM_MAX_PER_FARM)
+      .map((a) => {
+        const ts = a.startsAt ?? a.completedAt ?? a.createdAt;
+        const ev: Record<string, any> = {};
+        if (ts) ev.d = new Date(ts).toISOString().slice(0, 10);
+        if (a.type) ev.t = a.type;
+        const subj = trimNoteShort(a.subject, 100);
+        if (subj) ev.s = subj;
+        const notes = trimNoteShort(a.description, 220);
+        if (notes) ev.n = notes;
+        const uname = a.assignedUserId ? userMap.get(a.assignedUserId) : null;
+        if (uname) ev.u = uname;
+        if (a.status) ev.st = a.status;
+        return ev;
+      });
+
     summaries.push({
       farmId,
       farmName: accountMap.get(farmId) || "Unknown",
       recentWeeks: extractWeekly(sorted, recentNoteWeeks),
       priorWeeks: extractWeekly(olderSorted.slice(-NOTE_WEEKS_PRIOR), priorNoteWeeks),
+      shipperEvents: shipperEvents.slice(0, SHIPPER_MAX_PER_FARM),
+      crmActivities: farmActs,
       reportCount: sorted.length,
     });
   }
@@ -183,6 +302,11 @@ function scopeAnalysisToFarms(raw: any, allowedFarmIds: Set<string>) {
 export function ExceptionReport({
   reports,
   accounts,
+  activities = [],
+  users = [],
+  shipperReports = [],
+  shipperArrivals = [],
+  servicesOrders = [],
   onSelectFarm,
   open,
   onOpenChange,

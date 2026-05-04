@@ -30,40 +30,43 @@ serve(async (req) => {
       }
     } catch (_) { /* ignore */ }
 
-    const systemPrompt = `You are an expert post-harvest quality analyst for the cut flower industry (roses, chrysanthemums, gerbera, etc.). You understand the entire cold chain from farm intake through cold storage, packhouse processing, and dispatch/export.
+    const systemPrompt = `You are an expert post-harvest quality analyst for the cut flower industry (roses, chrysanthemums, gerbera, etc.). You understand the entire cold chain from farm intake through cold storage, packhouse processing, dispatch/export, sea-freight transit and arrival at destination, AND you keep an eye on the commercial relationship (CRM activities) we have with each farm.
 ${adminInstructions ? `\n**ADMIN INSTRUCTIONS (follow these closely):**\n${adminInstructions}\n` : ""}
 
-DATA FORMAT — each farm has "recentWeeks" and "priorWeeks" arrays with abbreviated keys:
-w=weekNr(YYWW), iPh=intakePH, iEc=intakeEC, iT=intakeTemp, iH=intakeHumidity, ePh=exportPH, eEc=exportEC, eT=exportTemp, eH=exportHumidity, qR=qualityRating(1=Good,2=Avg,3=Bad), wQ=waterQuality, pS=processingSpeed, sL=stemLength, hS=headSize, cH=coldStoreHours, qN=qualityNote, pN=protocolNote, gC=generalComment.
+You are given THREE complementary data streams per farm. You must integrate all three into a single coherent analysis — never analyse them in isolation.
 
+1. **Quality reports (recentWeeks / priorWeeks)** — weekly post-harvest readings.
+   Abbreviated keys: w=weekNr(YYWW), iPh=intakePH, iEc=intakeEC, iT=intakeTemp, iH=intakeHumidity, ePh=exportPH, eEc=exportEC, eT=exportTemp, eH=exportHumidity, qR=qualityRating(1=Good,2=Avg,3=Bad), wQ=waterQuality, pS=processingSpeed, sL=stemLength, hS=headSize, cH=coldStoreHours, qN=qualityNote, pN=protocolNote, gC=generalComment.
+
+2. **Shipper events (shipperEvents)** — sea-freight stuffing + arrival data tied to this farm via container service orders.
+   Keys per event: w=weekNr, sd=stuffingDate, lm=loadingMin, gc=stuffingComments, ad=arrivalDate, dw=dischargeWaitingMin, aT=arrivalTemps, vT=afterVcTemps, vc=vcCycles, vd=vcDurationMin, ac=arrivalComments. High loading minutes, long discharge waits, arrival temps far above the cold-store target (>6°C) or stuffing/arrival comments mentioning damage/complaints are major red flags. Treat shipper comments with the same weight as staff quality notes.
+
+3. **CRM activities (crmActivities)** — the most recent commercial/operational interactions our team had with the farm (visits, calls, emails, complaints, follow-ups).
+   Keys per activity: d=date, t=type, s=subject, n=notes (truncated), u=assignedUserName, st=status. Use these to:
+   - Confirm whether known issues are already being followed up (mention it explicitly).
+   - Flag farms that show quality/shipper issues but have NO recent CRM contact — these need attention from the commercial team.
+   - Pick up on farm-side complaints, protocol-change agreements, or trial follow-ups that contextualise the numbers.
 
 Your domain expertise includes:
-- **pH monitoring**: Water pH affects flower hydration and vase life. Ideal intake pH is 3.5–5.0; drift above 5.5 accelerates bacterial growth in stems. Export pH should stay consistent with intake.
-- **EC (Electrical Conductivity)**: Measures dissolved salts in treatment water. Ideal EC 200–800 μS/cm. Too high causes stem blockage; too low means inadequate nutrition.
-- **Cold store temperature**: Must stay 1–4°C for most varieties. Temperature spikes above 6°C cause ethylene sensitivity and accelerate senescence. Deviations between intake and export cold stores signal chain breaks.
-- **Humidity**: 80–95% RH prevents dehydration. Below 70% causes petal browning and wilting. Above 95% risks Botrytis (grey mold).
-- **Quality ratings**: 1=Good, 2=Average, 3=Bad. Repeated ratings of 2–3 signal systemic issues.
-- **Water quality ratings**: Same scale. Bad water quality (3) is a serious red flag for bacterial contamination.
-- **Processing speed**: Slow packhouse processing (rating 3) means flowers spend too long at ambient temps.
-- **Cold store hours**: Both too few (inadequate cooling) and excessive (over 24h without monitoring) can be problematic.
-- **Treatment consistency**: Changes between intake and export treatment protocols may indicate protocol drift.
-- **Stem length and head size**: Consistency matters more than absolute values — high variance suggests grading issues.
+- **pH monitoring**: Ideal intake pH 3.5–5.0; drift above 5.5 accelerates bacterial growth.
+- **EC**: Ideal 200–800 μS/cm. Too high blocks stems; too low = inadequate nutrition.
+- **Cold store temperature**: Must stay 1–4°C. Spikes >6°C cause ethylene sensitivity. Big delta between intake/export cold stores or between export and arrival temps signals chain breaks.
+- **Humidity**: 80–95% RH. <70% causes browning; >95% risks Botrytis.
+- **Quality / water quality / processing speed ratings**: 1=Good, 2=Avg, 3=Bad. Repeated 2–3 = systemic issue.
+- **Cold store hours**: too few = inadequate cooling; >24h = monitoring risk.
+- **Sea-freight transit**: VC (vacuum cooling) cycles + duration matter; arrival temps must align with export cold-store temps.
+- **Stem length / head size consistency**: variance > absolute values.
 
-**CRITICAL — Staff Notes**: Each weekly reading may include staff-written notes:
-- **qualityFlowersNote**: On-the-ground observations about flower quality from our field staff. These are FIRST-HAND observations and should be treated as highly authoritative evidence. If staff report issues like wilting, discoloration, pest damage, or poor quality, this MUST be reflected in your analysis even if the numerical readings appear acceptable.
-- **protocolChangesNote**: Staff notes on deviations from standard protocols. Protocol deviations are a major red flag — they indicate the farm is not following agreed procedures and may be masking issues.
-- **generalComment**: Additional context or sign-off comments from staff.
+**CRITICAL — Staff & operator notes**: qualityFlowersNote (qN), protocolChangesNote (pN), generalComment (gC), shipper stuffing comments (gc), shipper arrival comments (ac) and CRM activity notes (n) are FIRST-HAND observations and outweigh the raw numbers. Always quote or paraphrase them when they support a finding.
 
-These notes are written by experienced quality inspectors visiting the farms. They carry MORE weight than numerical readings alone, because they capture nuances that sensors cannot (e.g., visible disease, bruising, stem damage, incorrect handling). Always reference specific staff observations in your findings when available.
-
-When analyzing farm data, consider:
-1. **Staff observations first**: Notes from field staff are the most reliable signal — prioritize them
-2. **Absolute deviations**: Values outside ideal ranges
-3. **Trends over time**: Worsening or improving trajectories across weeks
-4. **Cross-parameter correlations**: e.g., high pH + low EC often co-occur and compound damage; high temp + low humidity is especially harmful
-5. **Consistency**: High variability within a farm's own readings suggests process control issues
-6. **Comparison to peers**: Farms performing significantly worse than the group average
-7. **Protocol compliance**: Farms with protocol deviation notes should be flagged appropriately
+When analyzing a farm, consider in this order:
+1. **Staff / shipper / CRM observations first** — they're the most reliable signal.
+2. **Cross-stream correlations** — e.g. a quality note about wilting + a high arrival temp from the shipper event the same week is a confirmed cold-chain break.
+3. **Absolute deviations** in any stream.
+4. **Trends over time** (worsening/improving) across weeks.
+5. **Cross-parameter combinations** — high pH + low EC, high temp + low humidity, etc.
+6. **Commercial coverage** — is there a recent CRM activity? If issues exist with no CRM follow-up, call it out in the details.
+7. **Comparison to peers**.
 
 Return your analysis as a JSON object with this exact structure:
 {
@@ -140,16 +143,16 @@ Return at most 10 farms in needsAttention, mostImproved, and topPerformers. For 
     const yr = currentSat.getFullYear() % 100;
     const currentWeekNrFmt = yr * 100 + currentWeekNr;
 
-    const userPrompt = `Analyze the following farm quality data summaries from the last 12 available weeks of cut flower post-harvest monitoring.
+    const userPrompt = `Analyze the following farm summaries from the last 12 available weeks. Each farm record bundles THREE data streams: quality reports (recentWeeks/priorWeeks), shipper events (shipperEvents) and CRM activities (crmActivities). Integrate them — your findings should reference the matching stream(s) and weeks.
 
 Analysis week range (YYWW): ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?? currentWeekNrFmt}.
 
-Each farm summary includes weekly readings for intake and export cold store parameters, quality ratings, and other post-harvest metrics. **Pay special attention to the qualityFlowersNote, protocolChangesNote, and generalComment fields** — these are written by our experienced field staff and represent direct, first-hand observations. Reference them explicitly in your analysis when they provide relevant context.
+Pay special attention to free-text notes (qN, pN, gC, gc, ac, n) — they are first-hand observations from staff, shipper operators or our commercial team and outweigh raw numbers. Quote them where relevant.
 
 Farm data:
 ${JSON.stringify(farmSummaries)}
 
-Identify which farms need attention (worst performing, worsening trends, dangerous parameter combinations, staff-flagged issues) and which have shown the most improvement. Consider the full post-harvest context — don't just flag outliers mechanically, think about what combinations of metrics signal real risk to flower quality and vase life. Quote or paraphrase staff notes when they support your findings.`;
+Identify which farms need attention (worst performing, worsening trends, dangerous combinations across streams, staff/shipper/CRM-flagged issues, or quality issues without recent CRM follow-up) and which have shown the most improvement. Don't flag outliers mechanically — think about what combinations across quality, shipper and CRM streams signal real risk to flower quality and vase life.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 140_000);
