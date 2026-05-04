@@ -21,6 +21,7 @@ import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
+import { getUserExpertiseFullMap, type UserExpertiseFullMap } from "@/lib/userExpertise";
 
 interface Props {
   allActivities: Activity[];
@@ -483,6 +484,15 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     [userCustomerRows],
   );
 
+  // Per-user farm scope: 'responsible' (default) limits the planner to farms
+  // that user owns in userCustomer.csv; 'all' lets the user be proposed any farm.
+  const [expertiseMap, setExpertiseMap] = useState<UserExpertiseFullMap>({});
+  useEffect(() => { getUserExpertiseFullMap().then(setExpertiseMap).catch(() => {}); }, []);
+  const userScope = useCallback(
+    (uid: string): "responsible" | "all" => expertiseMap[uid]?.farmScope || "responsible",
+    [expertiseMap],
+  );
+
   // Load cached plan for the selected week. `forceSpinner` is true only on
   // explicit user-triggered reload — automatic loads keep the previously
   // displayed plan visible (no flash of the loading state).
@@ -676,7 +686,9 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         // Commercial trial follow-ups are exempt — they were already routed
         // via resolveResponsible upstream and may legitimately involve farms
         // outside the standard rep mapping.
-        if (v.source !== "commercial") {
+        // Users with farm_scope = 'all' (set in Admin → User Expertise) are
+        // also exempt — the planner may propose any farm to them.
+        if (v.source !== "commercial" && userScope(id) !== "all") {
           const responsibleRep = resolveResponsible(v.farmName);
           if (!responsibleRep) continue;
           const responsibleId = resolveUserId(responsibleRep);
@@ -756,7 +768,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     } finally {
       setComputingRoutes(false);
     }
-  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible, baseOverride, homeBaseFor]);
+  }, [plan, planLoadedAt, selectedWeek, activeUsers, userSet, accountByName, accountById, userNameById, allActivities, reports, resolveResponsible, baseOverride, homeBaseFor, userScope]);
 
   // Auto-build routes when plan or selection changes — but skip the heavy
   // work (and the spinner) if we already have a cached result for this exact
