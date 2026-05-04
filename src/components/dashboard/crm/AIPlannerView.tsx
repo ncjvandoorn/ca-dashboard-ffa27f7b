@@ -323,7 +323,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     return false;
   }, [selectedWeek]);
 
-  useEffect(() => { loadApproval(); }, [loadApproval]);
+  // (loadApproval is invoked from the week-change effect below to coordinate with loadPlan.)
 
   const toggleApproval = useCallback(async () => {
     if (!isAdmin) return;
