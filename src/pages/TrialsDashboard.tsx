@@ -196,6 +196,7 @@ export default function TrialsDashboard() {
         t.treatment_count != null ? String(t.treatment_count) : "",
         t.total_vases != null ? String(t.total_vases) : "",
         t.stems_per_vase != null ? String(t.stems_per_vase) : "",
+        resolveConsultant(t.farm) || resolveConsultant(t.customer) || "",
       ]
         .filter(Boolean)
         .join(" ")
