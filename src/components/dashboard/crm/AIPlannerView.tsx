@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   MapPin, Sparkles, Loader2, RefreshCw, Route, AlertTriangle, Plus, X,
-  ChevronLeft, ChevronRight, CalendarDays,
+  ChevronLeft, ChevronRight, CalendarDays, Lock, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -265,6 +265,12 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   const [, setConfLoaded] = useState(false);
   const [activityFarm, setActivityFarm] = useState<{ id: string; name: string } | null>(null);
 
+  // Approval lock for the selected week (admin-only). When approved, the
+  // plan is frozen: no reload, no checkbox toggling, no add/remove farm.
+  const [approval, setApproval] = useState<{ approved_at: string; approved_by: string | null } | null>(null);
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const isApproved = !!approval;
+
   const openFarmActivity = useCallback((farmName: string | null | undefined) => {
     if (!farmName) return;
     const norm = normalizeName(farmName);
@@ -290,6 +296,56 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
   }, [selectedWeek]);
 
   useEffect(() => { loadConfirmations(); }, [loadConfirmations]);
+
+  // Load approval status for the selected week.
+  const loadApproval = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("weekly_plan_approvals")
+      .select("approved_at, approved_by")
+      .eq("week_nr", selectedWeek)
+      .maybeSingle();
+    if (error) { console.error("loadApproval error", error); return; }
+    setApproval(data ? { approved_at: data.approved_at as string, approved_by: (data.approved_by as string | null) ?? null } : null);
+  }, [selectedWeek]);
+
+  useEffect(() => { loadApproval(); }, [loadApproval]);
+
+  const toggleApproval = useCallback(async () => {
+    if (!isAdmin) return;
+    setApprovalLoading(true);
+    try {
+      if (approval) {
+        const { error } = await supabase
+          .from("weekly_plan_approvals")
+          .delete()
+          .eq("week_nr", selectedWeek);
+        if (error) throw error;
+        setApproval(null);
+        toast({ title: `Plan unlocked for week ${selectedWeek}` });
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data, error } = await supabase
+          .from("weekly_plan_approvals")
+          .insert({
+            week_nr: selectedWeek,
+            approved_by: user?.id ?? null,
+            plan_snapshot: plan as never,
+            routes_snapshot: routes as never,
+          })
+          .select("approved_at, approved_by")
+          .single();
+        if (error) throw error;
+        setApproval({ approved_at: data.approved_at as string, approved_by: (data.approved_by as string | null) ?? null });
+        toast({ title: `Plan approved for week ${selectedWeek}`, description: "The plan is now locked." });
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      toast({ title: "Could not update approval", description: msg, variant: "destructive" });
+    } finally {
+      setApprovalLoading(false);
+    }
+  }, [approval, isAdmin, selectedWeek, plan, routes]);
+
 
   // Fast lookup for current-week confirmations.
   const confByKey = useMemo(() => {
@@ -612,6 +668,15 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
       for (const v of allVisits) {
         const id = resolveUserId(v.suggestedUser);
         if (!id || !userSet.has(id)) continue;
+        // TC-user filter: a visit is only proposed if THIS sales rep is the
+        // one assigned to that farm/customer in userCustomer.csv. The AI may
+        // suggest cross-rep visits — we override to keep each rep on the
+        // farms they're actually responsible for.
+        const responsibleRep = resolveResponsible(v.farmName);
+        if (responsibleRep) {
+          const responsibleId = resolveUserId(responsibleRep);
+          if (responsibleId && responsibleId !== id) continue;
+        }
         if (!byUserId.has(id)) byUserId.set(id, []);
         // Prevent same-farm duplicates per user
         const arr = byUserId.get(id)!;
@@ -620,20 +685,28 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         }
       }
 
-      // Priority order helper
+      // Priority hierarchy (TOP-DOWN): 1) Commercial trials, 2) CRM activity,
+      // 3) Quality/shipper/arrival coverage. "Urgent" entries can come from
+      // either CRM or quality; we use the source field to decide rank.
+      const sourceRank: Record<PlanVisit["source"], number> = {
+        commercial: 0, // trials follow-up — most important
+        crm: 1,        // open / overdue CRM items
+        urgent: 2,     // AI-flagged urgent (quality/shipper)
+        coverage: 3,   // quality coverage gap
+        suggested: 4,  // generic AI suggestion
+      };
       const prioRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
       const out: Record<string, PlannedFarm[]> = {};
 
       for (const [uid, visits] of byUserId.entries()) {
-        // Cap at 12 by priority/source/score, keeping commercial follow-ups first.
+        // Sort by source first (hierarchy is the dominant signal), then priority.
         const trimmed = [...visits]
           .sort((a, b) => {
+            if (a.source !== b.source) return sourceRank[a.source] - sourceRank[b.source];
             const pa = prioRank[a.priority?.toLowerCase()] ?? 9;
             const pb = prioRank[b.priority?.toLowerCase()] ?? 9;
             if (pa !== pb) return pa - pb;
-            const sourceRank: Record<PlanVisit["source"], number> = { commercial: 0, urgent: 1, crm: 2, coverage: 3, suggested: 4 };
-            if (a.source !== b.source) return sourceRank[a.source] - sourceRank[b.source];
             const sa = a.visitScore ?? 0;
             const sb = b.visitScore ?? 0;
             if (sa !== sb) return sb - sa;
@@ -761,11 +834,37 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
           <Button
             variant="outline" size="sm" className="h-8 gap-1.5"
             onClick={refreshFromCache}
-            disabled={loading}
+            disabled={loading || isApproved}
+            title={isApproved ? "Plan approved — unlock to reload" : undefined}
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Reload AI plan
           </Button>
+        )}
+
+        {isAdmin && plan && (
+          <Button
+            variant={isApproved ? "outline" : "default"}
+            size="sm" className="h-8 gap-1.5"
+            onClick={toggleApproval}
+            disabled={approvalLoading}
+          >
+            {approvalLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isApproved ? (
+              <Lock className="h-4 w-4" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
+            {isApproved ? "Unlock plan" : "Approve plan"}
+          </Button>
+        )}
+
+        {isApproved && (
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/40 text-[10px] gap-1">
+            <Lock className="h-3 w-3" />
+            Approved {new Date(approval!.approved_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+          </Badge>
         )}
 
         <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
@@ -926,7 +1025,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                                     onCheckedChange={(val) => toggleConfirmation(u.id, v.farmName, "ai", val === true)}
                                     className="mt-0.5"
                                     aria-label={`Confirm visit to ${v.farmName}`}
-                                    disabled={isPastWeek || !isAdmin}
+                                    disabled={isPastWeek || !isAdmin || isApproved}
                                   />
                                   <span className="font-mono text-[10px] text-muted-foreground">#{v.order}</span>
                                   <div className="flex-1 min-w-0">
@@ -958,7 +1057,7 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                   onAdd={(farmName) => toggleConfirmation(u.id, farmName, "added", true)}
                   onRemove={(farmName) => removeAddedFarm(u.id, farmName)}
                   onFarmClick={openFarmActivity}
-                  readOnly={isPastWeek || !isAdmin}
+                  readOnly={isPastWeek || !isAdmin || isApproved}
                 />
               </div>
             );

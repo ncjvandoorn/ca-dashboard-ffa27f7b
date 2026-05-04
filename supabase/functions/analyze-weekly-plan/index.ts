@@ -55,12 +55,14 @@ Quality data: w=weekNr(YYWW), iPh=intakePH, iEc=intakeEC, iT=intakeTemp, iH=inta
 - Staff notes (qN, pN, gC) > numerical readings: field observations are most reliable
 - Key pests/diseases: Botrytis, powdery/downy mildew, thrips, spider mites, FCM
 
-**ANALYSIS PRIORITIES (in order):**
-1. URGENT: Farms with quality deterioration (worsening qR, staff-flagged pests/diseases) AND no open activities
-2. OVERDUE: Any To Do item older than 14 days — decide: complete this week, reassign, or close
-3. STAFF NOTES: Any qN/pN/gC mentioning pest, disease, damage, contamination → flag for visit
-4. WORKLOAD: Balance work across team. If one user has 50 open and another has 3, redistribute
-5. NEW ACTIVITIES: Based on quality trends — be specific (cite farm, metric, week numbers)
+**ANALYSIS PRIORITIES — STRICT HIERARCHY (apply in this exact order, never deviate):**
+1. **COMMERCIAL TRIAL FOLLOW-UPS (HIGHEST PRIORITY)** — Vase Life trials marked "Commercial" with no follow-up CRM activity. These are direct sales opportunities and ALWAYS take precedence over operational concerns. Surface them first in commercialFollowups and, where a visit is warranted, also as urgentFarmVisits with priority "critical".
+2. **CRM ACTIVITY** — Open / overdue CRM items (To Do, In Progress, Visit, Call, Task), staff-assigned follow-ups, and any farm-side complaint or commitment recorded in CRM. Overdue (>14 days) items must be surfaced.
+3. **QUALITY / SHIPPER / ARRIVAL DATA (LOWEST PRIORITY of the three)** — Farms with worsening qR, staff-flagged pests/diseases, dangerous combinations across quality reports, shipper reports and shipper arrival events. These matter, but never override commercial or CRM signals.
+4. WORKLOAD: Balance work across team. If one user has 50 open and another has 3, redistribute.
+5. NEW ACTIVITIES: Based on the hierarchy above — be specific (cite farm, metric, week numbers).
+
+When two findings compete for the same slot in urgentFarmVisits or suggestedNewActivities, the higher tier in this hierarchy ALWAYS wins. Mention which tier a finding belongs to in its reason field when relevant.
 
 Return JSON with this structure:
 {

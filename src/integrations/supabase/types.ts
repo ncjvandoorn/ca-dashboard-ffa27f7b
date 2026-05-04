@@ -918,6 +918,33 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_plan_approvals: {
+        Row: {
+          approved_at: string
+          approved_by: string | null
+          id: string
+          plan_snapshot: Json | null
+          routes_snapshot: Json | null
+          week_nr: number
+        }
+        Insert: {
+          approved_at?: string
+          approved_by?: string | null
+          id?: string
+          plan_snapshot?: Json | null
+          routes_snapshot?: Json | null
+          week_nr: number
+        }
+        Update: {
+          approved_at?: string
+          approved_by?: string | null
+          id?: string
+          plan_snapshot?: Json | null
+          routes_snapshot?: Json | null
+          week_nr?: number
+        }
+        Relationships: []
+      }
       weekly_plan_cache: {
         Row: {
           analysis: Json
