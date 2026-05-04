@@ -438,7 +438,9 @@ export default function TrialsDashboard() {
                     <TableCell className="text-right text-sm">{t.total_vases ?? "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{t.initial_quality || "—"}</TableCell>
                     <TableCell className="text-sm">
-                      {/repeat/i.test(t.recommendations || "") ? (
+                      {!(t.conclusion || "").trim() || !(t.recommendations || "").trim() ? (
+                        <Badge variant="outline" className="border-orange-500 text-orange-700 dark:text-orange-300">To be concluded</Badge>
+                      ) : /repeat/i.test(t.recommendations || "") ? (
                         <Badge variant="outline" className="border-amber-400 text-amber-700 dark:text-amber-300">Repeat</Badge>
                       ) : (
                         <Badge variant="outline" className="border-emerald-500 text-emerald-700 dark:text-emerald-300">Commercial</Badge>
