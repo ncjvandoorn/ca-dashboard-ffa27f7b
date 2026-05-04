@@ -686,7 +686,9 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
         // Commercial trial follow-ups are exempt — they were already routed
         // via resolveResponsible upstream and may legitimately involve farms
         // outside the standard rep mapping.
-        if (v.source !== "commercial") {
+        // Users with farm_scope = 'all' (set in Admin → User Expertise) are
+        // also exempt — the planner may propose any farm to them.
+        if (v.source !== "commercial" && userScope(id) !== "all") {
           const responsibleRep = resolveResponsible(v.farmName);
           if (!responsibleRep) continue;
           const responsibleId = resolveUserId(responsibleRep);
