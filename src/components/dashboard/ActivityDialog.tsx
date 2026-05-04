@@ -329,6 +329,7 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                       );
                     })}
                   </div>
+                  </TooltipProvider>
 
                   {timeline.length > 80 && (
                     <p className="text-xs text-muted-foreground text-center pt-2">
