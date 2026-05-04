@@ -413,6 +413,11 @@ const Index = () => {
                 <ExceptionReport
                   reports={yearFilteredReports}
                   accounts={scopedAccounts}
+                  activities={isCustomer ? [] : (scopedActivities || [])}
+                  users={isCustomer ? [] : (users || [])}
+                  shipperReports={isCustomer ? [] : (shipperReports || [])}
+                  shipperArrivals={isCustomer ? [] : (shipperArrivals || [])}
+                  servicesOrders={isCustomer ? [] : (servicesOrders || [])}
                   onSelectFarm={(id) => { setSelectedFarmId(id); }}
                   open={exceptionOpen}
                   onOpenChange={setExceptionOpen}
