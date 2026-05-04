@@ -1010,10 +1010,11 @@ interface AddedFarmsRowProps {
   accounts: Account[];
   onAdd: (farmName: string) => void;
   onRemove: (farmName: string) => void;
+  onFarmClick?: (farmName: string) => void;
   readOnly?: boolean;
 }
 
-function AddedFarmsRow({ added, accounts, onAdd, onRemove, readOnly = false }: AddedFarmsRowProps) {
+function AddedFarmsRow({ added, accounts, onAdd, onRemove, onFarmClick, readOnly = false }: AddedFarmsRowProps) {
   const [open, setOpen] = useState(false);
   const sortedAccounts = useMemo(
     () => [...accounts]
