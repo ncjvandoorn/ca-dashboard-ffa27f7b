@@ -217,6 +217,7 @@ function getWeekOptions(currentWeek: number): { value: number; label: string }[]
 }
 
 export function ComingWeekView({ allActivities, users, accounts, reports, activeUsers, onBack }: Props) {
+  const { isAdmin } = useAuth();
   const [currentWeek, setCurrentWeek] = useState<number>(() => getCurrentWeekNr());
   const [selectedWeek, setSelectedWeek] = useState<number>(() => getCurrentWeekNr());
   const [referenceNow, setReferenceNow] = useState<Date | null>(null);
