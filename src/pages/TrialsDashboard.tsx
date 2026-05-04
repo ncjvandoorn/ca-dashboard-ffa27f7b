@@ -51,6 +51,8 @@ export default function TrialsDashboard() {
   const { data: accounts = [] } = useAccounts();
   const { data: customerFarms = [] } = useCustomerFarms();
   const { data: planner = [] } = usePlannerTrials();
+  const { data: userCustomers = [] } = useUserCustomers();
+  const resolveConsultant = useMemo(() => buildResponsibleResolver(userCustomers), [userCustomers]);
 
   const [search, setSearch] = useState("");
   const [customerFilter, setCustomerFilter] = useState<string>(ALL);
