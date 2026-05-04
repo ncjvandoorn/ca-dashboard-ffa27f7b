@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAccounts, useCustomerFarms } from "@/hooks/useQualityData";
 import { usePlannerTrials } from "@/hooks/usePlannerTrials";
 import { computeTrialLink, type LinkStatus } from "@/lib/trialLinkage";
+import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import { computeConcludedDate } from "@/lib/trialConcluded";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -50,6 +51,8 @@ export default function TrialsDashboard() {
   const { data: accounts = [] } = useAccounts();
   const { data: customerFarms = [] } = useCustomerFarms();
   const { data: planner = [] } = usePlannerTrials();
+  const { data: userCustomers = [] } = useUserCustomers();
+  const resolveConsultant = useMemo(() => buildResponsibleResolver(userCustomers), [userCustomers]);
 
   const [search, setSearch] = useState("");
   const [customerFilter, setCustomerFilter] = useState<string>(ALL);
@@ -193,6 +196,7 @@ export default function TrialsDashboard() {
         t.treatment_count != null ? String(t.treatment_count) : "",
         t.total_vases != null ? String(t.total_vases) : "",
         t.stems_per_vase != null ? String(t.stems_per_vase) : "",
+        resolveConsultant(t.farm) || resolveConsultant(t.customer) || "",
       ]
         .filter(Boolean)
         .join(" ")
@@ -206,7 +210,7 @@ export default function TrialsDashboard() {
       const db = concludedByTrial.get(b.id) || "";
       return db.localeCompare(da);
     });
-  }, [customerScopedTrials, search, customerFilter, farmFilter, extraSearchByHeaderId, concludedByTrial]);
+  }, [customerScopedTrials, search, customerFilter, farmFilter, extraSearchByHeaderId, concludedByTrial, resolveConsultant]);
 
   /** Set of all account names (customers + farms) for matching */
   const accountNameSet = useMemo(() => {
