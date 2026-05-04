@@ -612,6 +612,15 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
       for (const v of allVisits) {
         const id = resolveUserId(v.suggestedUser);
         if (!id || !userSet.has(id)) continue;
+        // TC-user filter: a visit is only proposed if THIS sales rep is the
+        // one assigned to that farm/customer in userCustomer.csv. The AI may
+        // suggest cross-rep visits — we override to keep each rep on the
+        // farms they're actually responsible for.
+        const responsibleRep = resolveResponsible(v.farmName);
+        if (responsibleRep) {
+          const responsibleId = resolveUserId(responsibleRep);
+          if (responsibleId && responsibleId !== id) continue;
+        }
         if (!byUserId.has(id)) byUserId.set(id, []);
         // Prevent same-farm duplicates per user
         const arr = byUserId.get(id)!;
