@@ -437,7 +437,7 @@ export default function TrialsDashboard() {
                     <TableCell className="text-right text-sm">{t.treatment_count ?? "—"}</TableCell>
                     <TableCell className="text-right text-sm">{t.total_vases ?? "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{t.initial_quality || "—"}</TableCell>
-                    <TableCell className="text-sm">
+                    <TableCell className="text-sm whitespace-nowrap">
                       {!(t.conclusion || "").trim() || !(t.recommendations || "").trim() ? (
                         <Badge variant="outline" className="border-orange-500 text-orange-700 dark:text-orange-300">To be concluded</Badge>
                       ) : /repeat/i.test(t.recommendations || "") ? (
