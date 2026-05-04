@@ -297,6 +297,56 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
 
   useEffect(() => { loadConfirmations(); }, [loadConfirmations]);
 
+  // Load approval status for the selected week.
+  const loadApproval = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("weekly_plan_approvals")
+      .select("approved_at, approved_by")
+      .eq("week_nr", selectedWeek)
+      .maybeSingle();
+    if (error) { console.error("loadApproval error", error); return; }
+    setApproval(data ? { approved_at: data.approved_at as string, approved_by: (data.approved_by as string | null) ?? null } : null);
+  }, [selectedWeek]);
+
+  useEffect(() => { loadApproval(); }, [loadApproval]);
+
+  const toggleApproval = useCallback(async () => {
+    if (!isAdmin) return;
+    setApprovalLoading(true);
+    try {
+      if (approval) {
+        const { error } = await supabase
+          .from("weekly_plan_approvals")
+          .delete()
+          .eq("week_nr", selectedWeek);
+        if (error) throw error;
+        setApproval(null);
+        toast({ title: `Plan unlocked for week ${selectedWeek}` });
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data, error } = await supabase
+          .from("weekly_plan_approvals")
+          .insert({
+            week_nr: selectedWeek,
+            approved_by: user?.id ?? null,
+            plan_snapshot: plan as never,
+            routes_snapshot: routes as never,
+          })
+          .select("approved_at, approved_by")
+          .single();
+        if (error) throw error;
+        setApproval({ approved_at: data.approved_at as string, approved_by: (data.approved_by as string | null) ?? null });
+        toast({ title: `Plan approved for week ${selectedWeek}`, description: "The plan is now locked." });
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      toast({ title: "Could not update approval", description: msg, variant: "destructive" });
+    } finally {
+      setApprovalLoading(false);
+    }
+  }, [approval, isAdmin, selectedWeek, plan, routes]);
+
+
   // Fast lookup for current-week confirmations.
   const confByKey = useMemo(() => {
     const m = new Map<string, PlannerConfirmation>();
