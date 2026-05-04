@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { FlaskConical, Loader2, Search, Database } from "lucide-react";
+import { FlaskConical, Loader2, Search, Database, Layers, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { VaselifeCombinedDetail } from "@/components/trials/VaselifeCombinedDetail";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +61,23 @@ export default function TrialsDashboard() {
   const [customerFilter, setCustomerFilter] = useState<string>(ALL);
   const [farmFilter, setFarmFilter] = useState<string>(ALL);
   const [selected, setSelected] = useState<VaselifeHeader | null>(null);
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
+  const [comboOpen, setComboOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const toggleChecked = (id: string) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const clearChecked = () => setCheckedIds(new Set());
+  const checkedTrials = useMemo(
+    () => trials.filter((t) => checkedIds.has(t.id)),
+    [trials, checkedIds],
+  );
 
   // Deep-link: open a specific trial via ?trial=<id> or ?trial=<trial_number>
   useEffect(() => {
@@ -367,6 +386,22 @@ export default function TrialsDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={
+                        filtered.length > 0 && filtered.every((t) => checkedIds.has(t.id))
+                      }
+                      onCheckedChange={(v) => {
+                        setCheckedIds((prev) => {
+                          const next = new Set(prev);
+                          if (v) filtered.forEach((t) => next.add(t.id));
+                          else filtered.forEach((t) => next.delete(t.id));
+                          return next;
+                        });
+                      }}
+                      aria-label="Select all visible trials"
+                    />
+                  </TableHead>
                   <TableHead>Concluded</TableHead>
                   <TableHead>Trial</TableHead>
                   <TableHead className="w-16 text-center">Linked</TableHead>
@@ -400,7 +435,15 @@ export default function TrialsDashboard() {
                     key={t.id}
                     className="cursor-pointer hover:bg-muted/40"
                     onClick={() => setSelected(t)}
+                    data-state={checkedIds.has(t.id) ? "selected" : undefined}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={checkedIds.has(t.id)}
+                        onCheckedChange={() => toggleChecked(t.id)}
+                        aria-label={`Select trial ${t.trial_number || t.id.slice(0, 6)}`}
+                      />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(concludedByTrial.get(t.id) ?? null)}</TableCell>
                     <TableCell className="font-medium text-sm">
                       {t.trial_number || (
@@ -455,6 +498,30 @@ export default function TrialsDashboard() {
           )}
         </Card>
       </main>
+
+      {/* Floating combine button — top-right of viewport when selections exist */}
+      {checkedIds.size > 0 && (
+        <div className="fixed top-20 right-6 z-40 flex items-center gap-2 bg-card border border-border rounded-lg shadow-lg px-3 py-2">
+          <Layers className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">{checkedIds.size} selected</span>
+          <Button
+            size="sm"
+            onClick={() => setComboOpen(true)}
+            disabled={checkedIds.size < 2}
+          >
+            Combine
+          </Button>
+          <Button size="sm" variant="ghost" onClick={clearChecked} aria-label="Clear selection">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      <VaselifeCombinedDetail
+        trials={checkedTrials}
+        open={comboOpen}
+        onOpenChange={setComboOpen}
+      />
 
       <VaselifeTrialDetail
         trial={selected}
