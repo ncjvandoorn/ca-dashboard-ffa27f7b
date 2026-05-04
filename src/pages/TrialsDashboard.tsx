@@ -499,6 +499,30 @@ export default function TrialsDashboard() {
         </Card>
       </main>
 
+      {/* Floating combine button — top-right of viewport when selections exist */}
+      {checkedIds.size > 0 && (
+        <div className="fixed top-20 right-6 z-40 flex items-center gap-2 bg-card border border-border rounded-lg shadow-lg px-3 py-2">
+          <Layers className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">{checkedIds.size} selected</span>
+          <Button
+            size="sm"
+            onClick={() => setComboOpen(true)}
+            disabled={checkedIds.size < 2}
+          >
+            Combine
+          </Button>
+          <Button size="sm" variant="ghost" onClick={clearChecked} aria-label="Clear selection">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      <VaselifeCombinedDetail
+        trials={checkedTrials}
+        open={comboOpen}
+        onOpenChange={setComboOpen}
+      />
+
       <VaselifeTrialDetail
         trial={selected}
         open={!!selected}
