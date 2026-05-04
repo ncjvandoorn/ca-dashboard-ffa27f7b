@@ -861,7 +861,13 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
                           <div className="flex items-start gap-2">
                             <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold truncate">{m.farmName}</div>
+                              <button
+                                type="button"
+                                onClick={() => openFarmActivity(m.farmName)}
+                                className="font-semibold truncate text-left hover:underline hover:text-primary block w-full"
+                              >
+                                {m.farmName}
+                              </button>
                               <div className="text-[10px] text-destructive/80">
                                 Promised week {m.weekNr} · still no Visit recorded
                               </div>
