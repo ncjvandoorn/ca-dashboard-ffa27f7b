@@ -21,6 +21,7 @@ import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
+import { getUserExpertiseFullMap, type UserExpertiseFullMap } from "@/lib/userExpertise";
 
 interface Props {
   allActivities: Activity[];
