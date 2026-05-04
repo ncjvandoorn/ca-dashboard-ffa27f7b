@@ -219,6 +219,7 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                   {/* Vertical line */}
                   <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
 
+                  <TooltipProvider>
                   <div className="space-y-0">
                     {timeline.slice(0, 80).map((item, i) => {
                       if (item.kind === "trial") {
