@@ -268,44 +268,63 @@ export function ActivityDialog({ open, onOpenChange, farmId, farmName, activitie
                       const colorClass = statusColor[activity.status] || statusColor["To Do"];
 
                       return (
-                        <motion.div
-                          key={activity.id}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.02 }}
-                          className="relative flex items-start gap-3 py-2.5 pl-0"
-                        >
-                          {/* Dot on timeline */}
-                          <div className="z-10 mt-1 w-[31px] flex justify-center shrink-0">
-                            <div className={`w-2.5 h-2.5 rounded-full border-2 ${
-                              activity.status === "Completed" ? "bg-accent border-accent" :
-                              activity.status === "In Progress" ? "bg-primary border-primary" :
-                              "bg-muted-foreground/30 border-muted-foreground/40"
-                            }`} />
-                          </div>
+                        <Tooltip key={activity.id} delayDuration={250}>
+                          <TooltipTrigger asChild>
+                            <motion.div
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.02 }}
+                              className="relative flex items-start gap-3 py-2.5 pl-0 cursor-default"
+                            >
+                              {/* Dot on timeline */}
+                              <div className="z-10 mt-1 w-[31px] flex justify-center shrink-0">
+                                <div className={`w-2.5 h-2.5 rounded-full border-2 ${
+                                  activity.status === "Completed" ? "bg-accent border-accent" :
+                                  activity.status === "In Progress" ? "bg-primary border-primary" :
+                                  "bg-muted-foreground/30 border-muted-foreground/40"
+                                }`} />
+                              </div>
 
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="text-sm font-medium text-foreground truncate">
-                                {activity.subject || "Untitled"}
-                              </span>
-                              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${colorClass}`}>
-                                {activity.status}
-                              </Badge>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                  <span className="text-sm font-medium text-foreground truncate">
+                                    {activity.subject || "Untitled"}
+                                  </span>
+                                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${colorClass}`}>
+                                    {activity.status}
+                                  </Badge>
+                                </div>
+                                {activity.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2 ml-[22px]">
+                                    {activity.description}
+                                  </p>
+                                )}
+                                <p className="text-[11px] text-muted-foreground/60 ml-[22px] mt-0.5">
+                                  {formatDate(activity.startsAt || activity.createdAt)}
+                                  {activity.type && ` · ${activity.type}`}
+                                  {activity.assignedUserId && userMap.get(activity.assignedUserId) && ` · ${userMap.get(activity.assignedUserId)}`}
+                                </p>
+                              </div>
+                            </motion.div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" align="start" className="max-w-sm whitespace-pre-wrap break-words">
+                            <div className="space-y-1">
+                              <div className="font-semibold text-xs">{activity.subject || "Untitled"}</div>
+                              {activity.type && (
+                                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{activity.type}</div>
+                              )}
+                              {activity.description && (
+                                <div className="text-xs">{activity.description}</div>
+                              )}
+                              <div className="text-[10px] text-muted-foreground pt-1">
+                                {activity.assignedUserId && userMap.get(activity.assignedUserId) ? `${userMap.get(activity.assignedUserId)} · ` : ""}
+                                {formatDate(activity.startsAt || activity.createdAt)}
+                                {activity.status ? ` · ${activity.status}` : ""}
+                              </div>
                             </div>
-                            {activity.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2 ml-[22px]">
-                                {activity.description}
-                              </p>
-                            )}
-                            <p className="text-[11px] text-muted-foreground/60 ml-[22px] mt-0.5">
-                              {formatDate(activity.startsAt || activity.createdAt)}
-                              {activity.type && ` · ${activity.type}`}
-                              {activity.assignedUserId && userMap.get(activity.assignedUserId) && ` · ${userMap.get(activity.assignedUserId)}`}
-                            </p>
-                          </div>
-                        </motion.div>
+                          </TooltipContent>
+                        </Tooltip>
                       );
                     })}
                   </div>
