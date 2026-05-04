@@ -226,6 +226,10 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
   const [loading, setLoading] = useState(false);
   const [cachedAt, setCachedAt] = useState<string | null>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
+  const [expertiseMap, setExpertiseMap] = useState<UserExpertiseMap>({});
+  useEffect(() => {
+    getUserExpertiseMap().then(setExpertiseMap).catch(() => {});
+  }, []);
   const lastCurrentWeekRef = useRef(currentWeek);
   const resolvedCurrentWeek = useMemo(
     () => (referenceNow ? getWeekNrForDate(referenceNow, "utc") : currentWeek),
@@ -641,6 +645,7 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
       id: u.id,
       name: u.name,
       pos: users.find((usr) => usr.id === u.id)?.position || undefined,
+      expertise: (expertiseMap[u.id] || "").trim() || undefined,
     }));
 
     const weekRange = {
