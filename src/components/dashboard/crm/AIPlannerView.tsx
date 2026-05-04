@@ -998,6 +998,16 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
           </div>
         </div>
       )}
+
+      <ActivityDialog
+        open={!!activityFarm}
+        onOpenChange={(o) => { if (!o) setActivityFarm(null); }}
+        farmId={activityFarm?.id || ""}
+        farmName={activityFarm?.name || ""}
+        activities={allActivities}
+        users={users}
+        analysis={null}
+      />
     </div>
   );
 }
