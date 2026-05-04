@@ -275,7 +275,7 @@ function ActivityChip({ activity, userMap, accountMap }: {
           {farm && <div className="truncate opacity-80 ml-4">{farm}</div>}
         </div>
       </TooltipTrigger>
-      <TooltipContent side="right" className="max-w-xs">
+      <TooltipContent side="right" className="max-w-md max-h-[70vh] overflow-y-auto">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 font-semibold text-xs">
             <Icon className="h-3.5 w-3.5" />
@@ -286,7 +286,7 @@ function ActivityChip({ activity, userMap, accountMap }: {
           {assignee && <div className="text-xs"><span className="text-muted-foreground">Assignee:</span> {assignee}</div>}
           {activity.status && <div className="text-xs"><span className="text-muted-foreground">Status:</span> {activity.status}</div>}
           {activity.description && (
-            <div className="text-xs mt-1.5 pt-1.5 border-t border-border/50 line-clamp-6 whitespace-pre-wrap">{activity.description}</div>
+            <div className="text-xs mt-1.5 pt-1.5 border-t border-border/50 whitespace-pre-wrap break-words">{activity.description}</div>
           )}
         </div>
       </TooltipContent>
@@ -362,7 +362,7 @@ function MonthGrid({ anchor, activities, userMap, accountMap, onPickDay }: {
                           <span className="truncate">{a.subject || "Untitled"}</span>
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-xs">
+                      <TooltipContent side="right" className="max-w-md max-h-[70vh] overflow-y-auto">
                         <ChipTooltipContent activity={a} userMap={userMap} accountMap={accountMap} />
                       </TooltipContent>
                     </Tooltip>
@@ -397,7 +397,7 @@ function ChipTooltipContent({ activity, userMap, accountMap }: {
       {farm && <div className="text-xs"><span className="text-muted-foreground">Farm:</span> {farm}</div>}
       {assignee && <div className="text-xs"><span className="text-muted-foreground">Assignee:</span> {assignee}</div>}
       {activity.description && (
-        <div className="text-xs mt-1.5 pt-1.5 border-t border-border/50 line-clamp-6 whitespace-pre-wrap">{activity.description}</div>
+        <div className="text-xs mt-1.5 pt-1.5 border-t border-border/50 whitespace-pre-wrap break-words">{activity.description}</div>
       )}
     </div>
   );
