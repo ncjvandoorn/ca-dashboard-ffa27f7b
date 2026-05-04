@@ -435,7 +435,15 @@ export default function TrialsDashboard() {
                     key={t.id}
                     className="cursor-pointer hover:bg-muted/40"
                     onClick={() => setSelected(t)}
+                    data-state={checkedIds.has(t.id) ? "selected" : undefined}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={checkedIds.has(t.id)}
+                        onCheckedChange={() => toggleChecked(t.id)}
+                        aria-label={`Select trial ${t.trial_number || t.id.slice(0, 6)}`}
+                      />
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{fmtDate(concludedByTrial.get(t.id) ?? null)}</TableCell>
                     <TableCell className="font-medium text-sm">
                       {t.trial_number || (
