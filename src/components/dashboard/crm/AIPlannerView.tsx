@@ -484,6 +484,15 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
     [userCustomerRows],
   );
 
+  // Per-user farm scope: 'responsible' (default) limits the planner to farms
+  // that user owns in userCustomer.csv; 'all' lets the user be proposed any farm.
+  const [expertiseMap, setExpertiseMap] = useState<UserExpertiseFullMap>({});
+  useEffect(() => { getUserExpertiseFullMap().then(setExpertiseMap).catch(() => {}); }, []);
+  const userScope = useCallback(
+    (uid: string): "responsible" | "all" => expertiseMap[uid]?.farmScope || "responsible",
+    [expertiseMap],
+  );
+
   // Load cached plan for the selected week. `forceSpinner` is true only on
   // explicit user-triggered reload — automatic loads keep the previously
   // displayed plan visible (no flash of the loading state).
