@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import type { Activity, User } from "@/lib/csvParser";
 import { useVaselifeHeaders, useAllVaselifeMeasurements, type VaselifeHeader } from "@/hooks/useVaselifeTrials";
 import { computeConcludedDate } from "@/lib/trialConcluded";
