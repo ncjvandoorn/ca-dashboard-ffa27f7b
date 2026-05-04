@@ -210,7 +210,7 @@ export default function TrialsDashboard() {
       const db = concludedByTrial.get(b.id) || "";
       return db.localeCompare(da);
     });
-  }, [customerScopedTrials, search, customerFilter, farmFilter, extraSearchByHeaderId, concludedByTrial]);
+  }, [customerScopedTrials, search, customerFilter, farmFilter, extraSearchByHeaderId, concludedByTrial, resolveConsultant]);
 
   /** Set of all account names (customers + farms) for matching */
   const accountNameSet = useMemo(() => {
