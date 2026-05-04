@@ -68,6 +68,9 @@ Each entry in TEAM may include an \`expertise\` field describing what that Techn
 - If a finding involves a specific product (e.g. a commercial trial recommending Gatten), assign it to a user whose expertise covers that product. If multiple qualify, balance workload.
 - If NO user on the team is qualified, still surface the finding but set \`suggestedUser\` to "" and mention "no qualified TC available" in the reason.
 
+**FARM SCOPE — STRICT ASSIGNMENT RULE:**
+Each entry in TEAM also has a \`farmScope\` field: either \`"responsible"\` (the default — that user only visits the farms they own in the user↔customer mapping) or \`"all"\` (that user may be assigned ANY farm regardless of ownership). When choosing \`suggestedUser\`, only assign a farm to a \`responsible\`-scoped user if they are the responsible rep for that farm. \`all\`-scoped users (e.g. a generalist) may be assigned any farm.
+
 When two findings compete for the same slot in urgentFarmVisits or suggestedNewActivities, the higher tier in this hierarchy ALWAYS wins. Mention which tier a finding belongs to in its reason field when relevant.
 
 Return JSON with this structure:
