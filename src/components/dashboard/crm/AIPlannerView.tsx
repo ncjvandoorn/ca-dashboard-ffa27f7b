@@ -668,14 +668,20 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
       for (const v of allVisits) {
         const id = resolveUserId(v.suggestedUser);
         if (!id || !userSet.has(id)) continue;
-        // TC-user filter: a visit is only proposed if THIS sales rep is the
-        // one assigned to that farm/customer in userCustomer.csv. The AI may
-        // suggest cross-rep visits — we override to keep each rep on the
-        // farms they're actually responsible for.
-        const responsibleRep = resolveResponsible(v.farmName);
-        if (responsibleRep) {
+        // TC-user filter (STRICT): a visit is only proposed if THIS sales rep
+        // is the one assigned to that farm in userCustomer.csv. If the farm
+        // has no mapping, the visit is dropped entirely (rather than falling
+        // through to any user). This enforces "only farms under their
+        // responsibility" across CRM, coverage, urgent and AI suggestions.
+        // Commercial trial follow-ups are exempt — they were already routed
+        // via resolveResponsible upstream and may legitimately involve farms
+        // outside the standard rep mapping.
+        if (v.source !== "commercial") {
+          const responsibleRep = resolveResponsible(v.farmName);
+          if (!responsibleRep) continue;
           const responsibleId = resolveUserId(responsibleRep);
-          if (responsibleId && responsibleId !== id) continue;
+          if (!responsibleId) continue;
+          if (responsibleId !== id) continue;
         }
         if (!byUserId.has(id)) byUserId.set(id, []);
         // Prevent same-farm duplicates per user
