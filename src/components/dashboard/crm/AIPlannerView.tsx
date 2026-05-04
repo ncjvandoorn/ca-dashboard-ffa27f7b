@@ -757,14 +757,16 @@ export function AIPlannerView({ allActivities, users, accounts, reports, activeU
           </Badge>
         )}
 
-        <Button
-          variant="outline" size="sm" className="h-8 gap-1.5"
-          onClick={refreshFromCache}
-          disabled={loading}
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          Reload AI plan
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="outline" size="sm" className="h-8 gap-1.5"
+            onClick={refreshFromCache}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Reload AI plan
+          </Button>
+        )}
 
         <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
           {planLoadedAt && (

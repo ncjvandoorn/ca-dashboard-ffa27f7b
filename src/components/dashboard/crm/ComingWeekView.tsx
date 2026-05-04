@@ -20,6 +20,7 @@ import { computeConcludedDate } from "@/lib/trialConcluded";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 import type { Activity, User, Account, QualityReport } from "@/lib/csvParser";
 import { useUserCustomers, buildResponsibleResolver } from "@/lib/userCustomer";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   allActivities: Activity[];
@@ -216,6 +217,7 @@ function getWeekOptions(currentWeek: number): { value: number; label: string }[]
 }
 
 export function ComingWeekView({ allActivities, users, accounts, reports, activeUsers, onBack }: Props) {
+  const { isAdmin } = useAuth();
   const [currentWeek, setCurrentWeek] = useState<number>(() => getCurrentWeekNr());
   const [selectedWeek, setSelectedWeek] = useState<number>(() => getCurrentWeekNr());
   const [referenceNow, setReferenceNow] = useState<Date | null>(null);
@@ -971,16 +973,18 @@ export function ComingWeekView({ allActivities, users, accounts, reports, active
             ))}
           </SelectContent>
         </Select>
-        <Button
-          variant="default"
-          size="sm"
-          onClick={runAnalysis}
-          disabled={loading}
-          className="gap-1.5"
-        >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : plan ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-          {loading ? "Analyzing..." : plan ? "Refresh AI Plan" : "Generate AI Plan"}
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={runAnalysis}
+            disabled={loading}
+            className="gap-1.5"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : plan ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+            {loading ? "Analyzing..." : plan ? "Refresh AI Plan" : "Generate AI Plan"}
+          </Button>
+        )}
         {cachedAt && (
           <span className="text-[11px] text-muted-foreground">
             Last generated: {new Date(cachedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
