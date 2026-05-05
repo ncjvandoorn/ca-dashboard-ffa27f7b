@@ -199,6 +199,15 @@ export function FarmAIInsights({ farmId, farmName, activities, reports, users, h
                 variant="outline"
                 size="sm"
                 className="gap-1.5 text-xs"
+                onClick={() => setSalesOpen(true)}
+              >
+                <ShoppingCart className="h-3.5 w-3.5" />
+                Sales
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
                 onClick={() => setReportsOpen(true)}
               >
                 <FileText className="h-3.5 w-3.5" />
@@ -237,6 +246,13 @@ export function FarmAIInsights({ farmId, farmName, activities, reports, users, h
         farmName={farmName}
         reports={reports}
         users={users}
+      />
+      <SalesDialog
+        open={salesOpen}
+        onOpenChange={setSalesOpen}
+        farmId={farmId}
+        farmName={farmName}
+        servicesOrders={servicesOrders}
       />
     </motion.div>
   );
