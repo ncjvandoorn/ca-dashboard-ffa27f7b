@@ -69,7 +69,7 @@ export function SalesDialog({ open, onOpenChange, farmId, farmName, servicesOrde
       ex.orders += 1;
       map.set(wk, ex);
     }
-    return Array.from(map.values()).sort((a, b) => a.week.localeCompare(b.week));
+    return Array.from(map.values()).sort((a, b) => b.week.localeCompare(a.week));
   }, [filteredRows]);
 
   const totalStems = weekly.reduce((s, w) => s + w.stems, 0);
