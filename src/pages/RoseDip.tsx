@@ -59,6 +59,9 @@ export default function RoseDip() {
   const [selectedCustomer, setSelectedCustomer] = useState<string>("all");
   const [selectedFarm, setSelectedFarm] = useState<string>("all");
   const [selectedPurpose, setSelectedPurpose] = useState<string>("all");
+  const [ytd, setYtd] = useState<boolean>(true);
+
+  const currentWeek = useMemo(() => weekFromMs(Date.now()).week, []);
 
   const accountById = useMemo(() => {
     const m = new Map<string, string>();
@@ -140,9 +143,10 @@ export default function RoseDip() {
       if (selectedCustomer !== "all" && r.customerId !== selectedCustomer) return false;
       if (selectedFarm !== "all" && r.farmId !== selectedFarm) return false;
       if (selectedPurpose !== "all" && r.purpose !== selectedPurpose) return false;
+      if (ytd && r.week > currentWeek) return false;
       return true;
     });
-  }, [rows, selectedYear, selectedCustomer, selectedFarm, selectedPurpose]);
+  }, [rows, selectedYear, selectedCustomer, selectedFarm, selectedPurpose, ytd, currentWeek]);
 
   // ── Aggregations ────────────────────────────────────────────────────────
 
@@ -266,13 +270,24 @@ export default function RoseDip() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Year</label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All years</SelectItem>
-                    {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All years</SelectItem>
+                      {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant={ytd ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setYtd((v) => !v)}
+                    title={`Limit to weeks 1–${currentWeek}`}
+                  >
+                    YTD
+                  </Button>
+                </div>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Customer</label>
