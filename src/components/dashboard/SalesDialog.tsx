@@ -126,7 +126,7 @@ export function SalesDialog({ open, onOpenChange, farmId, farmName, servicesOrde
                   <TableCell className="text-right font-semibold">{w.stems.toLocaleString()}</TableCell>
                   <TableCell className="text-right text-muted-foreground">{w.forecast.toLocaleString()}</TableCell>
                   <TableCell className="text-right text-muted-foreground">
-                    {w.stems > 0 ? (w.rtu / w.stems).toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}
+                    {w.stems > 0 ? ((w.rtu / w.stems) * 1000).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">{w.orders}</TableCell>
                 </TableRow>
