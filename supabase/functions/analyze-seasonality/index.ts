@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Anonymizer } from "../_shared/anonymize.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,12 +90,16 @@ Analyze the data and provide:
 
 Return as JSON using the tool provided.`;
 
+    // Anonymize farm/customer/user identifiers before any prompt is built.
+    const anon = new Anonymizer();
+    const safeFarmSummaries = anon.anonymize(farmSummaries);
+
     const userPrompt = `Analyze the following multi-farm post-harvest quality data from the last 12 weeks (one quarter, YYWW format, current week ~2612, covering roughly January–March 2026). This is cut flower data from East African farms.
 
 Focus on CROSS-FARM patterns to deduce weather/seasonality conditions. Pay special attention to staff notes — they contain direct observations about pests, diseases, rain damage, and flower conditions.
 
 Farm data from ${farmSummaries.length} farms:
-${JSON.stringify(farmSummaries, null, 2)}
+${JSON.stringify(safeFarmSummaries, null, 2)}
 
 Deduce the weather patterns, pest/disease pressure, and seasonal conditions from this data. Identify which weeks had the most weather impact on flower quality.`;
 
@@ -215,8 +220,9 @@ Deduce the weather patterns, pest/disease pressure, and seasonal conditions from
     }
 
     const analysis = JSON.parse(toolCall.function.arguments);
+    const hydrated = anon.deanonymizeValue(analysis);
 
-    return new Response(JSON.stringify(analysis), {
+    return new Response(JSON.stringify(hydrated), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

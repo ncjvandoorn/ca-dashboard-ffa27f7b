@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import { Anonymizer } from "../_shared/anonymize.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -186,6 +187,10 @@ Hard rules:
 - If treatments or crops are too few/heterogeneous to draw a conclusion, say so plainly — never fabricate.
 ${instr?.instructions ? `\nGlobal instructions:\n${instr.instructions}` : ""}`;
 
+    // Anonymize farm/customer/trial identifiers before the AI call.
+    const anon = new Anonymizer();
+    const safePayload = anon.anonymize(payload);
+
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -196,7 +201,7 @@ ${instr?.instructions ? `\nGlobal instructions:\n${instr.instructions}` : ""}`;
         model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Analyse this combined dataset of ${headers.length} trials:\n\n${JSON.stringify(payload, null, 2)}` },
+          { role: "user", content: `Analyse this combined dataset of ${headers.length} trials:\n\n${JSON.stringify(safePayload, null, 2)}` },
         ],
       }),
     });
@@ -210,7 +215,8 @@ ${instr?.instructions ? `\nGlobal instructions:\n${instr.instructions}` : ""}`;
       });
     }
     const aiJson = await aiRes.json();
-    const analysis: string = aiJson?.choices?.[0]?.message?.content?.trim() || "";
+    const rawAnalysis: string = aiJson?.choices?.[0]?.message?.content?.trim() || "";
+    const analysis = anon.deanonymize(rawAnalysis);
 
     return new Response(JSON.stringify({ analysis, treatmentTable, cropTable, trialCount: headers.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

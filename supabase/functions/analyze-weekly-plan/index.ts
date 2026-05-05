@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Anonymizer } from "../_shared/anonymize.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -116,30 +117,42 @@ When generating THIS week's plan you MUST:
 - If a user reliably visits the farms they commit to, you can be slightly more aggressive in suggesting visits for them.
 - Do NOT re-suggest farms from \`priorPlanReview\` where \`fulfilled=true\` UNLESS the underlying quality data warrants a fresh visit.`;
 
+    // Anonymize all identifying fields before they enter the prompt.
+    // The AI sees pseudonyms (Farm_001, User_002, ...); we re-hydrate the
+    // structured tool-call response below.
+    const anon = new Anonymizer();
+    const aUser = anon.anonymize(userSummary);
+    const aActivity = anon.anonymize(activitySummary);
+    const aQuality = anon.anonymize(qualitySummary);
+    const aUncovered = anon.anonymize(uncoveredFarms);
+    const aCommercial = anon.anonymize(commercialFollowupCandidates || []);
+    const aPriorPlan = anon.anonymize(priorPlanReview || []);
+    const aMisses = anon.anonymize(unresolvedMisses || []);
+
     const userPrompt = `Create the action plan for THIS week (${weekDates || "Mon–Fri"}). Today is ${todayDate || "a weekday"}, week ${currentWeekNr || "?"}.
 The plan must cover Monday through Friday. The weekLabel should reflect "${weekDates || "Mon–Fri"}".
 
 Quality data covers weeks: ${weekRange?.min ?? "?"} to ${weekRange?.max ?? "?"}.
 
-TEAM: ${JSON.stringify(userSummary)}
+TEAM: ${JSON.stringify(aUser)}
 
 CRM ACTIVITIES (per user — ALL open items + recent completions + stats):
-${JSON.stringify(activitySummary)}
+${JSON.stringify(aActivity)}
 
 QUALITY REPORTS (per farm, last 12 weeks, compact format):
-${JSON.stringify(qualitySummary)}
+${JSON.stringify(aQuality)}
 
 UNCOVERED FARMS (have quality reports but zero open activities):
-${JSON.stringify(uncoveredFarms)}
+${JSON.stringify(aUncovered)}
 
 COMMERCIAL TRIAL CANDIDATES (Vase-Life trials with Next Step = Commercial AND no follow-up CRM activity yet on that farm mentioning the trial's product/keywords):
-${JSON.stringify(commercialFollowupCandidates || [])}
+${JSON.stringify(aCommercial)}
 
 PRIOR PLAN REVIEW (per-user, per-week — what the team committed to in past Monday meetings, and whether each commitment turned into a real Visit):
-${JSON.stringify(priorPlanReview || [])}
+${JSON.stringify(aPriorPlan)}
 
 UNRESOLVED MISSES (committed in a prior week, still no Visit recorded — these are MANDATORY top-priority urgentFarmVisits this week):
-${JSON.stringify(unresolvedMisses || [])}
+${JSON.stringify(aMisses)}
 
 Create the full Mon–Fri plan. Focus on what matters MOST. Always honour the LEARNING FROM PAST PLANS rules.`;
 
@@ -381,7 +394,10 @@ Create the full Mon–Fri plan. Focus on what matters MOST. Always honour the LE
       }
     }
 
-    return new Response(JSON.stringify({ analysis }), {
+    // Re-hydrate pseudonyms back to original names in the AI's structured output.
+    const hydrated = anon.deanonymizeValue(analysis);
+
+    return new Response(JSON.stringify({ analysis: hydrated }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

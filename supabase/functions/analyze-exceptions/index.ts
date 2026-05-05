@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Anonymizer } from "../_shared/anonymize.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -149,6 +150,10 @@ Return at most 10 farms in needsAttention, mostImproved, and topPerformers. For 
     const yr = currentSat.getFullYear() % 100;
     const currentWeekNrFmt = yr * 100 + currentWeekNr;
 
+    // Anonymize farm/customer/user identifiers before any prompt is built.
+    const anon = new Anonymizer();
+    const safeFarmSummaries = anon.anonymize(farmSummaries);
+
     const userPrompt = `Analyze the following farm summaries from the last 12 available weeks. Each farm record bundles THREE data streams: quality reports (recentWeeks/priorWeeks), shipper events (shipperEvents) and CRM activities (crmActivities). Integrate them — your findings should reference the matching stream(s) and weeks.
 
 Analysis week range (YYWW): ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?? currentWeekNrFmt}.
@@ -156,7 +161,7 @@ Analysis week range (YYWW): ${weekRange?.min ?? "unknown"} to ${weekRange?.max ?
 Pay special attention to free-text notes (qN, pN, gC, gc, ac, n) — they are first-hand observations from staff, shipper operators or our commercial team and outweigh raw numbers. Quote them where relevant.
 
 Farm data:
-${JSON.stringify(farmSummaries)}
+${JSON.stringify(safeFarmSummaries)}
 
 Identify which farms need attention (worst performing, worsening trends, dangerous combinations across streams, staff/shipper/CRM-flagged issues, or quality issues without recent CRM follow-up) and which have shown the most improvement. Don't flag outliers mechanically — think about what combinations across quality, shipper and CRM streams signal real risk to flower quality and vase life.`;
 
@@ -377,7 +382,8 @@ Identify which farms need attention (worst performing, worsening trends, dangero
       }
     }
 
-    return new Response(JSON.stringify(analysis), {
+    const hydrated = anon.deanonymizeValue(analysis);
+    return new Response(JSON.stringify(hydrated), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
