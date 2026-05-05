@@ -19,6 +19,7 @@ import {
   BarChart3,
   MapPin,
   Flower2,
+  LayoutDashboard,
 } from "lucide-react";
 
 /**
