@@ -33,6 +33,7 @@ interface FarmAIInsightsProps {
   reports: QualityReport[];
   users: User[];
   hideActivity?: boolean;
+  servicesOrders?: ServicesOrder[];
 }
 
 const statusConfig = {
