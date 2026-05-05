@@ -115,7 +115,7 @@ export function SalesDialog({ open, onOpenChange, farmId, farmName, servicesOrde
                 <TableHead>Week (YYWW)</TableHead>
                 <TableHead className="text-right">Stems</TableHead>
                 <TableHead className="text-right">Forecast</TableHead>
-                <TableHead className="text-right">RTU / Stems</TableHead>
+                <TableHead className="text-right">RTU / 1000 Stems</TableHead>
                 <TableHead className="text-right">Dipping days</TableHead>
               </TableRow>
             </TableHeader>
@@ -126,7 +126,7 @@ export function SalesDialog({ open, onOpenChange, farmId, farmName, servicesOrde
                   <TableCell className="text-right font-semibold">{w.stems.toLocaleString()}</TableCell>
                   <TableCell className="text-right text-muted-foreground">{w.forecast.toLocaleString()}</TableCell>
                   <TableCell className="text-right text-muted-foreground">
-                    {w.stems > 0 ? (w.rtu / w.stems).toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}
+                    {w.stems > 0 ? ((w.rtu / w.stems) * 1000).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">{w.orders}</TableCell>
                 </TableRow>
