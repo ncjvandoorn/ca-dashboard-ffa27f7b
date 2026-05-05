@@ -84,11 +84,12 @@ const statusConfig = {
   },
 };
 
-export function FarmAIInsights({ farmId, farmName, activities, reports, users, hideActivity }: FarmAIInsightsProps) {
+export function FarmAIInsights({ farmId, farmName, activities, reports, users, hideActivity, servicesOrders }: FarmAIInsightsProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [activityOpen, setActivityOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
+  const [salesOpen, setSalesOpen] = useState(false);
 
   useEffect(() => {
     async function loadCache() {
