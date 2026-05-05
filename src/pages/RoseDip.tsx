@@ -59,6 +59,9 @@ export default function RoseDip() {
   const [selectedCustomer, setSelectedCustomer] = useState<string>("all");
   const [selectedFarm, setSelectedFarm] = useState<string>("all");
   const [selectedPurpose, setSelectedPurpose] = useState<string>("all");
+  const [ytd, setYtd] = useState<boolean>(true);
+
+  const currentWeek = useMemo(() => weekFromMs(Date.now()).week, []);
 
   const accountById = useMemo(() => {
     const m = new Map<string, string>();
