@@ -7,6 +7,7 @@ import {
   FlaskConical,
   CreditCard,
   LogOut,
+  UserCircle,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
