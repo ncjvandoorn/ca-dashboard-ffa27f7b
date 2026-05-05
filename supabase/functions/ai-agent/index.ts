@@ -621,38 +621,73 @@ serve(async (req) => {
 
     const systemPrompt = buildSystemPrompt(adminInstructions, aiLearnings, customerScope);
 
+    // -------- Anonymization layer --------
+    // Build one Anonymizer per request. We anonymize every dataset that
+    // flows into the model (context summaries, tool results, indexes) and
+    // de-anonymize the model's responses (tool calls + final stream).
+    const anon = new Anonymizer();
+    const A = <T>(v: T): T => anon.anonymize(v);
+
+    const safeStaffSummary = A(staffSummary);
+    const safeActivitySummary = A(activitySummary);
+    const safeExceptionAnalysis = A(exceptionAnalysis);
+    const safeSeasonalityAnalysis = A(seasonalityAnalysis);
+    const safeFarmIndex = A(farmIndex);
+    const safeContainerIndex = A(containerIndex);
+    const safeTripIndex = A(tripIndex);
+    const safeFarmData = A(farmData);
+    const safeRawActivities = A(rawActivities);
+    const safeLogisticsData = A(logisticsData);
+    const safeSfTracking = A(sfTracking);
+    const safeVaselifeHeaders = A(vaselifeHeaders);
+    const safeVaselifeVases = A(vaselifeVases);
+    const safeVaselifeMeasurements = A(vaselifeMeasurements);
+    // Anonymize the customer scope too — its allowed name lists must match
+    // the anonymized dataset for tool filtering to keep working.
+    const safeScope: CustomerScope | undefined = customerScope
+      ? {
+          ...customerScope,
+          allowedCustomerNames: (customerScope.allowedCustomerNames || []).map(
+            (n) => anon.anonymize(n, "customer") as string,
+          ),
+          allowedFarmNames: (customerScope.allowedFarmNames || []).map(
+            (n) => anon.anonymize(n, "farm") as string,
+          ),
+        }
+      : undefined;
+
     // Build the small "always-in-context" payload (summaries + indexes only — no bulk data)
     const contextParts: string[] = [];
-    if (activitySummary) {
-      contextParts.push(`**CRM ACTIVITY SUMMARY (authoritative — never count manually):**\n${JSON.stringify(activitySummary)}`);
+    if (safeActivitySummary) {
+      contextParts.push(`**CRM ACTIVITY SUMMARY (authoritative — never count manually):**\n${JSON.stringify(safeActivitySummary)}`);
     }
-    if (staffSummary) {
-      contextParts.push(`**STAFF REPORT ATTRIBUTION SUMMARY:**\n${JSON.stringify(staffSummary)}`);
+    if (safeStaffSummary) {
+      contextParts.push(`**STAFF REPORT ATTRIBUTION SUMMARY:**\n${JSON.stringify(safeStaffSummary)}`);
     }
-    if (exceptionAnalysis) {
-      contextParts.push(`**EXCEPTION REPORT (pre-computed):**\n${JSON.stringify(exceptionAnalysis)}`);
+    if (safeExceptionAnalysis) {
+      contextParts.push(`**EXCEPTION REPORT (pre-computed):**\n${JSON.stringify(safeExceptionAnalysis)}`);
     }
-    if (seasonalityAnalysis) {
-      contextParts.push(`**SEASONALITY REPORT (pre-computed):**\n${JSON.stringify(seasonalityAnalysis)}`);
+    if (safeSeasonalityAnalysis) {
+      contextParts.push(`**SEASONALITY REPORT (pre-computed):**\n${JSON.stringify(safeSeasonalityAnalysis)}`);
     }
-    if (farmIndex?.length) {
-      contextParts.push(`**FARM INDEX (use to discover farms; call get_farm_quality for details):**\n${JSON.stringify(farmIndex)}`);
+    if (safeFarmIndex?.length) {
+      contextParts.push(`**FARM INDEX (use to discover farms; call get_farm_quality for details):**\n${JSON.stringify(safeFarmIndex)}`);
     }
-    if (containerIndex?.length) {
-      contextParts.push(`**CONTAINER INDEX (call get_container for full details):**\n${JSON.stringify(containerIndex)}`);
+    if (safeContainerIndex?.length) {
+      contextParts.push(`**CONTAINER INDEX (call get_container for full details):**\n${JSON.stringify(safeContainerIndex)}`);
     }
-    if (tripIndex?.length) {
-      contextParts.push(`**ACTIVE SEA FREIGHT INDEX (call get_sf_trip for live readings):**\n${JSON.stringify(tripIndex)}`);
+    if (safeTripIndex?.length) {
+      contextParts.push(`**ACTIVE SEA FREIGHT INDEX (call get_sf_trip for live readings):**\n${JSON.stringify(safeTripIndex)}`);
     }
     if (weeklyPlans?.length) {
       const summaries = weeklyPlans.map((p: any) => ({ week_nr: p.week_nr, created_at: p.created_at }));
       contextParts.push(`**AVAILABLE WEEKLY PLANS (call get_weekly_plan(weekNr) for content):**\n${JSON.stringify(summaries)}`);
     }
-    // Plantscout vaselife trial index — pre-scoped per customer
-    if (vaselifeHeaders?.length) {
-      const visibleTrials = customerScope?.isCustomer
-        ? vaselifeHeaders.filter((h: any) => isTrialVisible(h, customerScope))
-        : vaselifeHeaders;
+    // Plantscout vaselife trial index — pre-scoped per customer (using anonymized data)
+    if (safeVaselifeHeaders?.length) {
+      const visibleTrials = safeScope?.isCustomer
+        ? safeVaselifeHeaders.filter((h: any) => isTrialVisible(h, safeScope))
+        : safeVaselifeHeaders;
       if (visibleTrials.length) {
         const trialIdx = visibleTrials.map((h: any) => ({
           id: h.id,
@@ -669,22 +704,29 @@ serve(async (req) => {
     const userContextMessage = contextParts.join("\n\n---\n\n") || "No pre-computed context available.";
 
     const ctx: ToolContext = {
-      farmData,
-      rawActivities,
-      logisticsData,
-      sfTracking,
-      weeklyPlans,
-      vaselifeHeaders,
-      vaselifeVases,
-      vaselifeMeasurements,
-      scope: customerScope,
+      farmData: safeFarmData,
+      rawActivities: safeRawActivities,
+      logisticsData: safeLogisticsData,
+      sfTracking: safeSfTracking,
+      weeklyPlans: A(weeklyPlans),
+      vaselifeHeaders: safeVaselifeHeaders,
+      vaselifeVases: safeVaselifeVases,
+      vaselifeMeasurements: safeVaselifeMeasurements,
+      scope: safeScope,
     };
+
+    // Anonymize user-supplied chat messages too — questions often contain
+    // farm/customer/container names that we already mapped above.
+    const safeChatMessages = (messages || []).map((m) => ({
+      ...m,
+      content: typeof m.content === "string" ? anon.anonymizeText(m.content) : m.content,
+    }));
 
     // Conversation state for the agentic loop
     const allMessages: any[] = [
       { role: "system", content: systemPrompt },
       { role: "system", content: userContextMessage },
-      ...messages,
+      ...safeChatMessages,
     ];
 
     const MAX_TOOL_ROUNDS = 5;
