@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, Menu } from "lucide-react";
+import { Search, X, Menu, ArrowLeft } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
