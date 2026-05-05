@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useAccounts, useServicesOrders } from "@/hooks/useQualityData";
+import { useAccounts, useServicesOrders, useCustomerFarms } from "@/hooks/useQualityData";
 import { useOrderDay } from "@/hooks/useOrderDay";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
+import { useAuth } from "@/hooks/useAuth";
 
 /** YYWW (Sat-Fri week, week containing Jan 1 = week 1). Matches project memory rule. */
 function weekFromMs(ms: number): { year: number; week: number } {
