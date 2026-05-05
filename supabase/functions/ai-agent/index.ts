@@ -775,8 +775,8 @@ serve(async (req) => {
       const toolCalls = message.tool_calls || [];
 
       if (!toolCalls.length) {
-        // Model produced a final answer — stream it as SSE so the client logic doesn't change
-        const finalText = message.content || "";
+        // Model produced a final answer — de-anonymize then stream it as SSE
+        const finalText = anon.deanonymize(message.content || "");
         const stream = new ReadableStream({
           start(controller) {
             const enc = new TextEncoder();
