@@ -21,6 +21,7 @@ import Subscriptions from "./pages/Subscriptions.tsx";
 import CRM from "./pages/CRM.tsx";
 import ActivityAnalysisPage from "./pages/ActivityAnalysisPage.tsx";
 import Customers from "./pages/Customers.tsx";
+import RoseDip from "./pages/RoseDip.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import SharedPage from "./pages/SharedPage.tsx";
 import { Loader2 } from "lucide-react";
