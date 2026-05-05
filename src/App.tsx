@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { PermissionKey } from "@/lib/permissions";
 import Index from "./pages/Index.tsx";
+import Landing from "./pages/Landing.tsx";
 import Login from "./pages/Login.tsx";
 import Signup from "./pages/Signup.tsx";
 import Profile from "./pages/Profile.tsx";
