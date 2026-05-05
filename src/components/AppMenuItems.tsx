@@ -18,6 +18,7 @@ import {
   Activity,
   BarChart3,
   MapPin,
+  Flower2,
 } from "lucide-react";
 
 /**
