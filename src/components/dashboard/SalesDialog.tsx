@@ -115,7 +115,7 @@ export function SalesDialog({ open, onOpenChange, farmId, farmName, servicesOrde
                 <TableHead>Week (YYWW)</TableHead>
                 <TableHead className="text-right">Stems</TableHead>
                 <TableHead className="text-right">Forecast</TableHead>
-                <TableHead className="text-right">RTU / 1000 Stems</TableHead>
+                <TableHead className="text-right">RTU / 10,000 Stems</TableHead>
                 <TableHead className="text-right">Dipping days</TableHead>
               </TableRow>
             </TableHeader>
