@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useAccounts, useServicesOrders } from "@/hooks/useQualityData";
+import { useAccounts, useServicesOrders, useCustomerFarms } from "@/hooks/useQualityData";
 import { useOrderDay } from "@/hooks/useOrderDay";
 import { PageHeaderActions } from "@/components/PageHeaderActions";
+import { useAuth } from "@/hooks/useAuth";
 
 /** YYWW (Sat-Fri week, week containing Jan 1 = week 1). Matches project memory rule. */
 function weekFromMs(ms: number): { year: number; week: number } {
@@ -51,8 +52,10 @@ const fallbackColor = "hsl(var(--muted-foreground))";
 
 export default function RoseDip() {
   const navigate = useNavigate();
+  const { isCustomer, customerAccount } = useAuth();
   const { data: accounts, isLoading: la } = useAccounts();
   const { data: servicesOrders, isLoading: lso } = useServicesOrders();
+  const { data: customerFarms, isLoading: lcf } = useCustomerFarms();
   const { data: orderDay, isLoading: lod } = useOrderDay(undefined, true);
 
   const [selectedYear, setSelectedYear] = useState<string>("all");
@@ -63,6 +66,23 @@ export default function RoseDip() {
 
   const currentWeek = useMemo(() => weekFromMs(Date.now()).week, []);
 
+  // Customer scoping: restrict to farms with consent=1 linked to their customer account.
+  // Fail closed while loading.
+  const customerAllowedFarmIds = useMemo<Set<string> | null>(() => {
+    if (!isCustomer) return null;
+    if (!customerAccount || !customerFarms) return new Set();
+    return new Set(
+      customerFarms
+        .filter(
+          (cf) =>
+            cf.customerAccountId === customerAccount.customerAccountId &&
+            cf.farmAccountConsent === "1" &&
+            !cf.deletedAt,
+        )
+        .map((cf) => cf.farmAccountId),
+    );
+  }, [isCustomer, customerAccount, customerFarms]);
+
   const accountById = useMemo(() => {
     const m = new Map<string, string>();
     (accounts || []).forEach((a) => m.set(a.id, a.name));
@@ -71,15 +91,21 @@ export default function RoseDip() {
 
   const orderById = useMemo(() => {
     const m = new Map<string, { farmAccountId: string; customerAccountId: string; purposeName: string }>();
-    (servicesOrders || []).forEach((o) =>
+    (servicesOrders || []).forEach((o) => {
+      // Customer scope: only include orders for their customer account AND allowed farms.
+      if (isCustomer) {
+        if (!customerAccount) return;
+        if (o.customerAccountId !== customerAccount.customerAccountId) return;
+        if (customerAllowedFarmIds && !customerAllowedFarmIds.has(o.farmAccountId)) return;
+      }
       m.set(o.id, {
         farmAccountId: o.farmAccountId,
         customerAccountId: o.customerAccountId,
         purposeName: o.purposeName || "Unknown",
-      }),
-    );
+      });
+    });
     return m;
-  }, [servicesOrders]);
+  }, [servicesOrders, isCustomer, customerAccount, customerAllowedFarmIds]);
 
   /** Joined + filtered rows. */
   const rows = useMemo(() => {
@@ -245,7 +271,7 @@ export default function RoseDip() {
       .map(([year, stems]) => ({ year, stems }));
   }, [filtered]);
 
-  const isLoading = la || lso || lod;
+  const isLoading = la || lso || lod || (isCustomer && lcf);
 
   return (
     <div className="min-h-screen bg-background">

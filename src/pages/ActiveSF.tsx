@@ -282,14 +282,28 @@ const ActiveSF = () => {
       }
       return true;
     });
-    // Customers: only trips whose linked order belongs to them.
+    // Customers: only trips whose linked order belongs to them AND whose farm has consent=1.
     if (isCustomer) {
-      if (!customerAccount) {
+      if (!customerAccount || !customerFarms) {
         list = [];
       } else {
+        const allowedFarmIds = new Set(
+          (customerFarms || [])
+            .filter(
+              (cf) =>
+                cf.customerAccountId === customerAccount.customerAccountId &&
+                cf.farmAccountConsent === "1" &&
+                !cf.deletedAt,
+            )
+            .map((cf) => cf.farmAccountId),
+        );
         const myOrderIds = new Set(
           (servicesOrders || [])
-            .filter((o) => o.customerAccountId === customerAccount.customerAccountId)
+            .filter(
+              (o) =>
+                o.customerAccountId === customerAccount.customerAccountId &&
+                allowedFarmIds.has(o.farmAccountId),
+            )
             .map((o) => o.orderNumber)
             .filter(Boolean)
         );
@@ -363,7 +377,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year, last8Weeks]);
+  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, customerFarms, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year, last8Weeks]);
 
   // Map tripId -> VF active tracking info (when available for the trip's container)
   const vfByTrip = useMemo(() => {

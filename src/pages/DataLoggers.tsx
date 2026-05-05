@@ -42,6 +42,7 @@ import {
   type LoggerSeries,
 } from "@/lib/loggerExceptions";
 import { stripLoggerSuffix } from "@/lib/sfFormat";
+import { useAuth } from "@/hooks/useAuth";
 import type { SFTrip } from "@/pages/ActiveSF";
 
 // Hue per metric line in the multigraph (one chosen color per metric)
@@ -61,6 +62,7 @@ function shortDate(iso: string | null): string {
 
 const DataLoggers = () => {
   const navigate = useNavigate();
+  const { isCustomer, customerAccount } = useAuth();
   const [activeFilters, setActiveFilters] = useState<Set<ExceptionType>>(
     new Set(EXCEPTION_RULES.map((r) => r.key))
   );
@@ -72,6 +74,47 @@ const DataLoggers = () => {
   const { data: accounts } = useAccounts();
   const { data: customerFarms } = useCustomerFarms();
   const { data: containers } = useContainers();
+
+  // Customer scope: set of allowed order numbers (consent=1, own customer account).
+  // null = no scoping (internal users); empty set = customer with no allowed farms.
+  const customerAllowedOrderNumbers = useMemo<Set<string> | null>(() => {
+    if (!isCustomer) return null;
+    if (!customerAccount || !customerFarms || !servicesOrders) return new Set();
+    const allowedFarmIds = new Set(
+      customerFarms
+        .filter(
+          (cf) =>
+            cf.customerAccountId === customerAccount.customerAccountId &&
+            cf.farmAccountConsent === "1" &&
+            !cf.deletedAt,
+        )
+        .map((cf) => cf.farmAccountId),
+    );
+    return new Set(
+      servicesOrders
+        .filter(
+          (o) =>
+            o.customerAccountId === customerAccount.customerAccountId &&
+            allowedFarmIds.has(o.farmAccountId),
+        )
+        .map((o) => o.orderNumber)
+        .filter(Boolean),
+    );
+  }, [isCustomer, customerAccount, customerFarms, servicesOrders]);
+
+  // Customer-scope set of serial numbers (loggers attached to allowed orders).
+  const customerAllowedSerials = useMemo<Set<string> | null>(() => {
+    if (!customerAllowedOrderNumbers) return null;
+    const set = new Set<string>();
+    for (const t of trips) {
+      if (!t.serialNumber) continue;
+      if (customerAllowedOrderNumbers.has(stripLoggerSuffix(t.internalTripId))) {
+        set.add(t.serialNumber);
+      }
+    }
+    return set;
+  }, [customerAllowedOrderNumbers, trips]);
+
 
   // Same orderInfo map as Active SF, so click-to-detail can reuse the
   // ContainerDetailDialog.
@@ -114,7 +157,13 @@ const DataLoggers = () => {
   }, [servicesOrders, accounts, customerFarms, containers]);
 
   // Compute exception series once (heavy — only runs when readings change).
-  const allSeries = useMemo(() => buildLoggerSeries(readings), [readings]);
+  const allSeriesRaw = useMemo(() => buildLoggerSeries(readings), [readings]);
+
+  // Customer scope: hide loggers not attached to one of the customer's allowed orders.
+  const allSeries = useMemo(() => {
+    if (!customerAllowedSerials) return allSeriesRaw;
+    return allSeriesRaw.filter((s) => customerAllowedSerials.has(s.serial));
+  }, [allSeriesRaw, customerAllowedSerials]);
 
   // Filter to loggers that have at least one *currently selected* exception.
   const flaggedSeries = useMemo(() => {
