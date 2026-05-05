@@ -833,7 +833,52 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "AI analysis failed (final round)" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    return new Response(finalResp.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+    // Pipe through a transformer that de-anonymizes each SSE delta's content.
+    const reader = finalResp.body.getReader();
+    const decoder = new TextDecoder();
+    const encoder = new TextEncoder();
+    let buf = "";
+    const transformed = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            let nl: number;
+            while ((nl = buf.indexOf("\n")) !== -1) {
+              let line = buf.slice(0, nl);
+              buf = buf.slice(nl + 1);
+              if (line.endsWith("\r")) line = line.slice(0, -1);
+              if (!line.startsWith("data: ")) {
+                controller.enqueue(encoder.encode(line + "\n"));
+                continue;
+              }
+              const payload = line.slice(6).trim();
+              if (payload === "[DONE]") {
+                controller.enqueue(encoder.encode(line + "\n"));
+                continue;
+              }
+              try {
+                const obj = JSON.parse(payload);
+                const delta = obj?.choices?.[0]?.delta?.content;
+                if (typeof delta === "string") {
+                  obj.choices[0].delta.content = anon.deanonymize(delta);
+                }
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n`));
+              } catch {
+                controller.enqueue(encoder.encode(line + "\n"));
+              }
+            }
+          }
+          if (buf) controller.enqueue(encoder.encode(buf));
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      },
+    });
+    return new Response(transformed, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
   } catch (e) {
     console.error("ai-agent error:", e);
     return new Response(
