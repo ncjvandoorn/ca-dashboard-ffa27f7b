@@ -278,9 +278,9 @@ export default function RoseDip() {
       <div className="container mx-auto px-4 py-6 max-w-[1600px]">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Dashboard
+              Home
             </Button>
             <div className="flex items-center gap-2">
               <Flower2 className="h-6 w-6 text-primary" />
