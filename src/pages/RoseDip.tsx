@@ -143,9 +143,10 @@ export default function RoseDip() {
       if (selectedCustomer !== "all" && r.customerId !== selectedCustomer) return false;
       if (selectedFarm !== "all" && r.farmId !== selectedFarm) return false;
       if (selectedPurpose !== "all" && r.purpose !== selectedPurpose) return false;
+      if (ytd && r.week > currentWeek) return false;
       return true;
     });
-  }, [rows, selectedYear, selectedCustomer, selectedFarm, selectedPurpose]);
+  }, [rows, selectedYear, selectedCustomer, selectedFarm, selectedPurpose, ytd, currentWeek]);
 
   // ── Aggregations ────────────────────────────────────────────────────────
 
