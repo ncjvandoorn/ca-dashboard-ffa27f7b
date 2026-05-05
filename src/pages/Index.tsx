@@ -12,6 +12,8 @@ import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights"
 import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
 import { AIAgent } from "@/components/dashboard/AIAgent";
+import { SalesDialog } from "@/components/dashboard/SalesDialog";
+import { ShoppingCart } from "lucide-react";
 import { useVaselifeHeaders, useAllVaselifeVases, useAllVaselifeMeasurements } from "@/hooks/useVaselifeTrials";
 import { LastUploadFooter } from "@/components/dashboard/LastUploadFooter";
 
@@ -72,6 +74,7 @@ const Index = () => {
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
   const [reportingCheckOpen, setReportingCheckOpen] = useState(false);
+  const [salesOpen, setSalesOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [exceptionAnalysis, setExceptionAnalysis] = useState<any>(null);
   const [seasonalityAnalysis, setSeasonalityAnalysis] = useState<any>(null);
@@ -380,6 +383,12 @@ const Index = () => {
                   customerScope={aiCustomerScope}
                 />
               )}
+              {!isCustomer && (
+                <Button variant="outline" size="sm" onClick={() => setSalesOpen(true)} className="gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  Sales
+                </Button>
+              )}
               {can("all_reports") && (
                 <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                   All Reports
@@ -426,6 +435,8 @@ const Index = () => {
                 />
               )}
             </div>
+
+            <SalesDialog open={salesOpen} onOpenChange={setSalesOpen} />
 
             {/* Farm info strip */}
             <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center gap-2">
