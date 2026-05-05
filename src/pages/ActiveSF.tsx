@@ -377,7 +377,7 @@ const ActiveSF = () => {
       }
       return 0;
     });
-  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year, last8Weeks]);
+  }, [allRows, query, sortField, sortDir, lookupOrder, hiddenIds, isAdmin, isCustomer, customerAccount, customerFarms, servicesOrders, showHidden, onlySF, onlyActiveDL, onlyLiveTracking, vfActiveSet, year, last8Weeks]);
 
   // Map tripId -> VF active tracking info (when available for the trip's container)
   const vfByTrip = useMemo(() => {
