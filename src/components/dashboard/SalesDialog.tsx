@@ -3,10 +3,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, ShoppingCart } from "lucide-react";
 import { useOrderDay } from "@/hooks/useOrderDay";
+import type { ServicesOrder } from "@/lib/csvParser";
 
 interface SalesDialogProps {
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  farmId?: string;
+  farmName?: string;
+  servicesOrders?: ServicesOrder[];
 }
 
 /** YYWW (Sat-Fri week, week containing Jan 1 = week 1). */
@@ -25,7 +29,6 @@ function getWeekNr(d: Date): string {
 
 function parseDate(raw: any): Date | null {
   if (raw == null || raw === "") return null;
-  // bigint Unix-ms (number or numeric string)
   if (typeof raw === "number" && isFinite(raw)) return new Date(raw);
   if (typeof raw === "string" && /^\d{10,}$/.test(raw)) {
     const n = Number(raw);
@@ -35,12 +38,27 @@ function parseDate(raw: any): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-export function SalesDialog({ open, onOpenChange }: SalesDialogProps) {
-  const { data: rows, isLoading, error } = useOrderDay();
+export function SalesDialog({ open, onOpenChange, farmId, farmName, servicesOrders }: SalesDialogProps) {
+  // Only enable the query when the dialog is open AND we have a farm selected.
+  const { data: rows, isLoading, error } = useOrderDay(undefined, open && !!farmId);
+
+  // Build set of servicesOrderIds belonging to the selected farm.
+  const farmOrderIds = useMemo(() => {
+    if (!farmId || !servicesOrders) return null;
+    return new Set(
+      servicesOrders.filter((o) => o.farmAccountId === farmId).map((o) => o.id)
+    );
+  }, [farmId, servicesOrders]);
+
+  const filteredRows = useMemo(() => {
+    if (!rows) return [];
+    if (!farmOrderIds) return [];
+    return rows.filter((r) => r.servicesOrderId && farmOrderIds.has(r.servicesOrderId));
+  }, [rows, farmOrderIds]);
 
   const weekly = useMemo(() => {
     const map = new Map<string, { week: string; stems: number; forecast: number; rtu: number; orders: number }>();
-    for (const r of rows || []) {
+    for (const r of filteredRows) {
       const d = parseDate(r.date);
       if (!d) continue;
       const wk = getWeekNr(d);
@@ -52,7 +70,7 @@ export function SalesDialog({ open, onOpenChange }: SalesDialogProps) {
       map.set(wk, ex);
     }
     return Array.from(map.values()).sort((a, b) => a.week.localeCompare(b.week));
-  }, [rows]);
+  }, [filteredRows]);
 
   const totalStems = weekly.reduce((s, w) => s + w.stems, 0);
 
@@ -62,28 +80,33 @@ export function SalesDialog({ open, onOpenChange }: SalesDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
-            Sales — Stems per Week
+            Sales — Stems per Week{farmName ? ` · ${farmName}` : ""}
           </DialogTitle>
           <DialogDescription>
-            Aggregated from <code>orderDay</code> (external secured database).
+            Live data from <code>orderDay</code> joined to <code>servicesOrder</code> by{" "}
+            <code>servicesOrderId</code>, filtered to this farm.
             {weekly.length > 0 && (
               <> {weekly.length} week{weekly.length !== 1 ? "s" : ""} · {totalStems.toLocaleString()} stems total.</>
             )}
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
+        {!farmId ? (
+          <div className="text-sm text-muted-foreground py-8 text-center">
+            Select a farm to view its sales.
+          </div>
+        ) : isLoading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading sales data…
           </div>
         ) : error ? (
           <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-            Could not load <code>orderDay</code>. Make sure the table exists in the external database and the publishable key has read access.
+            Could not load <code>orderDay</code>.
             <div className="mt-2 text-xs opacity-80">{(error as Error).message}</div>
           </div>
         ) : weekly.length === 0 ? (
           <div className="text-sm text-muted-foreground py-8 text-center">
-            No order rows yet. Insert a dummy row in the external <code>orderDay</code> table to verify the connection.
+            No <code>orderDay</code> rows found for this farm's services orders.
           </div>
         ) : (
           <Table>
