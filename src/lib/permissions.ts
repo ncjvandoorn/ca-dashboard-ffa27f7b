@@ -13,6 +13,7 @@ export type PermissionKey =
   | "trials_dashboard"
   | "subscription_plans"
   | "customers_map"
+  | "rose_dip"
   | "settings";
 
 export type RoleKey = "admin" | "user" | "ta" | "customer_basic" | "customer_pro";
