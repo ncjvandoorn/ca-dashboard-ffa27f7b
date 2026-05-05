@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import { Anonymizer } from "../_shared/anonymize.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -146,6 +147,12 @@ Hard rules:
 - If there is no meaningful extra insight beyond the team's conclusion, say so plainly under Nuance — never fabricate.
 ${instr?.instructions ? `\nGlobal instructions:\n${instr.instructions}` : ""}`;
 
+    // Anonymize identifying fields (farm/customer/trial names) before
+    // sending to the AI gateway. The AI sees pseudonyms; we re-hydrate
+    // before storing/returning the analysis.
+    const anon = new Anonymizer();
+    const safePayload = anon.anonymize(payload);
+
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -156,7 +163,7 @@ ${instr?.instructions ? `\nGlobal instructions:\n${instr.instructions}` : ""}`;
         model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Analyse this vaselife trial:\n\n${JSON.stringify(payload, null, 2)}` },
+          { role: "user", content: `Analyse this vaselife trial:\n\n${JSON.stringify(safePayload, null, 2)}` },
         ],
       }),
     });
@@ -170,7 +177,9 @@ ${instr?.instructions ? `\nGlobal instructions:\n${instr.instructions}` : ""}`;
       });
     }
     const aiJson = await aiRes.json();
-    const analysis: string = aiJson?.choices?.[0]?.message?.content?.trim() || "";
+    const rawAnalysis: string = aiJson?.choices?.[0]?.message?.content?.trim() || "";
+    // Map pseudonyms back to original names so the user sees real values.
+    const analysis = anon.deanonymize(rawAnalysis);
     if (!analysis) {
       return new Response(JSON.stringify({ error: "Empty AI response" }), {
         status: 502,
