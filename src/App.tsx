@@ -81,6 +81,7 @@ const App = () => (
             <Route path="/active-sf" element={<PermissionRoute permission="active_sf"><ActiveSF /></PermissionRoute>} />
             
             <Route path="/crm" element={<PermissionRoute permission="crm_activities"><CRM /></PermissionRoute>} />
+            <Route path="/rose-dip" element={<PermissionRoute permission="rose_dip"><RoseDip /></PermissionRoute>} />
             <Route path="/activity-analysis" element={<PermissionRoute permission="activity_analysis"><ActivityAnalysisPage /></PermissionRoute>} />
             <Route path="/customers" element={<PermissionRoute permission="customers_map"><Customers /></PermissionRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
