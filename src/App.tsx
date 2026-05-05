@@ -73,7 +73,8 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/share/:token" element={<SharedPage />} />
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/planner" element={<PermissionRoute permission="trial_planner"><Planner /></PermissionRoute>} />
             <Route path="/data-loggers" element={<PermissionRoute permission="data_loggers"><DataLoggers /></PermissionRoute>} />
