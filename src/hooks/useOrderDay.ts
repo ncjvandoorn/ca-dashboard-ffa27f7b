@@ -22,16 +22,28 @@ export interface OrderDayRow {
   deletedById: string | null;
 }
 
-export function useOrderDay(servicesOrderId?: string) {
+export function useOrderDay(servicesOrderId?: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ["external-orderDay", servicesOrderId ?? "all"],
     queryFn: async () => {
-      let q = supabaseExternal.from("orderDay").select("*");
-      if (servicesOrderId) q = q.eq("servicesOrderId", servicesOrderId);
-      const { data, error } = await q.limit(1000);
-      if (error) throw error;
-      return (data || []) as OrderDayRow[];
+      // Page through results — Supabase caps at 1000 rows per request.
+      const pageSize = 1000;
+      const all: OrderDayRow[] = [];
+      let from = 0;
+      while (true) {
+        let q = supabaseExternal.from("orderDay").select("*").range(from, from + pageSize - 1);
+        if (servicesOrderId) q = q.eq("servicesOrderId", servicesOrderId);
+        const { data, error } = await q;
+        if (error) throw error;
+        const batch = (data || []) as OrderDayRow[];
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        from += pageSize;
+        if (from > 100000) break; // safety
+      }
+      return all;
     },
+    enabled,
     staleTime: 5 * 60 * 1000,
   });
 }

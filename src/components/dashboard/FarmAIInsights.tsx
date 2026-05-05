@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield, ClipboardList, FileText } from "lucide-react";
+import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield, ClipboardList, FileText, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 import { FarmReportsDialog } from "@/components/dashboard/FarmReportsDialog";
-import type { Activity, QualityReport, User } from "@/lib/csvParser";
+import { SalesDialog } from "@/components/dashboard/SalesDialog";
+import type { Activity, QualityReport, User, ServicesOrder } from "@/lib/csvParser";
 
 interface FarmInsight {
   farmId: string;
@@ -32,6 +33,7 @@ interface FarmAIInsightsProps {
   reports: QualityReport[];
   users: User[];
   hideActivity?: boolean;
+  servicesOrders?: ServicesOrder[];
 }
 
 const statusConfig = {
@@ -82,11 +84,12 @@ const statusConfig = {
   },
 };
 
-export function FarmAIInsights({ farmId, farmName, activities, reports, users, hideActivity }: FarmAIInsightsProps) {
+export function FarmAIInsights({ farmId, farmName, activities, reports, users, hideActivity, servicesOrders }: FarmAIInsightsProps) {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [activityOpen, setActivityOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
+  const [salesOpen, setSalesOpen] = useState(false);
 
   useEffect(() => {
     async function loadCache() {
@@ -128,6 +131,15 @@ export function FarmAIInsights({ farmId, farmName, activities, reports, users, h
         <div className={`rounded-xl border p-5 ${config.border} ${config.bg} relative`}>
           {!hideActivity && (
             <div className="absolute top-3 right-3 flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => setSalesOpen(true)}
+              >
+                <ShoppingCart className="h-3.5 w-3.5" />
+                Sales
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -187,6 +199,15 @@ export function FarmAIInsights({ farmId, farmName, activities, reports, users, h
                 variant="outline"
                 size="sm"
                 className="gap-1.5 text-xs"
+                onClick={() => setSalesOpen(true)}
+              >
+                <ShoppingCart className="h-3.5 w-3.5" />
+                Sales
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
                 onClick={() => setReportsOpen(true)}
               >
                 <FileText className="h-3.5 w-3.5" />
@@ -225,6 +246,13 @@ export function FarmAIInsights({ farmId, farmName, activities, reports, users, h
         farmName={farmName}
         reports={reports}
         users={users}
+      />
+      <SalesDialog
+        open={salesOpen}
+        onOpenChange={setSalesOpen}
+        farmId={farmId}
+        farmName={farmName}
+        servicesOrders={servicesOrders}
       />
     </motion.div>
   );
