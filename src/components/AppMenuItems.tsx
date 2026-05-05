@@ -42,31 +42,31 @@ export function AppMenuItems() {
 
   return (
     <>
+      {can("rose_dip") && (
+        <DropdownMenuItem onClick={() => navigate("/rose-dip")}>
+          <Flower2 className="h-4 w-4 mr-2" />
+          Rose Dip
+        </DropdownMenuItem>
+      )}
+
+      <DropdownMenuSeparator />
+
       {can("active_sf") && (
         <DropdownMenuItem onClick={() => navigate("/active-sf")}>
           <Ship className="h-4 w-4 mr-2" />
-          Active Sea Freight
+          Sea Freight
         </DropdownMenuItem>
       )}
       {can("trials_dashboard") && (
         <DropdownMenuItem onClick={() => navigate("/trials")}>
           <FlaskConical className="h-4 w-4 mr-2" />
-          Trials Dashboard
+          Trials
         </DropdownMenuItem>
       )}
       {can("subscription_plans") && (
         <DropdownMenuItem onClick={() => navigate("/subscriptions")}>
           <CreditCard className="h-4 w-4 mr-2" />
           Subscription Plans
-        </DropdownMenuItem>
-      )}
-
-      <DropdownMenuSeparator />
-
-      {can("rose_dip") && (
-        <DropdownMenuItem onClick={() => navigate("/rose-dip")}>
-          <Flower2 className="h-4 w-4 mr-2" />
-          Rose Dip
         </DropdownMenuItem>
       )}
       {can("crm_activities") && (
