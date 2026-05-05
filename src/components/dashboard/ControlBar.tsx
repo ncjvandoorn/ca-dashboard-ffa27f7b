@@ -201,7 +201,11 @@ export function ControlBar({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 border-l border-border pl-3">
+        <div className="flex items-center gap-2 border-l border-border pl-3">
+          <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Home
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" title="Menu" aria-label="Open menu">
