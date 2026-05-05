@@ -7,6 +7,7 @@ import {
   FlaskConical,
   CreditCard,
   LogOut,
+  UserCircle,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -66,6 +67,13 @@ const TILES: Tile[] = [
     icon: CreditCard,
     to: "/subscriptions",
     permission: "subscription_plans",
+  },
+  {
+    label: "My Profile",
+    description: "Account details and preferences",
+    icon: UserCircle,
+    to: "/profile",
+    always: true,
   },
 ];
 
