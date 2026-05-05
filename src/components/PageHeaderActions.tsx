@@ -9,7 +9,7 @@ import { ArrowLeft, Menu } from "lucide-react";
 import { AppMenuItems } from "@/components/AppMenuItems";
 
 interface PageHeaderActionsProps {
-  /** If true, hides the Dashboard button (e.g. on the dashboard itself) */
+  /** If true, hides the Home button (e.g. on the landing page itself) */
   hideDashboardButton?: boolean;
 }
 
@@ -19,9 +19,9 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
   return (
     <div className="flex items-center gap-2">
       {!hideDashboardButton && (
-        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-2">
+        <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
-          Dashboard
+          Home
         </Button>
       )}
       <DropdownMenu>
