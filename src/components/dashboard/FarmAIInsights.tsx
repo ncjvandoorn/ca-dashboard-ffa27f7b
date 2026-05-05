@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield, ClipboardList, FileText } from "lucide-react";
+import { AlertTriangle, TrendingUp, Award, Info, CheckCircle, Shield, ClipboardList, FileText, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ActivityDialog } from "@/components/dashboard/ActivityDialog";
 import { FarmReportsDialog } from "@/components/dashboard/FarmReportsDialog";
-import type { Activity, QualityReport, User } from "@/lib/csvParser";
+import { SalesDialog } from "@/components/dashboard/SalesDialog";
+import type { Activity, QualityReport, User, ServicesOrder } from "@/lib/csvParser";
 
 interface FarmInsight {
   farmId: string;
