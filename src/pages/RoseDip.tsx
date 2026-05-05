@@ -270,13 +270,24 @@ export default function RoseDip() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Year</label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All years</SelectItem>
-                    {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All years</SelectItem>
+                      {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant={ytd ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setYtd((v) => !v)}
+                    title={`Limit to weeks 1–${currentWeek}`}
+                  >
+                    YTD
+                  </Button>
+                </div>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Customer</label>
