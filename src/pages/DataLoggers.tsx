@@ -157,7 +157,13 @@ const DataLoggers = () => {
   }, [servicesOrders, accounts, customerFarms, containers]);
 
   // Compute exception series once (heavy — only runs when readings change).
-  const allSeries = useMemo(() => buildLoggerSeries(readings), [readings]);
+  const allSeriesRaw = useMemo(() => buildLoggerSeries(readings), [readings]);
+
+  // Customer scope: hide loggers not attached to one of the customer's allowed orders.
+  const allSeries = useMemo(() => {
+    if (!customerAllowedSerials) return allSeriesRaw;
+    return allSeriesRaw.filter((s) => customerAllowedSerials.has(s.serial));
+  }, [allSeriesRaw, customerAllowedSerials]);
 
   // Filter to loggers that have at least one *currently selected* exception.
   const flaggedSeries = useMemo(() => {
