@@ -271,7 +271,7 @@ export default function RoseDip() {
       .map(([year, stems]) => ({ year, stems }));
   }, [filtered]);
 
-  const isLoading = la || lso || lod;
+  const isLoading = la || lso || lod || (isCustomer && lcf);
 
   return (
     <div className="min-h-screen bg-background">
