@@ -31,7 +31,11 @@ export function useOrderDay(servicesOrderId?: string, enabled: boolean = true) {
       const all: OrderDayRow[] = [];
       let from = 0;
       while (true) {
-        let q = supabaseExternal.from("orderDay").select("*").range(from, from + pageSize - 1);
+        let q = supabaseExternal
+          .from("orderDay")
+          .select("*")
+          .is("deletedAt", null)
+          .range(from, from + pageSize - 1);
         if (servicesOrderId) q = q.eq("servicesOrderId", servicesOrderId);
         const { data, error } = await q;
         if (error) throw error;
