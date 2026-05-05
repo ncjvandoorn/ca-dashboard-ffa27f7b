@@ -221,7 +221,7 @@ export default function Signup() {
           <CardHeader className="space-y-3">
             <div className="flex items-center gap-3">
               <Link
-                to="/dashboard"
+                to="/"
                 aria-label="Go to dashboard"
                 className="bg-card border border-border rounded-md p-1.5 hover:bg-accent/10 transition-colors"
               >

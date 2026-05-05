@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, Menu } from "lucide-react";
+import { Search, X, Menu, ArrowLeft } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -189,8 +189,8 @@ export function ControlBar({
         <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={() => navigate("/dashboard")}
-            aria-label="Go to dashboard"
+            onClick={() => navigate("/")}
+            aria-label="Go to home"
             className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0 hover:bg-accent/10 transition-colors cursor-pointer"
           >
             <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto max-w-none block shrink-0" />
@@ -201,7 +201,11 @@ export function ControlBar({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 border-l border-border pl-3">
+        <div className="flex items-center gap-2 border-l border-border pl-3">
+          <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Home
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" title="Menu" aria-label="Open menu">

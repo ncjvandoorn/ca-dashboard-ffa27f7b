@@ -277,7 +277,7 @@ const DataLoggers = () => {
         <header className="border-b border-border bg-card">
           <div className="container mx-auto px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/")} aria-label="Home">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <img src={chrysalLogo} alt="Chrysal" className="h-9 w-auto" />

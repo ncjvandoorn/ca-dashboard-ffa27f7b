@@ -266,7 +266,7 @@ export default function TrialsDashboard() {
       <header className="border-b border-border px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
-            to="/dashboard"
+            to="/"
             aria-label="Go to dashboard"
             className="bg-card border border-border rounded-md p-1.5 flex items-center justify-center hover:bg-accent/10 transition-colors"
           >
