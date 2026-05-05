@@ -12,8 +12,6 @@ import { SeasonalityInsights } from "@/components/dashboard/SeasonalityInsights"
 import { FarmAIInsights } from "@/components/dashboard/FarmAIInsights";
 import { ReportingCheck } from "@/components/dashboard/ReportingCheck";
 import { AIAgent } from "@/components/dashboard/AIAgent";
-import { SalesDialog } from "@/components/dashboard/SalesDialog";
-import { ShoppingCart } from "lucide-react";
 import { useVaselifeHeaders, useAllVaselifeVases, useAllVaselifeMeasurements } from "@/hooks/useVaselifeTrials";
 import { LastUploadFooter } from "@/components/dashboard/LastUploadFooter";
 
