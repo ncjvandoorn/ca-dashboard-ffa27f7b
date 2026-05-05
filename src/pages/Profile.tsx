@@ -126,7 +126,7 @@ export default function Profile() {
         <div className="container mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
-              to="/"
+              to="/dashboard"
               aria-label="Go to dashboard"
               className="bg-card border border-border rounded-md p-1.5 hover:bg-accent/10 transition-colors"
             >
