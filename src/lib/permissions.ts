@@ -33,6 +33,7 @@ export const PERMISSION_ITEMS: PermissionItem[] = [
   { key: "trial_planner", label: "Trial Planner", group: "Menu items" },
   { key: "data_loggers", label: "Data Loggers", group: "Menu items" },
   { key: "reporting_check", label: "Reporting Check", group: "Menu items" },
+  { key: "rose_dip", label: "Rose Dip", group: "Menu items" },
   { key: "crm_activities", label: "CRM Activities", group: "Menu items" },
   { key: "activity_analysis", label: "Activity Analysis", group: "Menu items" },
   { key: "trials_dashboard", label: "Trials Dashboard", group: "Menu items" },
