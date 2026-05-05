@@ -92,7 +92,7 @@ export default function Subscriptions() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <Link
-                to="/"
+                to="/dashboard"
                 aria-label="Go to dashboard"
                 className="bg-card border border-border rounded-md p-1.5 flex items-center justify-center shrink-0 hover:bg-accent/10 transition-colors"
               >

@@ -147,7 +147,7 @@ export default function Customers() {
             <div className="flex items-center gap-4">
               <button
                 type="button"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/dashboard")}
                 aria-label="Go to dashboard"
                 className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0 hover:bg-accent/10 transition-colors cursor-pointer"
               >

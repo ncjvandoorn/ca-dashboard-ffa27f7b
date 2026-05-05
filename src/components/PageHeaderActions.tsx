@@ -19,7 +19,7 @@ export function PageHeaderActions({ hideDashboardButton = false }: PageHeaderAct
   return (
     <div className="flex items-center gap-2">
       {!hideDashboardButton && (
-        <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-2">
+        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Dashboard
         </Button>
