@@ -383,12 +383,6 @@ const Index = () => {
                   customerScope={aiCustomerScope}
                 />
               )}
-              {!isCustomer && (
-                <Button variant="outline" size="sm" onClick={() => setSalesOpen(true)} className="gap-2">
-                  <ShoppingCart className="h-4 w-4" />
-                  Sales
-                </Button>
-              )}
               {can("all_reports") && (
                 <Button variant="outline" size="sm" onClick={() => navigate("/report")} className="gap-2">
                   All Reports
