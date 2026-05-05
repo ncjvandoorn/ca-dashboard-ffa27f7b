@@ -189,8 +189,8 @@ export function ControlBar({
         <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={() => navigate("/dashboard")}
-            aria-label="Go to dashboard"
+            onClick={() => navigate("/")}
+            aria-label="Go to home"
             className="rounded-xl px-3 py-2 flex items-center bg-card border border-border/50 shadow-sm shrink-0 hover:bg-accent/10 transition-colors cursor-pointer"
           >
             <img src={chrysalLogo} alt="Chrysal" className="h-7 w-auto max-w-none block shrink-0" />
