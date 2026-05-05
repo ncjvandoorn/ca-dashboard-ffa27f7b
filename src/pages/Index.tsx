@@ -436,6 +436,8 @@ const Index = () => {
               )}
             </div>
 
+            <SalesDialog open={salesOpen} onOpenChange={setSalesOpen} />
+
             {/* Farm info strip */}
             <div className="chrysal-gradient-subtle rounded-xl px-5 py-3 mb-6 flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-accent shrink-0" />
