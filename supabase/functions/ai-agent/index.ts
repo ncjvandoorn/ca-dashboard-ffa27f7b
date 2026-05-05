@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Anonymizer } from "../_shared/anonymize.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -620,38 +621,73 @@ serve(async (req) => {
 
     const systemPrompt = buildSystemPrompt(adminInstructions, aiLearnings, customerScope);
 
+    // -------- Anonymization layer --------
+    // Build one Anonymizer per request. We anonymize every dataset that
+    // flows into the model (context summaries, tool results, indexes) and
+    // de-anonymize the model's responses (tool calls + final stream).
+    const anon = new Anonymizer();
+    const A = <T>(v: T): T => anon.anonymize(v);
+
+    const safeStaffSummary = A(staffSummary);
+    const safeActivitySummary = A(activitySummary);
+    const safeExceptionAnalysis = A(exceptionAnalysis);
+    const safeSeasonalityAnalysis = A(seasonalityAnalysis);
+    const safeFarmIndex = A(farmIndex);
+    const safeContainerIndex = A(containerIndex);
+    const safeTripIndex = A(tripIndex);
+    const safeFarmData = A(farmData);
+    const safeRawActivities = A(rawActivities);
+    const safeLogisticsData = A(logisticsData);
+    const safeSfTracking = A(sfTracking);
+    const safeVaselifeHeaders = A(vaselifeHeaders);
+    const safeVaselifeVases = A(vaselifeVases);
+    const safeVaselifeMeasurements = A(vaselifeMeasurements);
+    // Anonymize the customer scope too — its allowed name lists must match
+    // the anonymized dataset for tool filtering to keep working.
+    const safeScope: CustomerScope | undefined = customerScope
+      ? {
+          ...customerScope,
+          allowedCustomerNames: (customerScope.allowedCustomerNames || []).map(
+            (n) => anon.anonymize(n, "customer") as string,
+          ),
+          allowedFarmNames: (customerScope.allowedFarmNames || []).map(
+            (n) => anon.anonymize(n, "farm") as string,
+          ),
+        }
+      : undefined;
+
     // Build the small "always-in-context" payload (summaries + indexes only — no bulk data)
     const contextParts: string[] = [];
-    if (activitySummary) {
-      contextParts.push(`**CRM ACTIVITY SUMMARY (authoritative — never count manually):**\n${JSON.stringify(activitySummary)}`);
+    if (safeActivitySummary) {
+      contextParts.push(`**CRM ACTIVITY SUMMARY (authoritative — never count manually):**\n${JSON.stringify(safeActivitySummary)}`);
     }
-    if (staffSummary) {
-      contextParts.push(`**STAFF REPORT ATTRIBUTION SUMMARY:**\n${JSON.stringify(staffSummary)}`);
+    if (safeStaffSummary) {
+      contextParts.push(`**STAFF REPORT ATTRIBUTION SUMMARY:**\n${JSON.stringify(safeStaffSummary)}`);
     }
-    if (exceptionAnalysis) {
-      contextParts.push(`**EXCEPTION REPORT (pre-computed):**\n${JSON.stringify(exceptionAnalysis)}`);
+    if (safeExceptionAnalysis) {
+      contextParts.push(`**EXCEPTION REPORT (pre-computed):**\n${JSON.stringify(safeExceptionAnalysis)}`);
     }
-    if (seasonalityAnalysis) {
-      contextParts.push(`**SEASONALITY REPORT (pre-computed):**\n${JSON.stringify(seasonalityAnalysis)}`);
+    if (safeSeasonalityAnalysis) {
+      contextParts.push(`**SEASONALITY REPORT (pre-computed):**\n${JSON.stringify(safeSeasonalityAnalysis)}`);
     }
-    if (farmIndex?.length) {
-      contextParts.push(`**FARM INDEX (use to discover farms; call get_farm_quality for details):**\n${JSON.stringify(farmIndex)}`);
+    if (safeFarmIndex?.length) {
+      contextParts.push(`**FARM INDEX (use to discover farms; call get_farm_quality for details):**\n${JSON.stringify(safeFarmIndex)}`);
     }
-    if (containerIndex?.length) {
-      contextParts.push(`**CONTAINER INDEX (call get_container for full details):**\n${JSON.stringify(containerIndex)}`);
+    if (safeContainerIndex?.length) {
+      contextParts.push(`**CONTAINER INDEX (call get_container for full details):**\n${JSON.stringify(safeContainerIndex)}`);
     }
-    if (tripIndex?.length) {
-      contextParts.push(`**ACTIVE SEA FREIGHT INDEX (call get_sf_trip for live readings):**\n${JSON.stringify(tripIndex)}`);
+    if (safeTripIndex?.length) {
+      contextParts.push(`**ACTIVE SEA FREIGHT INDEX (call get_sf_trip for live readings):**\n${JSON.stringify(safeTripIndex)}`);
     }
     if (weeklyPlans?.length) {
       const summaries = weeklyPlans.map((p: any) => ({ week_nr: p.week_nr, created_at: p.created_at }));
       contextParts.push(`**AVAILABLE WEEKLY PLANS (call get_weekly_plan(weekNr) for content):**\n${JSON.stringify(summaries)}`);
     }
-    // Plantscout vaselife trial index — pre-scoped per customer
-    if (vaselifeHeaders?.length) {
-      const visibleTrials = customerScope?.isCustomer
-        ? vaselifeHeaders.filter((h: any) => isTrialVisible(h, customerScope))
-        : vaselifeHeaders;
+    // Plantscout vaselife trial index — pre-scoped per customer (using anonymized data)
+    if (safeVaselifeHeaders?.length) {
+      const visibleTrials = safeScope?.isCustomer
+        ? safeVaselifeHeaders.filter((h: any) => isTrialVisible(h, safeScope))
+        : safeVaselifeHeaders;
       if (visibleTrials.length) {
         const trialIdx = visibleTrials.map((h: any) => ({
           id: h.id,
@@ -668,22 +704,29 @@ serve(async (req) => {
     const userContextMessage = contextParts.join("\n\n---\n\n") || "No pre-computed context available.";
 
     const ctx: ToolContext = {
-      farmData,
-      rawActivities,
-      logisticsData,
-      sfTracking,
-      weeklyPlans,
-      vaselifeHeaders,
-      vaselifeVases,
-      vaselifeMeasurements,
-      scope: customerScope,
+      farmData: safeFarmData,
+      rawActivities: safeRawActivities,
+      logisticsData: safeLogisticsData,
+      sfTracking: safeSfTracking,
+      weeklyPlans: A(weeklyPlans),
+      vaselifeHeaders: safeVaselifeHeaders,
+      vaselifeVases: safeVaselifeVases,
+      vaselifeMeasurements: safeVaselifeMeasurements,
+      scope: safeScope,
     };
+
+    // Anonymize user-supplied chat messages too — questions often contain
+    // farm/customer/container names that we already mapped above.
+    const safeChatMessages = (messages || []).map((m) => ({
+      ...m,
+      content: typeof m.content === "string" ? anon.anonymizeText(m.content) : m.content,
+    }));
 
     // Conversation state for the agentic loop
     const allMessages: any[] = [
       { role: "system", content: systemPrompt },
       { role: "system", content: userContextMessage },
-      ...messages,
+      ...safeChatMessages,
     ];
 
     const MAX_TOOL_ROUNDS = 5;
@@ -732,8 +775,8 @@ serve(async (req) => {
       const toolCalls = message.tool_calls || [];
 
       if (!toolCalls.length) {
-        // Model produced a final answer — stream it as SSE so the client logic doesn't change
-        const finalText = message.content || "";
+        // Model produced a final answer — de-anonymize then stream it as SSE
+        const finalText = anon.deanonymize(message.content || "");
         const stream = new ReadableStream({
           start(controller) {
             const enc = new TextEncoder();
@@ -790,7 +833,52 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "AI analysis failed (final round)" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    return new Response(finalResp.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+    // Pipe through a transformer that de-anonymizes each SSE delta's content.
+    const reader = finalResp.body.getReader();
+    const decoder = new TextDecoder();
+    const encoder = new TextEncoder();
+    let buf = "";
+    const transformed = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            let nl: number;
+            while ((nl = buf.indexOf("\n")) !== -1) {
+              let line = buf.slice(0, nl);
+              buf = buf.slice(nl + 1);
+              if (line.endsWith("\r")) line = line.slice(0, -1);
+              if (!line.startsWith("data: ")) {
+                controller.enqueue(encoder.encode(line + "\n"));
+                continue;
+              }
+              const payload = line.slice(6).trim();
+              if (payload === "[DONE]") {
+                controller.enqueue(encoder.encode(line + "\n"));
+                continue;
+              }
+              try {
+                const obj = JSON.parse(payload);
+                const delta = obj?.choices?.[0]?.delta?.content;
+                if (typeof delta === "string") {
+                  obj.choices[0].delta.content = anon.deanonymize(delta);
+                }
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n`));
+              } catch {
+                controller.enqueue(encoder.encode(line + "\n"));
+              }
+            }
+          }
+          if (buf) controller.enqueue(encoder.encode(buf));
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        }
+      },
+    });
+    return new Response(transformed, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
   } catch (e) {
     console.error("ai-agent error:", e);
     return new Response(

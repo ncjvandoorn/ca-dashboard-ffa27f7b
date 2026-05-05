@@ -144,6 +144,40 @@ export class Anonymizer {
   }
 
   /**
+   * Substitute any already-known raw values inside a free-text string with
+   * their pseudonyms. Call this AFTER anonymize() has been run over the
+   * structured datasets, so the forward maps are populated. Used to scrub
+   * the user's free-text questions before sending them to the model.
+   */
+  anonymizeText(text: string): string {
+    if (!text) return text;
+    let out = text;
+    // Collect every known raw value across all buckets, longest first so
+    // "AAA Growers Simba Farm" wins over "Simba Farm".
+    const raws: Array<{ raw: string; token: string }> = [];
+    for (const bucket of this.buckets.values()) {
+      for (const [raw, token] of bucket.fwd.entries()) {
+        if (raw && raw.length >= 3) raws.push({ raw, token });
+      }
+    }
+    raws.sort((a, b) => b.raw.length - a.raw.length);
+    for (const { raw, token } of raws) {
+      // Case-insensitive whole-substring replace, no regex meta-char risk.
+      const lower = out.toLowerCase();
+      const needle = raw.toLowerCase();
+      let idx = 0;
+      let result = "";
+      let cursor = 0;
+      while ((idx = lower.indexOf(needle, cursor)) !== -1) {
+        result += out.slice(cursor, idx) + token;
+        cursor = idx + needle.length;
+      }
+      if (cursor > 0) out = result + out.slice(cursor);
+    }
+    return out;
+  }
+
+  /**
    * Replace tokens in a string back to their original values.
    * Use this on the AI's response text before storing/returning to the user.
    */
