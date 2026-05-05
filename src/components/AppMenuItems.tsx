@@ -49,8 +49,6 @@ export function AppMenuItems() {
         </DropdownMenuItem>
       )}
 
-      <DropdownMenuSeparator />
-
       {can("active_sf") && (
         <DropdownMenuItem onClick={() => navigate("/active-sf")}>
           <Ship className="h-4 w-4 mr-2" />
@@ -69,6 +67,9 @@ export function AppMenuItems() {
           Subscription Plans
         </DropdownMenuItem>
       )}
+
+      <DropdownMenuSeparator />
+
       {can("crm_activities") && (
         <DropdownMenuItem onClick={() => navigate("/crm")}>
           <Users className="h-4 w-4 mr-2" />
