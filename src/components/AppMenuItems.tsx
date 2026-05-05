@@ -43,6 +43,11 @@ export function AppMenuItems() {
 
   return (
     <>
+      <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+        <LayoutDashboard className="h-4 w-4 mr-2" />
+        Dashboard
+      </DropdownMenuItem>
+
       {can("rose_dip") && (
         <DropdownMenuItem onClick={() => navigate("/rose-dip")}>
           <Flower2 className="h-4 w-4 mr-2" />
