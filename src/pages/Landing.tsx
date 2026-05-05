@@ -68,6 +68,13 @@ const TILES: Tile[] = [
     to: "/subscriptions",
     permission: "subscription_plans",
   },
+  {
+    label: "My Profile",
+    description: "Account details and preferences",
+    icon: UserCircle,
+    to: "/profile",
+    always: true,
+  },
 ];
 
 export default function Landing() {
