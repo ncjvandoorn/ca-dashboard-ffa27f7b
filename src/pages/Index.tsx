@@ -72,7 +72,7 @@ const Index = () => {
   const [exceptionOpen, setExceptionOpen] = useState(false);
   const [seasonalityOpen, setSeasonalityOpen] = useState(false);
   const [reportingCheckOpen, setReportingCheckOpen] = useState(false);
-  const [salesOpen, setSalesOpen] = useState(false);
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const [exceptionAnalysis, setExceptionAnalysis] = useState<any>(null);
   const [seasonalityAnalysis, setSeasonalityAnalysis] = useState<any>(null);
