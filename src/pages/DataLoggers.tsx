@@ -42,6 +42,7 @@ import {
   type LoggerSeries,
 } from "@/lib/loggerExceptions";
 import { stripLoggerSuffix } from "@/lib/sfFormat";
+import { useAuth } from "@/hooks/useAuth";
 import type { SFTrip } from "@/pages/ActiveSF";
 
 // Hue per metric line in the multigraph (one chosen color per metric)
