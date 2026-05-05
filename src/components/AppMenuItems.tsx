@@ -18,6 +18,7 @@ import {
   Activity,
   BarChart3,
   MapPin,
+  Flower2,
 } from "lucide-react";
 
 /**
@@ -62,6 +63,12 @@ export function AppMenuItems() {
 
       <DropdownMenuSeparator />
 
+      {can("rose_dip") && (
+        <DropdownMenuItem onClick={() => navigate("/rose-dip")}>
+          <Flower2 className="h-4 w-4 mr-2" />
+          Rose Dip
+        </DropdownMenuItem>
+      )}
       {can("crm_activities") && (
         <DropdownMenuItem onClick={() => navigate("/crm")}>
           <Users className="h-4 w-4 mr-2" />
