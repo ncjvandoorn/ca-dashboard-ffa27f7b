@@ -160,6 +160,23 @@ export class Anonymizer {
     return out;
   }
 
+  /**
+   * Recursively deanonymize any value (string / object / array). Used when
+   * the AI returns structured JSON (tool-calling) — we walk the tree and
+   * swap pseudonyms inside every string field.
+   */
+  deanonymizeValue<T>(value: T): T {
+    if (value == null) return value;
+    if (typeof value === "string") return this.deanonymize(value) as unknown as T;
+    if (Array.isArray(value)) return value.map((v) => this.deanonymizeValue(v)) as unknown as T;
+    if (typeof value === "object") {
+      const out: any = {};
+      for (const [k, v] of Object.entries(value as any)) out[k] = this.deanonymizeValue(v);
+      return out;
+    }
+    return value;
+  }
+
   /** Useful for debugging: how many distinct values were anonymized. */
   stats(): Record<string, number> {
     const out: Record<string, number> = {};
