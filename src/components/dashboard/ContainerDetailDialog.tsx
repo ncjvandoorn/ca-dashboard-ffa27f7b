@@ -639,6 +639,34 @@ function NoLoggerSection({
     if (!id || !orderNumber) return;
     setSaving(true);
     try {
+      // Verify the entered value matches an actual sensiwatch trip in our
+      // database (by trip_id, internal_trip_id with/without -N suffix, or
+      // serial number). Without this check we silently link non-existent
+      // trips and the popup keeps showing "No datalogger".
+      const lower = id.toLowerCase();
+      const { data: matches, error: lookupError } = await (supabase as any)
+        .from("sensiwatch_trip_latest")
+        .select("trip_id, internal_trip_id, serial_number")
+        .or(
+          [
+            `trip_id.eq.${id}`,
+            `internal_trip_id.eq.${id}`,
+            `internal_trip_id.eq.${id}-1`,
+            `internal_trip_id.eq.${id}-2`,
+            `serial_number.eq.${id}`,
+          ].join(",")
+        )
+        .limit(1);
+      if (lookupError) throw lookupError;
+      if (!matches || matches.length === 0) {
+        toast({
+          title: "No SensiWatch trip found",
+          description: `No trip in our database matches "${id}". Check the SensiWatch trip id, internal id, or device serial — and confirm the device has pushed at least one report.`,
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
       const { error } = await (supabase as any)
         .from("sf_logger_attachments")
         .upsert(
@@ -674,23 +702,6 @@ function NoLoggerSection({
         </p>
         {canManage && orderNumbers.length > 0 && (
           <div className="space-y-2">
-            {orderNumbers.length > 1 && (
-              <div>
-                <label className="text-[10px] uppercase text-muted-foreground">Attach to order</label>
-                <Select value={orderNumber} onValueChange={setOrderNumber}>
-                  <SelectTrigger className="h-8 text-xs mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {orderNumbers.map((on) => (
-                      <SelectItem key={on} value={on} className="text-xs font-mono">
-                        {on}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div>
               <label className="text-[10px] uppercase text-muted-foreground">SensiWatch trip id, internal trip id, or device serial</label>
               <div className="flex gap-2 mt-1">
