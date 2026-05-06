@@ -201,16 +201,34 @@ const ActiveSF = () => {
 
   // Resolve the order number a trip belongs to, applying manual logger
   // attachments first so admin-attached trips appear under the right order.
+  // The attachment match value can be the stripped internal id, the raw
+  // sensiwatch trip id, or the device serial number — we try each.
   const tripOrderNumber = useCallback(
-    (internalId: string) => {
+    (internalIdOrTrip: string | SFTrip) => {
+      const t = typeof internalIdOrTrip === "string" ? null : internalIdOrTrip;
+      const internalId = typeof internalIdOrTrip === "string" ? internalIdOrTrip : internalIdOrTrip.internalTripId;
       const stripped = stripLoggerSuffix(internalId);
-      return loggerAttachments.get(stripped) || stripped;
+      if (loggerAttachments.size) {
+        const candidates = [
+          stripped,
+          internalId,
+          t?.tripId || "",
+          t?.serialNumber || "",
+        ]
+          .map((v) => String(v || "").trim().toLowerCase())
+          .filter(Boolean);
+        for (const c of candidates) {
+          const hit = loggerAttachments.get(c);
+          if (hit) return hit;
+        }
+      }
+      return stripped;
     },
     [loggerAttachments]
   );
 
   const lookupOrder = useCallback(
-    (internalId: string) => orderInfo.get(tripOrderNumber(internalId)) || null,
+    (internalIdOrTrip: string | SFTrip) => orderInfo.get(tripOrderNumber(internalIdOrTrip)) || null,
     [orderInfo, tripOrderNumber]
   );
 
