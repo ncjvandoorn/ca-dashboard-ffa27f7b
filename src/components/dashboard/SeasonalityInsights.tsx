@@ -264,7 +264,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
 
         {analysis && !loading && (
           <>
-            <SeasonalityInsightsBody analysis={analysis} />
+            <SeasonalityInsightsBody analysis={analysis} hideFarms={isCustomer} />
 
             {/* Refresh / cache info */}
             <div className="mt-4 flex flex-col items-center gap-2">
