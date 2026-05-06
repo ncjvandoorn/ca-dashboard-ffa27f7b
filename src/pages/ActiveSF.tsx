@@ -117,6 +117,24 @@ const ActiveSF = () => {
   // restricted by role.
   const vfActiveSet = useVesselFinderActiveSet(true);
 
+  // Manual datalogger attachments: order_number -> internal_trip_id (without
+  // logger suffix). Used to force a sensiwatch trip to show under a given
+  // services order even when its internal id doesn't naturally match.
+  const [loggerAttachments, setLoggerAttachments] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("sf_logger_attachments" as any)
+        .select("order_number, internal_trip_id");
+      if (cancelled || error || !data) return;
+      const m = new Map<string, string>();
+      for (const r of data as any[]) m.set(r.internal_trip_id, r.order_number);
+      setLoggerAttachments(m);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   // Load hidden trip IDs (visible to all authenticated users)
   const loadHidden = useCallback(async () => {
     const { data, error } = await supabase.from("sf_hidden_trips").select("trip_id");
