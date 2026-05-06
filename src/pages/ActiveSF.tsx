@@ -365,7 +365,7 @@ const ActiveSF = () => {
           // Also match just the WW portion (e.g. "12") so users can search by week
           (info?.dippingWeek || "").slice(2),
           info?.bookingCode,
-          stripLoggerSuffix(t.internalTripId), // order number
+          tripOrderNumber(t.internalTripId), // order number (incl. attachments)
           info?.containerNumber,
           info?.customer,
           info?.farm,
