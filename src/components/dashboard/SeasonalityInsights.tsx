@@ -87,7 +87,7 @@ function buildAllFarmSummaries(reports: QualityReport[], accounts: Account[], we
 }
 
 export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: SeasonalityInsightsProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isCustomer } = useAuth();
   const [analysis, setAnalysis] = useState<SeasonalityAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
