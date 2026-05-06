@@ -195,20 +195,30 @@ const ActiveSF = () => {
     return m;
   }, [servicesOrders, accounts, customerFarms, containers]);
 
+  // Resolve the order number a trip belongs to, applying manual logger
+  // attachments first so admin-attached trips appear under the right order.
+  const tripOrderNumber = useCallback(
+    (internalId: string) => {
+      const stripped = stripLoggerSuffix(internalId);
+      return loggerAttachments.get(stripped) || stripped;
+    },
+    [loggerAttachments]
+  );
+
   const lookupOrder = useCallback(
-    (internalId: string) => orderInfo.get(stripLoggerSuffix(internalId)) || null,
-    [orderInfo]
+    (internalId: string) => orderInfo.get(tripOrderNumber(internalId)) || null,
+    [orderInfo, tripOrderNumber]
   );
 
   // Build the master list of rows: one per services order, plus orphan trips
   // (sensiwatch trips whose internal id doesn't match any order). Each row is
   // a synthetic SFTrip — for orders without a logger, sensor fields are null.
   const allRows = useMemo<SFTrip[]>(() => {
-    // Index sensiwatch trips by stripped internal trip id (= orderNumber).
-    // One order can have multiple loggers, so this map's value is an array.
+    // Index sensiwatch trips by stripped internal trip id (= orderNumber),
+    // honouring manual logger attachments.
     const tripsByOrder = new Map<string, SFTrip[]>();
     for (const t of trips) {
-      const key = stripLoggerSuffix(t.internalTripId);
+      const key = tripOrderNumber(t.internalTripId);
       if (!key) continue;
       if (!tripsByOrder.has(key)) tripsByOrder.set(key, []);
       tripsByOrder.get(key)!.push(t);
