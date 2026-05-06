@@ -58,9 +58,11 @@ function impactBg(score: number) {
 
 interface SeasonalityInsightsBodyProps {
   analysis: SeasonalityAnalysis;
+  /** When true, farm names in pest/disease cards are hidden (customer view). */
+  hideFarms?: boolean;
 }
 
-export function SeasonalityInsightsBody({ analysis }: SeasonalityInsightsBodyProps) {
+export function SeasonalityInsightsBody({ analysis, hideFarms = false }: SeasonalityInsightsBodyProps) {
   const chartData = useMemo(() => {
     const assessmentMap = new Map(analysis.weeklyAssessment.map((w) => [w.weekNr, w.qualityImpactScore]));
     const qualityMap = new Map(analysis.averageQualityByWeek.map((w) => [w.weekNr, w.avgQualityRating]));
