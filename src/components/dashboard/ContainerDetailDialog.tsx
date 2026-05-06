@@ -319,7 +319,7 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
             <NoLoggerSection
               vfTracking={vfTracking}
               orderNumbers={detailOrders.map((o) => o.orderNumber).filter(Boolean) as string[]}
-              canManage={!isCustomer}
+              canManage={isAdmin || (!isAdmin && !isCustomer)}
             />
           ) : hasMultipleTrips ? (
             <Tabs
