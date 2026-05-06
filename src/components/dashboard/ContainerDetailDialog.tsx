@@ -591,7 +591,129 @@ function TripSection({ trip, vfTracking }: { trip: SFTrip; vfTracking: VFTrackin
   );
 }
 
-// Color palette for per-logger lines in the combined multigraph. Each logger
+/** Shown when a container has no datalogger trips attached.
+ *  - If VesselFinder tracking is active, still show the route map (with VF only).
+ *  - Admin/staff can manually attach a datalogger by typing its internal trip id. */
+function NoLoggerSection({
+  vfTracking,
+  orderNumbers,
+  canManage,
+}: {
+  vfTracking: VFTracking | null;
+  orderNumbers: string[];
+  canManage: boolean;
+}) {
+  const [internalId, setInternalId] = useState("");
+  const [orderNumber, setOrderNumber] = useState<string>(orderNumbers[0] || "");
+  const [saving, setSaving] = useState(false);
+
+  const hasVf = vfTracking?.status === "success" && !!vfTracking.response?.general;
+
+  const syntheticTrip: SFTrip = useMemo(
+    () => ({
+      tripId: "vf-only",
+      tripStatus: "Live tracking",
+      internalTripId: "",
+      originName: "",
+      originAddress: "",
+      destinationName: "",
+      carrier: "",
+      stops: 0,
+      plannedDepartureTime: null,
+      actualDepartureTime: null,
+      latitude: null,
+      longitude: null,
+      serialNumber: null,
+      lastTemp: null,
+      lastLight: null,
+      lastHumidity: null,
+      lastReadingTime: null,
+      lastLocation: null,
+      isBackfillOnly: false,
+    }),
+    []
+  );
+
+  const handleAttach = async () => {
+    const id = internalId.trim();
+    if (!id || !orderNumber) return;
+    setSaving(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("sf_logger_attachments")
+        .upsert(
+          { order_number: orderNumber, internal_trip_id: id },
+          { onConflict: "order_number" }
+        );
+      if (error) throw error;
+      toast({
+        title: "Datalogger attached",
+        description: `Linked trip ${id} to order ${orderNumber}. Reload to see the trip.`,
+      });
+      setInternalId("");
+    } catch (e: any) {
+      toast({ title: "Failed to attach", description: e?.message || "Unknown error", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {hasVf && (
+        <div className="rounded-xl border border-border overflow-hidden" data-pdf-section>
+          <TripPathMap trip={syntheticTrip} height={280} vfTracking={vfTracking} />
+        </div>
+      )}
+      <div className="rounded-xl border border-border p-4 bg-card">
+        <p className="text-sm font-semibold mb-1">No datalogger attached</p>
+        <p className="text-xs text-muted-foreground mb-3">
+          {canManage
+            ? "If a datalogger trip exists for this container, attach it here using its internal trip id."
+            : "No datalogger trip is linked to this container yet."}
+        </p>
+        {canManage && orderNumbers.length > 0 && (
+          <div className="space-y-2">
+            {orderNumbers.length > 1 && (
+              <div>
+                <label className="text-[10px] uppercase text-muted-foreground">Attach to order</label>
+                <Select value={orderNumber} onValueChange={setOrderNumber}>
+                  <SelectTrigger className="h-8 text-xs mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {orderNumbers.map((on) => (
+                      <SelectItem key={on} value={on} className="text-xs font-mono">
+                        {on}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div>
+              <label className="text-[10px] uppercase text-muted-foreground">Internal trip id</label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  value={internalId}
+                  onChange={(e) => setInternalId(e.target.value)}
+                  placeholder="e.g. 1234567"
+                  className="h-8 text-xs font-mono"
+                />
+                <Button size="sm" onClick={handleAttach} disabled={!internalId.trim() || saving} className="h-8 text-xs">
+                  {saving ? <Loader2Icon className="h-3 w-3 animate-spin" /> : "Attach"}
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Use the SensiWatch internal trip id (without the <code>-1</code>/<code>-2</code> suffix; that's added automatically per logger).
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 // gets a temp/humidity/light triple drawn in the same hue family so they're
 // visually grouped.
 const LOGGER_COLORS: { temp: string; humidity: string; light: string }[] = [
