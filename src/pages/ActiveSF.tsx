@@ -117,9 +117,10 @@ const ActiveSF = () => {
   // restricted by role.
   const vfActiveSet = useVesselFinderActiveSet(true);
 
-  // Manual datalogger attachments: order_number -> internal_trip_id (without
-  // logger suffix). Used to force a sensiwatch trip to show under a given
-  // services order even when its internal id doesn't naturally match.
+  // Manual datalogger attachments: matchValue -> order_number. The match
+  // value can be either a stripped SensiWatch internal trip id, the
+  // sensiwatch tripId, or a device serial number — whichever the admin
+  // entered. Lookup compares all three for each trip.
   const [loggerAttachments, setLoggerAttachments] = useState<Map<string, string>>(new Map());
   useEffect(() => {
     let cancelled = false;
@@ -129,7 +130,10 @@ const ActiveSF = () => {
         .select("order_number, internal_trip_id");
       if (cancelled || error || !data) return;
       const m = new Map<string, string>();
-      for (const r of data as any[]) m.set(r.internal_trip_id, r.order_number);
+      for (const r of data as any[]) {
+        const v = String(r.internal_trip_id || "").trim();
+        if (v) m.set(v.toLowerCase(), r.order_number);
+      }
       setLoggerAttachments(m);
     })();
     return () => { cancelled = true; };
