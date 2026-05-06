@@ -316,9 +316,11 @@ export function ContainerDetailDialog({ trips, orders, container, onClose }: Pro
               The multigraph is rendered ONCE below at container scope so all
               loggers can be compared on a single chart. */}
           {trips.length === 0 ? (
-            <div className="rounded-xl border border-border p-6 text-center text-sm text-muted-foreground">
-              No datalogger trips for this container.
-            </div>
+            <NoLoggerSection
+              vfTracking={vfTracking}
+              orderNumbers={detailOrders.map((o) => o.orderNumber).filter(Boolean) as string[]}
+              canManage={!isCustomer}
+            />
           ) : hasMultipleTrips ? (
             <Tabs
               value={currentActiveTripId ?? undefined}
