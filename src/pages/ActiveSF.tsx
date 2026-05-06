@@ -260,7 +260,7 @@ const ActiveSF = () => {
       }
     }
     return rows;
-  }, [trips, orderInfo]);
+  }, [trips, orderInfo, tripOrderNumber]);
 
   // Build the list of distinct years available, derived from dippingWeek (YYWW).
   const availableYears = useMemo(() => {
