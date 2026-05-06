@@ -218,7 +218,7 @@ export function SeasonalityInsightsBody({ analysis, hideFarms = false }: Seasona
                     </p>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-muted-foreground">
                       <span><span className="font-medium text-foreground/70">Weeks:</span> {pd.weeksObserved.join(", ")}</span>
-                      {pd.farmsAffected.length > 0 && (
+                      {!hideFarms && pd.farmsAffected.length > 0 && (
                         <span><span className="font-medium text-foreground/70">Farms:</span> {pd.farmsAffected.join(", ")}</span>
                       )}
                     </div>
