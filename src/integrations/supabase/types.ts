@@ -578,6 +578,33 @@ export type Database = {
         }
         Relationships: []
       }
+      sf_logger_attachments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          internal_trip_id: string
+          order_number: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          internal_trip_id: string
+          order_number: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          internal_trip_id?: string
+          order_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shared_pages: {
         Row: {
           created_at: string
