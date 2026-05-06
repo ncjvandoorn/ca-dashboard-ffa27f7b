@@ -335,7 +335,7 @@ const ActiveSF = () => {
             .map((o) => o.orderNumber)
             .filter(Boolean)
         );
-        list = list.filter((t) => myOrderIds.has(stripLoggerSuffix(t.internalTripId)));
+        list = list.filter((t) => myOrderIds.has(tripOrderNumber(t.internalTripId)));
       }
     }
     // Hide rows admin marked as hidden — bypassed by Show hidden.
