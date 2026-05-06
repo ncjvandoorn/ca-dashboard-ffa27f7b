@@ -58,9 +58,11 @@ function impactBg(score: number) {
 
 interface SeasonalityInsightsBodyProps {
   analysis: SeasonalityAnalysis;
+  /** When true, farm names in pest/disease cards are hidden (customer view). */
+  hideFarms?: boolean;
 }
 
-export function SeasonalityInsightsBody({ analysis }: SeasonalityInsightsBodyProps) {
+export function SeasonalityInsightsBody({ analysis, hideFarms = false }: SeasonalityInsightsBodyProps) {
   const chartData = useMemo(() => {
     const assessmentMap = new Map(analysis.weeklyAssessment.map((w) => [w.weekNr, w.qualityImpactScore]));
     const qualityMap = new Map(analysis.averageQualityByWeek.map((w) => [w.weekNr, w.avgQualityRating]));
@@ -181,7 +183,7 @@ export function SeasonalityInsightsBody({ analysis }: SeasonalityInsightsBodyPro
                     </p>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-muted-foreground">
                       <span><span className="font-medium text-foreground/70">Weeks:</span> {pd.weeksObserved.join(", ")}</span>
-                      {pd.farmsAffected.length > 0 && (
+                      {!hideFarms && pd.farmsAffected.length > 0 && (
                         <span><span className="font-medium text-foreground/70">Farms:</span> {pd.farmsAffected.join(", ")}</span>
                       )}
                     </div>
@@ -216,7 +218,7 @@ export function SeasonalityInsightsBody({ analysis }: SeasonalityInsightsBodyPro
                     </p>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-muted-foreground">
                       <span><span className="font-medium text-foreground/70">Weeks:</span> {pd.weeksObserved.join(", ")}</span>
-                      {pd.farmsAffected.length > 0 && (
+                      {!hideFarms && pd.farmsAffected.length > 0 && (
                         <span><span className="font-medium text-foreground/70">Farms:</span> {pd.farmsAffected.join(", ")}</span>
                       )}
                     </div>

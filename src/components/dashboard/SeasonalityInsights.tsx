@@ -87,7 +87,7 @@ function buildAllFarmSummaries(reports: QualityReport[], accounts: Account[], we
 }
 
 export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: SeasonalityInsightsProps) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isCustomer } = useAuth();
   const [analysis, setAnalysis] = useState<SeasonalityAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -264,7 +264,7 @@ export function SeasonalityInsights({ reports, accounts, open, onOpenChange }: S
 
         {analysis && !loading && (
           <>
-            <SeasonalityInsightsBody analysis={analysis} />
+            <SeasonalityInsightsBody analysis={analysis} hideFarms={isCustomer} />
 
             {/* Refresh / cache info */}
             <div className="mt-4 flex flex-col items-center gap-2">
