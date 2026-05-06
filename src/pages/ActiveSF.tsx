@@ -117,9 +117,10 @@ const ActiveSF = () => {
   // restricted by role.
   const vfActiveSet = useVesselFinderActiveSet(true);
 
-  // Manual datalogger attachments: order_number -> internal_trip_id (without
-  // logger suffix). Used to force a sensiwatch trip to show under a given
-  // services order even when its internal id doesn't naturally match.
+  // Manual datalogger attachments: matchValue -> order_number. The match
+  // value can be either a stripped SensiWatch internal trip id, the
+  // sensiwatch tripId, or a device serial number — whichever the admin
+  // entered. Lookup compares all three for each trip.
   const [loggerAttachments, setLoggerAttachments] = useState<Map<string, string>>(new Map());
   useEffect(() => {
     let cancelled = false;
@@ -129,7 +130,10 @@ const ActiveSF = () => {
         .select("order_number, internal_trip_id");
       if (cancelled || error || !data) return;
       const m = new Map<string, string>();
-      for (const r of data as any[]) m.set(r.internal_trip_id, r.order_number);
+      for (const r of data as any[]) {
+        const v = String(r.internal_trip_id || "").trim();
+        if (v) m.set(v.toLowerCase(), r.order_number);
+      }
       setLoggerAttachments(m);
     })();
     return () => { cancelled = true; };
@@ -197,16 +201,34 @@ const ActiveSF = () => {
 
   // Resolve the order number a trip belongs to, applying manual logger
   // attachments first so admin-attached trips appear under the right order.
+  // The attachment match value can be the stripped internal id, the raw
+  // sensiwatch trip id, or the device serial number — we try each.
   const tripOrderNumber = useCallback(
-    (internalId: string) => {
+    (internalIdOrTrip: string | SFTrip) => {
+      const t = typeof internalIdOrTrip === "string" ? null : internalIdOrTrip;
+      const internalId = typeof internalIdOrTrip === "string" ? internalIdOrTrip : internalIdOrTrip.internalTripId;
       const stripped = stripLoggerSuffix(internalId);
-      return loggerAttachments.get(stripped) || stripped;
+      if (loggerAttachments.size) {
+        const candidates = [
+          stripped,
+          internalId,
+          t?.tripId || "",
+          t?.serialNumber || "",
+        ]
+          .map((v) => String(v || "").trim().toLowerCase())
+          .filter(Boolean);
+        for (const c of candidates) {
+          const hit = loggerAttachments.get(c);
+          if (hit) return hit;
+        }
+      }
+      return stripped;
     },
     [loggerAttachments]
   );
 
   const lookupOrder = useCallback(
-    (internalId: string) => orderInfo.get(tripOrderNumber(internalId)) || null,
+    (internalIdOrTrip: string | SFTrip) => orderInfo.get(tripOrderNumber(internalIdOrTrip)) || null,
     [orderInfo, tripOrderNumber]
   );
 
@@ -218,7 +240,7 @@ const ActiveSF = () => {
     // honouring manual logger attachments.
     const tripsByOrder = new Map<string, SFTrip[]>();
     for (const t of trips) {
-      const key = tripOrderNumber(t.internalTripId);
+      const key = tripOrderNumber(t);
       if (!key) continue;
       if (!tripsByOrder.has(key)) tripsByOrder.set(key, []);
       tripsByOrder.get(key)!.push(t);
@@ -278,7 +300,7 @@ const ActiveSF = () => {
     const q = query.toLowerCase().trim();
     const yearSuffix = year ? year.slice(-2) : "";
     let list = allRows.filter((t) => {
-      const info = lookupOrder(t.internalTripId);
+      const info = lookupOrder(t);
       // Active SF only shows orders that are linked to a real container
       // (i.e. one that exists in containers.csv). Orphan trips and orders
       // without a known container are excluded.
@@ -335,7 +357,7 @@ const ActiveSF = () => {
             .map((o) => o.orderNumber)
             .filter(Boolean)
         );
-        list = list.filter((t) => myOrderIds.has(tripOrderNumber(t.internalTripId)));
+        list = list.filter((t) => myOrderIds.has(tripOrderNumber(t)));
       }
     }
     // Hide rows admin marked as hidden — bypassed by Show hidden.
@@ -344,7 +366,7 @@ const ActiveSF = () => {
     }
     if (q) {
       list = list.filter((t) => {
-        const info = lookupOrder(t.internalTripId);
+        const info = lookupOrder(t);
         const haystack = [
           t.tripId,
           t.tripStatus,
@@ -365,7 +387,7 @@ const ActiveSF = () => {
           // Also match just the WW portion (e.g. "12") so users can search by week
           (info?.dippingWeek || "").slice(2),
           info?.bookingCode,
-          tripOrderNumber(t.internalTripId), // order number (incl. attachments)
+          tripOrderNumber(t), // order number (incl. attachments)
           info?.containerNumber,
           info?.customer,
           info?.farm,
@@ -382,8 +404,8 @@ const ActiveSF = () => {
     return [...list].sort((a, b) => {
       if (sortField === "week") {
         // Sort by dippingWeek (YYWW) numerically; rows without a week sink last.
-        const aw = lookupOrder(a.internalTripId)?.dippingWeek || "";
-        const bw = lookupOrder(b.internalTripId)?.dippingWeek || "";
+        const aw = lookupOrder(a)?.dippingWeek || "";
+        const bw = lookupOrder(b)?.dippingWeek || "";
         const an = aw ? Number(aw) : sortDir === "asc" ? Infinity : -Infinity;
         const bn = bw ? Number(bw) : sortDir === "asc" ? Infinity : -Infinity;
         return sortDir === "asc" ? an - bn : bn - an;
@@ -411,7 +433,7 @@ const ActiveSF = () => {
   const vfByTrip = useMemo(() => {
     const m = new Map<string, ReturnType<typeof vfActiveSet.get>>();
     for (const t of filtered) {
-      const info = lookupOrder(t.internalTripId);
+      const info = lookupOrder(t);
       const vf = info?.containerId ? vfActiveSet.get(info.containerId) : null;
       if (vf && vf.enabled && vf.status === "success") m.set(t.tripId, vf);
     }
@@ -436,7 +458,7 @@ const ActiveSF = () => {
     const groups = new Map<string, ContainerGroup>();
     const order: string[] = [];
     for (const t of filtered) {
-      const info = lookupOrder(t.internalTripId);
+      const info = lookupOrder(t);
       // Group by container when available; otherwise fall back to the order id
       // (so non-SF orders like TC service collapse into one row per order even
       // without a container) — finally to the trip id for true orphan trips.
@@ -596,7 +618,7 @@ const ActiveSF = () => {
               trips={tripsWithLocation}
               vfByTrip={vfByTrip}
               onSelectTrip={(t) => {
-                const info = lookupOrder(t.internalTripId);
+                const info = lookupOrder(t);
                 const key = info?.containerId || `trip:${t.tripId}`;
                 const g = groupedRows.find((x) => x.key === key);
                 if (g) setSelectedGroup(g);

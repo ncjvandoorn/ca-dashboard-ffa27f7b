@@ -669,7 +669,7 @@ function NoLoggerSection({
         <p className="text-sm font-semibold mb-1">No datalogger attached</p>
         <p className="text-xs text-muted-foreground mb-3">
           {canManage
-            ? "If a datalogger trip exists for this container, attach it here using its internal trip id."
+            ? "If a datalogger trip exists for this container, attach it here using its SensiWatch trip id, internal trip id, or device serial number."
             : "No datalogger trip is linked to this container yet."}
         </p>
         {canManage && orderNumbers.length > 0 && (
@@ -692,12 +692,12 @@ function NoLoggerSection({
               </div>
             )}
             <div>
-              <label className="text-[10px] uppercase text-muted-foreground">Internal trip id</label>
+              <label className="text-[10px] uppercase text-muted-foreground">SensiWatch trip id, internal trip id, or device serial</label>
               <div className="flex gap-2 mt-1">
                 <Input
                   value={internalId}
                   onChange={(e) => setInternalId(e.target.value)}
-                  placeholder="e.g. 1234567"
+                  placeholder="e.g. 3670537 or PKF9A00WS4"
                   className="h-8 text-xs font-mono"
                 />
                 <Button size="sm" onClick={handleAttach} disabled={!internalId.trim() || saving} className="h-8 text-xs">
@@ -705,7 +705,7 @@ function NoLoggerSection({
                 </Button>
               </div>
               <p className="text-[10px] text-muted-foreground mt-1">
-                Use the SensiWatch internal trip id (without the <code>-1</code>/<code>-2</code> suffix; that's added automatically per logger).
+                Enter any of: SensiWatch trip id (e.g. <code>3670537</code>), internal trip id (without the <code>-1</code>/<code>-2</code> logger suffix), or device serial number (e.g. <code>PKF9A00WS4</code>).
               </p>
             </div>
           </div>
