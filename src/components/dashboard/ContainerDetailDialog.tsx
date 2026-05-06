@@ -41,6 +41,11 @@ import { SharePageButton } from "@/components/SharePageButton";
 import { useAuth } from "@/hooks/useAuth";
 import type { VFTracking } from "@/hooks/useVesselFinder";
 import { QualityReportBody } from "./QualityReportBody";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 as Loader2Icon } from "lucide-react";
 
 /**
  * Detail dialog for a *container* — handles the case where a single physical
